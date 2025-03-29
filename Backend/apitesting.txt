@@ -1,0 +1,265 @@
+# EDUVERSE API TESTING DOCUMENT
+
+## BASE URL: http://localhost:5000/api
+
+## AUTHENTICATION ENDPOINTS
+
+### Login
+✅ POST /auth/login
+{
+  "email": "admin@example.com",
+  "password": "password"
+}
+--------------------
+### Forgot Password
+POST /auth/forgot-password
+{
+  "email": "educator@example.com"
+}
+--------------------
+### Reset Password
+POST /auth/reset-password
+{
+  "token": "your_jwt_token_here",
+  "newPassword": "newpassword123"
+}
+##########################
+## ADMIN ENDPOINTS
+Headers for all admin endpoints:
+x-auth-token: your_jwt_token_here
+
+### Get Universities
+✅ GET /admin/universities
+--------------------
+### Create University
+✅ POST /admin/university
+{
+  "name": "Example University",
+  "email": "university@example.com",
+  "password": "password123"
+}
+--------------------
+### Update University
+PUT /admin/university/:id
+{
+  "name": "Updated University Name"
+}
+--------------------
+### Get Content
+✅ GET /admin/content
+Query Parameters (optional):
+- search: keyword
+- filter: pending|approved|rejected
+--------------------
+### Create Content
+POST /admin/content
+Content-Type: multipart/form-data
+Form data:
+- title: Admin Created Content
+- description: This is a sample content created by admin
+- file: [file upload]
+--------------------
+### Update Content
+PUT /admin/content/:id
+{
+  "title": "Updated Content Title",
+  "description": "Updated content description"
+}
+--------------------
+### Approve Content
+PUT /admin/content/approve/:id
+--------------------
+### Reject Content
+PUT /admin/content/reject/:id
+--------------------
+### Delete Content
+DELETE /admin/content/:id
+--------------------
+### Get Courses
+✅ GET /admin/courses
+--------------------
+### Update Profile
+PUT /admin/profile
+{
+  "name": "Admin User",
+  "phone": "1234567890",
+  "address": "123 Admin Street"
+}
+--------------------
+### Update Password
+PUT /admin/password
+{
+  "oldPassword": "password",
+  "newPassword": "newpassword123"
+}
+##########################
+## EDUCATOR ENDPOINTS
+Headers for all educator endpoints:
+x-auth-token: your_jwt_token_here
+
+### Get Courses
+GET /educator/courses
+Query Parameters (optional):
+- search: keyword
+- filter: status
+--------------------
+### Enroll in Course
+POST /educator/enroll/:id
+--------------------
+### Get My Courses
+GET /educator/my-courses
+--------------------
+### Resume Course
+GET /educator/course/:id/resume
+--------------------
+### Get Content
+GET /educator/content
+Query Parameters (optional):
+- search: keyword
+- filter: approved
+--------------------
+### Add Comment to Content
+POST /educator/content/:id/comment
+{
+  "text": "This is a comment on the content"
+}
+--------------------
+### Get My Content
+GET /educator/my-content
+--------------------
+### Create Content
+POST /educator/content
+Content-Type: multipart/form-data
+Form data:
+- title: Educator Created Content
+- description: This is a sample content created by educator
+- file: [file upload]
+--------------------
+### Submit Quiz
+POST /educator/quiz/:id
+{
+  "answers": {
+    "60d21b4667d0d8992e610c85": "Option A",
+    "60d21b4667d0d8992e610c86": "Option B",
+    "60d21b4667d0d8992e610c87": "Option C"
+  }
+}
+--------------------
+### Update Profile
+✅ PUT /educator/profile
+{
+  "name": "Educator Name",
+  "phone": "9876543210",
+  "address": "456 Educator Avenue"
+}
+--------------------
+### Update Password
+✅ PUT /educator/password
+{
+  "oldPassword": "password",
+  "newPassword": "newpassword123"
+}
+##########################
+## UNIVERSITY ENDPOINTS
+Headers for all university endpoints:
+x-auth-token: your_jwt_token_here
+
+### Create Educator
+POST /university/educator
+{
+  "name": "Educator Name",
+  "email": "new.educator@example.com",
+  "password": "password123"
+}
+--------------------
+### Get Educators
+✅ GET /university/educators
+--------------------
+### Update Educator
+PUT /university/educator/:id
+{
+  "name": "Updated Educator Name",
+  "email": "updated.educator@example.com"
+}
+--------------------
+### Update Profile
+PUT /university/profile
+{
+  "name": "University Admin",
+  "phone": "5555555555",
+  "address": "789 University Blvd"
+}
+--------------------
+### Update Password
+PUT /university/password
+{
+  "oldPassword": "password",
+  "newPassword": "newpassword123"
+}
+##########################
+## SAMPLE MODEL DATA
+
+### User
+{
+  "email": "user@example.com",
+  "password": "hashedpassword",
+  "role": "educator",
+  "name": "User Name",
+  "university": "60d21b4667d0d8992e610c85",
+  "profile": {
+    "phone": "1234567890",
+    "address": "123 User Street"
+  }
+}
+--------------------
+### Content
+{
+  "title": "Content Title",
+  "description": "Content description text goes here.",
+  "fileUrl": "https://res.cloudinary.com/example/file.pdf",
+  "creator": "60d21b4667d0d8992e610c85",
+  "status": "pending",
+  "comments": [
+    {
+      "user": "60d21b4667d0d8992e610c85",
+      "text": "This is a comment on the content"
+    }
+  ]
+}
+--------------------
+### Course
+{
+  "title": "Course Title",
+  "creator": "60d21b4667d0d8992e610c85",
+  "content": ["60d21b4667d0d8992e610c86", "60d21b4667d0d8992e610c87"],
+  "quiz": [
+    {
+      "question": "What is the capital of France?",
+      "options": ["London", "Berlin", "Paris", "Madrid"],
+      "answer": "Paris"
+    },
+    {
+      "question": "What is 2+2?",
+      "options": ["3", "4", "5", "6"],
+      "answer": "4"
+    }
+  ],
+  "enrolledUsers": [
+    {
+      "user": "60d21b4667d0d8992e610c88",
+      "status": "in_progress"
+    }
+  ],
+  "certificateUrl": "https://res.cloudinary.com/example/certificate.pdf"
+}
+--------------------
+### University
+{
+  "name": "University Name",
+  "educators": ["60d21b4667d0d8992e610c89", "60d21b4667d0d8992e610c90"]
+}
+--------------------
+## TESTING USERS (FROM SEEDER)
+- School Admin: school@example.com / password
+- Educator: educator@example.com / password
+- Admin: admin@example.com / password
