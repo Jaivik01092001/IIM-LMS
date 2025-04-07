@@ -1,26 +1,23 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { login, forgotPassword, resetPassword } from './authApi';
-
 export const loginThunk = createAsyncThunk('auth/login', async (credentials) => {
   const data = await login(credentials);
   localStorage.setItem('token', data.token);
+  localStorage.setItem('user', JSON.stringify(data.user));
   return data.user;
 });
-
 export const forgotPasswordThunk = createAsyncThunk('auth/forgotPassword', async (email) => {
   const data = await forgotPassword(email);
   return data;
 });
-
 export const resetPasswordThunk = createAsyncThunk('auth/resetPassword', async (data) => {
   const response = await resetPassword(data);
   return response;
 });
-
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: null,
+    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
     token: localStorage.getItem('token') || null,
     loading: false,
     error: null,
@@ -30,6 +27,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
   },
   extraReducers: (builder) => {
@@ -48,6 +46,5 @@ const authSlice = createSlice({
       .addCase(resetPasswordThunk.fulfilled, (state) => { state.loading = false; });
   },
 });
-
 export const { logout } = authSlice.actions;
 export default authSlice.reducer;

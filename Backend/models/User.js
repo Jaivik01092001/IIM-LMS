@@ -9,6 +9,14 @@ const userSchema = new mongoose.Schema({
   profile: { // Added for settings
     phone: { type: String },
     address: { type: String },
+    bio: { type: String },
+    avatar: { type: String }, // URL to profile image
+    socialLinks: {
+      website: { type: String },
+      linkedin: { type: String },
+      twitter: { type: String },
+      facebook: { type: String }
+    },
   },
 }, { timestamps: true });
 
