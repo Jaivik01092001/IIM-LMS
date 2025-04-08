@@ -4,7 +4,7 @@ const courseSchema = new mongoose.Schema({
   title: { type: String, required: true },
   creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   content: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Content' }],
-  quiz: [{ question: String, options: [String], answer: String }],
+  quizzes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Quiz' }],
   enrolledUsers: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['in_progress', 'completed'], default: 'in_progress' },

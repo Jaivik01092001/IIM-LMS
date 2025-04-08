@@ -75,3 +75,8 @@ export const updatePassword = async (data) => {
   const response = await axios.put(`${API_URL}/educator/password`, data, getConfig());
   return response.data;
 };
+
+export const updateProgress = async ({ courseId, progress }) => {
+  const response = await axios.put(`${API_URL}/educator/course/${courseId}/progress`, { progress }, getConfig());
+  return response.data;
+};

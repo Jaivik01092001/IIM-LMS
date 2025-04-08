@@ -1,11 +1,63 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as api from './universityApi';
+import { showSuccessToast, showErrorToast } from '../../utils/toast';
 
-export const createEducatorThunk = createAsyncThunk('university/createEducator', api.createEducator);
+export const createEducatorThunk = createAsyncThunk('university/createEducator', async (educatorData, { rejectWithValue }) => {
+  try {
+    const data = await api.createEducator(educatorData);
+    showSuccessToast(data.msg || 'Educator created successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to create educator');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to create educator');
+  }
+});
+
 export const getEducatorsThunk = createAsyncThunk('university/getEducators', api.getEducators);
-export const updateEducatorThunk = createAsyncThunk('university/updateEducator', api.updateEducator);
-export const updateProfileThunk = createAsyncThunk('university/updateProfile', api.updateProfile);
-export const updatePasswordThunk = createAsyncThunk('university/updatePassword', api.updatePassword);
+
+export const deleteEducatorThunk = createAsyncThunk('university/deleteEducator', async (id, { rejectWithValue }) => {
+  try {
+    const data = await api.deleteEducator(id);
+    showSuccessToast(data.msg || 'Educator deleted successfully');
+    return id; // Return the ID for state updates
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to delete educator');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to delete educator');
+  }
+});
+
+export const updateEducatorThunk = createAsyncThunk('university/updateEducator', async ({ id, ...educatorData }, { rejectWithValue }) => {
+  try {
+    const data = await api.updateEducator(id, educatorData);
+    showSuccessToast(data.msg || 'Educator updated successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to update educator');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to update educator');
+  }
+});
+
+export const updateProfileThunk = createAsyncThunk('university/updateProfile', async (profileData, { rejectWithValue }) => {
+  try {
+    const data = await api.updateProfile(profileData);
+    showSuccessToast(data.msg || 'Profile updated successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to update profile');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to update profile');
+  }
+});
+
+export const updatePasswordThunk = createAsyncThunk('university/updatePassword', async (passwordData, { rejectWithValue }) => {
+  try {
+    const data = await api.updatePassword(passwordData);
+    showSuccessToast(data.msg || 'Password updated successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to update password');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to update password');
+  }
+});
 
 const universitySlice = createSlice({
   name: 'university',
@@ -17,6 +69,14 @@ const universitySlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(getEducatorsThunk.fulfilled, (state, action) => { state.educators = action.payload; })
+      .addCase(createEducatorThunk.fulfilled, (state, action) => { state.educators.push(action.payload); })
+      .addCase(updateEducatorThunk.fulfilled, (state, action) => {
+        const index = state.educators.findIndex(educator => educator._id === action.payload._id);
+        if (index !== -1) state.educators[index] = action.payload;
+      })
+      .addCase(deleteEducatorThunk.fulfilled, (state, action) => {
+        state.educators = state.educators.filter(educator => educator._id !== action.payload);
+      })
       .addMatcher(
         (action) => action.type.endsWith('/pending'),
         (state) => { state.loading = true; }

@@ -1,18 +1,38 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { login, forgotPassword, resetPassword } from './authApi';
-export const loginThunk = createAsyncThunk('auth/login', async (credentials) => {
-  const data = await login(credentials);
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  return data.user;
+import { showSuccessToast, showErrorToast } from '../../utils/toast';
+export const loginThunk = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
+  try {
+    const data = await login(credentials);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    showSuccessToast(`Welcome, ${data.user.name}!`);
+    return data.user;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Login failed');
+    return rejectWithValue(error.response?.data?.msg || 'Login failed');
+  }
 });
-export const forgotPasswordThunk = createAsyncThunk('auth/forgotPassword', async (email) => {
-  const data = await forgotPassword(email);
-  return data;
+export const forgotPasswordThunk = createAsyncThunk('auth/forgotPassword', async (email, { rejectWithValue }) => {
+  try {
+    const data = await forgotPassword(email);
+    showSuccessToast(data.msg || 'Password reset instructions sent to your email');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to process request');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to process request');
+  }
 });
-export const resetPasswordThunk = createAsyncThunk('auth/resetPassword', async (data) => {
-  const response = await resetPassword(data);
-  return response;
+
+export const resetPasswordThunk = createAsyncThunk('auth/resetPassword', async (data, { rejectWithValue }) => {
+  try {
+    const response = await resetPassword(data);
+    showSuccessToast(response.msg || 'Password reset successful');
+    return response;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to reset password');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to reset password');
+  }
 });
 const authSlice = createSlice({
   name: 'auth',
@@ -28,6 +48,7 @@ const authSlice = createSlice({
       state.token = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      showSuccessToast('Logged out successfully');
     },
   },
   extraReducers: (builder) => {

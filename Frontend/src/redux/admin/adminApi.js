@@ -65,3 +65,39 @@ export const updatePassword = async (data) => {
   const response = await axios.put(`${API_URL}/admin/password`, data, getConfig());
   return response.data;
 };
+
+// CMS API calls
+export const getPages = async () => {
+  const response = await axios.get(`${API_URL}/cms/admin/pages`, getConfig());
+  return response.data;
+};
+
+export const getPage = async (id) => {
+  const response = await axios.get(`${API_URL}/cms/admin/page/${id}`, getConfig());
+  return response.data;
+};
+
+export const createPage = async (data) => {
+  const response = await axios.post(`${API_URL}/cms/admin/page`, data, getConfig());
+  return response.data;
+};
+
+export const updatePage = async ({ id, ...data }) => {
+  const response = await axios.put(`${API_URL}/cms/admin/page/${id}`, data, getConfig());
+  return response.data;
+};
+
+export const deletePage = async (id) => {
+  const response = await axios.delete(`${API_URL}/cms/admin/page/${id}`, getConfig());
+  return response.data;
+};
+
+export const publishPage = async (id) => {
+  const response = await axios.put(`${API_URL}/cms/admin/page/${id}/publish`, {}, getConfig());
+  return response.data;
+};
+
+export const unpublishPage = async (id) => {
+  const response = await axios.put(`${API_URL}/cms/admin/page/${id}/unpublish`, {}, getConfig());
+  return response.data;
+};

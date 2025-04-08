@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getCourseDetailThunk } from '../redux/educator/educatorSlice';
+import { getCourseDetailThunk, updateProgressThunk } from '../redux/educator/educatorSlice';
 
 function CourseLearning() {
   const { id } = useParams();
@@ -9,6 +9,27 @@ function CourseLearning() {
   const { courseDetail, loading } = useSelector((state) => state.educator);
   const [activeModule, setActiveModule] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const setActiveModuleAndTrackProgress = (index) => {
+    setActiveModule(index);
+
+    // Calculate progress based on viewed modules
+    if (courseDetail && courseDetail._id) {
+      const totalModules = modules ? modules.length : 0;
+      if (totalModules > 0) {
+        const progress = Math.round(((index + 1) / totalModules) * 100);
+
+        // Only update if progress has increased
+        const currentProgress = courseDetail.enrolledUsers && courseDetail.enrolledUsers.length > 0
+          ? courseDetail.enrolledUsers[0].progress || 0
+          : 0;
+
+        if (progress > currentProgress) {
+          dispatch(updateProgressThunk({ courseId: courseDetail._id, progress }));
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -25,8 +46,8 @@ function CourseLearning() {
   }
 
   // Mock content for demonstration
-  const modules = courseDetail.content && courseDetail.content.length > 0 
-    ? courseDetail.content 
+  const modules = courseDetail.content && courseDetail.content.length > 0
+    ? courseDetail.content
     : [
         {
           _id: 'module1',
@@ -124,10 +145,26 @@ function CourseLearning() {
       <div className={`bg-white shadow-lg ${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden flex flex-col`}>
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900 truncate">{courseDetail.title}</h2>
-          <p className="text-sm text-gray-500 mt-1">Your progress: 25%</p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '25%' }}></div>
-          </div>
+          {courseDetail.enrolledUsers && courseDetail.enrolledUsers.length > 0 ? (
+            <>
+              <p className="text-sm text-gray-500 mt-1">
+                Your progress: {courseDetail.enrolledUsers[0].progress || 0}%
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full"
+                  style={{ width: `${courseDetail.enrolledUsers[0].progress || 0}%` }}
+                ></div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500 mt-1">Your progress: 0%</p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '0%' }}></div>
+              </div>
+            </>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
@@ -136,7 +173,7 @@ function CourseLearning() {
               {modules.map((module, index) => (
                 <button
                   key={module._id || index}
-                  onClick={() => setActiveModule(index)}
+                  onClick={() => setActiveModuleAndTrackProgress(index)}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
                     activeModule === index
                       ? 'bg-blue-50 text-blue-700'
@@ -225,7 +262,7 @@ function CourseLearning() {
         <div className="flex-1 overflow-y-auto bg-white p-8">
           <div className="max-w-3xl mx-auto">
             <div className="prose prose-blue max-w-none" dangerouslySetInnerHTML={{ __html: modules[activeModule]?.content }}></div>
-            
+
             <div className="mt-12 flex justify-between">
               <button
                 onClick={() => setActiveModule(Math.max(0, activeModule - 1))}
@@ -241,7 +278,7 @@ function CourseLearning() {
                 </svg>
                 Previous Module
               </button>
-              
+
               {activeModule === modules.length - 1 ? (
                 <Link
                   to={`/course/${id}/quiz`}

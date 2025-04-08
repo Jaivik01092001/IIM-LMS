@@ -17,7 +17,7 @@ app.use(
 );
 
 // Import and register routes dynamically
-const routes = ['auth', 'educator', 'university', 'admin'].reduce((acc, route) => {
+const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms'].reduce((acc, route) => {
   try {
     acc[route] = require(`./routes/${route}Routes`);
     if (typeof acc[route] !== 'function') {

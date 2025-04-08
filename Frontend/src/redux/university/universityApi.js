@@ -27,3 +27,8 @@ export const updatePassword = async (data) => {
   const response = await axios.put(`${API_URL}/university/password`, data, getConfig());
   return response.data;
 };
+
+export const deleteEducator = async (id) => {
+  const response = await axios.delete(`${API_URL}/university/educator/${id}`, getConfig());
+  return response.data;
+};

@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import store from './redux/store';
 import App from './App';
 import './index.css';
+import './i18n'; // Import i18n configuration
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>

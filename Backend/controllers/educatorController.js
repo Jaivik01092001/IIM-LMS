@@ -4,7 +4,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
 
-exports.getCourses = async (req, res) => {
+const getCourses = async (req, res) => {
   const { search, filter } = req.query;
   let query = {};
   if (search) query.title = { $regex: search, $options: 'i' };
@@ -13,7 +13,7 @@ exports.getCourses = async (req, res) => {
   res.json(courses);
 };
 
-exports.enrollCourse = async (req, res) => {
+const enrollCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
 
@@ -48,12 +48,12 @@ exports.enrollCourse = async (req, res) => {
   }
 };
 
-exports.getMyCourses = async (req, res) => {
+const getMyCourses = async (req, res) => {
   const courses = await Course.find({ 'enrolledUsers.user': req.user.id }).populate('content');
   res.json(courses);
 };
 
-exports.getCourseDetail = async (req, res) => {
+const getCourseDetail = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
       .populate('creator', 'name')
@@ -65,7 +65,6 @@ exports.getCourseDetail = async (req, res) => {
     }
 
     // Check if the current user is enrolled
-    // Handle both populated and unpopulated user references
     const isEnrolled = course.enrolledUsers.some(e => {
       const userId = e.user._id ? e.user._id.toString() : e.user.toString();
       return userId === req.user.id;
@@ -88,7 +87,7 @@ exports.getCourseDetail = async (req, res) => {
   }
 };
 
-exports.resumeCourse = async (req, res) => {
+const resumeCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
       .populate('creator', 'name')
@@ -109,7 +108,7 @@ exports.resumeCourse = async (req, res) => {
   }
 };
 
-exports.getContent = async (req, res) => {
+const getContent = async (req, res) => {
   try {
     const { search, filter, type } = req.query;
 
@@ -137,7 +136,7 @@ exports.getContent = async (req, res) => {
   }
 };
 
-exports.addComment = async (req, res) => {
+const addComment = async (req, res) => {
   try {
     const { text } = req.body;
 
@@ -174,7 +173,7 @@ exports.addComment = async (req, res) => {
   }
 };
 
-exports.getMyContent = async (req, res) => {
+const getMyContent = async (req, res) => {
   try {
     const content = await Content.find({ creator: req.user.id })
       .populate('creator', 'name')
@@ -188,7 +187,7 @@ exports.getMyContent = async (req, res) => {
   }
 };
 
-exports.createContent = async (req, res) => {
+const createContent = async (req, res) => {
   try {
     const { title, description, type } = req.body;
 
@@ -221,7 +220,7 @@ exports.createContent = async (req, res) => {
   }
 };
 
-exports.submitQuiz = async (req, res) => {
+const submitQuiz = async (req, res) => {
   try {
     const { answers } = req.body; // { questionId: answer }
     const course = await Course.findById(req.params.id);
@@ -273,7 +272,7 @@ exports.submitQuiz = async (req, res) => {
   }
 };
 
-exports.updateProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
     const { name, phone, address, bio } = req.body;
     const user = await User.findById(req.user.id);
@@ -312,7 +311,7 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-exports.updatePassword = async (req, res) => {
+const updatePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
@@ -349,4 +348,67 @@ exports.updatePassword = async (req, res) => {
     console.error('Error updating password:', error);
     res.status(500).json({ msg: 'Server error' });
   }
+};
+
+const updateProgress = async (req, res) => {
+  try {
+    const { progress } = req.body;
+    const courseId = req.params.id;
+
+    if (!progress || isNaN(progress) || progress < 0 || progress > 100) {
+      return res.status(400).json({ msg: 'Invalid progress value' });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ msg: 'Course not found' });
+    }
+
+    // Find the enrollment for the current user
+    const enrollmentIndex = course.enrolledUsers.findIndex(e => e.user.toString() === req.user.id);
+
+    if (enrollmentIndex === -1) {
+      return res.status(400).json({ msg: 'You are not enrolled in this course' });
+    }
+
+    // Only update if the new progress is greater than the current progress
+    if (progress > course.enrolledUsers[enrollmentIndex].progress) {
+      course.enrolledUsers[enrollmentIndex].progress = progress;
+      course.enrolledUsers[enrollmentIndex].lastAccessedAt = new Date();
+
+      // If progress is 100%, mark as completed
+      if (progress === 100) {
+        course.enrolledUsers[enrollmentIndex].status = 'completed';
+        course.enrolledUsers[enrollmentIndex].completedAt = new Date();
+      }
+
+      await course.save();
+    }
+
+    res.json({
+      msg: 'Progress updated successfully',
+      progress: course.enrolledUsers[enrollmentIndex].progress,
+      status: course.enrolledUsers[enrollmentIndex].status
+    });
+  } catch (error) {
+    console.error('Error updating progress:', error);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+module.exports = {
+  getCourses,
+  enrollCourse,
+  getMyCourses,
+  getCourseDetail,
+  resumeCourse,
+  getContent,
+  addComment,
+  getMyContent,
+  createContent,
+  submitQuiz,
+  updateProfile,
+  updatePassword,
+  updateProgress
 };

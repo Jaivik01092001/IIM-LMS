@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/auth/authSlice';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './LanguageSelector';
 
 function Navbar() {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const handleLogout = () => dispatch(logout());
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -27,42 +30,48 @@ function Navbar() {
             {user?.role === 'educator' && (
               <>
                 <Link to="/my-learning" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  My Learning
+                  {t('educator.myLearning')}
                 </Link>
                 <Link to="/content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Content
+                  {t('educator.content')}
                 </Link>
                 <Link to="/my-content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  My Content
+                  {t('educator.myContent')}
                 </Link>
               </>
             )}
             {user?.role === 'university' && (
               <Link to="/university/educators" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Educators
+                {t('university.educators')}
               </Link>
             )}
             {user?.role === 'admin' && (
               <>
                 <Link to="/admin/universities" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Universities
+                  {t('admin.universities')}
                 </Link>
                 <Link to="/admin/content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Content
+                  {t('educator.content')}
                 </Link>
                 <Link to="/admin/courses" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Courses
+                  {t('admin.courseManagement')}
+                </Link>
+                <Link to="/admin/pages" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  {t('admin.cmsBuilder')}
                 </Link>
               </>
             )}
             <Link to="/settings" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Settings
+              {t('common.settings')}
             </Link>
+            <div className="ml-2">
+              <LanguageSelector />
+            </div>
             <button
               onClick={handleLogout}
               className="text-white bg-red-500 hover:bg-red-600 ml-2 px-4 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              Logout
+              {t('common.logout')}
             </button>
           </div>
 
@@ -101,42 +110,48 @@ function Navbar() {
           {user?.role === 'educator' && (
             <>
               <Link to="/my-learning" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                My Learning
+                {t('educator.myLearning')}
               </Link>
               <Link to="/content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                Content
+                {t('educator.content')}
               </Link>
               <Link to="/my-content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                My Content
+                {t('educator.myContent')}
               </Link>
             </>
           )}
           {user?.role === 'university' && (
             <Link to="/university/educators" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-              Educators
+              {t('university.educators')}
             </Link>
           )}
           {user?.role === 'admin' && (
             <>
               <Link to="/admin/universities" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                Universities
+                {t('admin.universities')}
               </Link>
               <Link to="/admin/content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                Content
+                {t('educator.content')}
               </Link>
               <Link to="/admin/courses" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                Courses
+                {t('admin.courseManagement')}
+              </Link>
+              <Link to="/admin/pages" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
+                {t('admin.cmsBuilder')}
               </Link>
             </>
           )}
           <Link to="/settings" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-            Settings
+            {t('common.settings')}
           </Link>
+          <div className="px-3 py-2">
+            <LanguageSelector />
+          </div>
           <button
             onClick={handleLogout}
             className="text-white bg-red-500 hover:bg-red-600 w-full text-left px-3 py-2 rounded-md text-base font-medium mt-2"
           >
-            Logout
+            {t('common.logout')}
           </button>
         </div>
       </div>
