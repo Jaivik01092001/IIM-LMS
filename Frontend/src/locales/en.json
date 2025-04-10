@@ -29,7 +29,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "cancel": "Cancel",
-    "file": "File"
+    "file": "File",
+    "backToLogin": "Back to Login"
   },
   "auth": {
     "loginTitle": "Welcome to IIM-LMS",
@@ -43,7 +44,23 @@
     "demoAccounts": "Demo Accounts",
     "educatorAccount": "Educator Account",
     "universityAdmin": "University Admin",
-    "systemAdmin": "System Admin"
+    "systemAdmin": "System Admin",
+    "loggingIn": "Logging in",
+    "sending": "Sending",
+    "resetting": "Resetting",
+    "resetLinkSent": "Reset Link Sent",
+    "checkEmailForInstructions": "Check your email for instructions on how to reset your password",
+    "enterYourEmail": "Enter your email address",
+    "sendResetLink": "Send Reset Link",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "enterNewPassword": "Enter new password",
+    "confirmNewPassword": "Confirm new password",
+    "passwordTooShort": "Password must be at least 8 characters long",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordResetSuccess": "Password Reset Successful",
+    "redirectingToLogin": "Redirecting to login page...",
+    "createNewPassword": "Create a new secure password for your account"
   },
   "educator": {
     "myLearning": "My Learning",

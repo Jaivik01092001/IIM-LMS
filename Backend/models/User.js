@@ -6,6 +6,9 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['educator', 'university', 'admin'], required: true },
   name: { type: String, required: true },
   university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' }, // For educators
+  refreshToken: { type: String }, // Added for JWT refresh token
+  passwordResetToken: { type: String },
+  passwordResetExpires: { type: Date },
   profile: { // Added for settings
     phone: { type: String },
     address: { type: String },

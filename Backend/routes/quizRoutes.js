@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { protect, restrictTo } = require('../middleware/auth');
 const {
   createQuiz,
   getQuiz,
@@ -11,13 +10,13 @@ const {
 } = require('../controllers/quizController');
 
 // Quiz CRUD routes
-router.post('/:courseId', protect, restrictTo('educator', 'admin'), createQuiz);
-router.get('/:quizId', protect, getQuiz);
-router.put('/:quizId', protect, restrictTo('educator', 'admin'), updateQuiz);
-router.delete('/:quizId', protect, restrictTo('educator', 'admin'), deleteQuiz);
+router.post('/:courseId', createQuiz);
+router.get('/:quizId', getQuiz);
+router.put('/:quizId', updateQuiz);
+router.delete('/:quizId', deleteQuiz);
 
 // Quiz attempt routes
-router.post('/:quizId/submit', protect, submitQuiz);
-router.get('/:quizId/results', protect, getQuizResults);
+router.post('/:quizId/submit', submitQuiz);
+router.get('/:quizId/results', getQuizResults);
 
-module.exports = router; 
+module.exports = router;
