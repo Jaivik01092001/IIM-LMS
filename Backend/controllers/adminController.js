@@ -44,13 +44,13 @@ exports.getContent = async (req, res) => {
 };
 
 exports.createContent = async (req, res) => {
-  const { title, description, userid } = req.body;
+  const { title, description, userId } = req.body;
   const fileUrl = req.file ? req.file.path : null;
   const content = new Content({
     title,
     description,
     fileUrl,
-    creator: userid,
+    creator: userId,
     status: "approved", // Admin-created content is auto-approved
   });
   await content.save();
