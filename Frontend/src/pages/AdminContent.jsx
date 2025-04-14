@@ -17,13 +17,23 @@ function AdminContent() {
     dispatch(getContentThunk());
   }, [dispatch]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+    const user = JSON.parse(localStorage.getItem('user'));
     e.preventDefault();
     const formData = new FormData();
     formData.append('title', form.title);
     formData.append('description', form.description);
+    formData.append('userId', user.id);
     if (form.file) formData.append('file', form.file);
-    dispatch(createContentThunk(formData));
+
+    const response = await dispatch(createContentThunk(formData));
+    if (response.meta.requestStatus === 'fulfilled') {
+      dispatch(getContentThunk());
+      // Handle success if needed
+    } else {
+      // Handle error if needed
+    }
+
     setForm({ title: '', description: '', file: null });
     setShowForm(false);
   };
@@ -39,7 +49,7 @@ function AdminContent() {
   );
 
   const getStatusBadgeClass = (status) => {
-    switch(status) {
+    switch (status) {
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
