@@ -17,6 +17,8 @@ import UniversityEducators from './pages/UniversityEducators';
 import AdminUniversities from './pages/AdminUniversities';
 import AdminContent from './pages/AdminContent';
 import AdminCourses from './pages/AdminCourses';
+import AdminCourseDetail from './pages/AdminCourseDetail';
+import AdminQuizzes from './pages/AdminQuizzes';
 import CmsPages from './pages/CmsPages';
 import CmsBuilder from './pages/CmsBuilder';
 import Navbar from './components/Navbar';
@@ -62,6 +64,8 @@ function App() {
         <Route path="/admin/universities" element={<ProtectedRoute role="admin"><AdminUniversities /></ProtectedRoute>} />
         <Route path="/admin/content" element={<ProtectedRoute role="admin"><AdminContent /></ProtectedRoute>} />
         <Route path="/admin/courses" element={<ProtectedRoute role="admin"><AdminCourses /></ProtectedRoute>} />
+        <Route path="/admin/course/:id" element={<ProtectedRoute role="admin"><AdminCourseDetail /></ProtectedRoute>} />
+        <Route path="/admin/quizzes" element={<ProtectedRoute role="admin"><AdminQuizzes /></ProtectedRoute>} />
         <Route path="/admin/pages" element={<ProtectedRoute role="admin"><CmsPages /></ProtectedRoute>} />
         <Route path="/admin/cms/create" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />
         <Route path="/admin/cms/edit/:id" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />

@@ -30,7 +30,13 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "file": "File",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "view": "View",
+    "add": "Add",
+    "close": "Close",
+    "notAvailable": "Not Available",
+    "notSet": "Not Set",
+    "select": "Select"
   },
   "auth": {
     "loginTitle": "Welcome to IIM-LMS",
@@ -131,7 +137,22 @@
     "published": "Published",
     "draft": "Draft",
     "noPages": "No pages found",
-    "createPageToGetStarted": "Create a page to get started"
+    "createPageToGetStarted": "Create a page to get started",
+    "createCourse": "Create Course",
+    "manage": "Manage",
+    "confirmDeleteCourse": "Are you sure you want to delete this course? This action cannot be undone.",
+    "backToCourses": "Back to Courses",
+    "addContent": "Add Content",
+    "editCourse": "Edit Course",
+    "addContentToCourse": "Add Content to Course",
+    "noAvailableContent": "No available content found",
+    "createContentFirst": "Create content first",
+    "tagsHelp": "Separate tags with commas",
+    "quizManagement": "Quiz Management",
+    "createQuiz": "Create Quiz",
+    "noQuizzes": "No quizzes found",
+    "addQuizToGetStarted": "Add a quiz to get started",
+    "addQuiz": "Add Quiz"
   },
   "course": {
     "details": "Course Details",
@@ -144,6 +165,36 @@
     "enrolledUsers": "Enrolled Users",
     "beginner": "Beginner",
     "intermediate": "Intermediate",
-    "advanced": "Advanced"
+    "advanced": "Advanced",
+    "description": "Description",
+    "content": "Content",
+    "quizzes": "Quizzes",
+    "title": "Title",
+    "tags": "Tags",
+    "thumbnailUrl": "Thumbnail URL",
+    "select": "Select Course"
+  },
+  "content": {
+    "title": "Title",
+    "type": "Type",
+    "creator": "Creator",
+    "description": "Description",
+    "status": "Status"
+  },
+  "quiz": {
+    "title": "Title",
+    "description": "Description",
+    "questions": "Questions",
+    "timeLimit": "Time Limit",
+    "passingScore": "Passing Score",
+    "minutes": "minutes",
+    "options": "Options",
+    "question": "Question",
+    "questionText": "Enter your question here",
+    "option": "Option",
+    "explanation": "Explanation",
+    "explanationPlaceholder": "Explain why this answer is correct",
+    "points": "Points",
+    "addQuestion": "Add Question"
   }
 }

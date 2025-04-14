@@ -124,41 +124,37 @@ function CourseDetail() {
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`py-4 px-6 text-sm font-medium ${
-                activeTab === 'overview'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-4 px-6 text-sm font-medium ${activeTab === 'overview'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('content')}
-              className={`py-4 px-6 text-sm font-medium ${
-                activeTab === 'content'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-4 px-6 text-sm font-medium ${activeTab === 'content'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Content
             </button>
             <button
               onClick={() => setActiveTab('quiz')}
-              className={`py-4 px-6 text-sm font-medium ${
-                activeTab === 'quiz'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-4 px-6 text-sm font-medium ${activeTab === 'quiz'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Quiz
             </button>
             <button
               onClick={() => setActiveTab('discussion')}
-              className={`py-4 px-6 text-sm font-medium ${
-                activeTab === 'discussion'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-4 px-6 text-sm font-medium ${activeTab === 'discussion'
+                ? 'border-b-2 border-blue-500 text-blue-600'
+                : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Discussion
             </button>
@@ -224,7 +220,7 @@ function CourseDetail() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
-                        <span className="text-gray-700">Quiz: {courseDetail.quiz?.length || 0} questions</span>
+                        <span className="text-gray-700">Quiz: {courseDetail.quizzes[0]?.questions.length || 0} questions</span>
                       </div>
                       <div className="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -301,7 +297,7 @@ function CourseDetail() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Quiz</h2>
 
               {isEnrolled ? (
-                courseDetail.quiz && courseDetail.quiz.length > 0 ? (
+                courseDetail.quizzes && courseDetail.quizzes.length > 0 ? (
                   <div className="space-y-6">
                     <p className="text-gray-700 mb-4">
                       Complete the quiz to test your knowledge and earn your certificate. You need to answer all questions correctly to pass.
@@ -318,7 +314,7 @@ function CourseDetail() {
                           <h3 className="text-sm font-medium text-blue-800">Quiz Information</h3>
                           <div className="mt-2 text-sm text-blue-700">
                             <ul className="list-disc pl-5 space-y-1">
-                              <li>Total Questions: {courseDetail.quiz.length}</li>
+                              <li>Total Questions: {courseDetail.quizzes.length}</li>
                               <li>Passing Score: 100%</li>
                               <li>Time Limit: None</li>
                               <li>Attempts: Unlimited</li>

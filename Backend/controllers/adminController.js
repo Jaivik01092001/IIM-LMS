@@ -44,13 +44,13 @@ exports.getContent = async (req, res) => {
 };
 
 exports.createContent = async (req, res) => {
-  const { title, description, userId } = req.body;
+  const { title, description } = req.body;
   const fileUrl = req.file ? req.file.path : null;
   const content = new Content({
     title,
     description,
     fileUrl,
-    creator: userId,
+    creator: req.user.id,
     status: "approved", // Admin-created content is auto-approved
   });
   await content.save();
@@ -91,38 +91,267 @@ exports.getCourses = async (req, res) => {
   res.json(courses);
 };
 
+// Get a specific course with its content and quizzes
+exports.getCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+      .populate('creator', 'name')
+      .populate('content')
+      .populate('quizzes');
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving course', error: error.message });
+  }
+};
+
+// Create a new course
+exports.createCourse = async (req, res) => {
+  try {
+    const { title, description, duration, level, tags, thumbnail } = req.body;
+
+
+    const course = new Course({
+      title,
+      description,
+      duration,
+      level: level || 'beginner',
+      tags: tags || [],
+      thumbnail,
+      creator: req.user.id,
+      content: [],
+      quizzes: []
+    });
+
+    await course.save();
+    res.status(201).json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating course', error: error.message });
+  }
+};
+
+// Update a course
+exports.updateCourse = async (req, res) => {
+  try {
+    const { title, description, duration, level, tags, thumbnail } = req.body;
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    course.title = title || course.title;
+    course.description = description || course.description;
+    course.duration = duration || course.duration;
+    if (level) course.level = level;
+    if (tags) course.tags = tags;
+    if (thumbnail) course.thumbnail = thumbnail;
+
+    await course.save();
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating course', error: error.message });
+  }
+};
+
+// Delete a course
+exports.deleteCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const Quiz = require('../models/Quiz');
+    // Delete all quizzes associated with the course
+    await Quiz.deleteMany({ course: course._id });
+
+    // Delete the course
+    await Course.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting course', error: error.message });
+  }
+};
+
+// Add content to a course
+exports.addContentToCourse = async (req, res) => {
+  try {
+    const { courseId, contentId } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if content exists
+    const content = await Content.findById(contentId);
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+
+    // Add content to course if not already added
+    if (!course.content.includes(contentId)) {
+      course.content.push(contentId);
+      await course.save();
+    }
+
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding content to course', error: error.message });
+  }
+};
+
+// Add quiz to a course
+exports.addQuizToCourse = async (req, res) => {
+  try {
+    const { courseId, quizId } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if quiz is already in the course
+    if (!course.quizzes.includes(quizId)) {
+      course.quizzes.push(quizId);
+      await course.save();
+    }
+
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding quiz to course', error: error.message });
+  }
+};
+
+// Create a quiz
+exports.createQuiz = async (req, res) => {
+  try {
+    const { title, description, courseId, questions, timeLimit, passingScore } = req.body;
+
+    // Check if course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const Quiz = require('../models/Quiz');
+    const quiz = new Quiz({
+      title,
+      description,
+      course: courseId,
+      questions: questions || [],
+      timeLimit: timeLimit || 30,
+      passingScore: passingScore || 60
+    });
+
+    await quiz.save();
+
+    // Add quiz to course if not added automatically
+    if (!course.quizzes.includes(quiz._id)) {
+      course.quizzes.push(quiz._id);
+      await course.save();
+    }
+
+    res.status(201).json(quiz);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating quiz', error: error.message });
+  }
+};
+
+// Update a quiz
+exports.updateQuiz = async (req, res) => {
+  try {
+    const { title, description, questions, timeLimit, passingScore } = req.body;
+    const { quizId } = req.params;
+
+    const Quiz = require('../models/Quiz');
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    quiz.title = title || quiz.title;
+    quiz.description = description || quiz.description;
+    if (questions) quiz.questions = questions;
+    if (timeLimit) quiz.timeLimit = timeLimit;
+    if (passingScore) quiz.passingScore = passingScore;
+
+    await quiz.save();
+    res.json(quiz);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating quiz', error: error.message });
+  }
+};
+
+// Get all quizzes
+exports.getQuizzes = async (req, res) => {
+  try {
+    const Quiz = require('../models/Quiz');
+    const quizzes = await Quiz.find()
+      .populate('course', 'title');
+
+    res.json(quizzes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving quizzes', error: error.message });
+  }
+};
+
+// Get a specific quiz
+exports.getQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const Quiz = require('../models/Quiz');
+    const quiz = await Quiz.findById(quizId)
+      .populate('course', 'title');
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    res.json(quiz);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving quiz', error: error.message });
+  }
+};
+
 exports.updateProfile = async (req, res) => {
-  const { name, phone, address, userId } = req.body;
-  const user = await User.findById(userId);
+  const { name, phone, address } = req.body;
+  const user = await User.findById(req.user.id);
   user.name = name || user.name;
   user.profile = { phone, address };
   await user.save();
   res.json(user);
 };
 exports.updatePassword = async (req, res) => {
-  const { currentPassword, newPassword, confirmPassword, userId } = req.body;
-  console.debug(`Updating password for userId: ${userId}`);
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  console.debug(`Updating password for userId: ${req.user.id}`);
 
   // Validate passwords match
   if (newPassword !== confirmPassword) {
-    console.warn(`Password confirmation mismatch for userId: ${userId}`);
+    console.warn(`Password confirmation mismatch for userId: ${req.user.id}`);
     return res.status(400).json({ msg: 'New passwords do not match' });
   }
 
-  const user = await User.findById(userId);
+  const user = await User.findById(req.user.id);
   if (!user) {
-    console.error(`User not found for userId: ${userId}`);
+    console.error(`User not found for userId: ${req.user.id}`);
     return res.status(404).json({ msg: 'User not found' });
   }
 
   const isMatch = await bcrypt.compare(currentPassword, user.password);
   if (!isMatch) {
-    console.warn(`Invalid current password attempt for userId: ${userId}`);
+    console.warn(`Invalid current password attempt for userId: ${req.user.id}`);
     return res.status(400).json({ msg: 'Invalid current password' });
   }
 
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
-  console.debug(`Password updated successfully for userId: ${userId}`);
+  console.debug(`Password updated successfully for userId: ${req.user.id}`);
   res.json({ msg: 'Password updated' });
 };

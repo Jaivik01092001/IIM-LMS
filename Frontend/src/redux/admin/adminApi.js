@@ -56,6 +56,56 @@ export const getCourses = async () => {
   return response.data;
 };
 
+export const getCourse = async (id) => {
+  const response = await axios.get(`${API_URL}/admin/course/${id}`, getConfig());
+  return response.data;
+};
+
+export const createCourse = async (data) => {
+  const response = await axios.post(`${API_URL}/admin/course`, data, getConfig());
+  return response.data;
+};
+
+export const updateCourse = async (id, data) => {
+  const response = await axios.put(`${API_URL}/admin/course/${id}`, data, getConfig());
+  return response.data;
+};
+
+export const deleteCourse = async (id) => {
+  const response = await axios.delete(`${API_URL}/admin/course/${id}`, getConfig());
+  return response.data;
+};
+
+export const addContentToCourse = async (data) => {
+  const response = await axios.post(`${API_URL}/admin/course/content`, data, getConfig());
+  return response.data;
+};
+
+export const addQuizToCourse = async (data) => {
+  const response = await axios.post(`${API_URL}/admin/course/quiz`, data, getConfig());
+  return response.data;
+};
+
+export const getQuizzes = async () => {
+  const response = await axios.get(`${API_URL}/admin/quizzes`, getConfig());
+  return response.data;
+};
+
+export const getQuiz = async (id) => {
+  const response = await axios.get(`${API_URL}/admin/quiz/${id}`, getConfig());
+  return response.data;
+};
+
+export const createQuiz = async (data) => {
+  const response = await axios.post(`${API_URL}/admin/quiz`, data, getConfig());
+  return response.data;
+};
+
+export const updateQuiz = async (id, data) => {
+  const response = await axios.put(`${API_URL}/admin/quiz/${id}`, data, getConfig());
+  return response.data;
+};
+
 export const updateProfile = async (data) => {
   const response = await axios.put(`${API_URL}/admin/profile`, data, getConfig());
   return response.data;

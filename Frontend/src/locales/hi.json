@@ -28,7 +28,15 @@
     "name": "नाम",
     "edit": "संपादित करें",
     "delete": "हटाएं",
-    "cancel": "रद्द करें"
+    "cancel": "रद्द करें",
+    "file": "फ़ाइल",
+    "backToLogin": "लॉगिन पर वापस जाएं",
+    "view": "देखें",
+    "add": "जोड़ें",
+    "close": "बंद करें",
+    "notAvailable": "उपलब्ध नहीं",
+    "notSet": "निर्धारित नहीं",
+    "select": "चुनें"
   },
   "auth": {
     "loginTitle": "IIM-LMS में आपका स्वागत है",
@@ -102,7 +110,22 @@
     "published": "प्रकाशित",
     "draft": "ड्राफ्ट",
     "noPages": "कोई पेज नहीं मिला",
-    "createPageToGetStarted": "शुरू करने के लिए एक पेज बनाएं"
+    "createPageToGetStarted": "शुरू करने के लिए एक पेज बनाएं",
+    "createCourse": "पाठ्यक्रम बनाएं",
+    "manage": "प्रबंधित करें",
+    "confirmDeleteCourse": "क्या आप वाकई इस पाठ्यक्रम को हटाना चाहते हैं? यह कार्य पूर्ववत नहीं किया जा सकता है।",
+    "backToCourses": "पाठ्यक्रमों पर वापस जाएं",
+    "addContent": "सामग्री जोड़ें",
+    "editCourse": "पाठ्यक्रम संपादित करें",
+    "addContentToCourse": "पाठ्यक्रम में सामग्री जोड़ें",
+    "noAvailableContent": "कोई उपलब्ध सामग्री नहीं मिली",
+    "createContentFirst": "पहले सामग्री बनाएं",
+    "tagsHelp": "टैग को अल्पविराम से अलग करें",
+    "quizManagement": "क्विज़ प्रबंधन",
+    "createQuiz": "क्विज़ बनाएं",
+    "noQuizzes": "कोई क्विज़ नहीं मिला",
+    "addQuizToGetStarted": "शुरू करने के लिए एक क्विज़ जोड़ें",
+    "addQuiz": "क्विज़ जोड़ें"
   },
   "course": {
     "details": "पाठ्यक्रम विवरण",
@@ -115,6 +138,36 @@
     "enrolledUsers": "नामांकित उपयोगकर्ता",
     "beginner": "शुरुआती",
     "intermediate": "मध्यवर्ती",
-    "advanced": "उन्नत"
+    "advanced": "उन्नत",
+    "description": "विवरण",
+    "content": "सामग्री",
+    "quizzes": "क्विज़",
+    "title": "शीर्षक",
+    "tags": "टैग",
+    "thumbnailUrl": "थंबनेल URL",
+    "select": "पाठ्यक्रम चुनें"
+  },
+  "content": {
+    "title": "शीर्षक",
+    "type": "प्रकार",
+    "creator": "निर्माता",
+    "description": "विवरण",
+    "status": "स्थिति"
+  },
+  "quiz": {
+    "title": "शीर्षक",
+    "description": "विवरण",
+    "questions": "प्रश्न",
+    "timeLimit": "समय सीमा",
+    "passingScore": "पास स्कोर",
+    "minutes": "मिनट",
+    "options": "विकल्प",
+    "question": "प्रश्न",
+    "questionText": "अपना प्रश्न यहां दर्ज करें",
+    "option": "विकल्प",
+    "explanation": "व्याख्या",
+    "explanationPlaceholder": "समझाएं कि यह उत्तर सही क्यों है",
+    "points": "अंक",
+    "addQuestion": "प्रश्न जोड़ें"
   }
 }
