@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
-const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('token') } });
+const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('accessToken') } });
 
 export const getUniversities = async () => {
   const response = await axios.get(`${API_URL}/admin/universities`, getConfig());

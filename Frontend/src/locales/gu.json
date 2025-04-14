@@ -122,7 +122,8 @@
     "createQuiz": "ક્વિઝ બનાવો",
     "noQuizzes": "કોઈ ક્વિઝ મળી નથી",
     "addQuizToGetStarted": "શરૂ કરવા માટે એક ક્વિઝ ઉમેરો",
-    "addQuiz": "ક્વિઝ ઉમેરો"
+    "addQuiz": "ક્વિઝ ઉમેરો",
+    "delete": "કાઢી નાખો"
   },
   "course": {
     "details": "અભ્યાસક્રમ વિગતો",

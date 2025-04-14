@@ -125,7 +125,8 @@
     "createQuiz": "क्विज़ बनाएं",
     "noQuizzes": "कोई क्विज़ नहीं मिला",
     "addQuizToGetStarted": "शुरू करने के लिए एक क्विज़ जोड़ें",
-    "addQuiz": "क्विज़ जोड़ें"
+    "addQuiz": "क्विज़ जोड़ें",
+    "delete": "हटाएं"
   },
   "course": {
     "details": "पाठ्यक्रम विवरण",

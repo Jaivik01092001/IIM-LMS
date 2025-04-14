@@ -152,7 +152,8 @@
     "createQuiz": "Create Quiz",
     "noQuizzes": "No quizzes found",
     "addQuizToGetStarted": "Add a quiz to get started",
-    "addQuiz": "Add Quiz"
+    "addQuiz": "Add Quiz",
+    "delete": "Delete"
   },
   "course": {
     "details": "Course Details",
