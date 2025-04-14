@@ -147,10 +147,14 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 // Reset password controller
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on token
-  const { token, newPassword } = req.body;
+  const { token, password, confirmPassword } = req.body;
 
-  if (!token || !newPassword) {
-    return next(new AppError('Token and new password are required', 400));
+  if (!token || !password || !confirmPassword) {
+    return next(new AppError('Token, password, and confirm password are required', 400));
+  }
+
+  if (password !== confirmPassword) {
+    return next(new AppError('Passwords do not match', 400));
   }
 
   const hashedToken = crypto
@@ -168,7 +172,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     return next(new AppError('Token is invalid or has expired', 400));
   }
 
-  user.password = await bcrypt.hash(newPassword, 12);
+  user.password = await bcrypt.hash(password, 12);
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
 

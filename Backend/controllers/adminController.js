@@ -44,14 +44,14 @@ exports.getContent = async (req, res) => {
 };
 
 exports.createContent = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, userid } = req.body;
   const fileUrl = req.file ? req.file.path : null;
   const content = new Content({
     title,
     description,
     fileUrl,
-    creator: req.user.id,
-    status: 'approved', // Admin-created content is auto-approved
+    creator: userid,
+    status: "approved", // Admin-created content is auto-approved
   });
   await content.save();
   res.json(content);
@@ -92,20 +92,37 @@ exports.getCourses = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const { name, phone, address } = req.body;
-  const user = await User.findById(req.user.id);
+  const { name, phone, address, userId } = req.body;
+  const user = await User.findById(userId);
   user.name = name || user.name;
   user.profile = { phone, address };
   await user.save();
   res.json(user);
 };
-
 exports.updatePassword = async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  const user = await User.findById(req.user.id);
-  const isMatch = await bcrypt.compare(oldPassword, user.password);
-  if (!isMatch) return res.status(400).json({ msg: 'Invalid old password' });
-  user.password = await bcrypt.hash(newPassword, 10);
+  const { currentPassword, newPassword, confirmPassword, userId } = req.body;
+  console.debug(`Updating password for userId: ${userId}`);
+
+  // Validate passwords match
+  if (newPassword !== confirmPassword) {
+    console.warn(`Password confirmation mismatch for userId: ${userId}`);
+    return res.status(400).json({ msg: 'New passwords do not match' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    console.error(`User not found for userId: ${userId}`);
+    return res.status(404).json({ msg: 'User not found' });
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    console.warn(`Invalid current password attempt for userId: ${userId}`);
+    return res.status(400).json({ msg: 'Invalid current password' });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
+  console.debug(`Password updated successfully for userId: ${userId}`);
   res.json({ msg: 'Password updated' });
 };
