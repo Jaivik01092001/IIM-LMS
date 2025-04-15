@@ -8,9 +8,15 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
+const http = require('http'); // ✅ for custom server timeout
 const seedDatabase = require('./utils/seeder'); // ✅ Import the seeder function
 
 const app = express();
+
+
+// ✅ Increase file/body limits to handle video uploads
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 // ==========================
 // 🔐 Security Middlewares
@@ -26,9 +32,6 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Body parser
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Data sanitization
 app.use(mongoSanitize()); // Against NoSQL injection
@@ -89,6 +92,11 @@ app.all('*', (req, res, next) => {
 // 🚀 Start Server
 // ==========================
 const PORT = process.env.PORT || 5000;
+const server = http.createServer(app);
+
+// ✅ Increase server timeout to 10 minutes
+server.setTimeout(10 * 60 * 1000); // 10 minutes
+
 connectDB()
   .then(async () => {
     await seedDatabase(); // ✅ Run seeder only if not already seeded

@@ -58,6 +58,9 @@ function Navbar() {
                 <Link to="/admin/content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('educator.content')}
                 </Link>
+                <Link to="/admin/quizzes" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  {t('educator.quiz')}
+                </Link>
                 <Link to="/admin/courses" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('admin.courseManagement')}
                 </Link>
