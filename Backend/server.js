@@ -37,10 +37,10 @@ app.use(xss());            // Against XSS
 // ==========================
 // 🌐 CORS
 // ==========================
-app.use(cors({
-  origin: 'http://localhost:5173', // ✅ Change this to your frontend live URL in production
-  credentials: true
-}));
+cors({
+  origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+  credentials: true,
+})
 
 // ==========================
 // 📦 Dynamic Routes Import
