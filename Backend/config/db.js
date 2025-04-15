@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        const connectionString = `${process.env.MONGO_URI}/${process.env.MONGO_DB_NAME}`;
+        const connectionString = `${process.env.MONGO_URI}`;
         await mongoose.connect(connectionString);
         console.log('MongoDB Connected to LMS database...');
     } catch (error) {

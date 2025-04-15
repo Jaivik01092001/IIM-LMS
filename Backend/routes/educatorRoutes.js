@@ -1,8 +1,8 @@
 const express = require('express');
 const educatorController = require('../controllers/educatorController');
-const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const router = express.Router();
+const { protect, restrictTo } = require('../middleware/auth');
 
 router.get('/courses', protect, educatorController.getCourses);
 router.post('/enroll/:id', protect, educatorController.enrollCourse);

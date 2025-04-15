@@ -42,11 +42,29 @@ exports.updateProfile = async (req, res) => {
 };
 
 exports.updatePassword = async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  console.debug(`Updating password for userId: ${req.user.id}`);
+
+  // Validate passwords match
+  if (newPassword !== confirmPassword) {
+    console.warn(`Password confirmation mismatch for userId: ${req.user.id}`);
+    return res.status(400).json({ msg: "New passwords do not match" });
+  }
+
   const user = await User.findById(req.user.id);
-  const isMatch = await bcrypt.compare(oldPassword, user.password);
-  if (!isMatch) return res.status(400).json({ msg: 'Invalid old password' });
-  user.password = await bcrypt.hash(newPassword, 10);
+  if (!user) {
+    console.error(`User not found for userId: ${req.user.id}`);
+    return res.status(404).json({ msg: "User not found" });
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    console.warn(`Invalid current password attempt for userId: ${req.user.id}`);
+    return res.status(400).json({ msg: "Invalid current password" });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
-  res.json({ msg: 'Password updated' });
+  console.debug(`Password updated successfully for userId: ${req.user.id}`);
+  res.json({ msg: "Password updated" });
 };

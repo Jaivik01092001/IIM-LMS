@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../redux/auth/authSlice';
-import { Link } from 'react-router-dom';
+import { logoutThunk } from '../redux/auth/authSlice';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 
 function Navbar() {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation();
 
-  const handleLogout = () => dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logoutThunk());
+    navigate('/');
+  };
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (

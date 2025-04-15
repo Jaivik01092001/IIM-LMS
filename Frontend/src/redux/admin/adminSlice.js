@@ -80,6 +80,65 @@ export const deleteContentThunk = createAsyncThunk('admin/deleteContent', async 
   }
 });
 export const getCoursesThunk = createAsyncThunk('admin/getCourses', api.getCourses);
+
+// Course thunks
+export const getCourseThunk = createAsyncThunk('admin/getCourse', api.getCourse);
+
+export const createCourseThunk = createAsyncThunk('admin/createCourse', async (courseData, { rejectWithValue }) => {
+  try {
+    const data = await api.createCourse(courseData);
+    showSuccessToast('Course created successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to create course');
+    return rejectWithValue(error.response?.data?.message || 'Failed to create course');
+  }
+});
+
+export const updateCourseThunk = createAsyncThunk('admin/updateCourse', async ({ id, ...courseData }, { rejectWithValue }) => {
+  try {
+    const data = await api.updateCourse(id, courseData);
+    showSuccessToast('Course updated successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to update course');
+    return rejectWithValue(error.response?.data?.message || 'Failed to update course');
+  }
+});
+
+export const deleteCourseThunk = createAsyncThunk('admin/deleteCourse', async (id, { rejectWithValue }) => {
+  try {
+    const data = await api.deleteCourse(id);
+    showSuccessToast('Course deleted successfully');
+    return id; // Return the ID for state updates
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to delete course');
+    return rejectWithValue(error.response?.data?.message || 'Failed to delete course');
+  }
+});
+
+export const addContentToCourseThunk = createAsyncThunk('admin/addContentToCourse', async (data, { rejectWithValue }) => {
+  try {
+    const response = await api.addContentToCourse(data);
+    showSuccessToast('Content added to course successfully');
+    return response;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to add content to course');
+    return rejectWithValue(error.response?.data?.message || 'Failed to add content to course');
+  }
+});
+
+export const addQuizToCourseThunk = createAsyncThunk('admin/addQuizToCourse', async (data, { rejectWithValue }) => {
+  try {
+    const response = await api.addQuizToCourse(data);
+    showSuccessToast('Quiz added to course successfully');
+    return response;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to add quiz to course');
+    return rejectWithValue(error.response?.data?.message || 'Failed to add quiz to course');
+  }
+});
+
 export const updateProfileThunk = createAsyncThunk('admin/updateProfile', async (profileData, { rejectWithValue }) => {
   try {
     const data = await api.updateProfile(profileData);
@@ -99,6 +158,33 @@ export const updatePasswordThunk = createAsyncThunk('admin/updatePassword', asyn
   } catch (error) {
     showErrorToast(error.response?.data?.msg || 'Failed to update password');
     return rejectWithValue(error.response?.data?.msg || 'Failed to update password');
+  }
+});
+
+// Quiz thunks
+export const getQuizzesThunk = createAsyncThunk('admin/getQuizzes', api.getQuizzes);
+
+export const getQuizThunk = createAsyncThunk('admin/getQuiz', api.getQuiz);
+
+export const createQuizThunk = createAsyncThunk('admin/createQuiz', async (quizData, { rejectWithValue }) => {
+  try {
+    const data = await api.createQuiz(quizData);
+    showSuccessToast('Quiz created successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to create quiz');
+    return rejectWithValue(error.response?.data?.message || 'Failed to create quiz');
+  }
+});
+
+export const updateQuizThunk = createAsyncThunk('admin/updateQuiz', async ({ id, ...quizData }, { rejectWithValue }) => {
+  try {
+    const data = await api.updateQuiz(id, quizData);
+    showSuccessToast('Quiz updated successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to update quiz');
+    return rejectWithValue(error.response?.data?.message || 'Failed to update quiz');
   }
 });
 
@@ -167,6 +253,9 @@ const adminSlice = createSlice({
     universities: [],
     content: [],
     courses: [],
+    currentCourse: null,
+    quizzes: [],
+    currentQuiz: null,
     pages: [],
     currentPage: null,
     loading: false,
@@ -177,6 +266,27 @@ const adminSlice = createSlice({
       .addCase(getUniversitiesThunk.fulfilled, (state, action) => { state.universities = action.payload; })
       .addCase(getContentThunk.fulfilled, (state, action) => { state.content = action.payload; })
       .addCase(getCoursesThunk.fulfilled, (state, action) => { state.courses = action.payload; })
+      .addCase(getCourseThunk.fulfilled, (state, action) => { state.currentCourse = action.payload; })
+      .addCase(createCourseThunk.fulfilled, (state, action) => { state.courses.push(action.payload); })
+      .addCase(updateCourseThunk.fulfilled, (state, action) => {
+        const index = state.courses.findIndex(course => course._id === action.payload._id);
+        if (index !== -1) state.courses[index] = action.payload;
+        state.currentCourse = action.payload;
+      })
+      .addCase(deleteCourseThunk.fulfilled, (state, action) => {
+        state.courses = state.courses.filter(course => course._id !== action.meta.arg);
+        if (state.currentCourse && state.currentCourse._id === action.meta.arg) {
+          state.currentCourse = null;
+        }
+      })
+      .addCase(getQuizzesThunk.fulfilled, (state, action) => { state.quizzes = action.payload; })
+      .addCase(getQuizThunk.fulfilled, (state, action) => { state.currentQuiz = action.payload; })
+      .addCase(createQuizThunk.fulfilled, (state, action) => { state.quizzes.push(action.payload); })
+      .addCase(updateQuizThunk.fulfilled, (state, action) => {
+        const index = state.quizzes.findIndex(quiz => quiz._id === action.payload._id);
+        if (index !== -1) state.quizzes[index] = action.payload;
+        state.currentQuiz = action.payload;
+      })
       .addCase(getPagesThunk.fulfilled, (state, action) => { state.pages = action.payload; })
       .addCase(getPageThunk.fulfilled, (state, action) => { state.currentPage = action.payload; })
       .addCase(createPageThunk.fulfilled, (state, action) => { state.pages.push(action.payload); })

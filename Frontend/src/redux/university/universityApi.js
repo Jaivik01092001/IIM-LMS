@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
-const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('token') } });
+const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('accessToken') } });
 
 export const createEducator = async (data) => {
   const response = await axios.post(`${API_URL}/university/educator`, data, getConfig());

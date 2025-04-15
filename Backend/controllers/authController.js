@@ -1,52 +1,194 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const sendEmail = require('../utils/email');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ msg: 'Invalid credentials' });
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
-
-  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+// Generate JWT token
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
-exports.forgotPassword = async (req, res) => {
+// Generate refresh token
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+};
+
+// Login controller
+exports.login = catchAsync(async (req, res, next) => {
+  // 1) Validate request body using Joi (to be implemented)
+  const { email, password } = req.body;
+
+  // 2) Check if email and password exist
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
+
+  // 3) Check if user exists && password is correct
+  const user = await User.findOne({ email }).select('+password');
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return next(new AppError('Invalid credentials', 401));
+  }
+
+  // 4) Generate tokens
+  const accessToken = generateToken(user._id, user.role);
+  const refreshToken = generateRefreshToken(user._id);
+
+  // 5) Save refresh token to database
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  // 6) Send response
+  res.json({
+    status: 'success',
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  });
+});
+
+// Refresh token controller
+exports.refreshToken = catchAsync(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return next(new AppError('Refresh token is required', 400));
+  }
+
+  // 1) Verify refresh token
+  const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+  // 2) Check if user still exists
+  const user = await User.findById(decoded.id);
+  if (!user || user.refreshToken !== refreshToken) {
+    return next(new AppError('Invalid refresh token', 401));
+  }
+
+  // 3) Generate new access token
+  const accessToken = generateToken(user._id, user.role);
+
+  res.json({
+    status: 'success',
+    accessToken
+  });
+});
+
+// Logout controller
+exports.logout = catchAsync(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return next(new AppError('Refresh token is required', 400));
+  }
+
+  // 1) Find user by refresh token
+  const user = await User.findOne({ refreshToken });
+  if (user) {
+    // 2) Remove refresh token
+    user.refreshToken = undefined;
+    await user.save({ validateBeforeSave: false });
+  }
+
+  res.json({
+    status: 'success',
+    message: 'Logged out successfully'
+  });
+});
+
+// Forgot password controller
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on email
   const { email } = req.body;
   const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ msg: 'User not found' });
+  if (!user) {
+    return next(new AppError('No user found with that email address', 404));
+  }
 
-  // Generate reset token
-  const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const resetLink = `http://yourdomain.com/reset-password?token=${resetToken}`;
+  // 2) Generate random reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  user.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-  // Send email
-  await sendEmail(
-    email,
-    'Password Reset Request',
-    `Click this link to reset your password: ${resetLink}`
-  );
+  await user.save({ validateBeforeSave: false });
 
-  res.json({ msg: 'Password reset link sent to your email' });
-};
-
-exports.resetPassword = async (req, res) => {
-  const { token, newPassword } = req.body;
+  // 3) Send email with reset link
+  const resetURL = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(400).json({ msg: 'Invalid token' });
+    await sendEmail(
+      user.email,
+      'Password Reset Request',
+      `Forgot your password? Submit a request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`
+    );
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
-
-    res.json({ msg: 'Password reset successfully' });
+    res.json({
+      status: 'success',
+      message: 'Password reset link sent to your email'
+    });
   } catch (err) {
-    res.status(400).json({ msg: 'Token expired or invalid' });
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(new AppError('Error sending email. Please try again later.', 500));
   }
-};
+});
+
+// Reset password controller
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on token
+  const { token, password, confirmPassword } = req.body;
+
+  if (!token || !password || !confirmPassword) {
+    return next(new AppError('Token, password, and confirm password are required', 400));
+  }
+
+  if (password !== confirmPassword) {
+    return next(new AppError('Passwords do not match', 400));
+  }
+
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }
+  });
+
+  // 2) If token has not expired, and there is a user, set the new password
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired', 400));
+  }
+
+  user.password = await bcrypt.hash(password, 12);
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  // 3) Log the user in, send JWT
+  const accessToken = generateToken(user._id, user.role);
+  const refreshToken = generateRefreshToken(user._id);
+
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  res.json({
+    status: 'success',
+    message: 'Password reset successfully',
+    accessToken,
+    refreshToken
+  });
+});

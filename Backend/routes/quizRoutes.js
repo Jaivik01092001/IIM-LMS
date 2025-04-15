@@ -10,14 +10,17 @@ const {
   getQuizResults
 } = require('../controllers/quizController');
 
-// Quiz CRUD routes
-router.post('/:courseId', protect, restrictTo('educator', 'admin'), createQuiz);
-router.get('/:quizId', protect, getQuiz);
-router.put('/:quizId', protect, restrictTo('educator', 'admin'), updateQuiz);
-router.delete('/:quizId', protect, restrictTo('educator', 'admin'), deleteQuiz);
+// Apply authentication middleware to all routes
+router.use(protect);
 
-// Quiz attempt routes
-router.post('/:quizId/submit', protect, submitQuiz);
-router.get('/:quizId/results', protect, getQuizResults);
+// Quiz CRUD routes - restricted to admin and educator roles
+router.post('/:courseId', restrictTo('admin', 'educator'), createQuiz);
+router.get('/:quizId', getQuiz); // All authenticated users can view quizzes
+router.put('/:quizId', restrictTo('admin', 'educator'), updateQuiz);
+router.delete('/:quizId', restrictTo('admin', 'educator'), deleteQuiz);
 
-module.exports = router; 
+// Quiz attempt routes - all authenticated users can submit and view results
+router.post('/:quizId/submit', submitQuiz);
+router.get('/:quizId/results', getQuizResults);
+
+module.exports = router;

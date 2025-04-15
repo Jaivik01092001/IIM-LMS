@@ -1,13 +1,13 @@
 const express = require('express');
-const { protect, restrictTo } = require('../middleware/auth');
 const cmsController = require('../controllers/cmsController');
+const { protect, restrictTo } = require('../middleware/auth');
 const router = express.Router();
 
 // Public routes
 router.get('/pages', cmsController.getPublishedPages);
 router.get('/page/:slug', cmsController.getPageBySlug);
 
-// Admin routes
+// Admin routes - protected and restricted to admin role
 router.get('/admin/pages', protect, restrictTo('admin'), cmsController.getAllPages);
 router.get('/admin/page/:id', protect, restrictTo('admin'), cmsController.getPageById);
 router.post('/admin/page', protect, restrictTo('admin'), cmsController.createPage);

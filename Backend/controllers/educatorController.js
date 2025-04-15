@@ -54,10 +54,12 @@ const getMyCourses = async (req, res) => {
 };
 
 const getCourseDetail = async (req, res) => {
+
   try {
     const course = await Course.findById(req.params.id)
       .populate('creator', 'name')
       .populate('content')
+      .populate('quizzes')
       .populate('enrolledUsers.user', 'name');
 
     if (!course) {
@@ -67,7 +69,7 @@ const getCourseDetail = async (req, res) => {
     // Check if the current user is enrolled
     const isEnrolled = course.enrolledUsers.some(e => {
       const userId = e.user._id ? e.user._id.toString() : e.user.toString();
-      return userId === req.user.id;
+      return userId === req.body.userId;
     });
 
     // Return course with enrollment status and user ID for frontend comparison

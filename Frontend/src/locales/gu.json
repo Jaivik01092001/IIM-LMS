@@ -26,9 +26,14 @@
     "create": "બનાવો",
     "update": "અપડેટ કરો",
     "name": "નામ",
-    "edit": "સંપાદિત કરો",
-    "delete": "કાઢી નાખો",
-    "cancel": "રદ કરો"
+    "file": "ફાઇલ",
+    "backToLogin": "લોગિન પર પાછા જાઓ",
+    "view": "જુઓ",
+    "add": "ઉમેરો",
+    "close": "બંધ કરો",
+    "notAvailable": "ઉપલબ્ધ નથી",
+    "notSet": "સેટ નથી",
+    "select": "પસંદ કરો"
   },
   "auth": {
     "loginTitle": "IIM-LMS માં આપનું સ્વાગત છે",
@@ -102,7 +107,23 @@
     "published": "પ્રકાશિત",
     "draft": "ડ્રાફ્ટ",
     "noPages": "કોઈ પેજ મળ્યું નથી",
-    "createPageToGetStarted": "શરૂ કરવા માટે એક પેજ બનાવો"
+    "createPageToGetStarted": "શરૂ કરવા માટે એક પેજ બનાવો",
+    "createCourse": "અભ્યાસક્રમ બનાવો",
+    "manage": "સંચાલિત કરો",
+    "confirmDeleteCourse": "શું તમે ખરેખર આ અભ્યાસક્રમને કાઢી નાખવા માંગો છો? આ ક્રિયા પાછી લઈ શકાતી નથી.",
+    "backToCourses": "અભ્યાસક્રમો પર પાછા જાઓ",
+    "addContent": "સામગ્રી ઉમેરો",
+    "editCourse": "અભ્યાસક્રમ સંપાદિત કરો",
+    "addContentToCourse": "અભ્યાસક્રમમાં સામગ્રી ઉમેરો",
+    "noAvailableContent": "કોઈ ઉપલબ્ધ સામગ્રી મળી નથી",
+    "createContentFirst": "પહેલા સામગ્રી બનાવો",
+    "tagsHelp": "ટૅગ્સને અલ્પવિરામથી અલગ કરો",
+    "quizManagement": "ક્વિઝ વ્યવસ્થાપન",
+    "createQuiz": "ક્વિઝ બનાવો",
+    "noQuizzes": "કોઈ ક્વિઝ મળી નથી",
+    "addQuizToGetStarted": "શરૂ કરવા માટે એક ક્વિઝ ઉમેરો",
+    "addQuiz": "ક્વિઝ ઉમેરો",
+    "delete": "કાઢી નાખો"
   },
   "course": {
     "details": "અભ્યાસક્રમ વિગતો",
@@ -115,6 +136,36 @@
     "enrolledUsers": "નોંધાયેલા વપરાશકર્તાઓ",
     "beginner": "શરૂઆતી",
     "intermediate": "મધ્યમ",
-    "advanced": "અદ્યતન"
+    "advanced": "અદ્યતન",
+    "description": "વિવરણ",
+    "content": "સામગ્રી",
+    "quizzes": "ક્વિઝ",
+    "title": "શીર્ષક",
+    "tags": "ટૅગ્સ",
+    "thumbnailUrl": "થંબનેલ URL",
+    "select": "અભ્યાસક્રમ પસંદ કરો"
+  },
+  "content": {
+    "title": "શીર્ષક",
+    "type": "પ્રકાર",
+    "creator": "નિર્માતા",
+    "description": "વિવરણ",
+    "status": "સ્થિતિ"
+  },
+  "quiz": {
+    "title": "શીર્ષક",
+    "description": "વિવરણ",
+    "questions": "પ્રશ્નો",
+    "timeLimit": "સમય મર્યાદા",
+    "passingScore": "પાસિંગ સ્કોર",
+    "minutes": "મિનિટ",
+    "options": "વિકલ્પો",
+    "question": "પ્રશ્ન",
+    "questionText": "તમારો પ્રશ્ન અહીં દાખલ કરો",
+    "option": "વિકલ્પ",
+    "explanation": "સમજૂતી",
+    "explanationPlaceholder": "સમજાવો કે આ જવાબ શા માટે સાચો છે",
+    "points": "પોઇન્ટ્સ",
+    "addQuestion": "પ્રશ્ન ઉમેરો"
   }
 }
