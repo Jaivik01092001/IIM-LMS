@@ -1,3 +1,4 @@
+dotenv.config();
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -9,7 +10,6 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const seedDatabase = require('./utils/seeder'); // ✅ Import the seeder function
 
-dotenv.config();
 const app = express();
 
 // ==========================
@@ -35,12 +35,18 @@ app.use(mongoSanitize()); // Against NoSQL injection
 app.use(xss());            // Against XSS
 
 // ==========================
-// 🌐 CORS
+// 🌐 CORS (must come BEFORE routes & body parsing!)
 // ==========================
-cors({
+app.use(cors({
   origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
   credentials: true,
-})
+}));
+
+app.options('*', cors({
+  origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+  credentials: true,
+}));
+
 
 // ==========================
 // 📦 Dynamic Routes Import
