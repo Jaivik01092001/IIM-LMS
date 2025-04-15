@@ -12,7 +12,9 @@ const seedDatabase = require('./utils/seeder'); // ✅ Import the seeder functio
 dotenv.config();
 const app = express();
 
-// Security Middleware
+// ==========================
+// 🔐 Security Middlewares
+// ==========================
 app.use(helmet()); // Set security HTTP headers
 app.use(morgan('dev')); // Logging
 
@@ -28,21 +30,21 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
+// Data sanitization
+app.use(mongoSanitize()); // Against NoSQL injection
+app.use(xss());            // Against XSS
 
-// Data sanitization against XSS
-app.use(xss());
+// ==========================
+// 🌐 CORS
+// ==========================
+app.use(cors({
+  origin: 'http://localhost:5173', // ✅ Change this to your frontend live URL in production
+  credentials: true
+}));
 
-// CORS
-app.use(
-  cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-  })
-);
-
-// Import and register routes dynamically
+// ==========================
+// 📦 Dynamic Routes Import
+// ==========================
 const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms'].reduce((acc, route) => {
   try {
     acc[route] = require(`./routes/${route}Routes`);
@@ -56,7 +58,16 @@ const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms'].reduce
   return acc;
 }, {});
 
-// Global error handling middleware
+// ==========================
+// ✅ Root Route
+// ==========================
+app.get('/', (req, res) => {
+  res.send('✅ Backend API is running...');
+});
+
+// ==========================
+// 🧯 Global Error Handling
+// ==========================
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
@@ -68,11 +79,16 @@ app.all('*', (req, res, next) => {
   next(err);
 });
 
-// Start server
+// ==========================
+// 🚀 Start Server
+// ==========================
 const PORT = process.env.PORT || 5000;
 connectDB()
   .then(async () => {
-    await seedDatabase(); // ✅ Runs only if the data is not seeded already
+    await seedDatabase(); // ✅ Run seeder only if not already seeded
     app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
   })
-  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+  .catch((err) => {
+    console.error('❌ MongoDB Connection Error:', err);
+    process.exit(1);
+  });
