@@ -43,19 +43,47 @@ exports.getContent = async (req, res) => {
   res.json(content);
 };
 
+// exports.createContent = async (req, res) => {
+//   const { title, description } = req.body;
+//   const fileUrl = req.file ? req.file.path : null;
+//   const content = new Content({
+//     title,
+//     description,
+//     fileUrl,
+//     creator: req.user.id,
+//     status: "approved", // Admin-created content is auto-approved
+//   });
+//   await content.save();
+//   res.json(content);
+// };
+
+// controllers/adminController.js
+//const Content = require('../models/Content');
+
 exports.createContent = async (req, res) => {
-  const { title, description } = req.body;
-  const fileUrl = req.file ? req.file.path : null;
-  const content = new Content({
-    title,
-    description,
-    fileUrl,
-    creator: req.user.id,
-    status: "approved", // Admin-created content is auto-approved
-  });
-  await content.save();
-  res.json(content);
+  try {
+    const { title, description } = req.body;
+    const fileUrl = req.file ? req.file.path : null;
+
+    if (!fileUrl) {
+      return res.status(400).json({ msg: 'File upload failed' });
+    }
+
+    const content = new Content({
+      title,
+      description,
+      fileUrl,
+      creator: req.user.id,
+      status: 'approved',
+    });
+
+    await content.save();
+    res.json(content);
+  } catch (error) {
+    res.status(500).json({ msg: error.message || 'Server Error' });
+  }
 };
+
 
 exports.updateContent = async (req, res) => {
   const { title, description } = req.body;

@@ -17,26 +17,67 @@ function AdminContent() {
     dispatch(getContentThunk());
   }, [dispatch]);
 
+  // const handleSubmit = async (e) => {
+  //   const user = JSON.parse(localStorage.getItem('user'));
+  //   e.preventDefault();
+  //   const formData = new FormData();
+  //   formData.append('title', form.title);
+  //   formData.append('description', form.description);
+  //   formData.append('userId', user.id);
+  //   if (form.file) formData.append('file', form.file);
+
+  //   const response = await dispatch(createContentThunk(formData));
+  //   if (response.meta.requestStatus === 'fulfilled') {
+  //     dispatch(getContentThunk());
+  //     // Handle success if needed
+  //   } else {
+  //     // Handle error if needed
+  //   }
+
+  //   setForm({ title: '', description: '', file: null });
+  //   setShowForm(false);
+  // };
+
   const handleSubmit = async (e) => {
-    const user = JSON.parse(localStorage.getItem('user'));
     e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('user'));
+  
+    if (!form.file) {
+      alert('Please select a file.');
+      return;
+    }
+  
+    const allowedTypes = [
+      'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+      'image/jpeg', 'image/png', 'image/gif'
+    ];
+  
+    if (!allowedTypes.includes(form.file.type)) {
+      alert('Only images (jpg, png, gif) and videos (mp4, mov, avi, mkv) are supported.');
+      return;
+    }
+  
+    const maxSizeMB = 100;
+    if (form.file.size > maxSizeMB * 1024 * 1024) {
+      alert(`File must be less than ${maxSizeMB}MB`);
+      return;
+    }
+  
     const formData = new FormData();
     formData.append('title', form.title);
     formData.append('description', form.description);
     formData.append('userId', user.id);
-    if (form.file) formData.append('file', form.file);
-
+    formData.append('file', form.file);
+  
     const response = await dispatch(createContentThunk(formData));
     if (response.meta.requestStatus === 'fulfilled') {
       dispatch(getContentThunk());
-      // Handle success if needed
-    } else {
-      // Handle error if needed
     }
-
+  
     setForm({ title: '', description: '', file: null });
     setShowForm(false);
   };
+  
 
   const handleDelete = (id) => {
     dispatch(deleteContentThunk(id));
