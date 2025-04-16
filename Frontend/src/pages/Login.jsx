@@ -11,12 +11,14 @@ import {
   resetOTPState,
 } from "../redux/auth/authSlice";
 import { useNavigate } from "react-router-dom";
-import { showSuccessToast, showErrorToast } from '../utils/toast'; // Importing from utils
+import { showSuccessToast, showErrorToast } from "../utils/toast"; // Importing from utils
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, otpRequested, userId } = useSelector((state) => state.auth);
+  const { loading, error, otpRequested, userId } = useSelector(
+    (state) => state.auth
+  );
 
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -62,7 +64,9 @@ const Login = () => {
       return;
     }
 
-    const formattedPhone = phone.startsWith("+91") ? phone : "+91" + phone.replace(/^0+/, "");
+    const formattedPhone = phone.startsWith("+91")
+      ? phone
+      : "+91" + phone.replace(/^0+/, "");
 
     await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
     showSuccessToast("OTP requested successfully!"); // Show toast for success
@@ -86,7 +90,7 @@ const Login = () => {
 
     const result = await dispatch(verifyOTPThunk({ userId, otp }));
     if (!result.error) {
-      const user = JSON.parse(localStorage.getItem('user'));
+      const user = JSON.parse(localStorage.getItem("user"));
       console.log("user....", user);
       if (user.role == "admin") {
         console.log("user....", user.role);
@@ -108,7 +112,9 @@ const Login = () => {
   };
 
   const handleResendOTP = async () => {
-    const formattedPhone = phone.startsWith("+91") ? phone : "+91" + phone.replace(/^0+/, "");
+    const formattedPhone = phone.startsWith("+91")
+      ? phone
+      : "+91" + phone.replace(/^0+/, "");
     await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
     showSuccessToast("OTP resent successfully!"); // Show toast for success
   };
@@ -142,22 +148,35 @@ const Login = () => {
                     <input
                       type="tel"
                       value={phone}
-                      onChange={(e) => /^[0-9]{0,10}$/.test(e.target.value) && setPhone(e.target.value)}
-                      className={errorMessage.includes("Phone") ? "input-error" : ""}
+                      onChange={(e) =>
+                        /^[0-9]{0,10}$/.test(e.target.value) &&
+                        setPhone(e.target.value)
+                      }
+                      className={
+                        errorMessage.includes("Phone") ? "input-error" : ""
+                      }
+                      placeholder="00000 00000"
                     />
                   </div>
-                  {errorMessage.includes("Phone") && <p className="form-error">{errorMessage}</p>}
+                  {errorMessage.includes("Phone") && (
+                    <p className="form-error">{errorMessage}</p>
+                  )}
                 </div>
 
                 <div className="form-group">
                   <label>Email</label>
                   <input
                     type="email"
+                    placeholder="Enter Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={errorMessage.includes("email") ? "input-error" : ""}
+                    className={
+                      errorMessage.includes("email") ? "input-error" : ""
+                    }
                   />
-                  {errorMessage.includes("email") && <p className="form-error">{errorMessage}</p>}
+                  {errorMessage.includes("email") && (
+                    <p className="form-error">{errorMessage}</p>
+                  )}
                 </div>
 
                 <a className="login-btn" onClick={handleLogin}>
@@ -185,7 +204,9 @@ const Login = () => {
                     />
                   ))}
                 </div>
-                {verificationError && <p className="form-error">{verificationError}</p>}
+                {verificationError && (
+                  <p className="form-error">{verificationError}</p>
+                )}
 
                 <p className="resend">
                   {showResendButton ? (
@@ -199,13 +220,16 @@ const Login = () => {
                   {loading ? "Verifying..." : "Verify"}
                 </a>
 
-                <p className="back-login" onClick={() => dispatch(resetOTPState())}>
+                <p
+                  className="back-login"
+                  onClick={() => dispatch(resetOTPState())}
+                >
                   ← Back To Login
                 </p>
               </>
             )}
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-white shadow-md p-4 rounded-lg mb-4">
               <h4 className="font-bold">Super Admin</h4>
               <p>Email: jaivik.patel@fabaf.in</p>

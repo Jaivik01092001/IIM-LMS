@@ -107,7 +107,7 @@
 }
 
 .login-wrapper .form-group input {
-  padding: 15px;
+  padding: 12px;
   font-size: var(--basefont);
   background-color: var(--bg-gray);
   border: 1px solid var(--primary-light-color);
@@ -127,7 +127,7 @@
 }
 
 .login-wrapper .phone-input-wrapper .phone-prefix {
-  padding: 15px 12px;
+  padding: 12px 12px;
   background-color: var(--bg-gray);
   border-right: 1px solid var(--border-gray);
   font-size: var(--basefont);
@@ -137,7 +137,7 @@
   align-items: center;
 }
 .login-wrapper .phone-input-wrapper .phone-prefix .phoneIcon {
-  width: 25px;
+  width: 1rem;
   height: auto;
 }
 
