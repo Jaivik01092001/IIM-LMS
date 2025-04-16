@@ -1,11 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { login, logout as logoutApi, forgotPassword, resetPassword, refreshToken } from './authApi';
+import { requestOTP, verifyOTP, logout as logoutApi, forgotAccount, refreshToken } from './authApi';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
 
-// Login thunk
-export const loginThunk = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
+// Request OTP thunk
+export const requestOTPThunk = createAsyncThunk('auth/requestOTP', async (credentials, { rejectWithValue }) => {
   try {
-    const data = await login(credentials);
+    const data = await requestOTP(credentials);
+    showSuccessToast(data.message || 'OTP sent successfully. Check your phone and email.');
+    return {
+      userId: data.userId,
+      debugOtp: data.debugOtp // Pass the debug OTP from development environment
+    };
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to send OTP');
+    return rejectWithValue(error.response?.data?.message || 'Failed to send OTP');
+  }
+});
+
+// Verify OTP thunk (login)
+export const verifyOTPThunk = createAsyncThunk('auth/verifyOTP', async (verificationData, { rejectWithValue }) => {
+  try {
+    const data = await verifyOTP(verificationData);
 
     // Store tokens and user data
     localStorage.setItem('accessToken', data.accessToken);
@@ -15,8 +30,8 @@ export const loginThunk = createAsyncThunk('auth/login', async (credentials, { r
     showSuccessToast(`Welcome, ${data.user.name}!`);
     return data.user;
   } catch (error) {
-    showErrorToast(error.response?.data?.message || 'Login failed');
-    return rejectWithValue(error.response?.data?.message || 'Login failed');
+    // Don't show toast here - we'll handle errors in the component
+    return rejectWithValue(error.response?.data?.message || 'OTP verification failed');
   }
 });
 
@@ -68,34 +83,18 @@ export const refreshTokenThunk = createAsyncThunk('auth/refreshToken', async (_,
   }
 });
 
-// Forgot password thunk
-export const forgotPasswordThunk = createAsyncThunk('auth/forgotPassword', async (email, { rejectWithValue }) => {
+// Forgot account thunk
+export const forgotAccountThunk = createAsyncThunk('auth/forgotAccount', async (email, { rejectWithValue }) => {
   try {
-    const data = await forgotPassword(email);
-    showSuccessToast(data.message || 'Password reset instructions sent to your email');
-    return data;
+    const data = await forgotAccount(email);
+    showSuccessToast(data.message || 'OTP sent to your registered phone number and email');
+    return {
+      userId: data.userId,
+      debugOtp: data.debugOtp // Pass the debug OTP from development environment
+    };
   } catch (error) {
     showErrorToast(error.response?.data?.message || 'Failed to process request');
     return rejectWithValue(error.response?.data?.message || 'Failed to process request');
-  }
-});
-
-// Reset password thunk
-export const resetPasswordThunk = createAsyncThunk('auth/resetPassword', async (data, { rejectWithValue }) => {
-  try {
-    const response = await resetPassword(data);
-    showSuccessToast(response.message || 'Password reset successful');
-
-    // If the response includes tokens, store them
-    if (response.accessToken && response.refreshToken) {
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-    }
-
-    return response;
-  } catch (error) {
-    showErrorToast(error.response?.data?.message || 'Failed to reset password');
-    return rejectWithValue(error.response?.data?.message || 'Failed to reset password');
   }
 });
 
@@ -108,6 +107,9 @@ const authSlice = createSlice({
     refreshToken: localStorage.getItem('refreshToken') || null,
     loading: false,
     error: null,
+    otpRequested: false,
+    userId: null,
+    debugOtp: null, // Add debug OTP for development environment
   },
   reducers: {
     // Manual logout (without API call)
@@ -115,28 +117,58 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;
+      state.otpRequested = false;
+      state.userId = null;
+      state.debugOtp = null; // Clear debug OTP
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       showSuccessToast('Logged out successfully');
     },
+    resetOTPState: (state) => {
+      state.otpRequested = false;
+      state.userId = null;
+      state.debugOtp = null; // Clear debug OTP
+    },
   },
   extraReducers: (builder) => {
     builder
-      // Login cases
-      .addCase(loginThunk.pending, (state) => {
+      // Request OTP cases
+      .addCase(requestOTPThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginThunk.fulfilled, (state, action) => {
+      .addCase(requestOTPThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.otpRequested = true;
+        state.userId = action.payload.userId;
+        state.debugOtp = action.payload.debugOtp; // Store debug OTP
+        state.error = null;
+      })
+      .addCase(requestOTPThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.otpRequested = false;
+        state.error = action.payload || action.error.message;
+      })
+
+      // Verify OTP cases
+      .addCase(verifyOTPThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOTPThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
         state.accessToken = localStorage.getItem('accessToken');
         state.refreshToken = localStorage.getItem('refreshToken');
+        state.otpRequested = false;
+        state.userId = null;
+        state.debugOtp = null; // Clear debug OTP
         state.error = null;
       })
-      .addCase(loginThunk.rejected, (state, action) => {
+      .addCase(verifyOTPThunk.rejected, (state, action) => {
         state.loading = false;
+        // Don't clear otpRequested or userId so user stays on verification screen
         state.error = action.payload || action.error.message;
       })
 
@@ -149,6 +181,9 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
+        state.otpRequested = false;
+        state.userId = null;
+        state.debugOtp = null; // Clear debug OTP
         state.error = null;
       })
       .addCase(logoutThunk.rejected, (state) => {
@@ -156,6 +191,9 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
+        state.otpRequested = false;
+        state.userId = null;
+        state.debugOtp = null; // Clear debug OTP
       })
 
       // Refresh token cases
@@ -166,18 +204,26 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
+        state.otpRequested = false;
+        state.userId = null;
+        state.debugOtp = null; // Clear debug OTP
       })
 
-      // Password reset cases
-      .addCase(forgotPasswordThunk.pending, (state) => { state.loading = true; })
-      .addCase(forgotPasswordThunk.fulfilled, (state) => { state.loading = false; })
-      .addCase(forgotPasswordThunk.rejected, (state) => { state.loading = false; })
-
-      .addCase(resetPasswordThunk.pending, (state) => { state.loading = true; })
-      .addCase(resetPasswordThunk.fulfilled, (state) => { state.loading = false; })
-      .addCase(resetPasswordThunk.rejected, (state) => { state.loading = false; });
+      // Forgot account cases
+      .addCase(forgotAccountThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(forgotAccountThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.otpRequested = true;
+        state.userId = action.payload.userId;
+        state.debugOtp = action.payload.debugOtp; // Store debug OTP
+      })
+      .addCase(forgotAccountThunk.rejected, (state) => {
+        state.loading = false;
+      });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, resetOTPState } = authSlice.actions;
 export default authSlice.reducer;

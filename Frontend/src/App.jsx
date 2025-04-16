@@ -1,6 +1,8 @@
 import React from 'react';
 import "./index.css"
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Login from './pages/Login';
 import EducatorDashboard from './pages/EducatorDashboard';
 import ForgotPassword from './pages/ForgotPassword';
@@ -12,6 +14,18 @@ import TutorDashboard from './pages/TutorDashboard';
 const App = () => {
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Router>
         <Routes>
           <Route path="/" element={<Login />} />
