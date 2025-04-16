@@ -26,3 +26,12 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Ensure modal content doesn't appear disabled */
+.modal-content input,
+.modal-content select,
+.modal-content textarea,
+.modal-content button {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
