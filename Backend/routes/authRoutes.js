@@ -1,14 +1,14 @@
 const express = require('express');
-const { login, forgotPassword, resetPassword, refreshToken, logout } = require('../controllers/authController');
+const { requestOTP, verifyOTP, forgotPassword, refreshToken, logout } = require('../controllers/authController');
 const router = express.Router();
 
-// Authentication routes
-router.post('/login', login);
+// OTP-based authentication routes
+router.post('/request-otp', requestOTP);
+router.post('/verify-otp', verifyOTP);
 router.post('/refresh-token', refreshToken);
 router.post('/logout', logout);
 
-// Password management routes
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+// Account recovery routes
+router.post('/forgot-account', forgotPassword);
 
 module.exports = router;

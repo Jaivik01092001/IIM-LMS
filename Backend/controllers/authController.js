@@ -1,10 +1,10 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
 const sendEmail = require('../utils/email');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const { sendOTP, verifyOTP } = require('../utils/otp');
 
 // Generate JWT token
 const generateToken = (id, role) => {
@@ -16,31 +16,74 @@ const generateRefreshToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-// Login controller
-exports.login = catchAsync(async (req, res, next) => {
-  // 1) Validate request body using Joi (to be implemented)
-  const { email, password } = req.body;
+// Request OTP controller
+exports.requestOTP = catchAsync(async (req, res, next) => {
+  // 1) Validate request body
+  const { email, phoneNumber } = req.body;
 
-  // 2) Check if email and password exist
-  if (!email || !password) {
-    return next(new AppError('Please provide email and password', 400));
+  // 2) Check if email and phone number exist
+  if (!email || !phoneNumber) {
+    return next(new AppError('Please provide email and phone number', 400));
   }
 
-  // 3) Check if user exists && password is correct
-  const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return next(new AppError('Invalid credentials', 401));
+  // 3) Check if user exists
+  const user = await User.findOne({ email, phoneNumber });
+  if (!user) {
+    return next(new AppError('No user found with this email and phone number', 404));
   }
 
-  // 4) Generate tokens
+  // 4) Generate and send OTP
+  const otpResult = await sendOTP(user);
+
+  // 5) Handle delivery issues but still succeed
+  if (!otpResult.success && !otpResult.smsRateLimited && !otpResult.emailDelivered) {
+    return next(new AppError('Failed to send OTP. Please try again later.', 500));
+  }
+
+  // 6) Send response
+  let message = 'OTP has been sent to your phone number and/or email';
+
+  if (otpResult.simulated) {
+    message = 'Development mode: OTP simulation active. Check console for OTP.';
+  } else if (otpResult.smsRateLimited) {
+    message = 'SMS limit reached. OTP sent to your email only.';
+  }
+
+  res.json({
+    status: 'success',
+    message,
+    userId: user._id,
+    debugOtp: otpResult.otp // Only included in development
+  });
+});
+
+// Verify OTP controller (login)
+exports.verifyOTP = catchAsync(async (req, res, next) => {
+  // 1) Validate request body
+  const { userId, otp } = req.body;
+
+  if (!userId || !otp) {
+    return next(new AppError('User ID and OTP are required', 400));
+  }
+
+  // 2) Verify OTP
+  const verificationResult = await verifyOTP(userId, otp);
+
+  if (!verificationResult.valid) {
+    return next(new AppError(verificationResult.message, 401));
+  }
+
+  const user = verificationResult.user;
+
+  // 3) Generate tokens
   const accessToken = generateToken(user._id, user.role);
   const refreshToken = generateRefreshToken(user._id);
 
-  // 5) Save refresh token to database
+  // 4) Save refresh token to database
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
-  // 6) Send response
+  // 5) Send response
   res.json({
     status: 'success',
     accessToken,
@@ -49,6 +92,7 @@ exports.login = catchAsync(async (req, res, next) => {
       id: user._id,
       name: user.name,
       email: user.email,
+      phoneNumber: user.phoneNumber,
       role: user.role
     }
   });
@@ -102,7 +146,7 @@ exports.logout = catchAsync(async (req, res, next) => {
   });
 });
 
-// Forgot password controller
+// Forgot password (reset via OTP) controller
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on email
   const { email } = req.body;
@@ -111,84 +155,33 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError('No user found with that email address', 404));
   }
 
-  // 2) Generate random reset token
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  user.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  // 2) Generate and send OTP
+  const otpResult = await sendOTP(user);
 
-  await user.save({ validateBeforeSave: false });
-
-  // 3) Send email with reset link
-  const resetURL = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
-
-  try {
-    await sendEmail(
-      user.email,
-      'Password Reset Request',
-      `Forgot your password? Submit a request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`
-    );
-
-    res.json({
-      status: 'success',
-      message: 'Password reset link sent to your email'
-    });
-  } catch (err) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    return next(new AppError('Error sending email. Please try again later.', 500));
-  }
-});
-
-// Reset password controller
-exports.resetPassword = catchAsync(async (req, res, next) => {
-  // 1) Get user based on token
-  const { token, password, confirmPassword } = req.body;
-
-  if (!token || !password || !confirmPassword) {
-    return next(new AppError('Token, password, and confirm password are required', 400));
+  // 3) Handle delivery issues but still succeed if possible
+  if (!otpResult.success && !otpResult.smsRateLimited && !otpResult.emailDelivered) {
+    return next(new AppError('Failed to send OTP. Please try again later.', 500));
   }
 
-  if (password !== confirmPassword) {
-    return next(new AppError('Passwords do not match', 400));
+  // 4) Send response
+  let message = 'OTP has been sent to your phone number and/or email';
+
+  if (otpResult.simulated) {
+    message = 'Development mode: OTP simulation active. Check console for OTP.';
+  } else if (otpResult.smsRateLimited) {
+    message = 'SMS limit reached. OTP sent to your email only.';
   }
-
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(token)
-    .digest('hex');
-
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() }
-  });
-
-  // 2) If token has not expired, and there is a user, set the new password
-  if (!user) {
-    return next(new AppError('Token is invalid or has expired', 400));
-  }
-
-  user.password = await bcrypt.hash(password, 12);
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
-
-  await user.save();
-
-  // 3) Log the user in, send JWT
-  const accessToken = generateToken(user._id, user.role);
-  const refreshToken = generateRefreshToken(user._id);
-
-  user.refreshToken = refreshToken;
-  await user.save({ validateBeforeSave: false });
 
   res.json({
     status: 'success',
-    message: 'Password reset successfully',
-    accessToken,
-    refreshToken
+    message,
+    userId: user._id,
+    debugOtp: otpResult.otp // Only included in development
   });
+});
+
+// Reset password with OTP controller
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // No longer needed as we're using OTP-based authentication without passwords
+  return next(new AppError('Password reset is not supported in OTP-based authentication', 400));
 });

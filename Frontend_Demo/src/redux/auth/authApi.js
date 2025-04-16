@@ -29,7 +29,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // If error is 401 and we haven't tried to refresh token yet
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -69,8 +69,13 @@ api.interceptors.response.use(
 );
 
 // Auth API functions
-export const login = async (credentials) => {
-  const response = await api.post('/auth/login', credentials);
+export const requestOTP = async (credentials) => {
+  const response = await api.post('/auth/request-otp', credentials);
+  return response.data;
+};
+
+export const verifyOTP = async (verificationData) => {
+  const response = await api.post('/auth/verify-otp', verificationData);
   return response.data;
 };
 
@@ -84,13 +89,8 @@ export const refreshToken = async (refreshToken) => {
   return response.data;
 };
 
-export const forgotPassword = async (email) => {
-  const response = await api.post('/auth/forgot-password', { email });
-  return response.data;
-};
-
-export const resetPassword = async (data) => {
-  const response = await api.post('/auth/reset-password', data);
+export const forgotAccount = async (email) => {
+  const response = await api.post('/auth/forgot-account', { email });
   return response.data;
 };
 
