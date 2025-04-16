@@ -1,1 +1,189 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Coiny&display=swap");
 @import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: var(--font-Poppins);
+  font-size: var(--basefont);
+  color: var(--text-color);
+  background-color: var(--white);
+}
+p {
+  margin: 0;
+}
+/* Root Variables */
+:root {
+  /* Colors */
+  --primary-color: #5038ed;
+  --primary-light-color: #9181f4;
+
+  --text-color: #1c1c1c;
+  --text-primary: #5038ed;
+  --text-gray: #84868a;
+
+  --bg-gray: #f5f7f9;
+  --bg-white: #ffffff;
+  --bg-primary: #5038ed;
+  --border-gray: #f0edff;
+
+  /* Font Sizes */
+  --heading1: 50px;
+  --heading2: 40px;
+  --heading3: 30px;
+  --heading4: 22px;
+  --heading5: 20px;
+  --heading6: 18px;
+  --basefont: 16px;
+  --smallfont: 14px;
+  --extrasmallfont: 12px;
+  /* Box Model Properties */
+
+  --border-large-radius: 12px;
+  --border-medium-radius: 10px;
+  --border-small-radius: 4px;
+
+  /* Shadows */
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --box-shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --box-shadow-dark: 0 6px 8px rgba(0, 0, 0, 0.2);
+  /* Z-Index */
+  --z-index-modal: 1000;
+  --z-index-tooltip: 1100;
+  --z-index-header: 900;
+
+  /* font-family */
+  --font-Coiny: "Coiny", system-ui;
+  --font-Poppins: "Poppins", sans-serif;
+}
+/* Container Styling */
+.content-width {
+  width: 100%;
+  margin: auto;
+}
+/* Input Styling */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--primary-color);
+  width: 18px;
+  height: 18px;
+}
+input,
+select {
+  outline: none;
+}
+/* Text Selection */
+::selection {
+  color: var(--white);
+  background-color: var(--primary-color);
+}
+/* Section Padding */
+.section-padding {
+  padding-top: 50px;
+  padding-bottom: 50px;
+}
+/* Common Titles and Descriptions */
+.commontitle {
+  text-align: center;
+  font-size: var(--heading3);
+  color: var(--secondary-color);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.commondescription {
+  text-align: center;
+  font-size: var(--heading6);
+  margin-bottom: 30px;
+}
+/* Flexbox Centering */
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Error Message */
+.error-message {
+  color: red;
+  font-size: var(--smallfont);
+  font-weight: 400;
+}
+/* Responsive Media Queries */
+/* Tablets (Portrait & Landscape) */
+@media (max-width: 1024px) {
+  :root {
+    --heading1: 44px;
+    --heading2: 36px;
+    --heading3: 28px;
+    --heading4: 20px;
+    --heading5: 18px;
+    --heading6: 16px;
+    --basefont: 15px;
+    --smallfont: 13px;
+    --extrasmallfont: 11px;
+  }
+  .section-padding {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+}
+/* Large Smartphones (Portrait & Landscape) */
+@media (max-width: 768px) {
+  :root {
+    --heading1: 36px;
+    --heading2: 28px;
+    --heading3: 22px;
+    --heading4: 17px;
+    --heading5: 16px;
+    --heading6: 14px;
+    --basefont: 13px;
+    --smallfont: 11px;
+    --extrasmallfont: 10px;
+  }
+  .section-padding {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+}
+
+/* Small Smartphones (Landscape) */
+@media (max-width: 640px) and (orientation: landscape) {
+  :root {
+    --heading1: 36px;
+    --heading2: 28px;
+    --heading3: 22px;
+    --heading4: 17px;
+    --heading5: 16px;
+    --heading6: 14px;
+    --basefont: 13px;
+    --smallfont: 11px;
+    --extrasmallfont: 14px;
+  }
+  .section-padding {
+    padding-top: 25px;
+    padding-bottom: 25px;
+  }
+}
+
+/* Small Smartphones (Portrait) */
+@media (max-width: 576px) and (orientation: portrait) {
+  :root {
+    --heading1: 36px;
+    --heading2: 28px;
+    --heading3: 22px;
+    --heading4: 17px;
+    --heading5: 16px;
+    --heading6: 14px;
+    --basefont: 13px;
+    --smallfont: 11px;
+    --extrasmallfont: 14px;
+  }
+  .section-padding {
+    padding-top: 25px;
+    padding-bottom: 25px;
+  }
+}
+/* Extra Small Devices (Watches, Foldable Phones) */
