@@ -36,7 +36,11 @@
     "close": "Close",
     "notAvailable": "Not Available",
     "notSet": "Not Set",
-    "select": "Select"
+    "select": "Select",
+    "phoneNumber": "Phone Number",
+    "forgotAccount": "Forgot Password",
+    "sending": "Sending",
+    "verifying": "Verifying"
   },
   "auth": {
     "loginTitle": "Welcome to IIM-LMS",
@@ -50,7 +54,7 @@
     "demoAccounts": "Demo Accounts",
     "educatorAccount": "Educator Account",
     "universityAdmin": "University Admin",
-    "systemAdmin": "System Admin",
+    "systemAdmin": "Super Admin(IIM)",
     "loggingIn": "Logging in",
     "sending": "Sending",
     "resetting": "Resetting",
@@ -66,7 +70,14 @@
     "passwordsDoNotMatch": "Passwords do not match",
     "passwordResetSuccess": "Password Reset Successful",
     "redirectingToLogin": "Redirecting to login page...",
-    "createNewPassword": "Create a new secure password for your account"
+    "createNewPassword": "Create a new secure password for your account",
+    "requestOTP": "Request OTP",
+    "otpSubtitle": "Enter the OTP sent to your phone",
+    "otpSentMessage": "OTP has been sent to your phone",
+    "enterOTPDigits": "Enter the 6-digit OTP",
+    "verifyAndLogin": "Verify & Login",
+    "resendCodeIn": "Resend code in",
+    "verifyOTP": "Verify OTP"
   },
   "educator": {
     "myLearning": "My Learning",

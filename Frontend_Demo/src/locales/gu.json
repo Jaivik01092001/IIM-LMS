@@ -33,7 +33,11 @@
     "close": "બંધ કરો",
     "notAvailable": "ઉપલબ્ધ નથી",
     "notSet": "સેટ નથી",
-    "select": "પસંદ કરો"
+    "select": "પસંદ કરો",
+    "phoneNumber": "ફોન નંબર",
+    "forgotAccount": "ખાતું ભૂલી ગયા",
+    "sending": "મોકલી રહ્યું છે",
+    "verifying": "ચકાસી રહ્યું છે"
   },
   "auth": {
     "loginTitle": "IIM-LMS માં આપનું સ્વાગત છે",
@@ -47,7 +51,14 @@
     "demoAccounts": "ડેમો ખાતાઓ",
     "educatorAccount": "શિક્ષક ખાતું",
     "universityAdmin": "યુનિવર્સિટી એડમિન",
-    "systemAdmin": "સિસ્ટમ એડમિન"
+    "systemAdmin": "સિસ્ટમ એડમિન",
+    "requestOTP": "OTP માટે વિનંતી કરો",
+    "otpSubtitle": "તમારા ફોન પર મોકલેલ OTP દાખલ કરો",
+    "otpSentMessage": "OTP તમારા ફોન પર મોકલવામાં આવ્યો છે",
+    "enterOTPDigits": "6-અંકનો OTP દાખલ કરો",
+    "verifyAndLogin": "ચકાસો અને લોગિન કરો",
+    "resendCodeIn": "કોડ ફરીથી મોકલો",
+    "verifyOTP": "OTP ચકાસો"
   },
   "educator": {
     "myLearning": "મારું શિક્ષણ",
