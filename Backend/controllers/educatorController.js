@@ -1,5 +1,6 @@
 const Course = require('../models/Course');
 const Content = require('../models/Content');
+const Module = require('../models/Module');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
@@ -191,7 +192,7 @@ const getMyContent = async (req, res) => {
 
 const createContent = async (req, res) => {
   try {
-    const { title, description, type } = req.body;
+    const { title, description, type, moduleId } = req.body;
 
     if (!title) {
       return res.status(400).json({ msg: 'Title is required' });
@@ -199,15 +200,45 @@ const createContent = async (req, res) => {
 
     const fileUrl = req.file ? req.file.path : null;
 
+    // Determine media type based on file extension
+    let mediaType = 'document';
+    let mimeType = req.file ? req.file.mimetype : null;
+    let fileSize = req.file ? req.file.size : 0;
+
+    if (req.file) {
+      const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+
+      if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) {
+        mediaType = 'video';
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+        mediaType = 'image';
+      }
+    }
+
     const content = new Content({
       title,
       description,
       fileUrl,
-      type: type || 'document',
+      type: type || (mediaType === 'video' ? 'video' : mediaType === 'image' ? 'image' : 'document'),
+      mediaType,
+      mimeType,
+      size: fileSize,
+      module: moduleId || null,
       creator: req.user.id,
     });
 
     await content.save();
+
+    // If moduleId is provided, add content to the module
+    if (moduleId) {
+      const module = await Module.findById(moduleId);
+      if (module) {
+        if (!module.content.includes(content._id)) {
+          module.content.push(content._id);
+          await module.save();
+        }
+      }
+    }
 
     // Populate creator information before returning
     const populatedContent = await Content.findById(content._id).populate('creator', 'name');
