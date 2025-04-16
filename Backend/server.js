@@ -41,12 +41,14 @@ app.use(xss());            // Against XSS
 // 🌐 CORS (must come BEFORE routes & body parsing!)
 // ==========================
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+  // origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+  origin: ['http://localhost:5173', 'https://iim-lms-1.onrender.com'],
   credentials: true,
 }));
 
 app.options('*', cors({
-  origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+  // origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+  origin: ['http://localhost:5173', 'https://iim-lms-1.onrender.com'],
   credentials: true,
 }));
 
