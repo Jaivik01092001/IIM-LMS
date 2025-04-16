@@ -57,7 +57,12 @@ function Login() {
   const handleRequestOTP = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(requestOTPThunk({ email, phoneNumber }));
+      // Format phone number to ensure it has +91 prefix
+      let formattedPhoneNumber = phoneNumber;
+      if (!phoneNumber.startsWith('+91')) {
+        formattedPhoneNumber = '+91' + phoneNumber.replace(/^0+/, '');
+      }
+      await dispatch(requestOTPThunk({ email, phoneNumber: formattedPhoneNumber }));
     } catch (error) {
       console.error('Failed to request OTP:', error);
     }
@@ -159,7 +164,12 @@ function Login() {
 
   const handleResendOTP = async () => {
     try {
-      await dispatch(requestOTPThunk({ email, phoneNumber }));
+      // Format phone number to ensure it has +91 prefix
+      let formattedPhoneNumber = phoneNumber;
+      if (!phoneNumber.startsWith('+91')) {
+        formattedPhoneNumber = '+91' + phoneNumber.replace(/^0+/, '');
+      }
+      await dispatch(requestOTPThunk({ email, phoneNumber: formattedPhoneNumber }));
       setTimer(30);
       setShowResendButton(false);
       setVerificationError('');
@@ -205,17 +215,26 @@ function Login() {
                 </div>
                 <div>
                   <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">{t('common.phoneNumber')}</label>
-                  <input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    type="tel"
-                    autoComplete="tel"
-                    required
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                    placeholder={t('common.phoneNumber')}
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className="text-gray-500">+91</span>
+                    </div>
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      autoComplete="tel"
+                      required
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        // Only allow numbers and remove any non-numeric characters
+                        const value = e.target.value.replace(/\D/g, '');
+                        setPhoneNumber(value);
+                      }}
+                      className="appearance-none relative block w-full pl-12 px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                      placeholder={t('common.phoneNumber')}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -270,7 +289,7 @@ function Login() {
                     {t('auth.otpSentMessage')}
                   </p>
                   <p className="text-sm font-medium text-blue-800 mt-1">
-                    {phoneNumber} & {email}
+                    +91{phoneNumber} & {email}
                   </p>
                 </div>
               </div>
