@@ -26,10 +26,21 @@ exports.requestOTP = catchAsync(async (req, res, next) => {
     return next(new AppError('Please provide email and phone number', 400));
   }
 
+  // Format phone number to ensure it has +91 prefix
+  let formattedPhoneNumber = phoneNumber;
+  if (!phoneNumber.startsWith('+91')) {
+    formattedPhoneNumber = '+91' + phoneNumber.replace(/^0+/, '');
+  }
+
   // 3) Check if user exists
-  const user = await User.findOne({ email, phoneNumber });
+  let user = await User.findOne({ email, phoneNumber: formattedPhoneNumber });
   if (!user) {
-    return next(new AppError('No user found with this email and phone number', 404));
+    // Try without the formatting in case the user was stored with a different format
+    const userAlt = await User.findOne({ email, phoneNumber });
+    if (!userAlt) {
+      return next(new AppError('No user found with this email and phone number', 404));
+    }
+    user = userAlt;
   }
 
   // 4) Generate and send OTP
@@ -153,6 +164,11 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email });
   if (!user) {
     return next(new AppError('No user found with that email address', 404));
+  }
+
+  // Ensure phone number has +91 prefix for SMS delivery
+  if (user.phoneNumber && !user.phoneNumber.startsWith('+91')) {
+    user.phoneNumber = '+91' + user.phoneNumber.replace(/^0+/, '');
   }
 
   // 2) Generate and send OTP
