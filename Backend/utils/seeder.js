@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs'); // Import bcrypt for password hashing
 const Course = require('../models/Course');
 const User = require('../models/User');
 const University = require('../models/University'); // Ensure the model is imported
@@ -17,11 +16,11 @@ const seedDatabase = async () => {
 
         console.log("🌱 Seeding database...");
 
-        // Hash passwords before inserting Users
+        // Insert Users with phone numbers instead of passwords
         const users = await User.insertMany([
-            { email: 'school@example.com', password: await bcrypt.hash('password', 10), role: 'university', name: 'User One' },
-            { email: 'educator@example.com', password: await bcrypt.hash('password', 10), role: 'educator', name: 'User Two' },
-            { email: 'admin@example.com', password: await bcrypt.hash('password', 10), role: 'admin', name: 'Admin User' },
+            { email: 'zeel.fabaf@gmail.com', phoneNumber: '+919904424789', role: 'university', name: 'User One' },
+            { email: 'anandkumarbarot@gmail.com', phoneNumber: '+918140977185', role: 'educator', name: 'User Two' },
+            { email: 'jaivik.patel@fabaf.in', phoneNumber: '+919664774890', role: 'admin', name: 'Admin User' },
         ]);
 
         // Predefined Courses

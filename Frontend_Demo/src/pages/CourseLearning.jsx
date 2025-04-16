@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCourseDetailThunk, updateProgressThunk } from '../redux/educator/educatorSlice';
+import MediaViewer from '../components/MediaViewer';
 
 function CourseLearning() {
   const { id } = useParams();
@@ -9,6 +10,8 @@ function CourseLearning() {
   const { courseDetail, loading } = useSelector((state) => state.educator);
   const [activeModule, setActiveModule] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [showMediaViewer, setShowMediaViewer] = useState(false);
 
   const setActiveModuleAndTrackProgress = (index) => {
     setActiveModule(index);
@@ -45,10 +48,12 @@ function CourseLearning() {
     );
   }
 
-  // Mock content for demonstration
-  const modules = courseDetail.content && courseDetail.content.length > 0
-    ? courseDetail.content
-    : [
+  // Use modules if available, otherwise fall back to content
+  const modules = courseDetail.hasModules && courseDetail.modules && courseDetail.modules.length > 0
+    ? courseDetail.modules
+    : courseDetail.content && courseDetail.content.length > 0
+      ? courseDetail.content
+      : [
         {
           _id: 'module1',
           title: 'Introduction to the Course',
@@ -174,16 +179,14 @@ function CourseLearning() {
                 <button
                   key={module._id || index}
                   onClick={() => setActiveModuleAndTrackProgress(index)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                    activeModule === index
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${activeModule === index
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="flex items-center">
-                    <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center mr-2 ${
-                      activeModule === index ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
-                    }`}>
+                    <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center mr-2 ${activeModule === index ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
+                      }`}>
                       {index + 1}
                     </div>
                     <span className="truncate">{module.title}</span>
@@ -231,11 +234,10 @@ function CourseLearning() {
               <button
                 onClick={() => setActiveModule(Math.max(0, activeModule - 1))}
                 disabled={activeModule === 0}
-                className={`p-2 rounded-full ${
-                  activeModule === 0
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}
+                className={`p-2 rounded-full ${activeModule === 0
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                  }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -244,11 +246,10 @@ function CourseLearning() {
               <button
                 onClick={() => setActiveModule(Math.min(modules.length - 1, activeModule + 1))}
                 disabled={activeModule === modules.length - 1}
-                className={`p-2 rounded-full ${
-                  activeModule === modules.length - 1
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}
+                className={`p-2 rounded-full ${activeModule === modules.length - 1
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                  }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -261,17 +262,93 @@ function CourseLearning() {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto bg-white p-8">
           <div className="max-w-3xl mx-auto">
-            <div className="prose prose-blue max-w-none" dangerouslySetInnerHTML={{ __html: modules[activeModule]?.content }}></div>
+            {/* Handle different content types */}
+            {modules[activeModule]?.content ? (
+              <div className="prose prose-blue max-w-none" dangerouslySetInnerHTML={{ __html: modules[activeModule]?.content }}></div>
+            ) : modules[activeModule]?.fileUrl ? (
+              <div className="mb-8">
+                {/* Display media content */}
+                <h2 className="text-2xl font-bold mb-4">{modules[activeModule]?.title}</h2>
+                <p className="text-gray-700 mb-6">{modules[activeModule]?.description}</p>
+
+                {/* Media preview */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                  {modules[activeModule]?.type === 'video' || modules[activeModule]?.mediaType === 'video' ||
+                    (modules[activeModule]?.fileUrl && /\.(mp4|mov|avi|mkv)$/i.test(modules[activeModule]?.fileUrl)) ? (
+                    <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                      <div className="flex items-center justify-center h-full">
+                        <button
+                          onClick={() => {
+                            setSelectedMedia(modules[activeModule]);
+                            setShowMediaViewer(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ) : modules[activeModule]?.type === 'image' || modules[activeModule]?.mediaType === 'image' ||
+                    (modules[activeModule]?.fileUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(modules[activeModule]?.fileUrl)) ? (
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={modules[activeModule]?.fileUrl}
+                        alt={modules[activeModule]?.title}
+                        className="w-full h-auto cursor-pointer transition-transform duration-300 hover:scale-105"
+                        onClick={() => {
+                          setSelectedMedia(modules[activeModule]);
+                          setShowMediaViewer(true);
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 flex items-center justify-center transition-opacity duration-300">
+                        <div className="transform scale-0 hover:scale-100 transition-transform duration-300">
+                          <button className="bg-white bg-opacity-75 rounded-full p-3 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="text-gray-600">This content is a document or other file type.</p>
+                      <a
+                        href={modules[activeModule]?.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                      >
+                        Download File
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">No content available</h3>
+                <p className="text-gray-600">This module doesn't have any content yet.</p>
+              </div>
+            )}
 
             <div className="mt-12 flex justify-between">
               <button
                 onClick={() => setActiveModule(Math.max(0, activeModule - 1))}
                 disabled={activeModule === 0}
-                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium ${
-                  activeModule === 0
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
-                }`}
+                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium ${activeModule === 0
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                  }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -304,6 +381,17 @@ function CourseLearning() {
           </div>
         </div>
       </div>
+
+      {/* Media Viewer Modal */}
+      {showMediaViewer && selectedMedia && (
+        <MediaViewer
+          content={selectedMedia}
+          onClose={() => {
+            setShowMediaViewer(false);
+            setSelectedMedia(null);
+          }}
+        />
+      )}
     </div>
   );
 }

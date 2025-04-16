@@ -2,6 +2,7 @@ const Content = require('../models/Content');
 const Course = require('../models/Course');
 const University = require('../models/University');
 const User = require('../models/User');
+const Module = require('../models/Module');
 const bcrypt = require('bcryptjs');
 
 exports.getUniversities = async (req, res) => {
@@ -62,11 +63,22 @@ exports.getContent = async (req, res) => {
 
 exports.createContent = async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, moduleId, type } = req.body;
     const fileUrl = req.file ? req.file.path : null;
 
     if (!fileUrl) {
       return res.status(400).json({ msg: 'File upload failed' });
+    }
+
+    // Determine media type based on file extension
+    let mediaType = 'document';
+    let mimeType = req.file.mimetype;
+    const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+
+    if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) {
+      mediaType = 'video';
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+      mediaType = 'image';
     }
 
     const content = new Content({
@@ -75,11 +87,29 @@ exports.createContent = async (req, res) => {
       fileUrl,
       creator: req.user.id,
       status: 'approved',
+      type: type || (mediaType === 'video' ? 'video' : mediaType === 'image' ? 'image' : 'document'),
+      mediaType,
+      mimeType,
+      size: req.file.size,
+      module: moduleId || null
     });
 
     await content.save();
+
+    // If moduleId is provided, add content to the module
+    if (moduleId) {
+      const module = await Module.findById(moduleId);
+      if (module) {
+        if (!module.content.includes(content._id)) {
+          module.content.push(content._id);
+          await module.save();
+        }
+      }
+    }
+
     res.json(content);
   } catch (error) {
+    console.error('Error creating content:', error);
     res.status(500).json({ msg: error.message || 'Server Error' });
   }
 };
