@@ -78,7 +78,7 @@ select {
 }
 /* Text Selection */
 ::selection {
-  color: var(--white);
+  color: var(--white) !important;
   background-color: var(--primary-color);
 }
 /* Section Padding */

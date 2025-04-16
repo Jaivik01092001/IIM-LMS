@@ -4,6 +4,8 @@ import logo from "../assets/images/login_page/logo.svg";
 import login_background from "../assets/images/login_page/login_background.svg";
 import campus_img from "../assets/images/login_page/campus_img.svg";
 import { IoPhonePortraitOutline } from "react-icons/io5";
+import { FaInfoCircle } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import {
   requestOTPThunk,
@@ -11,25 +13,121 @@ import {
   resetOTPState,
 } from "../redux/auth/authSlice";
 import { useNavigate } from "react-router-dom";
-import { showSuccessToast, showErrorToast } from "../utils/toast"; // Importing from utils
+import { showSuccessToast, showErrorToast } from "../utils/toast";
 
+// Test credentials data
+const TEST_CREDENTIALS = [
+  {
+    role: "Super Admin",
+    email: "jaivik.patel@fabaf.in",
+    phone: "+919664774890",
+  },
+  {
+    role: "Super Admin",
+    email: "fabaf2021@gmail.com",
+    phone: "+919924294542",
+  },
+  {
+    role: "Super Admin",
+    email: "nishant@fabaf.in",
+    phone: "+918980905254",
+  },
+  {
+    role: "University Admin",
+    email: "zeel.fabaf@gmail.com",
+    phone: "+919904424789",
+  },
+  {
+    role: "Educator Account",
+    email: "anandkumarbarot@gmail.com",
+    phone: "+918140977185",
+  },
+];
+
+/**
+ * Modal component for displaying test credentials
+ */
+const CredentialsModal = ({ isOpen, onClose, onUseCredential }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h3>Test Credentials</h3>
+          <button className="close-btn" onClick={onClose}>
+            <IoClose />
+          </button>
+        </div>
+        <div className="credentials-grid">
+          {TEST_CREDENTIALS.map((cred, index) => (
+            <div key={index} className="credential-card">
+              <h4>{cred.role}</h4>
+              <p>Email: {cred.email}</p>
+              <p>Phone: {cred.phone}</p>
+              <button 
+                className="w-full bg-blue-600 text-white font-medium p-4 rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition duration-200"
+                onClick={() => onUseCredential(cred)}
+              >
+                Use Credential
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Main Login component
+ */
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, otpRequested, userId } = useSelector(
+  const { loading, otpRequested, userId } = useSelector(
     (state) => state.auth
   );
 
+  // Form state
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [verificationError, setVerificationError] = useState("");
+  
+  // OTP timer state
   const [timer, setTimer] = useState(30);
   const [showResendButton, setShowResendButton] = useState(false);
+  
+  // Modal state
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
 
   const otpRefs = useRef([]);
+  const otpContainerRef = useRef(null);
 
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && userData.role) {
+          // Redirect user based on role
+          if (userData.role === "admin") {
+            navigate("/dashboard/admin");
+          } else if (userData.role === "educator") {
+            navigate("/dashboard/school");
+          } else {
+            navigate("/dashboard/tutor");
+          }
+        }
+      } catch (_) {
+        // Invalid user data in localStorage, clear it
+        localStorage.removeItem("user");
+      }
+    }
+  }, [navigate]);
+
+  // Effect to handle OTP request and reset form
   useEffect(() => {
     if (otpRequested) {
       setTimer(30);
@@ -38,6 +136,7 @@ const Login = () => {
     }
   }, [otpRequested]);
 
+  // Effect to handle OTP timer
   useEffect(() => {
     let interval;
     if (otpRequested && timer > 0) {
@@ -48,80 +147,146 @@ const Login = () => {
     return () => clearInterval(interval);
   }, [otpRequested, timer]);
 
-  const handleLogin = async () => {
-    let message = "";
-
-    if (!/^[0-9]{10}$/.test(phone)) {
-      message = "Phone number must be exactly 10 digits.";
-      showErrorToast(message); // Show toast for error
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      message = "Please enter a valid email address.";
-      showErrorToast(message); // Show toast for error
-    }
-
-    if (message) {
-      setErrorMessage(message);
-      return;
-    }
-
-    const formattedPhone = phone.startsWith("+91")
-      ? phone
-      : "+91" + phone.replace(/^0+/, "");
-
-    await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
-    showSuccessToast("OTP requested successfully!"); // Show toast for success
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^\d?$/.test(value)) return;
-    const newOtp = [...otpValues];
-    newOtp[index] = value;
-    setOtpValues(newOtp);
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
-  };
-
+  /**
+   * Verifies OTP and navigates to appropriate dashboard
+   */
   const handleVerifyOTP = async () => {
     const otp = otpValues.join("");
+    
+    // Validate OTP
     if (otp.length !== 6) {
-      setVerificationError("Enter a valid 6-digit OTP.");
-      showErrorToast("Enter a valid 6-digit OTP."); // Show toast for error
+      showErrorToast("Enter a valid 6-digit OTP.");
       return;
     }
 
+    // Prevent multiple verification attempts while loading
+    if (loading) return;
+
     const result = await dispatch(verifyOTPThunk({ userId, otp }));
+    
     if (!result.error) {
       const user = JSON.parse(localStorage.getItem("user"));
-      console.log("user....", user);
-      if (user.role == "admin") {
-        console.log("user....", user.role);
+      
+      // Navigate based on user role
+      if (user.role === "admin") {
         navigate("/dashboard/admin");
-      } else if (user.role == "educator") {
-        console.log("user....", user.role);
+      } else if (user.role === "educator") {
         navigate("/dashboard/school");
       } else {
-        console.log("user....", user.role);
         navigate("/dashboard/tutor");
       }
-      showSuccessToast("Login successful!"); // Show toast for success
+      
+      if (result.payload && result.payload.message) {
+        showSuccessToast(result.payload.message);
+      }
     } else {
-      setVerificationError("Invalid OTP. Try again.");
-      showErrorToast("Invalid OTP. Try again."); // Show toast for error
+      if (result.payload && result.payload.message) {
+        showErrorToast(result.payload.message);
+      } else {
+        showErrorToast("Invalid OTP. Try again.");
+      }
       setOtpValues(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
     }
   };
 
+  // Effect to check if all OTP values are entered to auto-verify
+  useEffect(() => {
+    const allDigitsEntered = otpValues.every(val => val !== "");
+    if (allDigitsEntered && otpValues.length === 6) {
+      handleVerifyOTP();
+    }
+  }, [otpValues]);
+
+  /**
+   * Handles using a test credential
+   */
+  const handleUseCredential = (credential) => {
+    // Extract phone number without +91 prefix
+    const phoneNumber = credential.phone.replace("+91", "");
+    setPhone(phoneNumber);
+    setEmail(credential.email);
+    setShowCredentialsModal(false);
+  };
+
+  /**
+   * Validates form and requests OTP
+   */
+  const handleLogin = async () => {
+    // Validate phone number
+    if (!/^[0-9]{10}$/.test(phone)) {
+      showErrorToast("Phone number must be exactly 10 digits.");
+      return;
+    }
+    
+    // Validate email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showErrorToast("Please enter a valid email address.");
+      return;
+    }
+
+    // Format phone number and request OTP
+    const formattedPhone = phone.startsWith("+91")
+      ? phone
+      : "+91" + phone.replace(/^0+/, "");
+
+    const result = await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
+    if (result.payload && result.payload.message) {
+      showSuccessToast(result.payload.message);
+    }
+  };
+
+  /**
+   * Handles OTP input changes
+   */
+  const handleOtpChange = (index, value) => {
+    // Allow only digits
+    if (!/^\d?$/.test(value)) return;
+    
+    const newOtp = [...otpValues];
+    newOtp[index] = value;
+    setOtpValues(newOtp);
+    
+    // Auto-focus next input field
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  };
+
+  /**
+   * Handles pasting OTP
+   */
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text/plain").trim();
+    
+    // Check if pasted text is 6 digit number
+    if (/^\d{6}$/.test(pastedText)) {
+      const digits = pastedText.split("");
+      setOtpValues(digits);
+      
+      // Focus the last input after paste
+      if (otpRefs.current[5]) {
+        otpRefs.current[5].focus();
+      }
+    }
+  };
+
+  /**
+   * Resends OTP
+   */
   const handleResendOTP = async () => {
     const formattedPhone = phone.startsWith("+91")
       ? phone
       : "+91" + phone.replace(/^0+/, "");
-    await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
-    showSuccessToast("OTP resent successfully!"); // Show toast for success
+    const result = await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
+    if (result.payload && result.payload.message) {
+      showSuccessToast(result.payload.message);
+    }
   };
 
   return (
     <div className="login-wrapper">
       <div className="login-container">
+        {/* Left side with logo and background */}
         <div className="login-left">
           <img src={login_background} alt="bg" className="bg-image" />
           <img src={campus_img} alt="campus" className="campusimage" />
@@ -131,14 +296,18 @@ const Login = () => {
           </div>
         </div>
 
+        {/* Right side with login form */}
         <div className="login-right">
           <div className="login-right-mainheading">
             <h2>IIM AHMEDABAD</h2>
           </div>
           <div className="right-Second_part">
             {!otpRequested ? (
+              /* Login form */
               <>
-                <h3>Login in to your account</h3>
+                <h3>Login to your account</h3>
+                
+                {/* Phone input */}
                 <div className="form-group">
                   <label>Phone</label>
                   <div className="phone-input-wrapper">
@@ -152,42 +321,47 @@ const Login = () => {
                         /^[0-9]{0,10}$/.test(e.target.value) &&
                         setPhone(e.target.value)
                       }
-                      className={
-                        errorMessage.includes("Phone") ? "input-error" : ""
-                      }
-                      placeholder="00000 00000"
+                      placeholder="9915678456"
                     />
                   </div>
-                  {errorMessage.includes("Phone") && (
-                    <p className="form-error">{errorMessage}</p>
-                  )}
                 </div>
 
+                {/* Email input */}
                 <div className="form-group">
                   <label>Email</label>
                   <input
                     type="email"
-                    placeholder="Enter Email address"
+                    placeholder="abc@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={
-                      errorMessage.includes("email") ? "input-error" : ""
-                    }
                   />
-                  {errorMessage.includes("email") && (
-                    <p className="form-error">{errorMessage}</p>
-                  )}
                 </div>
 
-                <a className="login-btn" onClick={handleLogin}>
+                {/* Login button */}
+                <button className="login-btn" onClick={handleLogin} disabled={loading}>
                   {loading ? "Requesting OTP..." : "Login Now"}
-                </a>
+                </button>
+                
+                {/* Test credentials button */}
+                <button 
+                  className="test-credentials-btn" 
+                  onClick={() => setShowCredentialsModal(true)}
+                >
+                  <FaInfoCircle /> Show Test Credentials
+                </button>
               </>
             ) : (
+              /* OTP verification form */
               <>
                 <h3>OTP Verification</h3>
                 <p>Enter the OTP sent to +91 {phone}</p>
-                <div className="Otp-form-group">
+                
+                {/* OTP input fields with paste functionality */}
+                <div 
+                  className="Otp-form-group" 
+                  ref={otpContainerRef} 
+                  onPaste={handleOtpPaste}
+                >
                   {otpValues.map((val, idx) => (
                     <input
                       key={idx}
@@ -204,10 +378,10 @@ const Login = () => {
                     />
                   ))}
                 </div>
-                {verificationError && (
-                  <p className="form-error">{verificationError}</p>
-                )}
+                
+                <p className="otp-note">Enter all 6 digits or paste your OTP to verify automatically</p>
 
+                {/* Resend OTP timer/button */}
                 <p className="resend">
                   {showResendButton ? (
                     <a onClick={handleResendOTP}>Resend OTP</a>
@@ -216,10 +390,7 @@ const Login = () => {
                   )}
                 </p>
 
-                <a className="login-btn" onClick={handleVerifyOTP}>
-                  {loading ? "Verifying..." : "Verify"}
-                </a>
-
+                {/* Back to login link */}
                 <p
                   className="back-login"
                   onClick={() => dispatch(resetOTPState())}
@@ -229,35 +400,15 @@ const Login = () => {
               </>
             )}
           </div>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-white shadow-md p-4 rounded-lg mb-4">
-              <h4 className="font-bold">Super Admin</h4>
-              <p>Email: jaivik.patel@fabaf.in</p>
-              <p>Phone Number: +919664774890</p>
-            </div>
-            <div className="bg-white shadow-md p-4 rounded-lg mb-4">
-              <h4 className="font-bold">Super Admin</h4>
-              <p>Email: fabaf2021@gmail.com</p>
-              <p>Phone Number: +919924294542</p>
-            </div>
-            <div className="bg-white shadow-md p-4 rounded-lg mb-4">
-              <h4 className="font-bold">Super Admin</h4>
-              <p>Email: nishant@fabaf.in</p>
-              <p>Phone Number: +918980905254</p>
-            </div>
-            <div className="bg-white shadow-md p-4 rounded-lg mb-4">
-              <h4 className="font-bold">University Admin</h4>
-              <p>Email: zeel.fabaf@gmail.com</p>
-              <p>Phone Number: +919904424789</p>
-            </div>
-            <div className="bg-white shadow-md p-4 rounded-lg mb-4">
-              <h4 className="font-bold">Educator Account</h4>
-              <p>Email: anandkumarbarot@gmail.com</p>
-              <p>Phone Number: +918140977185</p>
-            </div>
-          </div>
         </div>
       </div>
+      
+      {/* Test credentials modal */}
+      <CredentialsModal 
+        isOpen={showCredentialsModal} 
+        onClose={() => setShowCredentialsModal(false)} 
+        onUseCredential={handleUseCredential}
+      />
     </div>
   );
 };
