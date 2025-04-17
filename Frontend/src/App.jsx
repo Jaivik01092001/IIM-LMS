@@ -3,6 +3,7 @@ import "./index.css"
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { SmoothScrollProvider } from './context/SmoothScrollContext';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -24,7 +25,7 @@ import Settings from './pages/Dashboard/Settings.jsx';
 
 const App = () => {
   return (
-    <>
+    <SmoothScrollProvider>
       <ToastContainer
         position="bottom-right"
         autoClose={3000}
@@ -44,7 +45,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          
+
           {/* Dashboard routes with shared layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             {/* Admin routes */}
@@ -54,29 +55,29 @@ const App = () => {
             <Route path="admin/professors" element={<Professors userType="admin" />} />
             <Route path="admin/notification" element={<Notification userType="admin" />} />
             <Route path="admin/settings" element={<Settings userType="admin" />} />
-            
+
             {/* School routes */}
             <Route path="school" element={<SchoolDashboard />} />
             <Route path="school/courses" element={<Courses userType="school" />} />
             <Route path="school/professors" element={<Professors userType="school" />} />
             <Route path="school/notification" element={<Notification userType="school" />} />
             <Route path="school/settings" element={<Settings userType="school" />} />
-            
+
             {/* Tutor routes */}
             <Route path="tutor" element={<TutorDashboard />} />
             <Route path="tutor/courses" element={<Courses userType="tutor" />} />
             <Route path="tutor/notification" element={<Notification userType="tutor" />} />
             <Route path="tutor/settings" element={<Settings userType="tutor" />} />
-            
+
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />
           </Route>
-          
+
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </>
+    </SmoothScrollProvider>
   );
 }
 
