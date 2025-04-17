@@ -1,8 +1,11 @@
 import React from 'react';
 import { FaBook, FaUserGraduate, FaClock, FaStar, FaSearch } from 'react-icons/fa';
-import '../../assets/styles/Courses.css';
+import { useNavigate } from 'react-router-dom';
+import '../assets/styles/Courses.css';
 
 const Courses = ({ userType }) => {
+  const navigate = useNavigate();
+
   // Sample data with completely different content for each card
   const coursesData = [
     {
@@ -177,18 +180,18 @@ const Courses = ({ userType }) => {
 
   // No state needed for static filters
 
-  // Static page title based on userType
-  const pageTitle = userType === 'admin' ? 'All Courses' :
-                   userType === 'school' ? 'School Courses' :
-                   userType === 'tutor' ? 'My Courses' : 'All Courses';
+  
 
   // No filtering - display all courses
   const filteredCourses = coursesData;
 
+  // Handle click on course card to navigate to course details
+  const handleCourseClick = (courseId) => {
+    navigate(`/dashboard/${userType}/courses/${courseId}`);
+  };
+
   return (
     <div className="courses-container admin-dashboard">
-      {/* Header */}
-      
 
       {/* Search and Filters */}
       <div className="search-filter-container">
@@ -197,7 +200,7 @@ const Courses = ({ userType }) => {
           <input
             type="text"
             placeholder="Search courses..."
-            readOnly
+            
           />
         </div>
 
@@ -244,7 +247,11 @@ const Courses = ({ userType }) => {
       <div className="dashboard-section">
         <div className="course-grid">
         {filteredCourses.map(course => (
-          <div key={course.id} className="course-card">
+          <div 
+            key={course.id} 
+            className="course-card" 
+            onClick={() => handleCourseClick(course.id)}
+          >
             <img src={course.image} alt={course.title} className="course-image" />
             <div className="course-details">
               <h3 className="course-title">{course.title}</h3>
@@ -279,7 +286,15 @@ const Courses = ({ userType }) => {
                 </div>
               </div>
 
-              <button className="enroll-btn">Enroll Now</button>
+              <button 
+                className="enroll-btn"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent card click event
+                  // Enrollment logic here
+                }}
+              >
+                Enroll Now
+              </button>
             </div>
           </div>
         ))}

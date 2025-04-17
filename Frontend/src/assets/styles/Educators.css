@@ -1,0 +1,141 @@
+.educators-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.educators-container .educators-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.educators-container .search-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+  flex-wrap: wrap;
+}
+
+.educators-container .search-input {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 250px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.educators-container .search-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.educators-container .filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.educators-container .filter-select {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 150px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.educators-container .filter-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.educators-container .create-account-btn {
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.educators-container .create-account-btn:hover {
+  background-color: #4f46e5;
+}
+
+/* Professor cell styling */
+.educators-container .professor-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.educators-container .professor-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Action buttons container */
+.educators-container .action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .educators-container .search-filter-container {
+    flex-basis: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .educators-container .create-account-btn {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .educators-container .educators-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .educators-container .search-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .educators-container .filters {
+    margin-top: 0.5rem;
+  }
+
+  .educators-container .create-account-btn {
+    margin-top: 1rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .educators-container .filter-select {
+    width: 100%;
+  }
+}

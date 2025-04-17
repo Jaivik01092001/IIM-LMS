@@ -2,10 +2,17 @@ import React from 'react';
 import { FaBook, FaClock, FaUserGraduate, FaStar } from 'react-icons/fa';
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
+import { useNavigate } from 'react-router-dom';
 
 import "../../assets/styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
+  // Handle click on course card to navigate to course details
+  const handleCourseClick = (courseId) => {
+    navigate(`/dashboard/admin/courses/${courseId}`);
+  };
   // Sample data for courses with diverse content
   const courses = [
     {
@@ -66,22 +73,22 @@ const AdminDashboard = () => {
     <div className="admin-dashboard">
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
-        <div className="stat-card organizers">
+        <div className="stat-card schools">
           <div className="stat-icon1">
           <LuSchool className='icondesign1' />
             <LuSchool size={24}/>
           </div>
           <div className="stat-count">20</div>
-          <div className="stat-title">Total Organizers</div>
+          <div className="stat-title">Total Schools</div>
         </div>
 
-        <div className="stat-card professors">
+        <div className="stat-card educators">
           <div className="stat-icon2">
             <LiaChalkboardTeacherSolid  size={24} />
             <LiaChalkboardTeacherSolid className='icondesign2'  />
           </div>
           <div className="stat-count">100</div>
-          <div className="stat-title">Total Professors</div>
+          <div className="stat-title">Total Educators</div>
         </div>
 
         <div className="stat-card courses">
@@ -98,18 +105,25 @@ const AdminDashboard = () => {
       <div className="dashboard-section">
         <div className="section-header">
           <h2 className="section-title">All Courses ({courses.length})</h2>
-          <a href="#" className="view-all">View All</a>
+          <a href="#" className="view-all" onClick={(e) => {
+            e.preventDefault();
+            navigate('/dashboard/admin/courses');
+          }}>View All</a>
         </div>
 
         <div className="course-grid">
           {courses.map(course => (
-            <div key={course.id} className="course-card">
+            <div
+              key={course.id}
+              className="course-card"
+              onClick={() => handleCourseClick(course.id)}
+            >
               <img src={course.image} alt={course.title} className="course-image" />
               <div className="course-details">
                 <h3 className="course-title">{course.title}</h3>
                 <p className="course-category">Category: {course.category} | Language: {course.language}</p>
                 <p className="course-description">{course.description}</p>
-                <p className="course-category">Professor</p>
+                <p className="course-category">Educator</p>
                 <div className="instructor">
 
                   <img
@@ -139,7 +153,15 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <button className="enroll-btn">Enroll Now</button>
+                <button
+                  className="enroll-btn"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click event
+                    // Enrollment logic here
+                  }}
+                >
+                  Enroll Now
+                </button>
               </div>
             </div>
           ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../assets/styles/login.css";
 import logo from "../assets/images/login_page/logo.svg";
 import login_background from "../assets/images/login_page/login_background.svg";
@@ -65,7 +65,7 @@ const CredentialsModal = ({ isOpen, onClose, onUseCredential }) => {
               <h4>{cred.role}</h4>
               <p>Email: {cred.email}</p>
               <p>Phone: {cred.phone}</p>
-              <button 
+              <button
                 className="w-full bg-blue-600 text-white font-medium p-4 rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition duration-200"
                 onClick={() => onUseCredential(cred)}
               >
@@ -85,7 +85,7 @@ const CredentialsModal = ({ isOpen, onClose, onUseCredential }) => {
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, otpRequested, userId } = useSelector(
+  const { loading, otpRequested, userId, debugOtp } = useSelector(
     (state) => state.auth
   );
 
@@ -93,11 +93,11 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
-  
+
   // OTP timer state
   const [timer, setTimer] = useState(30);
   const [showResendButton, setShowResendButton] = useState(false);
-  
+
   // Modal state
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
 
@@ -120,7 +120,7 @@ const Login = () => {
             navigate("/dashboard/tutor");
           }
         }
-      } catch (_) {
+      } catch {
         // Invalid user data in localStorage, clear it
         localStorage.removeItem("user");
       }
@@ -152,7 +152,7 @@ const Login = () => {
    */
   const handleVerifyOTP = async () => {
     const otp = otpValues.join("");
-    
+
     // Validate OTP
     if (otp.length !== 6) {
       showErrorToast("Enter a valid 6-digit OTP.");
@@ -163,10 +163,10 @@ const Login = () => {
     if (loading) return;
 
     const result = await dispatch(verifyOTPThunk({ userId, otp }));
-    
+
     if (!result.error) {
       const user = JSON.parse(localStorage.getItem("user"));
-      
+
       // Navigate based on user role
       if (user.role === "admin") {
         navigate("/dashboard/admin");
@@ -175,7 +175,7 @@ const Login = () => {
       } else {
         navigate("/dashboard/tutor");
       }
-      
+
       if (result.payload && result.payload.message) {
         showSuccessToast(result.payload.message);
       }
@@ -218,7 +218,7 @@ const Login = () => {
       showErrorToast("Phone number must be exactly 10 digits.");
       return;
     }
-    
+
     // Validate email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showErrorToast("Please enter a valid email address.");
@@ -242,11 +242,11 @@ const Login = () => {
   const handleOtpChange = (index, value) => {
     // Allow only digits
     if (!/^\d?$/.test(value)) return;
-    
+
     const newOtp = [...otpValues];
     newOtp[index] = value;
     setOtpValues(newOtp);
-    
+
     // Auto-focus next input field
     if (value && index < 5) otpRefs.current[index + 1]?.focus();
   };
@@ -257,12 +257,12 @@ const Login = () => {
   const handleOtpPaste = (e) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData("text/plain").trim();
-    
+
     // Check if pasted text is 6 digit number
     if (/^\d{6}$/.test(pastedText)) {
       const digits = pastedText.split("");
       setOtpValues(digits);
-      
+
       // Focus the last input after paste
       if (otpRefs.current[5]) {
         otpRefs.current[5].focus();
@@ -306,7 +306,7 @@ const Login = () => {
               /* Login form */
               <>
                 <h3>Login to your account</h3>
-                
+
                 {/* Phone input */}
                 <div className="form-group">
                   <label>Phone</label>
@@ -341,10 +341,10 @@ const Login = () => {
                 <button className="login-btn" onClick={handleLogin} disabled={loading}>
                   {loading ? "Requesting OTP..." : "Login Now"}
                 </button>
-                
+
                 {/* Test credentials button */}
-                <button 
-                  className="test-credentials-btn" 
+                <button
+                  className="test-credentials-btn"
                   onClick={() => setShowCredentialsModal(true)}
                 >
                   <FaInfoCircle /> Show Test Credentials
@@ -355,11 +355,11 @@ const Login = () => {
               <>
                 <h3>OTP Verification</h3>
                 <p>Enter the OTP sent to +91 {phone}</p>
-                
+
                 {/* OTP input fields with paste functionality */}
-                <div 
-                  className="Otp-form-group" 
-                  ref={otpContainerRef} 
+                <div
+                  className="Otp-form-group"
+                  ref={otpContainerRef}
                   onPaste={handleOtpPaste}
                 >
                   {otpValues.map((val, idx) => (
@@ -378,8 +378,15 @@ const Login = () => {
                     />
                   ))}
                 </div>
-                
+
                 <p className="otp-note">Enter all 6 digits or paste your OTP to verify automatically</p>
+
+                {/* Show debug OTP in development mode */}
+                {debugOtp && (
+                  <div className="debug-otp-container" style={{ marginTop: '10px', padding: '8px', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid #ffeeba' }}>
+                    <p className="debug-otp-text" style={{ color: '#856404', fontSize: '14px', textAlign: 'center' }}>Development OTP: <strong>{debugOtp}</strong></p>
+                  </div>
+                )}
 
                 {/* Resend OTP timer/button */}
                 <p className="resend">
@@ -402,11 +409,11 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Test credentials modal */}
-      <CredentialsModal 
-        isOpen={showCredentialsModal} 
-        onClose={() => setShowCredentialsModal(false)} 
+      <CredentialsModal
+        isOpen={showCredentialsModal}
+        onClose={() => setShowCredentialsModal(false)}
         onUseCredential={handleUseCredential}
       />
     </div>
@@ -414,3 +421,6 @@ const Login = () => {
 };
 
 export default Login;
+
+
+
