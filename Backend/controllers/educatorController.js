@@ -410,6 +410,19 @@ const updateProgress = async (req, res) => {
       if (progress === 100) {
         course.enrolledUsers[enrollmentIndex].status = 'completed';
         course.enrolledUsers[enrollmentIndex].completedAt = new Date();
+
+        // Trigger certificate generation
+        try {
+          const certificateController = require('./certificateController');
+          const certificateResult = await certificateController.generateCertificateInternal(req.user.id, course._id);
+
+          if (certificateResult && certificateResult._id) {
+            course.enrolledUsers[enrollmentIndex].certificate = certificateResult._id;
+          }
+        } catch (certError) {
+          console.error('Error generating certificate:', certError);
+          // Continue with course completion even if certificate generation fails
+        }
       }
 
       await course.save();

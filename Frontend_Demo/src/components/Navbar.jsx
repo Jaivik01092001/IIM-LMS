@@ -43,6 +43,9 @@ function Navbar() {
                 <Link to="/my-content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('educator.myContent')}
                 </Link>
+                <Link to="/my-certificates" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  {t('educator.myCertificates') || 'My Certificates'}
+                </Link>
               </>
             )}
             {user?.role === 'university' && (
@@ -125,6 +128,9 @@ function Navbar() {
               </Link>
               <Link to="/my-content" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
                 {t('educator.myContent')}
+              </Link>
+              <Link to="/my-certificates" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
+                {t('educator.myCertificates') || 'My Certificates'}
               </Link>
             </>
           )}
