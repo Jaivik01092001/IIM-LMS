@@ -13,6 +13,8 @@ import Settings from './pages/Settings';
 import CourseDetail from './pages/CourseDetail';
 import CourseLearning from './pages/CourseLearning';
 import CourseQuiz from './pages/CourseQuiz';
+import MyCertificates from './pages/MyCertificates';
+import VerifyCertificate from './pages/VerifyCertificate';
 import UniversityEducators from './pages/UniversityEducators';
 import AdminUniversities from './pages/AdminUniversities';
 import AdminContent from './pages/AdminContent';
@@ -60,6 +62,9 @@ function App() {
         <Route path="/course/:id" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
         <Route path="/course/:id/learn" element={<ProtectedRoute><CourseLearning /></ProtectedRoute>} />
         <Route path="/course/:id/quiz" element={<ProtectedRoute><CourseQuiz /></ProtectedRoute>} />
+        <Route path="/my-certificates" element={<ProtectedRoute role="educator"><MyCertificates /></ProtectedRoute>} />
+        <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
+        <Route path="/verify-certificate" element={<VerifyCertificate />} />
         <Route path="/university/educators" element={<ProtectedRoute role="university"><UniversityEducators /></ProtectedRoute>} />
         <Route path="/admin/universities" element={<ProtectedRoute role="admin"><AdminUniversities /></ProtectedRoute>} />
         <Route path="/admin/content" element={<ProtectedRoute role="admin"><AdminContent /></ProtectedRoute>} />

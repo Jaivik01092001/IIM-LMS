@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getCourseDetailThunk, updateProgressThunk } from '../redux/educator/educatorSlice';
+import { getCourseDetailThunk, updateProgressThunk, generateCertificateThunk } from '../redux/educator/educatorSlice';
 import MediaViewer from '../components/MediaViewer';
+import { useTranslation } from 'react-i18next';
+import { showSuccessToast } from '../utils/toast';
 
 function CourseLearning() {
   const { id } = useParams();
@@ -12,6 +14,11 @@ function CourseLearning() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaViewer, setShowMediaViewer] = useState(false);
+  const { t } = useTranslation();
+
+  const handleGenerateCertificate = () => {
+    dispatch(generateCertificateThunk(id));
+  };
 
   const setActiveModuleAndTrackProgress = (index) => {
     setActiveModule(index);
@@ -20,15 +27,34 @@ function CourseLearning() {
     if (courseDetail && courseDetail._id) {
       const totalModules = modules ? modules.length : 0;
       if (totalModules > 0) {
-        const progress = Math.round(((index + 1) / totalModules) * 100);
+        // Calculate progress dynamically based on the number of modules
+        // Each module represents an equal percentage of the course
+        const modulePercentage = 100 / totalModules;
 
-        // Only update if progress has increased
+        // Calculate progress based on the current module index (0-indexed)
+        // We add 1 to count the current module as viewed
+        const modulesViewed = index + 1;
+
+        // Calculate the progress percentage (rounded to nearest integer)
+        const progress = Math.round(modulesViewed * modulePercentage);
+
+        // Get current progress from state
         const currentProgress = courseDetail.enrolledUsers && courseDetail.enrolledUsers.length > 0
           ? courseDetail.enrolledUsers[0].progress || 0
           : 0;
 
+        // Only update if progress has increased
         if (progress > currentProgress) {
+          console.log(`Updating progress: ${progress}% (Module ${index + 1}/${totalModules})`);
+
+          // Update progress in the backend
           dispatch(updateProgressThunk({ courseId: courseDetail._id, progress }));
+
+          // If this is the last module, show a completion message
+          if (index === totalModules - 1) {
+            // Show a toast notification that the course is completed
+            showSuccessToast('Congratulations! You have completed this course. You can now take the quiz or get your certificate.');
+          }
         }
       }
     }
@@ -196,13 +222,27 @@ function CourseLearning() {
             </div>
           </div>
         </div>
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 space-y-2">
           <Link
             to={`/course/${id}/quiz`}
             className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
           >
-            Take Quiz
+            {t('Take Quiz')}
           </Link>
+
+          {courseDetail.enrolledUsers &&
+           courseDetail.enrolledUsers.length > 0 &&
+           courseDetail.enrolledUsers[0].status === 'completed' && (
+            <button
+              onClick={handleGenerateCertificate}
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {t('Get Certificate')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -232,7 +272,12 @@ function CourseLearning() {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => setActiveModule(Math.max(0, activeModule - 1))}
+                onClick={() => {
+                  if (activeModule > 0) {
+                    const prevModuleIndex = Math.max(0, activeModule - 1);
+                    setActiveModuleAndTrackProgress(prevModuleIndex);
+                  }
+                }}
                 disabled={activeModule === 0}
                 className={`p-2 rounded-full ${activeModule === 0
                   ? 'text-gray-300 cursor-not-allowed'
@@ -244,7 +289,12 @@ function CourseLearning() {
                 </svg>
               </button>
               <button
-                onClick={() => setActiveModule(Math.min(modules.length - 1, activeModule + 1))}
+                onClick={() => {
+                  if (activeModule < modules.length - 1) {
+                    const nextModuleIndex = Math.min(modules.length - 1, activeModule + 1);
+                    setActiveModuleAndTrackProgress(nextModuleIndex);
+                  }
+                }}
                 disabled={activeModule === modules.length - 1}
                 className={`p-2 rounded-full ${activeModule === modules.length - 1
                   ? 'text-gray-300 cursor-not-allowed'
@@ -343,7 +393,12 @@ function CourseLearning() {
 
             <div className="mt-12 flex justify-between">
               <button
-                onClick={() => setActiveModule(Math.max(0, activeModule - 1))}
+                onClick={() => {
+                  if (activeModule > 0) {
+                    const prevModuleIndex = Math.max(0, activeModule - 1);
+                    setActiveModuleAndTrackProgress(prevModuleIndex);
+                  }
+                }}
                 disabled={activeModule === 0}
                 className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium ${activeModule === 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -368,7 +423,10 @@ function CourseLearning() {
                 </Link>
               ) : (
                 <button
-                  onClick={() => setActiveModule(Math.min(modules.length - 1, activeModule + 1))}
+                  onClick={() => {
+                    const nextModuleIndex = Math.min(modules.length - 1, activeModule + 1);
+                    setActiveModuleAndTrackProgress(nextModuleIndex);
+                  }}
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                 >
                   Next Module

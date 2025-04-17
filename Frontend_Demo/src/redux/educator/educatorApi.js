@@ -80,3 +80,29 @@ export const updateProgress = async ({ courseId, progress }) => {
   const response = await axios.put(`${API_URL}/educator/course/${courseId}/progress`, { progress }, getConfig());
   return response.data;
 };
+
+// Certificate-related API calls
+export const getMyCertificates = async () => {
+  const response = await axios.get(`${API_URL}/certificate/my-certificates`, getConfig());
+  return response.data.data;
+};
+
+export const generateCertificate = async (courseId) => {
+  const response = await axios.post(`${API_URL}/certificate/generate/${courseId}`, {}, getConfig());
+  return response.data.data;
+};
+
+export const getCertificate = async (id) => {
+  const response = await axios.get(`${API_URL}/certificate/${id}`, getConfig());
+  return response.data.data;
+};
+
+export const downloadCertificate = async (id) => {
+  const response = await axios.get(`${API_URL}/certificate/download/${id}`, getConfig());
+  return response.data;
+};
+
+export const verifyCertificate = async (certificateId) => {
+  const response = await axios.get(`${API_URL}/certificate/verify/${certificateId}`);
+  return response.data.data;
+};

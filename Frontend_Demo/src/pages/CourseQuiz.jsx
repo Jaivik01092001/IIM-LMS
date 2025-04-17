@@ -241,32 +241,7 @@ function CourseQuiz() {
                     <div className="text-gray-500">Score: {quizResult.score}/{quizResult.total}</div>
                   </div>
 
-                  {courseDetail.certificateUrl ? (
-                    <div className="mb-8">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Your Certificate</h3>
-                      <p className="text-gray-700 mb-4">
-                        You've earned a certificate for completing this course. You can download it below.
-                      </p>
-                      <a
-                        href={courseDetail.certificateUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        Download Certificate
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="mb-8">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Certificate Processing</h3>
-                      <p className="text-gray-700">
-                        Your certificate is being generated and will be available soon.
-                      </p>
-                    </div>
-                  )}
+
                 </>
               ) : (
                 <>
