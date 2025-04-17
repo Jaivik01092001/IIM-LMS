@@ -61,12 +61,12 @@ const TopBar = ({ toggleSidebar }) => {
 
       // Map of route segments to page titles
       const titleMap = {
-        'admin': 'Admin Dashboard',
+        'admin': 'Dashboard',
         'school': 'School Dashboard',
         'tutor': 'Tutor Dashboard',
-        'courses': 'Courses',
-        'organizers': 'Organizers',
-        'professors': 'Professors',
+        'courses': 'All Courses',
+        'schools': 'Universities/Schools',
+        'educators': 'Educators',
         'notification': 'Notifications',
         'settings': 'Settings'
       };

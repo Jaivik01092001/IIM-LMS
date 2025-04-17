@@ -86,6 +86,9 @@
 .sidebar-layout-parent .menu-text {
   font-size: var(--smallfont);
 }
+.sidebar-layout-parent .submenu-text{
+  font-size: var(--smallfont);
+}
 
 /* Overlay for mobile */
 .sidebar-layout-parent .sidebar-overlay {
@@ -97,6 +100,93 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 998;
+}
+
+/* Dropdown menu styles */
+.sidebar-layout-parent .dropdown-menu {
+  margin: 0 10px;
+}
+
+.sidebar-layout-parent .dropdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  color: var(--text-gray);
+  background: none;
+  border: none;
+  border-radius: var(--border-small-radius);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-layout-parent .dropdown-toggle:hover {
+  background-color: var(--bg-gray);
+  color: var(--primary-color);
+}
+
+.sidebar-layout-parent .dropdown-toggle.active {
+  background-color: #e8eaf6;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.sidebar-layout-parent .dropdown-toggle .menu-icon-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-layout-parent .dropdown-toggle .menu-icon {
+  font-size: 20px;
+  margin-right: 15px;
+}
+
+.sidebar-layout-parent .dropdown-toggle .menu-text {
+  font-size: var(--smallfont);
+}
+
+.sidebar-layout-parent .dropdown-toggle .dropdown-arrow {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-layout-parent .dropdown-toggle.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.sidebar-layout-parent .dropdown-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.sidebar-layout-parent .dropdown-content.open {
+  max-height: 200px;
+}
+
+.sidebar-layout-parent .submenu-item {
+  padding-left: 55px;
+  margin: 5px 0;
+}
+
+.sidebar-layout-parent .submenu-link {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  color: var(--text-gray);
+  text-decoration: none;
+  border-radius: var(--border-small-radius);
+  transition: all 0.2s ease;
+}
+
+.sidebar-layout-parent .submenu-link:hover {
+  color: var(--primary-color);
+}
+
+.sidebar-layout-parent .submenu-link.active {
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 /* Responsive styles */
@@ -111,16 +201,16 @@
     width: 280px;
     transform: translateX(-100%);
   }
-  
+
   .sidebar-layout-parent .sidebar.open {
     transform: translateX(0);
   }
-  
+
   .sidebar-layout-parent .sidebar-overlay {
     display: block;
   }
-  
+
   .sidebar-layout-parent .close-sidebar-btn {
     display: block;
   }
-} 
+}

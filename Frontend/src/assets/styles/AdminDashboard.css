@@ -26,11 +26,11 @@
   box-shadow: var(--box-shadow);
 }
 
-.admin-dashboard .stat-card.organizers {
+.admin-dashboard .stat-card.schools {
   background-color: #ffecef;
 }
 
-.admin-dashboard .stat-card.professors {
+.admin-dashboard .stat-card.educators {
   background-color: #e8ffef;
 }
 
@@ -52,7 +52,7 @@
 
 
 .admin-dashboard .stat-icon1  {
- 
+
   background-color: #FA5A7D ;
   border-radius: 50%;
   display: inline-block;
@@ -77,7 +77,7 @@
   margin-bottom: 15px;
   color: white;
   padding: 8px;
-   
+
 }
 .admin-dashboard .stat-icon1 .icondesign1 {
   position: absolute;
@@ -92,7 +92,7 @@
   right: 10px;
   font-size: 120px;
   color: #c6e3D0;
- 
+
 }
 .admin-dashboard .stat-icon3 .icondesign3 {
   position: absolute;
@@ -100,8 +100,8 @@
   right: 10px;
   font-size: 90px;
   color: #e6dcc8;
- 
-   
+
+
 }
 .admin-dashboard .dashboard-section {
   margin-bottom: 30px;
@@ -239,11 +239,11 @@
   .admin-dashboard .dashboard-stats {
     flex-direction: column;
   }
-  
+
   .admin-dashboard .stat-card {
     min-width: 100%;
   }
-  
+
   .admin-dashboard .course-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }

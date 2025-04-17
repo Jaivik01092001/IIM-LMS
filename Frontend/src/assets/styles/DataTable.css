@@ -1,0 +1,116 @@
+.data-table-container {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.data-table-container .search-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.data-table-container .search-input {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 350px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.data-table-container .search-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Override react-data-table-component styles */
+.data-table-container .rdt_TableHeader {
+  padding: 1.5rem 1.5rem 0.5rem !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+}
+
+.data-table-container .rdt_TableHeadRow {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+.data-table-container .rdt_TableRow {
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+  transition: background-color 0.2s;
+}
+
+.data-table-container .rdt_TableRow:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.data-table-container .rdt_Pagination {
+  border-top: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+/* Status indicator styles */
+.data-table-container .status-indicator {
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  border-radius: 20px;
+  background-color: #e2e8f0;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.data-table-container .status-indicator::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+.data-table-container .status-indicator.active {
+  background-color: #6366f1;
+}
+
+.data-table-container .status-indicator.active::after {
+  transform: translateX(16px);
+}
+
+/* Action buttons */
+.data-table-container .action-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.data-table-container .action-button:hover {
+  background-color: #f1f5f9;
+}
+
+.data-table-container .action-button.edit {
+  color: #6366f1;
+}
+
+.data-table-container .action-button.delete {
+  color: #ef4444;
+}

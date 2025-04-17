@@ -463,3 +463,19 @@
   margin-bottom: 15px;
   font-style: italic;
 }
+
+/* Debug OTP container styling */
+.debug-otp-container {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 10px 0 20px;
+  text-align: center;
+}
+
+.debug-otp-text {
+  color: #856404;
+  font-size: var(--smallfont);
+  margin: 0;
+}
