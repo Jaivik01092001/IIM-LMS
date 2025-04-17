@@ -45,6 +45,7 @@ p {
 
   --border-large-radius: 12px;
   --border-medium-radius: 10px;
+  --border-medium-small-radius: 8px;
   --border-small-radius: 4px;
 
   /* Shadows */
