@@ -133,6 +133,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     `menu-link ${isActive ? "active" : ""}`
                   }
                   end={item.exact}
+                  onClick={toggleSidebar}
                 >
                   {item.icon}
                   <span className="menu-text">{item.name}</span>
@@ -147,4 +148,4 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
