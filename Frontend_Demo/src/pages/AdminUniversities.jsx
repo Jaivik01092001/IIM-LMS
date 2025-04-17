@@ -1,26 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUniversitiesThunk, createUniversityThunk } from '../redux/admin/adminSlice';
+import { getRolesThunk } from '../redux/role/roleSlice';
 import Card from '../components/Card';
 import { useTranslation } from 'react-i18next';
 
 function AdminUniversities() {
   const dispatch = useDispatch();
-  const { universities, loading } = useSelector((state) => state.admin);
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const { universities, loading, error } = useSelector((state) => state.admin);
+  const { roles } = useSelector((state) => state.role);
+  const [form, setForm] = useState({ name: '', email: '', password: '', roleId: '', phoneNumber: '' });
+  const [formErrors, setFormErrors] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { t } = useTranslation();
 
   useEffect(() => {
     dispatch(getUniversitiesThunk());
+    dispatch(getRolesThunk());
   }, [dispatch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(createUniversityThunk(form));
-    setForm({ name: '', email: '', password: '' });
-    setShowForm(false);
+    setFormErrors({});
+
+    dispatch(createUniversityThunk(form))
+      .unwrap()
+      .then(() => {
+        setForm({ name: '', email: '', password: '', roleId: '', phoneNumber: '' });
+        setShowForm(false);
+      })
+      .catch((err) => {
+        if (err.errors) {
+          setFormErrors(err.errors);
+        }
+      });
   };
 
   const filteredUniversities = universities.filter(uni =>
@@ -93,8 +107,11 @@ function AdminUniversities() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={`appearance-none block w-full px-3 py-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 />
+                {formErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">{t('common.password')}</label>
@@ -106,6 +123,36 @@ function AdminUniversities() {
                   required
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
+              </div>
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">{t('common.phoneNumber') || 'Phone Number'}</label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  value={form.phoneNumber}
+                  onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                  required
+                  placeholder="+919876543210"
+                  className={`appearance-none block w-full px-3 py-2 border ${formErrors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                />
+                {formErrors.phoneNumber && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.phoneNumber}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="roleId" className="block text-sm font-medium text-gray-700 mb-1">{t('admin.assignRole') || 'Assign Role'}</label>
+                <select
+                  id="roleId"
+                  value={form.roleId}
+                  onChange={(e) => setForm({ ...form, roleId: e.target.value })}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">{t('admin.selectRole') || 'Select a role'}</option>
+                  {roles.map(role => (
+                    <option key={role._id} value={role._id}>{role.name}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">{t('admin.roleDescription') || 'Select a role to assign permissions to this university'}</p>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button

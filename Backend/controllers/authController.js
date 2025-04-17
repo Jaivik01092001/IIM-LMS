@@ -94,7 +94,12 @@ exports.verifyOTP = catchAsync(async (req, res, next) => {
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
-  // 5) Send response
+  // 5) Populate role reference if exists
+  if (user.roleRef) {
+    await user.populate('roleRef');
+  }
+
+  // 6) Send response
   res.json({
     status: 'success',
     accessToken,
@@ -104,7 +109,9 @@ exports.verifyOTP = catchAsync(async (req, res, next) => {
       name: user.name,
       email: user.email,
       phoneNumber: user.phoneNumber,
-      role: user.role
+      role: user.role,
+      roleRef: user.roleRef ? user.roleRef._id : null,
+      permissions: user.roleRef ? user.roleRef.permissions : null
     }
   });
 });
@@ -121,7 +128,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
   const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
 
   // 2) Check if user still exists
-  const user = await User.findById(decoded.id);
+  const user = await User.findById(decoded.id).populate('roleRef');
   if (!user || user.refreshToken !== refreshToken) {
     return next(new AppError('Invalid refresh token', 401));
   }
@@ -131,7 +138,16 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
 
   res.json({
     status: 'success',
-    accessToken
+    accessToken,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      roleRef: user.roleRef ? user.roleRef._id : null,
+      permissions: user.roleRef ? user.roleRef.permissions : null
+    }
   });
 });
 

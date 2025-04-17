@@ -35,8 +35,19 @@ const handleCastErrorDB = err => {
 };
 
 const handleDuplicateFieldsDB = err => {
-  const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  const message = `Duplicate field value: ${value}. Please use another value!`;
+  // Extract the field and value from the error
+  const field = Object.keys(err.keyPattern)[0];
+  const value = err.keyValue[field];
+
+  // Create a more user-friendly message based on the field
+  let message = `Duplicate field value: ${value}. Please use another value!`;
+
+  if (field === 'email') {
+    message = `The email address "${value}" is already in use.`;
+  } else if (field === 'phoneNumber') {
+    message = `The phone number "${value}" is already in use.`;
+  }
+
   return new AppError(message, 400);
 };
 

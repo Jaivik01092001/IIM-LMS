@@ -1,18 +1,24 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-exports.createEducator = async (req, res) => {
-  const { email, password, name } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const educator = new User({
-    email,
-    password: hashedPassword,
-    role: 'educator',
-    name,
-    university: req.user.id,
-  });
-  await educator.save();
-  res.json(educator);
+exports.createEducator = async (req, res, next) => {
+  try {
+    const { email, password, name, roleId, phoneNumber } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const educator = new User({
+      email,
+      password: hashedPassword,
+      role: 'educator',
+      name,
+      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+      university: req.user.id,
+      roleRef: roleId || undefined, // Assign role if provided
+    });
+    await educator.save();
+    res.json(educator);
+  } catch (error) {
+    next(error);
+  }
 };
 
 exports.getEducators = async (req, res) => {
