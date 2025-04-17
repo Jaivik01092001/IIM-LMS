@@ -285,9 +285,6 @@ const submitQuiz = async (req, res) => {
       enrolled.completedAt = new Date();
       enrolled.progress = 100;
 
-      // Generate certificate (simplified)
-      const certificateId = `${course._id}_${req.user.id}_${Date.now()}`;
-      course.certificateUrl = `https://cloudinary.com/certificate_${certificateId}`;
 
       await course.save();
     }
@@ -296,8 +293,7 @@ const submitQuiz = async (req, res) => {
       score,
       total,
       percentage,
-      passed,
-      certificateUrl: passed ? course.certificateUrl : null
+      passed
     });
   } catch (error) {
     console.error('Error submitting quiz:', error);

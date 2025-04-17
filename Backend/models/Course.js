@@ -14,7 +14,6 @@ const courseSchema = new mongoose.Schema({
     progress: { type: Number, default: 0 }, // 0-100%
     lastAccessedAt: { type: Date },
   }],
-  certificateUrl: { type: String }, // Cloudinary URL for certificate
   description: { type: String },
   duration: { type: String },
   level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
