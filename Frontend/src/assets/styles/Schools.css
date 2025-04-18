@@ -1,0 +1,269 @@
+.schools-container {
+  margin: 0 auto;
+}
+
+.schools-container .schools-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.schools-container .search-filter-container {
+  display: grid;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+  margin-bottom: 0rem;
+  grid-template-columns: 6fr 3fr 2fr 1fr;
+}
+
+.schools-container .search-input {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 250px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.schools-container .search-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.schools-container .filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.schools-container .filter-select {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 150px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.schools-container .filter-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.schools-container .create-account-btn {
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.schools-container .create-account-btn:hover {
+  background-color: #4f46e5;
+}
+
+/* Table styling */
+.schools-container .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.schools-container table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px; /* Ensures table doesn't get too compressed */
+}
+
+.schools-container th,
+.schools-container td {
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Owner cell styling */
+.schools-container .owner-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.schools-container .owner-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Action buttons container */
+.schools-container .action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* Responsive styles */
+@media (max-width: 1200px) {
+  .schools-container {
+    padding: 0 1.5rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 3fr 4fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 1130px) and (min-width: 900.5px) {
+  /* your styles here */
+  .schools-container {
+    padding: 0 1rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  .schools-container .create-account-btn {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar .user-name {
+    font-weight: 600;
+    font-size: var(--extrasmallfont);
+    color: var(--text-color);
+  }
+  .topbar .dashboard-title h1 {
+    font-size: var(--heading5);
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+  }
+  .schools-container .search-filter-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 1;
+  }
+
+  .schools-container .create-account-btn {
+    grid-column: span 1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .schools-container {
+    padding: 0 0.75rem;
+  }
+
+  .schools-container .schools-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .schools-container .search-filter-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 3;
+    min-width: 100%;
+  }
+
+  .schools-container .filter-select {
+    max-width: 100%;
+  }
+
+  .schools-container .create-account-btn {
+    justify-self: end;
+    max-width: fit-content;
+  }
+}
+
+@media (max-width: 576px) {
+  .schools-container {
+    padding: 0 0.5rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 2;
+    padding: 8px 12px;
+  }
+
+  .schools-container .filter-select {
+    padding: 8px 12px;
+  }
+
+  .schools-container .create-account-btn {
+    padding: 8px 16px;
+    grid-column: span 2;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 480px) {
+  .schools-container {
+    padding: 0 0.25rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 2fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 3;
+  }
+
+  .schools-container .filter-select {
+    min-width: 0;
+  }
+
+  .schools-container .create-account-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .schools-container .owner-avatar {
+    width: 24px;
+    height: 24px;
+  }
+}
