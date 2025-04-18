@@ -1,5 +1,4 @@
 .schools-container {
-  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -13,12 +12,12 @@
 }
 
 .schools-container .search-filter-container {
-  display: flex;
+  display: grid;
   align-items: center;
   gap: 1rem;
   flex-grow: 1;
   margin-bottom: 0rem;
-  flex-wrap: wrap;
+  grid-template-columns: 6fr 3fr 2fr 1fr;
 }
 
 .schools-container .search-input {
@@ -81,11 +80,34 @@
   background-color: #4f46e5;
 }
 
+/* Table styling */
+.schools-container .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.schools-container table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px; /* Ensures table doesn't get too compressed */
+}
+
+.schools-container th,
+.schools-container td {
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 /* Owner cell styling */
 .schools-container .owner-cell {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  white-space: nowrap;
 }
 
 .schools-container .owner-avatar {
@@ -103,10 +125,27 @@
 }
 
 /* Responsive styles */
-@media (max-width: 992px) {
+@media (max-width: 1200px) {
+  .schools-container {
+    padding: 0 1.5rem;
+  }
+
   .schools-container .search-filter-container {
-    flex-basis: 100%;
+    grid-template-columns: 3fr 4fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 1130px) and (min-width: 900.5px) {
+  /* your styles here */
+  .schools-container {
+    padding: 0 1rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 1fr 1fr;
     margin-bottom: 1rem;
+    width: 100%;
   }
 
   .schools-container .create-account-btn {
@@ -114,29 +153,117 @@
   }
 }
 
-@media (max-width: 768px) {
-  .schools-container .schools-header {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-width: 900px) {
+  .topbar .user-name {
+    font-weight: 600;
+    font-size: var(--extrasmallfont);
+    color: var(--text-color);
   }
-
+  .topbar .dashboard-title h1 {
+    font-size: var(--heading5);
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+  }
   .schools-container .search-filter-container {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
   }
 
-  .schools-container .filters {
-    margin-top: 0.5rem;
+  .schools-container .search-input {
+    grid-column: span 1;
   }
 
   .schools-container .create-account-btn {
-    margin-top: 1rem;
-    width: 100%;
+    grid-column: span 1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .schools-container {
+    padding: 0 0.75rem;
+  }
+
+  .schools-container .schools-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .schools-container .search-filter-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 3;
+    min-width: 100%;
+  }
+
+  .schools-container .filter-select {
+    max-width: 100%;
+  }
+
+  .schools-container .create-account-btn {
+    justify-self: end;
+    max-width: fit-content;
   }
 }
 
 @media (max-width: 576px) {
+  .schools-container {
+    padding: 0 0.5rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 2;
+    padding: 8px 12px;
+  }
+
   .schools-container .filter-select {
-    width: 100%;
+    padding: 8px 12px;
+  }
+
+  .schools-container .create-account-btn {
+    padding: 8px 16px;
+    grid-column: span 2;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 480px) {
+  .schools-container {
+    padding: 0 0.25rem;
+  }
+
+  .schools-container .search-filter-container {
+    grid-template-columns: 2fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .schools-container .search-input {
+    grid-column: span 3;
+  }
+
+  .schools-container .filter-select {
+    min-width: 0;
+  }
+
+  .schools-container .create-account-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .schools-container .owner-avatar {
+    width: 24px;
+    height: 24px;
   }
 }

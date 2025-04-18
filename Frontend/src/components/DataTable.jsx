@@ -1,22 +1,22 @@
-import React, { useState, useMemo } from 'react';
-import DataTable from 'react-data-table-component';
-import '../assets/styles/DataTable.css';
+import React, { useState, useMemo } from "react";
+import DataTable from "react-data-table-component";
+import "../assets/styles/DataTable.css";
 
-const DataTableComponent = ({ 
-  columns, 
-  data, 
-  title = "", 
+const DataTableComponent = ({
+  columns,
+  data,
+  title = "",
   searchPlaceholder = "Search...",
   showSearch = true,
-  pagination = true
+  pagination = true,
 }) => {
-  const [filterText, setFilterText] = useState('');
-  
+  const [filterText, setFilterText] = useState("");
+
   const filteredItems = useMemo(() => {
     if (!filterText) return data;
-    
-    return data.filter(item => {
-      return Object.keys(item).some(key => {
+
+    return data.filter((item) => {
+      return Object.keys(item).some((key) => {
         const value = item[key];
         if (value !== null && value !== undefined) {
           return String(value).toLowerCase().includes(filterText.toLowerCase());
@@ -32,7 +32,7 @@ const DataTableComponent = ({
         type="text"
         placeholder={searchPlaceholder}
         value={filterText}
-        onChange={e => setFilterText(e.target.value)}
+        onChange={(e) => setFilterText(e.target.value)}
         className="search-input"
       />
     </div>
@@ -56,4 +56,4 @@ const DataTableComponent = ({
   );
 };
 
-export default DataTableComponent; 
+export default DataTableComponent;
