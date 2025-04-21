@@ -116,7 +116,6 @@ function App() {
       console.log('Current user in localStorage:', localStorageUser);
     }
   }, [user]);
-
   return (
     <Layout>
       <div className="min-h-screen bg-gray-100">
