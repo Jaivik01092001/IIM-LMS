@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { hasPermission } from './utils/permissions';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Login from './pages/Login';
@@ -37,8 +39,9 @@ const ProtectedRoute = ({ children, role, permissions }) => {
   // Check role if specified
   if (role && user.role !== role) {
     // Special case for educators with course management permissions
-    if (role === 'admin' && user.role === 'educator' &&
-      permissions && permissions.some(perm => user.permissions?.[perm])) {
+    if (role === 'admin' && user.role === 'educator' && user.permissions !== null &&
+      permissions && permissions.some(perm => hasPermission(user, perm))) {
+      console.log('Allowing educator with admin permissions to access admin route');
       // Allow educators with specific permissions to access admin-like routes
       return children;
     }
@@ -47,19 +50,76 @@ const ProtectedRoute = ({ children, role, permissions }) => {
 
   // Check permissions if specified
   if (permissions && permissions.length > 0) {
-    const hasPermission = permissions.some(permission => user.permissions?.[permission]);
-    if (!hasPermission) return <Navigate to="/dashboard" />;
+    console.log('ProtectedRoute checking permissions:', { permissions, user });
+
+    // If permissions is null, user has no permissions
+    if (user.permissions === null) {
+      console.log('User has null permissions, redirecting to dashboard');
+      return <Navigate to="/dashboard" />;
+    }
+
+    const permissionResults = permissions.map(permission => ({
+      permission,
+      hasPermission: hasPermission(user, permission)
+    }));
+    console.log('Permission check results:', permissionResults);
+
+    const userHasPermission = permissionResults.some(result => result.hasPermission);
+    console.log('Final permission result:', userHasPermission);
+
+    if (!userHasPermission) {
+      console.log('User does not have required permissions, redirecting to dashboard');
+      return <Navigate to="/dashboard" />;
+    }
   }
 
   return children;
 };
 
+// Debug component to display user data
+const UserDebug = () => {
+  const { user } = useSelector((state) => state.auth);
+
+  if (process.env.NODE_ENV !== 'development') return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '0%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999,
+      background: 'rgba(0,0,0,0.8)',
+      color: 'white',
+      padding: '10px',
+      borderRadius: '5px',
+      maxWidth: '400px',
+      fontSize: '12px',
+      maxHeight: '200px',
+      overflow: 'auto'
+    }}>
+      <h4>User Debug Info</h4>
+      <pre>{JSON.stringify(user, null, 2)}</pre>
+    </div>
+  );
+};
+
 function App() {
   const { user } = useSelector((state) => state.auth);
+
+  // Force refresh localStorage user data to ensure it's up to date
+  useEffect(() => {
+    if (user) {
+      console.log('Current user in Redux state:', user);
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || 'null');
+      console.log('Current user in localStorage:', localStorageUser);
+    }
+  }, [user]);
 
   return (
     <Layout>
       <div className="min-h-screen bg-gray-100">
+        <UserDebug />
         <ToastContainer
           position="top-right"
           autoClose={3000}
