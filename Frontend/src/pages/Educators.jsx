@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTableComponent from "../components/DataTable";
 import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import "../assets/styles/Educators.css";
 
 const Educators = () => {
+  const navigate = useNavigate();
   const [tableData, setTableData] = useState([
     {
       id: 1,
@@ -107,14 +109,14 @@ const Educators = () => {
 
   // View handler
   const handleView = (row) => {
-    console.log(`View details for: ${row.professor}`);
-    // Here you would implement view functionality
+    navigate("/dashboard/admin/educator-details", { state: { educator: row } });
   };
 
   // Edit handler
   const handleEdit = (row) => {
-    console.log(`Edit clicked for: ${row.professor}`);
-    // Here you would implement edit functionality
+    navigate("/dashboard/admin/educator-account-form", {
+      state: { educator: row },
+    });
   };
 
   // Delete handler
@@ -220,7 +222,12 @@ const Educators = () => {
             <option>Status</option>
           </select>
 
-          <button className="create-account-btn">Create Account</button>
+          <button
+            className="create-account-btn"
+            onClick={() => navigate("/dashboard/admin/educator-account-form")}
+          >
+            Create Account
+          </button>
         </div>
       </div>
 

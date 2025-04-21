@@ -28,6 +28,8 @@ import Schools from "./pages/Schools.jsx";
 const SchoolDetails = React.lazy(() => import("./pages/SchoolDetails.jsx"));
 import SchoolAccountForm from "./pages/SchoolAccountForm.jsx";
 import Educators from "./pages/Educators.jsx";
+import EducatorDetails from "./pages/EducatorDetails.jsx";
+import EducatorAccountForm from "./pages/EducatorAccountForm.jsx";
 import Notification from "./pages/Notification.jsx";
 import Settings from "./pages/Settings.jsx";
 
@@ -80,6 +82,14 @@ const App = () => {
             <Route
               path="admin/educators"
               element={<Educators userType="admin" />}
+            />
+            <Route
+              path="admin/educator-details"
+              element={<EducatorDetails />}
+            />
+            <Route
+              path="admin/educator-account-form"
+              element={<EducatorAccountForm />}
             />
             <Route
               path="admin/notification"
