@@ -8,8 +8,22 @@ export const createEducatorThunk = createAsyncThunk('university/createEducator',
     showSuccessToast(data.msg || 'Educator created successfully');
     return data;
   } catch (error) {
-    showErrorToast(error.response?.data?.msg || 'Failed to create educator');
-    return rejectWithValue(error.response?.data?.msg || 'Failed to create educator');
+    // Check for specific error messages from the backend
+    const errorMessage = error.response?.data?.message || 'Failed to create educator';
+    const fieldErrors = error.response?.data?.errors;
+
+    // If we have field-specific errors, show the first one
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      const firstErrorField = Object.keys(fieldErrors)[0];
+      showErrorToast(fieldErrors[firstErrorField]);
+    } else {
+      showErrorToast(errorMessage);
+    }
+
+    return rejectWithValue({
+      message: errorMessage,
+      errors: fieldErrors
+    });
   }
 });
 

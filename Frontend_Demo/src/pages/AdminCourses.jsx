@@ -3,13 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getCoursesThunk, createCourseThunk, deleteCourseThunk } from '../redux/admin/adminSlice';
 import Card from '../components/Card';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Modal from '../components/Modal';
 
 function AdminCourses() {
   const dispatch = useDispatch();
   const { courses, loading } = useSelector((state) => state.admin);
   const { user } = useSelector((state) => state.auth);
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [courseData, setCourseData] = useState({
@@ -89,15 +90,17 @@ function AdminCourses() {
             {t('admin.courseManagement')}
           </h1>
           <div className="flex flex-col space-y-3 md:flex-row md:space-y-0 md:space-x-3">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              {t('admin.createCourse')}
-            </button>
+            {(user.role === 'admin' || user.permissions?.['create_course']) && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                {t('admin.createCourse')}
+              </button>
+            )}
             <div className="relative w-full md:w-64">
               <input
                 type="text"
@@ -123,16 +126,18 @@ function AdminCourses() {
             <h3 className="mt-2 text-sm font-medium text-gray-900">{t('admin.noCourses')}</h3>
             <p className="mt-1 text-sm text-gray-500">{t('admin.addCourseToGetStarted')}</p>
             <div className="mt-6">
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                {t('admin.createCourse')}
-              </button>
+              {(user.role === 'admin' || user.permissions?.['create_course']) && (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  {t('admin.createCourse')}
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -175,17 +180,19 @@ function AdminCourses() {
                   </div>
                   <div className="flex justify-between mt-4">
                     <Link
-                      to={`/admin/course/${course._id}`}
+                      to={`${location.pathname.includes('/admin/') ? '/admin' : location.pathname.includes('/educator/') ? '/educator' : '/university'}/course/${course._id}`}
                       className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none"
                     >
                       {t('admin.manage')}
                     </Link>
-                    <button
-                      onClick={() => handleDeleteCourse(course._id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-red-600 text-xs font-medium rounded text-red-600 bg-white hover:bg-red-50 focus:outline-none"
-                    >
-                      {t('admin.delete')}
-                    </button>
+                    {(user.role === 'admin' || user.permissions?.['delete_course']) && (
+                      <button
+                        onClick={() => handleDeleteCourse(course._id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-red-600 text-xs font-medium rounded text-red-600 bg-white hover:bg-red-50 focus:outline-none"
+                      >
+                        {t('admin.delete')}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

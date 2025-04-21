@@ -10,21 +10,27 @@ exports.getUniversities = async (req, res) => {
   res.json(universities);
 };
 
-exports.createUniversity = async (req, res) => {
-  const { name, email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const universityUser = new User({
-    email,
-    password: hashedPassword,
-    role: 'university',
-    name,
-  });
-  await universityUser.save();
-  const university = new University({ name, educators: [] });
-  universityUser.university = university._id;
-  await university.save();
-  await universityUser.save();
-  res.json(university);
+exports.createUniversity = async (req, res, next) => {
+  try {
+    const { name, email, password, roleId, phoneNumber } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const universityUser = new User({
+      email,
+      password: hashedPassword,
+      role: 'university',
+      name,
+      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+      roleRef: roleId || undefined, // Assign role if provided
+    });
+    await universityUser.save();
+    const university = new University({ name, educators: [] });
+    universityUser.university = university._id;
+    await university.save();
+    await universityUser.save();
+    res.json(university);
+  } catch (error) {
+    next(error);
+  }
 };
 
 exports.updateUniversity = async (req, res) => {
