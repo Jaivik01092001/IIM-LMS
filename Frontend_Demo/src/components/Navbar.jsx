@@ -73,13 +73,16 @@ function Navbar() {
                 <Link to="/admin/roles" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('admin.roleManagement') || 'Roles & Permissions'}
                 </Link>
+                <Link to="/admin/staff" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  {t('admin.staffManagement') || 'Staff Management'}
+                </Link>
                 <Link to="/admin/pages" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  {t('admin.cmsBuilder')}
+                  {t('admin.cmsBuilder') || 'CMS Builder'}
                 </Link>
               </>
             )}
             <Link to="/settings" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              {t('common.settings')}
+              {t('common.settings') || 'Settings'}
             </Link>
             <div className="ml-2">
               <LanguageSelector />
@@ -88,7 +91,7 @@ function Navbar() {
               onClick={handleLogout}
               className="text-white bg-red-500 hover:bg-red-600 ml-2 px-4 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              {t('common.logout')}
+              {t('common.logout') || 'Logout'}
             </button>
           </div>
 
@@ -162,13 +165,16 @@ function Navbar() {
               <Link to="/admin/roles" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
                 {t('admin.roleManagement') || 'Roles & Permissions'}
               </Link>
+              <Link to="/admin/staff" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
+                {t('admin.staffManagement') || 'Staff Management'}
+              </Link>
               <Link to="/admin/pages" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-                {t('admin.cmsBuilder')}
+                {t('admin.cmsBuilder') || 'CMS Builder'}
               </Link>
             </>
           )}
           <Link to="/settings" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
-            {t('common.settings')}
+            {t('common.settings') || 'Settings'}
           </Link>
           <div className="px-3 py-2">
             <LanguageSelector />
@@ -177,7 +183,7 @@ function Navbar() {
             onClick={handleLogout}
             className="text-white bg-red-500 hover:bg-red-600 w-full text-left px-3 py-2 rounded-md text-base font-medium mt-2"
           >
-            {t('common.logout')}
+            {t('common.logout') || 'Logout'}
           </button>
         </div>
       </div>

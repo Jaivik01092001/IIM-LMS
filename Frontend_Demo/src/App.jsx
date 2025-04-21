@@ -23,6 +23,7 @@ import AdminCourses from './pages/AdminCourses';
 import AdminCourseDetail from './pages/AdminCourseDetail';
 import AdminQuizzes from './pages/AdminQuizzes';
 import AdminRoles from './pages/AdminRoles';
+import AdminStaff from './pages/AdminStaff';
 import CmsPages from './pages/CmsPages';
 import CmsBuilder from './pages/CmsBuilder';
 import Layout from './components/Layout';
@@ -99,6 +100,7 @@ function App() {
           <Route path="/university/course/:id" element={<ProtectedRoute role="university" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourseDetail /></ProtectedRoute>} />
           <Route path="/admin/quizzes" element={<ProtectedRoute role="admin"><AdminQuizzes /></ProtectedRoute>} />
           <Route path="/admin/roles" element={<ProtectedRoute role="admin"><AdminRoles /></ProtectedRoute>} />
+          <Route path="/admin/staff" element={<ProtectedRoute role="admin"><AdminStaff /></ProtectedRoute>} />
           <Route path="/admin/pages" element={<ProtectedRoute role="admin"><CmsPages /></ProtectedRoute>} />
           <Route path="/admin/cms/create" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />
           <Route path="/admin/cms/edit/:id" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />

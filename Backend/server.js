@@ -69,7 +69,7 @@ app.options('*', cors({
 // ==========================
 // 📦 Dynamic Routes Import
 // ==========================
-const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms', 'module', 'certificate', 'role'].reduce((acc, route) => {
+const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms', 'module', 'certificate', 'role', 'staff'].reduce((acc, route) => {
   try {
     acc[route] = require(`./routes/${route}Routes`);
     if (typeof acc[route] !== 'function') {
