@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getEducatorsThunk, createEducatorThunk, deleteEducatorThunk } from '../redux/university/universitySlice';
+import { getEducatorsThunk, createEducatorThunk, deleteEducatorThunk, updateEducatorThunk } from '../redux/university/universitySlice';
 import { getRolesThunk } from '../redux/role/roleSlice';
 import Card from '../components/Card';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,8 @@ function UniversityEducators() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentEducatorId, setCurrentEducatorId] = useState(null);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -25,17 +27,62 @@ function UniversityEducators() {
     e.preventDefault();
     setFormErrors({});
 
-    dispatch(createEducatorThunk(form))
-      .unwrap()
-      .then(() => {
-        setForm({ name: '', email: '', password: '', roleId: '', phoneNumber: '' });
-        setShowForm(false);
-      })
-      .catch((err) => {
-        if (err.errors) {
-          setFormErrors(err.errors);
-        }
-      });
+    if (isEditMode) {
+      const updatedData = {
+        id: currentEducatorId,
+        name: form.name,
+        email: form.email
+      };
+
+      // Only include roleId if it's different from the current role or not empty
+      if (form.roleId) {
+        updatedData.roleId = form.roleId;
+      }
+
+      dispatch(updateEducatorThunk(updatedData))
+        .unwrap()
+        .then(() => {
+          resetForm();
+          // Refresh educator list to show updated data
+          dispatch(getEducatorsThunk());
+        })
+        .catch((err) => {
+          if (err.errors) {
+            setFormErrors(err.errors);
+          }
+        });
+    } else {
+      dispatch(createEducatorThunk(form))
+        .unwrap()
+        .then(() => {
+          resetForm();
+        })
+        .catch((err) => {
+          if (err.errors) {
+            setFormErrors(err.errors);
+          }
+        });
+    }
+  };
+
+  const resetForm = () => {
+    setForm({ name: '', email: '', password: '', roleId: '', phoneNumber: '' });
+    setShowForm(false);
+    setIsEditMode(false);
+    setCurrentEducatorId(null);
+  };
+
+  const handleEdit = (educator) => {
+    setCurrentEducatorId(educator._id);
+    setForm({
+      name: educator.name,
+      email: educator.email,
+      password: '',
+      roleId: educator.roleRef || '',
+      phoneNumber: educator.phoneNumber || ''
+    });
+    setIsEditMode(true);
+    setShowForm(true);
   };
 
   const handleDelete = (id) => {
@@ -82,7 +129,10 @@ function UniversityEducators() {
               </div>
             </div>
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => {
+                resetForm();
+                setShowForm(!showForm);
+              }}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -95,7 +145,9 @@ function UniversityEducators() {
 
         {showForm && (
           <div className="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">{t('university.addEducator')}</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              {isEditMode ? t('university.editEducator') : t('university.addEducator')}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">{t('common.name')}</label>
@@ -108,74 +160,129 @@ function UniversityEducators() {
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
+
+              {isEditMode ? (
+                <>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">{t('common.email')}</label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      disabled
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 bg-gray-100 text-gray-500 sm:text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{t('common.emailCannotBeChanged') || 'Email address cannot be changed'}</p>
+                  </div>
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">{t('common.phoneNumber') || 'Phone Number'}</label>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      value={form.phoneNumber}
+                      disabled
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 bg-gray-100 text-gray-500 sm:text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{t('common.phoneNumberCannotBeChanged') || 'Phone number cannot be changed'}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">{t('common.email')}</label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      required
+                      className={`appearance-none block w-full px-3 py-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    />
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">{t('common.password')}</label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      required
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">{t('common.phoneNumber') || 'Phone Number'}</label>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      value={form.phoneNumber}
+                      onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                      required
+                      placeholder="+919876543210"
+                      className={`appearance-none block w-full px-3 py-2 border ${formErrors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    />
+                    {formErrors.phoneNumber && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.phoneNumber}</p>
+                    )}
+                  </div>
+                </>
+              )}
+
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">{t('common.email')}</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                  className={`appearance-none block w-full px-3 py-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                />
-                {formErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
-                )}
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">{t('common.password')}</label>
-                <input
-                  id="password"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">{t('common.phoneNumber') || 'Phone Number'}</label>
-                <input
-                  id="phoneNumber"
-                  type="tel"
-                  value={form.phoneNumber}
-                  onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
-                  required
-                  placeholder="+919876543210"
-                  className={`appearance-none block w-full px-3 py-2 border ${formErrors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                />
-                {formErrors.phoneNumber && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.phoneNumber}</p>
-                )}
-              </div>
-              <div>
-                <label htmlFor="roleId" className="block text-sm font-medium text-gray-700 mb-1">{t('admin.assignRole') || 'Assign Role'}</label>
+                <label htmlFor="roleId" className="block text-sm font-medium text-gray-700 mb-1">
+                  {isEditMode
+                    ? <span className="text-blue-700 font-semibold">{t('admin.assignRole') || 'Assign Role'}</span>
+                    : t('admin.assignRole') || 'Assign Role'}
+                </label>
                 <select
                   id="roleId"
                   value={form.roleId}
                   onChange={(e) => setForm({ ...form, roleId: e.target.value })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm ${isEditMode
+                    ? 'border-blue-400 bg-blue-50 focus:ring-blue-500 focus:border-blue-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    }`}
                 >
                   <option value="">{t('common.selectRole') || 'Select a role'}</option>
                   {roles.map(role => (
                     <option key={role._id} value={role._id}>{role.name}</option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-gray-500">{t('admin.roleDescription') || 'Select a role to assign permissions to this educator'}</p>
+                <p className={`mt-1 text-xs ${isEditMode ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                  {isEditMode
+                    ? (t('admin.updateRoleDescription') || 'Update the role to change permissions for this educator')
+                    : (t('admin.roleDescription') || 'Select a role to assign permissions to this educator')}
+                </p>
               </div>
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={resetForm}
+                  disabled={loading}
+                  className={`px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={loading}
+                  className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
-                  {t('common.create')}
+                  {loading ? (
+                    <div className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {isEditMode ? t('common.updating') : t('common.creating')}
+                    </div>
+                  ) : (
+                    isEditMode ? t('common.update') : t('common.create')
+                  )}
                 </button>
               </div>
             </form>
@@ -214,11 +321,26 @@ function UniversityEducators() {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900">{educator.name}</h3>
                   </div>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-600 mb-2">
                     <span className="font-medium text-gray-700">{t('common.email')}:</span> {educator.email}
                   </p>
+                  {educator.phoneNumber && (
+                    <p className="text-gray-600 mb-2">
+                      <span className="font-medium text-gray-700">{t('common.phoneNumber')}:</span> {educator.phoneNumber}
+                    </p>
+                  )}
+                  {educator.roleRef && (
+                    <p className="text-gray-600 mb-4">
+                      <span className="font-medium text-gray-700">{t('common.role')}:</span> {
+                        roles.find(role => role._id === educator.roleRef)?.name || t('common.unknownRole')
+                      }
+                    </p>
+                  )}
                   <div className="flex justify-end space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(educator)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
                       {t('common.edit')}
                     </button>
                     <button
@@ -248,16 +370,18 @@ function UniversityEducators() {
                 <div className="sm:flex sm:items-start">
                   <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                     <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                       {t('university.deleteEducator')}
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        {t('university.deleteEducatorConfirmation')}
+                        {t('university.deleteEducatorConfirmation', {
+                          name: educators.find(e => e._id === confirmDelete)?.name || ''
+                        })}
                       </p>
                     </div>
                   </div>
@@ -267,14 +391,26 @@ function UniversityEducators() {
                 <button
                   type="button"
                   onClick={() => handleDelete(confirmDelete)}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  disabled={loading}
+                  className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
-                  {t('common.delete')}
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {t('common.deleting')}
+                    </>
+                  ) : (
+                    t('common.delete')
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(null)}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  disabled={loading}
+                  className={`mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
                   {t('common.cancel')}
                 </button>
