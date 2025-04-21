@@ -14,7 +14,8 @@ import {
   FaUserShield,
   FaUserGraduate,
   FaUserTie,
-  FaCertificate
+  FaCertificate,
+  FaUsers
 } from 'react-icons/fa';
 
 function Sidebar({ isOpen, toggleSidebar }) {
@@ -142,9 +143,14 @@ function Sidebar({ isOpen, toggleSidebar }) {
           text: t('admin.roleManagement') || 'Roles & Permissions'
         },
         {
+          to: '/admin/staff',
+          icon: <FaUsers className="w-5 h-5" />,
+          text: t('admin.staffManagement') || 'Staff Management'
+        },
+        {
           to: '/admin/pages',
           icon: <FaFileAlt className="w-5 h-5" />,
-          text: t('admin.cmsBuilder')
+          text: t('admin.cmsBuilder') || 'CMS Builder'
         }
       );
     }
@@ -153,7 +159,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     links.push({
       to: '/settings',
       icon: <FaCog className="w-5 h-5" />,
-      text: t('common.settings')
+      text: t('common.settings') || 'Settings'
     });
 
     return links;

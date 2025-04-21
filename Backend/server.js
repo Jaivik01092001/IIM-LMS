@@ -47,11 +47,17 @@ app.use(xss());            // Against XSS
 // ==========================
 // 🌐 CORS (must come BEFORE routes & body parsing!)
 // ==========================
-app.use(cors({
-  // origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
-  origin: ['http://localhost:5173', 'https://iim-lms-1.onrender.com'],
-  credentials: true,
-}));
+app.use(
+  cors({
+    // origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
+    origin: [
+      "http://localhost:5173",
+      "https://iim-lms-1.onrender.com",
+      "https://iim-lms-frontend.onrender.com",
+    ],
+    credentials: true,
+  })
+);
 
 app.options('*', cors({
   // origin: ['http://localhost:5173', 'https://iim-lms-frontend.onrender.com'],
@@ -63,7 +69,7 @@ app.options('*', cors({
 // ==========================
 // 📦 Dynamic Routes Import
 // ==========================
-const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms', 'module', 'certificate', 'role'].reduce((acc, route) => {
+const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms', 'module', 'certificate', 'role', 'staff'].reduce((acc, route) => {
   try {
     acc[route] = require(`./routes/${route}Routes`);
     if (typeof acc[route] !== 'function') {
