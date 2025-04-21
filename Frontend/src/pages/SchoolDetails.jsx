@@ -1,0 +1,94 @@
+import React from "react";
+import { useLocation } from "react-router-dom";
+import "../assets/styles/SchoolDetails.css";
+import { LuSchool } from "react-icons/lu";
+const SchoolDetails = () => {
+  const location = useLocation();
+  const school = location.state?.school;
+
+  if (!school) {
+    return <div className="school-details-error">School details not found</div>;
+  }
+
+  return (
+    <div className="school-details-page">
+      <div className="educator-header">
+        <div className="educator-info">
+          <img
+            src={school.ownerAvatar}
+            alt={school.owner}
+            className="educator-avatar"
+          />
+          <div className="educator-text">
+            <h1>{school.owner}</h1>
+            <span className="category">Category: {school.category}</span>
+          </div>
+        </div>
+        <div className="school-badge">
+          <LuSchool size={34} />
+          <div className="school-text">
+            <div className="school-name">{school.school}</div>
+            <div className="school-type">School/University</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="details-grid">
+        <div className="details-section">
+          <h2>Information</h2>
+          <div className="info-content">
+            <div className="info-row">
+              <label>Email:</label>
+              <span>{school.email || "jacksonchristian@gmail.com"}</span>
+            </div>
+            <div className="info-row">
+              <label>Phone:</label>
+              <span>{school.mobile}</span>
+            </div>
+            <div className="info-row">
+              <label>Address:</label>
+              <span>
+                Jay Ambenagar Rd, opp. Sardar Patel Institute,
+                <br />
+                Patel Society, Jai Ambe Nagar, Thaltej, Ahmedabad
+              </span>
+            </div>
+            <div className="info-row">
+              <label>Zipcode:</label>
+              <span>380054</span>
+            </div>
+            <div className="info-row">
+              <label>State:</label>
+              <span>Gujarat</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="details-section">
+          <h2>Credentials</h2>
+          <div className="info-content">
+            <div className="info-row">
+              <label>Phone:</label>
+              <span>+91 98765 43210</span>
+            </div>
+            <div className="info-row">
+              <label>Email:</label>
+              <span>udgamschoolforchildren@gmail.com</span>
+            </div>
+            <div className="info-row">
+              <label>Password:</label>
+              <span>Udgamschool@43210</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="action-buttons">
+        <button className="delete-btn">Delete</button>
+        <button className="edit-btn">Edit</button>
+      </div>
+    </div>
+  );
+};
+
+export default SchoolDetails;

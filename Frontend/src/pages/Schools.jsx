@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTableComponent from "../components/DataTable";
 import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
 const Schools = () => {
+  const navigate = useNavigate();
   const [tableData, setTableData] = useState([
     {
       id: 1,
@@ -152,8 +154,7 @@ const Schools = () => {
 
   // View handler
   const handleView = (row) => {
-    console.log(`View details for: ${row.school}`);
-    // Here you would implement view functionality
+    navigate("/dashboard/admin/school-details", { state: { school: row } });
   };
 
   // Edit handler

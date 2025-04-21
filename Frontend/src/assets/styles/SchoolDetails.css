@@ -1,0 +1,199 @@
+.school-details-page {
+  background-color: var(--bg-gray);
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.breadcrumb {
+  font-size: var(--basefont);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.school-details-card {
+  background-color: var(--bg-white);
+  border-radius: var(--border-large-radius);
+
+  box-shadow: var(--box-shadow-light);
+}
+
+.educator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-gray);
+  background-color: var(--primary-color);
+  padding: 2rem;
+  border-radius: var(--border-large-radius);
+}
+.educator-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.educator-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.educator-text h1 {
+  font-size: var(--heading4);
+  color: var(--color-white);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.category {
+  font-size: var(--basefont);
+  color: var(--color-white);
+}
+
+.school-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--bg-gray);
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-medium-radius);
+}
+
+.school-icon {
+  font-size: 24px;
+}
+
+.school-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.school-name {
+  font-size: var(--basefont);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.school-type {
+  font-size: var(--smallfont);
+  color: var(--text-gray);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.details-section {
+  background-color: var(--bg-white);
+  border-radius: var(--border-medium-small-radius);
+  border: 1px solid var(--border-gray);
+  padding: 1rem;
+}
+
+.details-section h2 {
+  font-size: var(--heading6);
+  color: var(--text-color);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--dark-gray);
+  padding-bottom: 1rem;
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.info-row label {
+  min-width: 80px;
+  font-size: var(--basefont);
+  color: var(--text-gray);
+  font-weight: 500;
+}
+
+.info-row span {
+  font-size: var(--basefont);
+  color: var(--text-color);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.delete-btn,
+.edit-btn {
+  padding: 0.75rem 2rem;
+  border-radius: var(--border-medium-small-radius);
+  font-size: var(--basefont);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-btn {
+  background-color: transparent;
+  border: 1px solid #d93025;
+  color: #d93025;
+}
+
+.edit-btn {
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.delete-btn:hover {
+  background-color: #fce8e8;
+}
+
+.edit-btn:hover {
+  background-color: var(--primary-light-color);
+}
+
+@media (max-width: 1130px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .educator-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .school-badge {
+    width: 100%;
+  }
+}
+
+@media (max-width: 500px) {
+  .educator-header {
+    display: grid;
+
+    gap: 1rem;
+  }
+
+  .school-badge {
+    width: 100%;
+  }
+}
