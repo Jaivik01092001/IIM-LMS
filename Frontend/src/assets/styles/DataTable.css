@@ -80,7 +80,7 @@
 }
 
 .data-table-container .status-indicator::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -114,9 +114,11 @@
 }
 
 .data-table-container .action-button.edit {
-  color: #6366f1;
+  background-color: #eef2ff;
+  color: var(--primary-color);
 }
 
 .data-table-container .action-button.delete {
-  color: #ef4444;
+  background-color: #fef2f2;
+  color: #dc2626;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import DataTableComponent from "../components/DataTable";
-import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
 const Schools = () => {
@@ -150,6 +150,12 @@ const Schools = () => {
     setTableData(updatedData);
   };
 
+  // View handler
+  const handleView = (row) => {
+    console.log(`View details for: ${row.school}`);
+    // Here you would implement view functionality
+  };
+
   // Edit handler
   const handleEdit = (row) => {
     console.log(`Edit clicked for: ${row.school}`);
@@ -212,6 +218,12 @@ const Schools = () => {
       cell: (row) => (
         <div className="action-buttons">
           <button
+            className="action-button view"
+            onClick={() => handleView(row)}
+          >
+            <FaEye />
+          </button>
+          <button
             className="action-button edit"
             onClick={() => handleEdit(row)}
           >
@@ -225,7 +237,7 @@ const Schools = () => {
           </button>
         </div>
       ),
-      width: "100px",
+      width: "150px",
       center: true,
     },
   ];
