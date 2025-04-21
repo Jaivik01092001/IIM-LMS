@@ -52,9 +52,9 @@ function Sidebar({ isOpen, toggleSidebar }) {
       );
 
       // Add course management link if educator has the permission
-      if (userPermissions['COURSE_MANAGEMENT.CREATE_COURSE'] ||
-          userPermissions['COURSE_MANAGEMENT.EDIT_COURSE'] ||
-          userPermissions['COURSE_MANAGEMENT.DELETE_COURSE']) {
+      if (userPermissions['create_course'] ||
+        userPermissions['edit_course'] ||
+        userPermissions['delete_course']) {
         links.push({
           to: '/educator/courses',
           icon: <FaBook className="w-5 h-5" />,
@@ -77,9 +77,9 @@ function Sidebar({ isOpen, toggleSidebar }) {
       );
 
       // Add course management link if university has the permission
-      if (userPermissions['COURSE_MANAGEMENT.CREATE_COURSE'] ||
-          userPermissions['COURSE_MANAGEMENT.EDIT_COURSE'] ||
-          userPermissions['COURSE_MANAGEMENT.DELETE_COURSE']) {
+      if (userPermissions['create_course'] ||
+        userPermissions['edit_course'] ||
+        userPermissions['delete_course']) {
         links.push({
           to: '/university/courses',
           icon: <FaBook className="w-5 h-5" />,
@@ -150,9 +150,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full bg-gradient-to-b from-blue-600 to-indigo-800 text-white w-64 z-30 transform sidebar-transition shadow-xl ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+        className={`fixed top-0 left-0 h-full bg-gradient-to-b from-blue-600 to-indigo-800 text-white w-64 z-30 transform sidebar-transition shadow-xl ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          }`}
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-blue-500">
@@ -188,11 +187,10 @@ function Sidebar({ isOpen, toggleSidebar }) {
               <li key={index}>
                 <Link
                   to={link.to}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    location.pathname === link.to
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${location.pathname === link.to
                       ? 'bg-blue-700 text-white'
                       : 'text-blue-100 hover:bg-blue-700'
-                  }`}
+                    }`}
                 >
                   {link.icon}
                   <span className="ml-3">{link.text}</span>

@@ -90,7 +90,7 @@ function AdminCourses() {
             {t('admin.courseManagement')}
           </h1>
           <div className="flex flex-col space-y-3 md:flex-row md:space-y-0 md:space-x-3">
-            {(user.role === 'admin' || user.permissions?.['COURSE_MANAGEMENT.CREATE_COURSE']) && (
+            {(user.role === 'admin' || user.permissions?.['create_course']) && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -126,7 +126,7 @@ function AdminCourses() {
             <h3 className="mt-2 text-sm font-medium text-gray-900">{t('admin.noCourses')}</h3>
             <p className="mt-1 text-sm text-gray-500">{t('admin.addCourseToGetStarted')}</p>
             <div className="mt-6">
-              {(user.role === 'admin' || user.permissions?.['COURSE_MANAGEMENT.CREATE_COURSE']) && (
+              {(user.role === 'admin' || user.permissions?.['create_course']) && (
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(true)}
@@ -185,7 +185,7 @@ function AdminCourses() {
                     >
                       {t('admin.manage')}
                     </Link>
-                    {(user.role === 'admin' || user.permissions?.['COURSE_MANAGEMENT.DELETE_COURSE']) && (
+                    {(user.role === 'admin' || user.permissions?.['delete_course']) && (
                       <button
                         onClick={() => handleDeleteCourse(course._id)}
                         className="inline-flex items-center px-3 py-1.5 border border-red-600 text-xs font-medium rounded text-red-600 bg-white hover:bg-red-50 focus:outline-none"

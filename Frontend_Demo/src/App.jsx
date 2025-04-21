@@ -37,7 +37,7 @@ const ProtectedRoute = ({ children, role, permissions }) => {
   if (role && user.role !== role) {
     // Special case for educators with course management permissions
     if (role === 'admin' && user.role === 'educator' &&
-        permissions && permissions.some(perm => user.permissions?.[perm])) {
+      permissions && permissions.some(perm => user.permissions?.[perm])) {
       // Allow educators with specific permissions to access admin-like routes
       return children;
     }
@@ -75,32 +75,32 @@ function App() {
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/my-learning" element={<ProtectedRoute role="educator"><MyLearning /></ProtectedRoute>} />
-        <Route path="/content" element={<ProtectedRoute role="educator"><ContentPage /></ProtectedRoute>} />
-        <Route path="/my-content" element={<ProtectedRoute role="educator"><MyContent /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/course/:id" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
-        <Route path="/course/:id/learn" element={<ProtectedRoute><CourseLearning /></ProtectedRoute>} />
-        <Route path="/course/:id/quiz" element={<ProtectedRoute><CourseQuiz /></ProtectedRoute>} />
-        <Route path="/my-certificates" element={<ProtectedRoute role="educator"><MyCertificates /></ProtectedRoute>} />
-        <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
-        <Route path="/verify-certificate" element={<VerifyCertificate />} />
-        <Route path="/university/educators" element={<ProtectedRoute role="university"><UniversityEducators /></ProtectedRoute>} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/universities" element={<ProtectedRoute role="admin"><AdminUniversities /></ProtectedRoute>} />
-        <Route path="/admin/content" element={<ProtectedRoute role="admin"><AdminContent /></ProtectedRoute>} />
-        <Route path="/admin/courses" element={<ProtectedRoute role="admin"><AdminCourses /></ProtectedRoute>} />
-        <Route path="/educator/courses" element={<ProtectedRoute role="educator" permissions={['COURSE_MANAGEMENT.CREATE_COURSE', 'COURSE_MANAGEMENT.EDIT_COURSE', 'COURSE_MANAGEMENT.DELETE_COURSE']}><AdminCourses /></ProtectedRoute>} />
-        <Route path="/university/courses" element={<ProtectedRoute role="university" permissions={['COURSE_MANAGEMENT.CREATE_COURSE', 'COURSE_MANAGEMENT.EDIT_COURSE', 'COURSE_MANAGEMENT.DELETE_COURSE']}><AdminCourses /></ProtectedRoute>} />
-        <Route path="/admin/course/:id" element={<ProtectedRoute role="admin"><AdminCourseDetail /></ProtectedRoute>} />
-        <Route path="/educator/course/:id" element={<ProtectedRoute role="educator" permissions={['COURSE_MANAGEMENT.CREATE_COURSE', 'COURSE_MANAGEMENT.EDIT_COURSE', 'COURSE_MANAGEMENT.DELETE_COURSE']}><AdminCourseDetail /></ProtectedRoute>} />
-        <Route path="/university/course/:id" element={<ProtectedRoute role="university" permissions={['COURSE_MANAGEMENT.CREATE_COURSE', 'COURSE_MANAGEMENT.EDIT_COURSE', 'COURSE_MANAGEMENT.DELETE_COURSE']}><AdminCourseDetail /></ProtectedRoute>} />
-        <Route path="/admin/quizzes" element={<ProtectedRoute role="admin"><AdminQuizzes /></ProtectedRoute>} />
-        <Route path="/admin/roles" element={<ProtectedRoute role="admin"><AdminRoles /></ProtectedRoute>} />
-        <Route path="/admin/pages" element={<ProtectedRoute role="admin"><CmsPages /></ProtectedRoute>} />
-        <Route path="/admin/cms/create" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />
-        <Route path="/admin/cms/edit/:id" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/my-learning" element={<ProtectedRoute role="educator"><MyLearning /></ProtectedRoute>} />
+          <Route path="/content" element={<ProtectedRoute role="educator"><ContentPage /></ProtectedRoute>} />
+          <Route path="/my-content" element={<ProtectedRoute role="educator"><MyContent /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/course/:id" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+          <Route path="/course/:id/learn" element={<ProtectedRoute><CourseLearning /></ProtectedRoute>} />
+          <Route path="/course/:id/quiz" element={<ProtectedRoute><CourseQuiz /></ProtectedRoute>} />
+          <Route path="/my-certificates" element={<ProtectedRoute role="educator"><MyCertificates /></ProtectedRoute>} />
+          <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
+          <Route path="/verify-certificate" element={<VerifyCertificate />} />
+          <Route path="/university/educators" element={<ProtectedRoute role="university"><UniversityEducators /></ProtectedRoute>} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/universities" element={<ProtectedRoute role="admin"><AdminUniversities /></ProtectedRoute>} />
+          <Route path="/admin/content" element={<ProtectedRoute role="admin"><AdminContent /></ProtectedRoute>} />
+          <Route path="/admin/courses" element={<ProtectedRoute role="admin"><AdminCourses /></ProtectedRoute>} />
+          <Route path="/educator/courses" element={<ProtectedRoute role="educator" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourses /></ProtectedRoute>} />
+          <Route path="/university/courses" element={<ProtectedRoute role="university" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourses /></ProtectedRoute>} />
+          <Route path="/admin/course/:id" element={<ProtectedRoute role="admin"><AdminCourseDetail /></ProtectedRoute>} />
+          <Route path="/educator/course/:id" element={<ProtectedRoute role="educator" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourseDetail /></ProtectedRoute>} />
+          <Route path="/university/course/:id" element={<ProtectedRoute role="university" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourseDetail /></ProtectedRoute>} />
+          <Route path="/admin/quizzes" element={<ProtectedRoute role="admin"><AdminQuizzes /></ProtectedRoute>} />
+          <Route path="/admin/roles" element={<ProtectedRoute role="admin"><AdminRoles /></ProtectedRoute>} />
+          <Route path="/admin/pages" element={<ProtectedRoute role="admin"><CmsPages /></ProtectedRoute>} />
+          <Route path="/admin/cms/create" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />
+          <Route path="/admin/cms/edit/:id" element={<ProtectedRoute role="admin"><CmsBuilder /></ProtectedRoute>} />
         </Routes>
       </div>
     </Layout>
