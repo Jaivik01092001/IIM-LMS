@@ -1,6 +1,6 @@
-# IIM-LMS Frontend
+# IIM-LMS Frontend Demo
 
-The frontend application for the IIM Learning Management System, built with React, Redux Toolkit, and Tailwind CSS.
+An enhanced frontend implementation for the IIM Learning Management System, built with React, Redux Toolkit, and Tailwind CSS. This version includes additional features and UI improvements over the standard frontend.
 
 ## Features
 
@@ -42,6 +42,8 @@ The frontend application for the IIM Learning Management System, built with Reac
 - Content Approval
 - Course Management
 - CMS Page Builder
+- Role Management
+- Staff Management
 
 ## Getting Started
 
@@ -116,7 +118,9 @@ src/
 │   ├── auth/       # Authentication state
 │   ├── educator/   # Educator state
 │   ├── university/ # University state
-│   └── admin/      # Admin state
+│   ├── admin/      # Admin state
+│   ├── role/       # Role management state
+│   └── staff/      # Staff management state
 ├── utils/          # Utility functions
 ├── App.jsx         # Main application component
 ├── i18n.js         # Internationalization setup
