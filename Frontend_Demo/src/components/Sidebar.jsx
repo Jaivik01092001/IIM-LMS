@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { hasPermission } from '../utils/permissions';
 import {
   FaHome,
   FaBook,
@@ -25,7 +26,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
   // Get navigation links based on user role and permissions
   const getNavLinks = () => {
     const links = [];
-    const userPermissions = user?.permissions || {};
 
     // Role-specific links
     if (user?.role === 'educator') {
@@ -59,14 +59,70 @@ function Sidebar({ isOpen, toggleSidebar }) {
       );
 
       // Add course management link if educator has the permission
-      if (userPermissions['create_course'] ||
-        userPermissions['edit_course'] ||
-        userPermissions['delete_course']) {
-        links.push({
-          to: '/educator/courses',
-          icon: <FaBook className="w-5 h-5" />,
-          text: t('admin.courseManagement') || 'Course Management'
-        });
+      console.log('Checking course management permissions for educator');
+
+      // Explicitly check for null permissions - if null, don't show course management
+      if (user.permissions === null) {
+        console.log('User has null permissions, not showing management tabs');
+      } else {
+        // Course Management
+        const canCreateCourse = hasPermission(user, 'create_course');
+        const canEditCourse = hasPermission(user, 'edit_course');
+        const canDeleteCourse = hasPermission(user, 'delete_course');
+        console.log('Course permission results:', { canCreateCourse, canEditCourse, canDeleteCourse });
+
+        if (canCreateCourse || canEditCourse || canDeleteCourse) {
+          links.push({
+            to: '/educator/courses',
+            icon: <FaBook className="w-5 h-5" />,
+            text: t('admin.courseManagement') || 'Course Management'
+          });
+        }
+
+        // Quiz Management
+        const canViewQuizzes = hasPermission(user, 'view_quizzes');
+        const canCreateQuiz = hasPermission(user, 'create_quiz');
+        const canEditQuiz = hasPermission(user, 'edit_quiz');
+        const canDeleteQuiz = hasPermission(user, 'delete_quiz');
+        console.log('Quiz permission results:', { canViewQuizzes, canCreateQuiz, canEditQuiz, canDeleteQuiz });
+
+        if (canViewQuizzes || canCreateQuiz || canEditQuiz || canDeleteQuiz) {
+          links.push({
+            to: '/educator/quizzes',
+            icon: <FaQuestionCircle className="w-5 h-5" />,
+            text: t('admin.quizManagement') || 'Quiz Management'
+          });
+        }
+
+        // User Management
+        const canViewUsers = hasPermission(user, 'view_users');
+        const canCreateUser = hasPermission(user, 'create_user');
+        const canEditUser = hasPermission(user, 'edit_user');
+        const canDeleteUser = hasPermission(user, 'delete_user');
+        console.log('User permission results:', { canViewUsers, canCreateUser, canEditUser, canDeleteUser });
+
+        if (canViewUsers || canCreateUser || canEditUser || canDeleteUser) {
+          links.push({
+            to: '/educator/users',
+            icon: <FaUsers className="w-5 h-5" />,
+            text: t('admin.userManagement') || 'User Management'
+          });
+        }
+
+        // Content Management
+        const canViewContent = hasPermission(user, 'view_content');
+        const canCreateContent = hasPermission(user, 'create_content');
+        const canEditContent = hasPermission(user, 'edit_content');
+        const canDeleteContent = hasPermission(user, 'delete_content');
+        console.log('Content permission results:', { canViewContent, canCreateContent, canEditContent, canDeleteContent });
+
+        if (canViewContent || canCreateContent || canEditContent || canDeleteContent) {
+          links.push({
+            to: '/educator/content',
+            icon: <FaFileAlt className="w-5 h-5" />,
+            text: t('admin.contentManagement') || 'Content Management'
+          });
+        }
       }
     } else if (user?.role === 'university') {
       // Basic university links
@@ -83,15 +139,68 @@ function Sidebar({ isOpen, toggleSidebar }) {
         }
       );
 
-      // Add course management link if university has the permission
-      if (userPermissions['create_course'] ||
-        userPermissions['edit_course'] ||
-        userPermissions['delete_course']) {
-        links.push({
-          to: '/university/courses',
-          icon: <FaBook className="w-5 h-5" />,
-          text: t('admin.courseManagement') || 'Course Management'
-        });
+      // Check permissions for university role
+      if (user.permissions === null) {
+        console.log('University user has null permissions, not showing management tabs');
+      } else {
+        // Course Management
+        const canCreateCourse = hasPermission(user, 'create_course');
+        const canEditCourse = hasPermission(user, 'edit_course');
+        const canDeleteCourse = hasPermission(user, 'delete_course');
+        console.log('University course permission results:', { canCreateCourse, canEditCourse, canDeleteCourse });
+
+        if (canCreateCourse || canEditCourse || canDeleteCourse) {
+          links.push({
+            to: '/university/courses',
+            icon: <FaBook className="w-5 h-5" />,
+            text: t('admin.courseManagement') || 'Course Management'
+          });
+        }
+
+        // Quiz Management
+        const canViewQuizzes = hasPermission(user, 'view_quizzes');
+        const canCreateQuiz = hasPermission(user, 'create_quiz');
+        const canEditQuiz = hasPermission(user, 'edit_quiz');
+        const canDeleteQuiz = hasPermission(user, 'delete_quiz');
+        console.log('University quiz permission results:', { canViewQuizzes, canCreateQuiz, canEditQuiz, canDeleteQuiz });
+
+        if (canViewQuizzes || canCreateQuiz || canEditQuiz || canDeleteQuiz) {
+          links.push({
+            to: '/university/quizzes',
+            icon: <FaQuestionCircle className="w-5 h-5" />,
+            text: t('admin.quizManagement') || 'Quiz Management'
+          });
+        }
+
+        // User Management
+        const canViewUsers = hasPermission(user, 'view_users');
+        const canCreateUser = hasPermission(user, 'create_user');
+        const canEditUser = hasPermission(user, 'edit_user');
+        const canDeleteUser = hasPermission(user, 'delete_user');
+        console.log('University user permission results:', { canViewUsers, canCreateUser, canEditUser, canDeleteUser });
+
+        if (canViewUsers || canCreateUser || canEditUser || canDeleteUser) {
+          links.push({
+            to: '/university/users',
+            icon: <FaUsers className="w-5 h-5" />,
+            text: t('admin.userManagement') || 'User Management'
+          });
+        }
+
+        // Content Management
+        const canViewContent = hasPermission(user, 'view_content');
+        const canCreateContent = hasPermission(user, 'create_content');
+        const canEditContent = hasPermission(user, 'edit_content');
+        const canDeleteContent = hasPermission(user, 'delete_content');
+        console.log('University content permission results:', { canViewContent, canCreateContent, canEditContent, canDeleteContent });
+
+        if (canViewContent || canCreateContent || canEditContent || canDeleteContent) {
+          links.push({
+            to: '/university/content',
+            icon: <FaFileAlt className="w-5 h-5" />,
+            text: t('admin.contentManagement') || 'Content Management'
+          });
+        }
       }
     } else if (user?.role === 'admin') {
       links.push(

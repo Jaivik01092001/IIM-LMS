@@ -72,14 +72,34 @@ export const PERMISSIONS = {
  * @returns {Boolean} - Whether the user has the permission
  */
 export const hasPermission = (user, permission) => {
+  // Debug logging
+  console.log('hasPermission check:', {
+    user: user ? {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      permissions: user.permissions,
+      roleRef: user.roleRef
+    } : null,
+    permission,
+    permissionsType: user ? typeof user.permissions : 'no user',
+    permissionsIsNull: user ? user.permissions === null : 'no user'
+  });
+
   // If no user or no permission, return false
   if (!user) return false;
-  
+
   // For backward compatibility, admin role has all permissions
   if (user.role === 'admin') return true;
-  
-  // If user has no roleRef or permissions, check based on role
-  if (!user.roleRef || !user.permissions) {
+
+  // IMPORTANT: If permissions is explicitly null, the user has no permissions
+  if (user.permissions === null) {
+    console.log('User permissions is explicitly null, returning false');
+    return false;
+  }
+
+  // If user has no roleRef or permissions is undefined, check based on role
+  if (!user.roleRef || user.permissions === undefined) {
     // Default permissions based on role for backward compatibility
     switch (user.role) {
       case 'admin':
@@ -108,9 +128,11 @@ export const hasPermission = (user, permission) => {
         return false;
     }
   }
-  
-  // Check if the user has the specific permission
-  return user.permissions && user.permissions[permission] === true;
+
+  // Check if the permission is granted in the user's permissions object
+  const hasPermissionResult = user.permissions && user.permissions[permission] === true;
+  console.log('Permission check result:', { permission, result: hasPermissionResult });
+  return hasPermissionResult;
 };
 
 /**

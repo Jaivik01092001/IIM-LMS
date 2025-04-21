@@ -27,15 +27,29 @@ exports.getEducators = async (req, res) => {
 };
 
 exports.updateEducator = async (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, roleId } = req.body;
   const educator = await User.findById(req.params.id);
+
+  if (!educator) {
+    return res.status(404).json({ msg: 'Educator not found' });
+  }
+
   if (educator.university.toString() !== req.user.id) {
     return res.status(403).json({ msg: 'Unauthorized' });
   }
+
   educator.name = name || educator.name;
   educator.email = email || educator.email;
+
+  if (roleId) {
+    educator.roleRef = roleId;
+  }
+
   await educator.save();
-  res.json(educator);
+  res.json({
+    educator,
+    msg: 'Educator updated successfully'
+  });
 };
 
 exports.updateProfile = async (req, res) => {
