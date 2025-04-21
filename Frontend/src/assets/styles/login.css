@@ -75,12 +75,10 @@
   justify-content: center;
   align-items: center;
 }
-.login-wrapper .login-right .login-right-mainheading h2 {
-  font-size: var(--heading2);
-  font-family: var(--font-Coiny);
-  color: var(--primary-color);
-  margin-bottom: 20px;
-  text-align: center;
+.login-wrapper .login-right .login-right-mainheading .mainlogoimg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-wrapper .login-right .right-Second_part h3 {

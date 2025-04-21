@@ -32,8 +32,8 @@
 }
 
 .educators-container .search-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
 }
 
 .educators-container .filters {
@@ -59,12 +59,12 @@
 }
 
 .educators-container .filter-select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
 }
 
 .educators-container .create-account-btn {
-  background-color: #6366f1;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 6px;
@@ -77,7 +77,7 @@
 }
 
 .educators-container .create-account-btn:hover {
-  background-color: #4f46e5;
+  background-color: var(--primary-hover-color);
 }
 
 /* Professor cell styling */
@@ -115,8 +115,8 @@
 }
 
 .educators-container .action-button.view {
-  background-color: #eef2ff;
-  color: #4f46e5;
+  background-color: var(--primary-light-bg);
+  color: var(--primary-color);
 }
 
 .educators-container .action-button.edit {

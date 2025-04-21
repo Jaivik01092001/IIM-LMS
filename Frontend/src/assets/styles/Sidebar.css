@@ -20,8 +20,11 @@
   justify-content: space-between;
   padding: 20px;
   border-bottom: 1px solid var(--border-gray);
+  justify-content: center;
 }
-
+.sidebar-layout-parent .sidebar-header img {
+  width: 25%;
+}
 .sidebar-layout-parent .sidebar-logo {
   color: var(--primary-color);
   font-size: var(--heading5);
@@ -73,7 +76,7 @@
 }
 
 .sidebar-layout-parent .menu-link.active {
-  background-color: #e8eaf6;
+  background-color: var(--primary-light-bg);
   color: var(--primary-color);
   font-weight: 600;
 }
@@ -86,7 +89,7 @@
 .sidebar-layout-parent .menu-text {
   font-size: var(--smallfont);
 }
-.sidebar-layout-parent .submenu-text{
+.sidebar-layout-parent .submenu-text {
   font-size: var(--smallfont);
 }
 
@@ -128,7 +131,7 @@
 }
 
 .sidebar-layout-parent .dropdown-toggle.active {
-  background-color: #e8eaf6;
+  background-color: var(--primary-light-bg);
   color: var(--primary-color);
   font-weight: 600;
 }
