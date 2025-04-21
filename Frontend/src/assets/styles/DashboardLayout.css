@@ -17,7 +17,7 @@
 /* Main content area */
 .dashboard-container .main-content {
   flex: 1;
-  padding: 24px;
+  padding: 1.5vw;
   overflow-y: auto;
 }
 

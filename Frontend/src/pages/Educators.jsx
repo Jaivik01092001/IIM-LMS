@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTableComponent from "../components/DataTable";
-import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import "../assets/styles/Educators.css";
 
 const Educators = () => {
+  const navigate = useNavigate();
   const [tableData, setTableData] = useState([
     {
       id: 1,
@@ -105,10 +107,16 @@ const Educators = () => {
     setTableData(updatedData);
   };
 
+  // View handler
+  const handleView = (row) => {
+    navigate("/dashboard/admin/educator-details", { state: { educator: row } });
+  };
+
   // Edit handler
   const handleEdit = (row) => {
-    console.log(`Edit clicked for: ${row.professor}`);
-    // Here you would implement edit functionality
+    navigate("/dashboard/admin/educator-account-form", {
+      state: { educator: row },
+    });
   };
 
   // Delete handler
@@ -167,6 +175,12 @@ const Educators = () => {
       cell: (row) => (
         <div className="action-buttons">
           <button
+            className="action-button view"
+            onClick={() => handleView(row)}
+          >
+            <FaEye />
+          </button>
+          <button
             className="action-button edit"
             onClick={() => handleEdit(row)}
           >
@@ -180,7 +194,7 @@ const Educators = () => {
           </button>
         </div>
       ),
-      width: "100px",
+      width: "150px",
       center: true,
     },
   ];
@@ -208,7 +222,12 @@ const Educators = () => {
             <option>Status</option>
           </select>
 
-          <button className="create-account-btn">Create Account</button>
+          <button
+            className="create-account-btn"
+            onClick={() => navigate("/dashboard/admin/educator-account-form")}
+          >
+            Create Account
+          </button>
         </div>
       </div>
 

@@ -97,8 +97,45 @@
 /* Action buttons container */
 .educators-container .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
   justify-content: center;
+}
+
+.educators-container .action-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.educators-container .action-button.view {
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+
+.educators-container .action-button.edit {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.educators-container .action-button.delete {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.educators-container .action-button:hover {
+  transform: translateY(-1px);
+}
+
+.educators-container .action-button svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Responsive styles */

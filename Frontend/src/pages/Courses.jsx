@@ -1,13 +1,22 @@
-import React from 'react';
-import { FaBook, FaUserGraduate, FaClock, FaStar, FaSearch } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import '../assets/styles/Courses.css';
+import React, { useState } from "react";
+import {
+  FaBook,
+  FaUserGraduate,
+  FaClock,
+  FaStar,
+  FaSearch,
+  FaPencilAlt,
+  FaTrashAlt,
+  FaEye,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import DataTableComponent from "../components/DataTable";
+import "../assets/styles/Courses.css";
 
 const Courses = ({ userType }) => {
   const navigate = useNavigate();
-
-  // Sample data with completely different content for each card
-  const coursesData = [
+  const [searchTerm, setSearchTerm] = useState("");
+  const [tableData, setTableData] = useState([
     {
       id: 1,
       title: "Effective Time Management",
@@ -19,285 +28,333 @@ const Courses = ({ userType }) => {
       students: 82,
       duration: "20:00 hrs",
       rating: 4.9,
+      status: true,
       createdAt: "2023-10-15",
       image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
     },
     {
       id: 2,
-      title: "Python for Data Science",
+      title: "Introduction to Python Programming",
       category: "Programming",
       language: "English",
-      description: "Learn Python programming fundamentals and essential libraries for data analysis, visualization, and machine learning.",
-      instructor: "David Miller",
+      description: "Learn Python programming from scratch with hands-on exercises and real-world projects to build a solid foundation in coding.",
+      instructor: "Emma Watson",
       lessons: 36,
-      students: 145,
-      duration: "32:00 hrs",
-      rating: 4.7,
-      createdAt: "2023-11-20",
-      image: "https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      students: 124,
+      duration: "28:30 hrs",
+      rating: 4.8,
+      status: true,
+      createdAt: "2023-09-28",
+      image: "https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2342&q=80"
     },
     {
       id: 3,
-      title: "UI/UX Design Fundamentals",
-      category: "Design",
+      title: "Digital Marketing Fundamentals",
+      category: "Marketing",
       language: "English",
-      description: "Master the principles of user interface and user experience design to create intuitive and engaging digital products.",
-      instructor: "Sarah Johnson",
-      lessons: 28,
-      students: 96,
-      duration: "24:30 hrs",
-      rating: 4.8,
-      createdAt: "2023-09-05",
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      description: "Discover essential digital marketing strategies including SEO, social media, email marketing, and analytics to grow your online presence.",
+      instructor: "John Doe",
+      lessons: 18,
+      students: 95,
+      duration: "15:45 hrs",
+      rating: 4.7,
+      status: false,
+      createdAt: "2023-11-05",
+      image: "https://images.unsplash.com/photo-1432888622747-4eb9a8f5a70d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
     },
     {
       id: 4,
-      title: "Digital Marketing Masterclass",
-      category: "Marketing",
-      language: "Hindi",
-      description: "Comprehensive guide to digital marketing including SEO, social media, email campaigns, and analytics for business growth.",
-      instructor: "Rahul Sharma",
-      lessons: 30,
-      students: 120,
-      duration: "26:00 hrs",
-      rating: 4.6,
-      createdAt: "2024-01-10",
-      image: "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      title: "UI/UX Design Principles",
+      category: "Design",
+      language: "English",
+      description: "Master the principles of user interface and user experience design to create intuitive, engaging, and user-friendly digital products.",
+      instructor: "Sarah Johnson",
+      lessons: 22,
+      students: 78,
+      duration: "18:20 hrs",
+      rating: 4.9,
+      status: true,
+      createdAt: "2023-10-20",
+      image: "https://images.unsplash.com/photo-1545235617-9465d2a55698?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
     },
     {
       id: 5,
-      title: "Leadership & Team Management",
-      category: "Management",
-      language: "Spanish",
-      description: "Develop essential leadership skills to effectively manage teams, resolve conflicts, and drive organizational success.",
-      instructor: "Carlos Rodriguez",
-      lessons: 22,
+      title: "Financial Planning and Investment",
+      category: "Finance",
+      language: "English",
+      description: "Learn how to create a solid financial plan, understand investment options, and build wealth through strategic financial management.",
+      instructor: "Michael Brown",
+      lessons: 30,
       students: 65,
-      duration: "18:30 hrs",
-      rating: 4.5,
-      createdAt: "2023-08-15",
-      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      duration: "25:15 hrs",
+      rating: 4.6,
+      status: true,
+      createdAt: "2023-09-15",
+      image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2342&q=80"
     },
     {
       id: 6,
-      title: "Full-Stack JavaScript Development",
+      title: "Advanced JavaScript Development",
       category: "Programming",
       language: "English",
-      description: "Master both frontend and backend development using JavaScript, Node.js, React, and MongoDB to build complete web applications.",
-      instructor: "Emily Chen",
+      description: "Take your JavaScript skills to the next level with advanced concepts, frameworks, and modern development practices.",
+      instructor: "David Miller",
       lessons: 40,
-      students: 210,
-      duration: "35:00 hrs",
-      rating: 4.9,
-      createdAt: "2024-02-20",
-      image: "https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      students: 112,
+      duration: "32:40 hrs",
+      rating: 4.8,
+      status: false,
+      createdAt: "2023-08-30",
+      image: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2274&q=80"
     },
     {
       id: 7,
-      title: "Adobe Photoshop Masterclass",
-      category: "Design",
-      language: "French",
-      description: "From beginner to expert: Learn professional photo editing, digital art creation, and graphic design using Adobe Photoshop.",
-      instructor: "Sophie Dubois",
-      lessons: 32,
-      students: 88,
-      duration: "28:00 hrs",
+      title: "Content Creation Masterclass",
+      category: "Marketing",
+      language: "English",
+      description: "Learn to create compelling content across various platforms to engage audiences and drive conversions for your brand.",
+      instructor: "Jennifer Lee",
+      lessons: 25,
+      students: 89,
+      duration: "21:30 hrs",
       rating: 4.7,
-      createdAt: "2023-12-05",
-      image: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      status: true,
+      createdAt: "2023-11-10",
+      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
     },
     {
       id: 8,
-      title: "Content Marketing Strategy",
-      category: "Marketing",
-      language: "Hindi",
-      description: "Create compelling content that attracts, engages, and converts your target audience while building your brand authority.",
-      instructor: "Priya Patel",
-      lessons: 26,
-      students: 175,
-      duration: "22:30 hrs",
-      rating: 4.8,
-      createdAt: "2024-01-25",
-      image: "https://images.unsplash.com/photo-1542744094-3a31f272c490?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      title: "Data Science Essentials",
+      category: "Data Science",
+      language: "English",
+      description: "Explore the fundamentals of data science including data analysis, visualization, machine learning, and statistical modeling.",
+      instructor: "Robert Chen",
+      lessons: 32,
+      students: 105,
+      duration: "27:15 hrs",
+      rating: 4.9,
+      status: true,
+      createdAt: "2023-10-05",
+      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
     },
     {
       id: 9,
-      title: "Financial Planning & Investment",
-      category: "Finance",
+      title: "Leadership and Management Skills",
+      category: "Management",
       language: "English",
-      description: "Learn how to create a solid financial plan, understand investment options, and build wealth through strategic money management.",
-      instructor: "Michael Roberts",
-      lessons: 30,
-      students: 135,
-      duration: "25:45 hrs",
-      rating: 4.9,
-      createdAt: "2023-11-10",
-      image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      description: "Develop essential leadership and management skills to effectively lead teams, manage projects, and drive organizational success.",
+      instructor: "Amanda Wilson",
+      lessons: 28,
+      students: 72,
+      duration: "23:45 hrs",
+      rating: 4.8,
+      status: false,
+      createdAt: "2023-09-20",
+      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
     },
     {
       id: 10,
-      title: "Mobile App Development with Flutter",
-      category: "Programming",
-      language: "English",
-      description: "Build beautiful, natively compiled applications for mobile, web, and desktop from a single codebase using Flutter and Dart.",
-      instructor: "Alex Wong",
-      lessons: 38,
-      students: 165,
-      duration: "30:15 hrs",
-      rating: 4.8,
-      createdAt: "2024-01-05",
-      image: "https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 11,
-      title: "3D Modeling & Animation",
+      title: "Graphic Design for Beginners",
       category: "Design",
-      language: "Spanish",
-      description: "Master the art of 3D modeling, texturing, rigging, and animation using industry-standard software for games, films, and visualization.",
-      instructor: "Elena Gomez",
-      lessons: 45,
-      students: 92,
-      duration: "40:30 hrs",
+      language: "Hindi",
+      description: "Start your graphic design journey with this comprehensive course covering design principles, tools, and practical techniques.",
+      instructor: "Rajesh Kumar",
+      lessons: 20,
+      students: 68,
+      duration: "16:30 hrs",
       rating: 4.6,
-      createdAt: "2023-10-20",
-      image: "https://images.unsplash.com/photo-1617791160505-6f00504e3519?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      status: true,
+      createdAt: "2023-11-15",
+      image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+    },
+  ]);
+
+  // Handle status toggle
+  const handleStatusToggle = (row) => {
+    const updatedData = tableData.map((item) =>
+      item.id === row.id ? { ...item, status: !item.status } : item
+    );
+    setTableData(updatedData);
+  };
+
+  // Handle view course details
+  const handleView = (row) => {
+    navigate(`/dashboard/${userType}/courses/${row.id}`);
+  };
+
+  // Handle edit course
+  const handleEdit = (row) => {
+    navigate(`/dashboard/${userType}/courses/edit/${row.id}`);
+  };
+
+  // Handle delete course
+  const handleDelete = (row) => {
+    const updatedData = tableData.filter((item) => item.id !== row.id);
+    setTableData(updatedData);
+  };
+
+  // Table columns configuration
+  const columns = [
+    {
+      name: "Course Title",
+      cell: (row) => (
+        <div className="course-info">
+          <img src={row.image} alt={row.title} className="course-thumbnail" />
+          <span>{row.title}</span>
+        </div>
+      ),
+      sortable: true,
     },
     {
-      id: 12,
-      title: "Search Engine Optimization (SEO)",
-      category: "Marketing",
-      language: "French",
-      description: "Learn proven SEO techniques to increase your website's visibility, drive organic traffic, and improve search engine rankings.",
-      instructor: "Jean Dupont",
-      lessons: 28,
-      students: 155,
-      duration: "23:45 hrs",
-      rating: 4.7,
-      createdAt: "2023-12-15",
-      image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+      name: "Categories",
+      selector: (row) => row.category,
+      sortable: true,
+    },
+    {
+      name: "Professor",
+      cell: (row) => (
+        <div className="professor-info">
+          <img
+            src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
+            alt={row.instructor}
+            className="professor-avatar"
+          />
+          <span>{row.instructor}</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Duration",
+      selector: (row) => row.duration,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      cell: (row) => (
+        <div
+          className={`status-indicator ${row.status ? "active" : ""}`}
+          onClick={() => handleStatusToggle(row)}
+        />
+      ),
+      sortable: true,
+      width: "100px",
+      center: true,
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="action-buttons">
+          <button className="action-btn view" onClick={() => handleView(row)}>
+            <FaEye />
+          </button>
+          <button className="action-btn edit" onClick={() => handleEdit(row)}>
+            <FaPencilAlt />
+          </button>
+          <button
+            className="action-btn delete"
+            onClick={() => handleDelete(row)}
+          >
+            <FaTrashAlt />
+          </button>
+        </div>
+      ),
+      width: "150px",
+      center: true,
     },
   ];
 
-  // No state needed for static filters
-
-  
-
-  // No filtering - display all courses
-  const filteredCourses = coursesData;
-
-  // Handle click on course card to navigate to course details
-  const handleCourseClick = (courseId) => {
-    navigate(`/dashboard/${userType}/courses/${courseId}`);
-  };
-
   return (
     <div className="courses-container admin-dashboard">
-
-      {/* Search and Filters */}
-      <div className="search-filter-container">
-        <div className="search-box">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search courses..."
-            
-          />
+      {/* Dashboard Stats */}
+      <div className="dashboard-stats">
+        <div className="stat-card schools">
+          <div className="stat-icon1">
+            <FaBook size={24} />
+            <FaBook className="icondesign1" />
+          </div>
+          <div className="stat-count">{tableData.length}</div>
+          <div className="stat-title">Total Courses</div>
         </div>
 
-        <div className="filter-dropdown">
-          <select
-            className="filter-select"
-            defaultValue=""
-          >
-            <option value="">Select Category</option>
-            <option value="Management">Management</option>
-            <option value="Programming">Programming</option>
-            <option value="Design">Design</option>
-            <option value="Marketing">Marketing</option>
-          </select>
+        <div className="stat-card educators">
+          <div className="stat-icon2">
+            <FaUserGraduate size={24} />
+            <FaUserGraduate className="icondesign2" />
+          </div>
+          <div className="stat-count">100</div>
+          <div className="stat-title">Total Students</div>
         </div>
 
-        <div className="filter-dropdown">
-          <select
-            className="filter-select"
-            defaultValue=""
-          >
-            <option value="">Select Language</option>
-            <option value="English">English</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-          </select>
-        </div>
-
-        <div className="filter-dropdown">
-          <select
-            className="filter-select"
-            defaultValue=""
-          >
-            <option value="">Sort By</option>
-            <option value="newest">Newest</option>
-            <option value="popular">Most Popular</option>
-            <option value="rating">Highest Rated</option>
-          </select>
+        <div className="stat-card courses">
+          <div className="stat-icon3">
+            <FaClock size={24} />
+            <FaClock className="icondesign3" />
+          </div>
+          <div className="stat-count">8</div>
+          <div className="stat-title">Hours of Content</div>
         </div>
       </div>
 
-      {/* Course Grid */}
+      {/* Courses Table Section */}
       <div className="dashboard-section">
-        <div className="course-grid">
-        {filteredCourses.map(course => (
-          <div 
-            key={course.id} 
-            className="course-card" 
-            onClick={() => handleCourseClick(course.id)}
-          >
-            <img src={course.image} alt={course.title} className="course-image" />
-            <div className="course-details">
-              <h3 className="course-title">{course.title}</h3>
-              <p className="course-category">Category: {course.category} | Language: {course.language}</p>
-              <p className="course-description">{course.description}</p>
-              <p className="course-category">Professor</p>
-              <div className="instructor">
-                <img
-                  src="https://i.pravatar.cc/150?img=32"
-                  alt={course.instructor}
-                  className="instructor-avatar"
-                />
-                <span className="instructor-name">{course.instructor}</span>
-              </div>
-
-              <div className="course-meta">
-                <div className="meta-item">
-                  <FaBook size={12} />
-                  <span>{course.lessons}</span>
-                </div>
-                <div className="meta-item">
-                  <FaUserGraduate size={12} />
-                  <span>{course.students}</span>
-                </div>
-                <div className="meta-item">
-                  <FaClock size={12} />
-                  <span>{course.duration}</span>
-                </div>
-                <div className="meta-item">
-                  <FaStar size={12} />
-                  <span>{course.rating}</span>
-                </div>
-              </div>
-
-              <button 
-                className="enroll-btn"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent card click event
-                  // Enrollment logic here
-                }}
-              >
-                Enroll Now
-              </button>
-            </div>
+        <div className="section-header">
+          <h2 className="section-title">All Courses ({tableData.length})</h2>
+          <div className="header-actions">
+            <button
+              className="add-course-btn"
+              onClick={() => navigate(`/dashboard/${userType}/courses/add`)}
+            >
+              Add Course
+            </button>
+            <button
+              className="view-all-btn"
+              onClick={() => navigate(`/dashboard/${userType}/courses`)}
+            >
+              View All Courses
+            </button>
           </div>
-        ))}
+        </div>
+
+        <div className="search-filter-container">
+          <input
+            type="text"
+            placeholder="Search courses..."
+            className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
+          <select className="filter-select">
+            <option>Select Category</option>
+            <option>Management</option>
+            <option>Programming</option>
+            <option>Design</option>
+            <option>Marketing</option>
+          </select>
+
+          <select className="filter-select">
+            <option>Select Language</option>
+            <option>English</option>
+            <option>Hindi</option>
+            <option>Spanish</option>
+            <option>French</option>
+          </select>
+
+          <select className="filter-select">
+            <option>Sort By</option>
+            <option>Newest</option>
+            <option>Most Popular</option>
+            <option>Highest Rated</option>
+          </select>
+        </div>
+
+        <div className="table-responsive">
+          <DataTableComponent
+            columns={columns}
+            data={tableData}
+            showSearch={false}
+          />
         </div>
       </div>
     </div>
