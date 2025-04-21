@@ -26,6 +26,7 @@ import AdminRoles from './pages/AdminRoles';
 import CmsPages from './pages/CmsPages';
 import CmsBuilder from './pages/CmsBuilder';
 import Layout from './components/Layout';
+import EducatorDashboard from './pages/EducatorDashboard';
 
 const ProtectedRoute = ({ children, role, permissions }) => {
   const { user } = useSelector((state) => state.auth);
@@ -75,7 +76,7 @@ function App() {
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><EducatorDashboard /></ProtectedRoute>} />
           <Route path="/my-learning" element={<ProtectedRoute role="educator"><MyLearning /></ProtectedRoute>} />
           <Route path="/content" element={<ProtectedRoute role="educator"><ContentPage /></ProtectedRoute>} />
           <Route path="/my-content" element={<ProtectedRoute role="educator"><MyContent /></ProtectedRoute>} />

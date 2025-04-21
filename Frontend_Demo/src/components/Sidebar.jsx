@@ -12,7 +12,8 @@ import {
   FaTimes,
   FaUserShield,
   FaUserGraduate,
-  FaUserTie
+  FaUserTie,
+  FaCertificate
 } from 'react-icons/fa';
 
 function Sidebar({ isOpen, toggleSidebar }) {
@@ -48,6 +49,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
           to: '/my-content',
           icon: <FaChalkboardTeacher className="w-5 h-5" />,
           text: t('educator.myContent')
+        },
+        {
+          to: '/my-certificates',
+          icon: <FaCertificate className="w-5 h-5" />,
+          text: t('educator.myCertificate')
         }
       );
 
@@ -188,8 +194,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 <Link
                   to={link.to}
                   className={`flex items-center px-4 py-3 rounded-lg transition-colors ${location.pathname === link.to
-                      ? 'bg-blue-700 text-white'
-                      : 'text-blue-100 hover:bg-blue-700'
+                    ? 'bg-blue-700 text-white'
+                    : 'text-blue-100 hover:bg-blue-700'
                     }`}
                 >
                   {link.icon}
