@@ -4,6 +4,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phoneNumber: { type: String, required: true, unique: true },
   role: { type: String, enum: ['educator', 'university', 'admin'], required: true },
+  // Reference to the Role model for fine-grained permissions
+  roleRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
   name: { type: String, required: true },
   university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' }, // For educators
   refreshToken: { type: String }, // Added for JWT refresh token

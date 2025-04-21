@@ -6,7 +6,7 @@ const { protect, restrictTo } = require('../middleware/auth');
 
 // Apply authentication and authorization middleware to all routes
 router.use(protect);
-router.use(restrictTo('admin'));
+//router.use(restrictTo('admin'));
 
 // University routes
 router.get('/universities', adminController.getUniversities);

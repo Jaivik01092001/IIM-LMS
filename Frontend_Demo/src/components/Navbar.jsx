@@ -55,6 +55,9 @@ function Navbar() {
             )}
             {user?.role === 'admin' && (
               <>
+                <Link to="/admin/dashboard" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  {t('common.dashboard')}
+                </Link>
                 <Link to="/admin/universities" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('admin.universities')}
                 </Link>
@@ -66,6 +69,9 @@ function Navbar() {
                 </Link>
                 <Link to="/admin/courses" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('admin.courseManagement')}
+                </Link>
+                <Link to="/admin/roles" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  {t('admin.roleManagement') || 'Roles & Permissions'}
                 </Link>
                 <Link to="/admin/pages" className="text-white hover:bg-blue-500 hover:bg-opacity-25 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   {t('admin.cmsBuilder')}
@@ -141,6 +147,9 @@ function Navbar() {
           )}
           {user?.role === 'admin' && (
             <>
+              <Link to="/admin/dashboard" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
+                {t('common.dashboard')}
+              </Link>
               <Link to="/admin/universities" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
                 {t('admin.universities')}
               </Link>
@@ -149,6 +158,9 @@ function Navbar() {
               </Link>
               <Link to="/admin/courses" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
                 {t('admin.courseManagement')}
+              </Link>
+              <Link to="/admin/roles" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
+                {t('admin.roleManagement') || 'Roles & Permissions'}
               </Link>
               <Link to="/admin/pages" className="text-white hover:bg-blue-500 hover:bg-opacity-25 block px-3 py-2 rounded-md text-base font-medium">
                 {t('admin.cmsBuilder')}
