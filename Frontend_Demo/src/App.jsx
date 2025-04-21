@@ -157,7 +157,22 @@ function App() {
           <Route path="/admin/course/:id" element={<ProtectedRoute role="admin"><AdminCourseDetail /></ProtectedRoute>} />
           <Route path="/educator/course/:id" element={<ProtectedRoute role="educator" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourseDetail /></ProtectedRoute>} />
           <Route path="/university/course/:id" element={<ProtectedRoute role="university" permissions={['create_course', 'edit_course', 'delete_course']}><AdminCourseDetail /></ProtectedRoute>} />
+          {/* Quiz Management Routes */}
           <Route path="/admin/quizzes" element={<ProtectedRoute role="admin"><AdminQuizzes /></ProtectedRoute>} />
+          <Route path="/educator/quizzes" element={<ProtectedRoute role="educator" permissions={['view_quizzes', 'create_quiz', 'edit_quiz', 'delete_quiz']}><AdminQuizzes /></ProtectedRoute>} />
+          <Route path="/university/quizzes" element={<ProtectedRoute role="university" permissions={['view_quizzes', 'create_quiz', 'edit_quiz', 'delete_quiz']}><AdminQuizzes /></ProtectedRoute>} />
+
+          {/* User Management Routes */}
+          <Route path="/admin/users" element={<ProtectedRoute role="admin"><AdminStaff /></ProtectedRoute>} />
+          <Route path="/educator/users" element={<ProtectedRoute role="educator" permissions={['view_users', 'create_user', 'edit_user', 'delete_user']}><AdminStaff /></ProtectedRoute>} />
+          <Route path="/university/users" element={<ProtectedRoute role="university" permissions={['view_users', 'create_user', 'edit_user', 'delete_user']}><AdminStaff /></ProtectedRoute>} />
+
+          {/* Content Management Routes */}
+          <Route path="/admin/content" element={<ProtectedRoute role="admin"><AdminContent /></ProtectedRoute>} />
+          <Route path="/educator/content" element={<ProtectedRoute role="educator" permissions={['view_content', 'create_content', 'edit_content', 'delete_content']}><AdminContent /></ProtectedRoute>} />
+          <Route path="/university/content" element={<ProtectedRoute role="university" permissions={['view_content', 'create_content', 'edit_content', 'delete_content']}><AdminContent /></ProtectedRoute>} />
+
+          {/* Admin-only Routes */}
           <Route path="/admin/roles" element={<ProtectedRoute role="admin"><AdminRoles /></ProtectedRoute>} />
           <Route path="/admin/staff" element={<ProtectedRoute role="admin"><AdminStaff /></ProtectedRoute>} />
           <Route path="/admin/pages" element={<ProtectedRoute role="admin"><CmsPages /></ProtectedRoute>} />
