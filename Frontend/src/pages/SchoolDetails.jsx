@@ -1,9 +1,11 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../assets/styles/SchoolDetails.css";
 import { LuSchool } from "react-icons/lu";
+
 const SchoolDetails = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const school = location.state?.school;
 
   if (!school) {
@@ -85,7 +87,12 @@ const SchoolDetails = () => {
 
       <div className="action-buttons">
         <button className="delete-btn">Delete</button>
-        <button className="edit-btn">Edit</button>
+        <button 
+          className="edit-btn" 
+          onClick={() => navigate("/dashboard/admin/school-account-form", { state: { school } })}
+        >
+          Edit
+        </button>
       </div>
     </div>
   );

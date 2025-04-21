@@ -159,8 +159,9 @@ const Schools = () => {
 
   // Edit handler
   const handleEdit = (row) => {
-    console.log(`Edit clicked for: ${row.school}`);
-    // Here you would implement edit functionality
+    navigate("/dashboard/admin/school-account-form", {
+      state: { school: row },
+    });
   };
 
   // Delete handler
@@ -266,7 +267,12 @@ const Schools = () => {
             <option>Status</option>
           </select>
 
-          <button className="create-account-btn">Create Account</button>
+          <button
+            className="create-account-btn"
+            onClick={() => navigate("/dashboard/admin/school-account-form")}
+          >
+            Create Account
+          </button>
         </div>
       </div>
 

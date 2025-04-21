@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import "./index.css";
 import {
   BrowserRouter as Router,
@@ -13,8 +13,6 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CourseDetail from "./pages/CourseDetail";
-import SchoolDetails from "./pages/SchoolDetails";
-
 // Dashboard layout
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -26,6 +24,9 @@ import TutorDashboard from "./pages/Dashboard/TutorDashboard";
 // Dashboard sub-pages
 import Courses from "./pages/Courses";
 import Schools from "./pages/Schools.jsx";
+// Import SchoolDetails dynamically to avoid casing issues
+const SchoolDetails = React.lazy(() => import("./pages/SchoolDetails.jsx"));
+import SchoolAccountForm from "./pages/SchoolAccountForm.jsx";
 import Educators from "./pages/Educators.jsx";
 import Notification from "./pages/Notification.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -64,7 +65,18 @@ const App = () => {
             />
             <Route path="admin/courses/:id" element={<CourseDetail />} />
             <Route path="admin/schools" element={<Schools />} />
-            <Route path="admin/school-details" element={<SchoolDetails />} />
+            <Route
+              path="admin/school-details"
+              element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <SchoolDetails />
+                </Suspense>
+              }
+            />
+            <Route
+              path="admin/school-account-form"
+              element={<SchoolAccountForm />}
+            />
             <Route
               path="admin/educators"
               element={<Educators userType="admin" />}
