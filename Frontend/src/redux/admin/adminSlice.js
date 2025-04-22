@@ -2,10 +2,21 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as api from './adminApi';
 import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toast';
 
+export const getUsersThunk = createAsyncThunk('admin/getUsers', async () => {
+  try {
+    const data = await api.getUsers();
+    console.log('getUsersThunk response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in getUsersThunk:', error);
+    throw error;
+  }
+});
+
 export const getUniversitiesThunk = createAsyncThunk('admin/getUniversities', api.getUniversities);
 
 export const getUniversityByIdThunk = createAsyncThunk(
-  'admin/getUniversityById', 
+  'admin/getUniversityById',
   async (id, { rejectWithValue }) => {
     try {
       const data = await api.getUniversityById(id);
@@ -46,10 +57,10 @@ export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', 
   try {
     const data = await api.updateUniversity(id, universityData);
     showSuccessToast(data.msg || 'University updated successfully');
-    
+
     // Refresh the universities list to ensure data consistency
     dispatch(getUniversitiesThunk());
-    
+
     return data;
   } catch (error) {
     showErrorToast(error.response?.data?.msg || 'Failed to update university');
@@ -294,6 +305,7 @@ export const unpublishPageThunk = createAsyncThunk('admin/unpublishPage', async 
 const adminSlice = createSlice({
   name: 'admin',
   initialState: {
+    users: [],
     universities: [],
     currentUniversity: null,
     content: [],
@@ -308,6 +320,7 @@ const adminSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(getUsersThunk.fulfilled, (state, action) => { state.users = action.payload; })
       .addCase(getUniversitiesThunk.fulfilled, (state, action) => { state.universities = action.payload; })
       .addCase(getUniversityByIdThunk.fulfilled, (state, action) => { state.currentUniversity = action.payload; })
       .addCase(createUniversityThunk.fulfilled, (state, action) => { state.universities.push(action.payload); })

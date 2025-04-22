@@ -296,7 +296,7 @@
 }
 
 .courses-container .status-indicator.active {
-  background-color: #6366f1;
+  background-color: var(--bg-primary);
 }
 
 .courses-container .status-indicator.active::before {

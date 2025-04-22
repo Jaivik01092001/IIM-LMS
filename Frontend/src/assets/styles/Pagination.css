@@ -29,8 +29,8 @@
 }
 
 .pagination-container .pagination-button.active {
-  background-color: #6366f1;
-  border-color: #6366f1;
+  background-color: var(--bg-primary);
+  border-color: var(--bg-primary);
   color: white;
 }
 

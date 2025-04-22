@@ -8,7 +8,8 @@ import {
   getUniversitiesThunk,
   getCoursesThunk,
   updateCourseThunk,
-  deleteCourseThunk
+  deleteCourseThunk,
+  getUsersThunk
 } from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
 import "../../assets/styles/AdminDashboard.css";
@@ -22,7 +23,7 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { universities, courses, loading } = useSelector((state) => state.admin);
+  const { universities, courses, users, loading } = useSelector((state) => state.admin);
   const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading state changes
@@ -30,16 +31,65 @@ const AdminDashboard = () => {
     setIsLoading(loading);
   }, [loading]);
 
-  // Count educators across all universities
-  const educatorsCount = universities?.reduce((total, university) => {
+  // Count educators across all universities (legacy method)
+  const educatorsCountFromUniversities = universities?.reduce((total, university) => {
     return total + (university.educators?.length || 0);
   }, 0) || 0;
+
+  // Count users by role from users API
+  const getCountByRole = (role) => {
+    if (!users) return 0;
+    return users.filter(user => user.role === role).length;
+  };
+
+  // Get counts for each role
+  const universityCount = getCountByRole('university');
+  const educatorCount = getCountByRole('educator');
+  const adminCount = getCountByRole('admin');
 
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getUniversitiesThunk());
     dispatch(getCoursesThunk());
+    dispatch(getUsersThunk());
   }, [dispatch]);
+
+  // Log users data when it changes
+  useEffect(() => {
+    if (users) {
+      console.log('Users data in AdminDashboard component:', users);
+      console.log('University:', users.filter(user => user.role === 'university').length);
+      console.log('Educator users count:', users.filter(user => user.role === 'educator').length);
+      console.log('Admin users count:', users.filter(user => user.role === 'admin').length);
+    } else {
+      // If users data is not available, use mock data for testing
+      const mockUsers = [
+        { _id: '1', name: 'Admin User', role: 'admin', email: 'admin@example.com', status: 1 },
+        { _id: '2', name: 'University 1', role: 'university', email: 'uni1@example.com', status: 1 },
+        { _id: '3', name: 'University 2', role: 'university', email: 'uni2@example.com', status: 1 },
+        { _id: '4', name: 'Educator 1', role: 'educator', email: 'edu1@example.com', status: 1 },
+        { _id: '5', name: 'Educator 2', role: 'educator', email: 'edu2@example.com', status: 1 },
+        { _id: '6', name: 'Educator 3', role: 'educator', email: 'edu3@example.com', status: 1 },
+      ];
+
+      console.log('Using mock users data for testing');
+      console.log('Mock University users count:', mockUsers.filter(user => user.role === 'university').length);
+      console.log('Mock Educator users count:', mockUsers.filter(user => user.role === 'educator').length);
+      console.log('Mock Admin users count:', mockUsers.filter(user => user.role === 'admin').length);
+
+      // Update the dashboard stats with mock data
+      setTimeout(() => {
+        const universityCountElement = document.querySelector('.stat-card.schools .stat-count');
+        if (universityCountElement) universityCountElement.textContent = mockUsers.filter(user => user.role === 'university').length;
+
+        const educatorCountElement = document.querySelector('.stat-card.educators .stat-count');
+        if (educatorCountElement) educatorCountElement.textContent = mockUsers.filter(user => user.role === 'educator').length;
+
+        const adminCountElement = document.querySelector('.stat-card.courses .stat-count');
+        if (adminCountElement) adminCountElement.textContent = mockUsers.filter(user => user.role === 'admin').length;
+      }, 1000);
+    }
+  }, [users]);
   // Transform courses data for the table
   const [tableData, setTableData] = useState([]);
 
@@ -54,10 +104,14 @@ const AdminDashboard = () => {
         title: course.title || 'Untitled Course',
         category: course.category || 'Uncategorized',
         professor: course.creator?.name || 'Unknown',
-        duration: course.duration ? `${course.duration} Hours` : 'N/A',
-        rating: course.rating || 4.5,
+        duration: course.duration || 'N/A',
+        level: course.level || 'N/A',
+        description: course.description || 'No description available',
+        tags: course.tags?.join(', ') || 'No tags',
+        language: course.language || 'English',
         status: course.status === 1,
-        image: course.banner || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+        thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+        hasModules: course.hasModules || false
       }));
       setTableData(formattedCourses);
 
@@ -70,6 +124,7 @@ const AdminDashboard = () => {
   // Status toggle handler
   const handleStatusToggle = (row) => {
     if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
+      // Use the same API as delete but only update the status
       dispatch(updateCourseThunk({
         id: row.id,
         status: row.status ? 0 : 1
@@ -89,7 +144,7 @@ const AdminDashboard = () => {
   // Edit handler
   const handleEdit = (row) => {
     console.log(`Edit clicked for: ${row.title}`);
-    navigate(`/dashboard/admin/courses/${row.id}/edit`);
+    navigate(`/dashboard/admin/courses/edit/${row.id}`);
   };
 
   // View handler
@@ -120,7 +175,7 @@ const AdminDashboard = () => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.image} alt={row.title} className="course-thumbnail" />
+          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),
@@ -132,7 +187,7 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
-      name: "Professor",
+      name: "Creator",
       cell: (row) => (
         <div className="professor-info">
           <img
@@ -151,11 +206,17 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
+      name: "Level",
+      selector: (row) => row.level,
+      sortable: true,
+    },
+    {
       name: "Status",
       cell: (row) => (
         <div
           className={`status-indicator ${row.status ? "active" : ""}`}
           onClick={() => handleStatusToggle(row)}
+          title={row.status ? "Active" : "Inactive"}
         />
       ),
       sortable: true,
@@ -166,15 +227,16 @@ const AdminDashboard = () => {
       name: "Action",
       cell: (row) => (
         <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleView(row)}>
+          <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
             <FaEye />
           </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)}>
+          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
             <FaPencilAlt />
           </button>
           <button
             className="action-btn delete"
             onClick={() => handleDelete(row)}
+            title="Delete Course"
           >
             <FaTrashAlt />
           </button>
@@ -200,7 +262,7 @@ const AdminDashboard = () => {
             <LuSchool size={24} />
             <LuSchool className="icondesign1" />
           </div>
-          <div className="stat-count">{universities?.length || 0}</div>
+          <div className="stat-count">{universityCount || universities?.length || 0}</div>
           <div className="stat-title">Total Schools</div>
         </div>
 
@@ -209,7 +271,7 @@ const AdminDashboard = () => {
             <LiaChalkboardTeacherSolid size={24} />
             <LiaChalkboardTeacherSolid className="icondesign2" />
           </div>
-          <div className="stat-count">{educatorsCount}</div>
+          <div className="stat-count">{educatorCount || educatorsCountFromUniversities}</div>
           <div className="stat-title">Total Educators</div>
         </div>
 
@@ -218,8 +280,8 @@ const AdminDashboard = () => {
             <LiaChalkboardTeacherSolid size={24} />
             <LiaChalkboardTeacherSolid className="icondesign3" />
           </div>
-          <div className="stat-count">{courses?.length || 0}</div>
-          <div className="stat-title">Total Courses</div>
+          <div className="stat-count">{adminCount || 0}</div>
+          <div className="stat-title">Admin Users</div>
         </div>
       </div>
 
@@ -270,6 +332,8 @@ const AdminDashboard = () => {
             <option value="">Sort by</option>
             <option value="title-asc">Title (A-Z)</option>
             <option value="title-desc">Title (Z-A)</option>
+            <option value="level-asc">Level (Beginner-Advanced)</option>
+            <option value="level-desc">Level (Advanced-Beginner)</option>
             <option value="status">Status</option>
           </select>
         </div>
@@ -282,7 +346,9 @@ const AdminDashboard = () => {
             .filter(item =>
               item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
               item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.professor.toLowerCase().includes(searchTerm.toLowerCase())
+              item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
             )
             // Apply category filter
             .filter(item =>
@@ -295,6 +361,8 @@ const AdminDashboard = () => {
               switch (sortBy) {
                 case "title-asc": return a.title.localeCompare(b.title);
                 case "title-desc": return b.title.localeCompare(a.title);
+                case "level-asc": return a.level.localeCompare(b.level);
+                case "level-desc": return b.level.localeCompare(a.level);
                 case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
                 default: return 0;
               }

@@ -8,6 +8,9 @@ const { protect, restrictTo } = require('../middleware/auth');
 router.use(protect);
 //router.use(restrictTo('admin'));
 
+// User routes
+router.get('/users', adminController.getAllUsers);
+
 // University routes
 router.get('/universities', adminController.getUniversities);
 router.get('/university/:id', adminController.getUniversityById);

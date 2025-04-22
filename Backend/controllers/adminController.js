@@ -264,11 +264,11 @@ exports.deleteContent = async (req, res) => {
   }
 };
 
-// Get all active courses
+// Get all courses (both active and inactive)
 exports.getCourses = async (req, res) => {
   try {
-    // Only return active courses (status = 1)
-    const courses = await Course.find({ status: 1 }).populate('creator', 'name');
+    // Return all courses regardless of status
+    const courses = await Course.find().populate('creator', 'name');
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving courses', error: error.message });
@@ -278,7 +278,7 @@ exports.getCourses = async (req, res) => {
 // Get a specific course with its content and quizzes
 exports.getCourse = async (req, res) => {
   try {
-    const course = await Course.findOne({ _id: req.params.id, status: 1 })
+    const course = await Course.findById(req.params.id)
       .populate('creator', 'name')
       .populate('content')
       .populate('quizzes');
@@ -321,7 +321,7 @@ exports.createCourse = async (req, res) => {
 // Update a course
 exports.updateCourse = async (req, res) => {
   try {
-    const { title, description, duration, level, tags, thumbnail } = req.body;
+    const { title, description, duration, level, tags, thumbnail, status } = req.body;
 
     const course = await Course.findById(req.params.id);
     if (!course) {
@@ -334,6 +334,11 @@ exports.updateCourse = async (req, res) => {
     if (level) course.level = level;
     if (tags) course.tags = tags;
     if (thumbnail) course.thumbnail = thumbnail;
+
+    // Handle status update if provided
+    if (status !== undefined) {
+      course.status = Number(status);
+    }
 
     await course.save();
     res.json(course);
@@ -535,4 +540,17 @@ exports.updatePassword = async (req, res) => {
   await user.save();
   console.debug(`Password updated successfully for userId: ${req.user.id}`);
   res.json({ msg: 'Password updated' });
+};
+
+// Get all users (admin, university, educator)
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Return all users regardless of status
+    const users = await User.find().select('-password');
+    console.log('getAllUsers API response:', JSON.stringify(users, null, 2));
+    res.json(users);
+  } catch (error) {
+    console.error('Error in getAllUsers:', error);
+    res.status(500).json({ message: 'Error retrieving users', error: error.message });
+  }
 };
