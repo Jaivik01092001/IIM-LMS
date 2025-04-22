@@ -120,6 +120,39 @@
   color: var(--text-color);
 }
 
+.educator-details-page .status-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.educator-details-page .status-toggle-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  color: white;
+}
+
+.educator-details-page .status-toggle-btn.activate {
+  background-color: #4CAF50;
+}
+
+.educator-details-page .status-toggle-btn.activate:hover {
+  background-color: #43A047;
+}
+
+.educator-details-page .status-toggle-btn.deactivate {
+  background-color: #F44336;
+}
+
+.educator-details-page .status-toggle-btn.deactivate:hover {
+  background-color: #E53935;
+}
+
 .educator-details-page .action-buttons {
   display: flex;
   gap: 1rem;
@@ -154,6 +187,11 @@
 .educator-details-page .edit-btn:hover {
   background-color: var(--primary-hover-color);
   color: white;
+}
+
+.educator-details-page .action-buttons button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* Responsive styles */

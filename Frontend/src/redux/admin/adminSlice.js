@@ -42,10 +42,14 @@ export const createUniversityThunk = createAsyncThunk('admin/createUniversity', 
   }
 });
 
-export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async ({ id, ...universityData }, { rejectWithValue }) => {
+export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async ({ id, ...universityData }, { rejectWithValue, dispatch }) => {
   try {
     const data = await api.updateUniversity(id, universityData);
     showSuccessToast(data.msg || 'University updated successfully');
+    
+    // Refresh the universities list to ensure data consistency
+    dispatch(getUniversitiesThunk());
+    
     return data;
   } catch (error) {
     showErrorToast(error.response?.data?.msg || 'Failed to update university');

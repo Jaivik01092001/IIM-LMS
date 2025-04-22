@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { 
-  getUniversitiesThunk, 
-  deleteUniversityThunk 
+import {
+  getUniversitiesThunk,
+  deleteUniversityThunk,
+  updateUniversityThunk
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
@@ -12,15 +13,16 @@ import "../assets/styles/Schools.css";
 const Schools = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Get data from Redux store
   const { universities, loading } = useSelector((state) => state.admin);
-  
+
   // Local state
   const [tableData, setTableData] = useState([]);
   const [filters, setFilters] = useState({
     searchTerm: "",
     category: "",
+    status: "", // Add status filter
     sortBy: ""
   });
 
@@ -32,18 +34,22 @@ const Schools = () => {
   // Transform API data to table format
   useEffect(() => {
     if (!universities?.length) return;
-    
-    const formattedData = universities.map((uni, index) => ({
-      id: uni._id || index + 1,
+
+    const formattedData = universities.map((uni) => ({
+      id: uni._id,
       school: uni.name || "N/A",
       category: "University",
-      owner: uni.creator?.name || "N/A",
-      ownerAvatar: uni.creator?.profile?.avatar || "https://randomuser.me/api/portraits/men/1.jpg",
-      mobile: uni.creator?.phoneNumber || "N/A",
-      status: true,
+      owner: uni.contactPerson || "N/A",
+      email: uni.email || "N/A",
+      mobile: uni.phone || "N/A",
+      ownerAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
+      status: uni.status === 1,
+      address: uni.address || "N/A",
+      zipcode: uni.zipcode || "N/A",
+      state: uni.state || "N/A",
       educators: uni.educators || []
     }));
-    
+
     setTableData(formattedData);
   }, [universities]);
 
@@ -54,10 +60,26 @@ const Schools = () => {
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    // We'll handle this in a future implementation
-    setTableData(tableData.map(item => 
-      item.id === row.id ? { ...item, status: !item.status } : item
-    ));
+    const newStatus = row.status ? 0 : 1;
+    const statusText = newStatus === 1 ? "activate" : "deactivate";
+
+    if (window.confirm(`Are you sure you want to ${statusText} "${row.school}"?`)) {
+      console.log(`Toggling status for ${row.school} to ${newStatus}`);
+
+      dispatch(updateUniversityThunk({
+        id: row.id,
+        status: newStatus
+      }))
+        .unwrap()
+        .then(() => {
+          console.log(`Successfully ${statusText}d ${row.school}`);
+          // Get fresh data from the server to ensure state is in sync with backend
+          dispatch(getUniversitiesThunk());
+        })
+        .catch(error => {
+          console.error(`Error ${statusText}ing university:`, error);
+        });
+    }
   };
 
   // Row action handlers
@@ -95,21 +117,28 @@ const Schools = () => {
 
   // Apply filters and sorting
   const getFilteredData = () => {
-    const { searchTerm, category, sortBy } = filters;
-    
+    const { searchTerm, category, status, sortBy } = filters;
+
     return tableData
-      .filter(item => 
+      .filter(item =>
         // Apply search filter
         !searchTerm || item.school.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .filter(item => 
+      .filter(item =>
         // Apply category filter
         !category || item.category === category
       )
+      .filter(item => {
+        // Apply status filter
+        if (!status) return true; // Show all if no status filter
+        if (status === "active") return item.status === true;
+        if (status === "inactive") return item.status === false;
+        return true;
+      })
       .sort((a, b) => {
         // Apply sorting
         if (!sortBy) return 0;
-        
+
         switch (sortBy) {
           case "Name (A-Z)": return a.school.localeCompare(b.school);
           case "Name (Z-A)": return b.school.localeCompare(a.school);
@@ -123,7 +152,7 @@ const Schools = () => {
   const columns = [
     {
       name: "No.",
-      selector: (row) => row.id,
+      selector: (row, index) => index + 1,
       sortable: true,
       width: "70px",
     },
@@ -155,14 +184,19 @@ const Schools = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleStatusToggle(row)}
-        />
+        <div className="status-cell">
+          <div
+            className={`status-indicator ${row.status ? "active" : ""}`}
+            onClick={() => handleStatusToggle(row)}
+            title={row.status ? "Click to deactivate" : "Click to activate"}
+          />
+          <span className={row.status ? "text-green-600" : "text-red-600"}>
+            {row.status ? "Active" : "Inactive"}
+          </span>
+        </div>
       ),
       sortable: true,
-      width: "100px",
-      center: true,
+      width: "120px",
     },
     {
       name: "Action",
@@ -193,19 +227,21 @@ const Schools = () => {
     );
   }
 
+
   return (
     <div className="schools-container">
       <div className="schools-header">
+      
         <div className="search-filter-container">
           <input
             type="text"
-            placeholder="Search Educators"
+            placeholder="Search Schools"
             className="search-input"
             value={filters.searchTerm}
             onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
           />
 
-          <select 
+          <select
             className="filter-select"
             value={filters.category}
             onChange={(e) => handleFilterChange("category", e.target.value)}
@@ -215,8 +251,18 @@ const Schools = () => {
             <option value="International school">International school</option>
             <option value="University">University</option>
           </select>
-          
-          <select 
+
+          <select
+            className="filter-select"
+            value={filters.status}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          <select
             className="filter-select"
             value={filters.sortBy}
             onChange={(e) => handleFilterChange("sortBy", e.target.value)}

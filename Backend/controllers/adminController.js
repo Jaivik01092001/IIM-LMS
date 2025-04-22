@@ -8,8 +8,8 @@ const { formatPhoneNumber } = require('../utils/phoneUtils');
 
 exports.getUniversities = async (req, res) => {
   try {
-    // Only return active universities (status = 1)
-    const universities = await University.find({ status: 1 }).populate('educators');
+    // Return all universities regardless of status
+    const universities = await University.find().populate('educators');
     res.json(universities);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving universities', error: error.message });
@@ -70,7 +70,7 @@ exports.createUniversity = async (req, res, next) => {
 
 exports.getUniversityById = async (req, res) => {
   try {
-    const university = await University.findOne({ _id: req.params.id, status: 1 })
+    const university = await University.findById(req.params.id)
       .populate('educators', 'name email phoneNumber');
 
     if (!university) {
@@ -110,7 +110,7 @@ exports.deleteUniversity = async (req, res) => {
 
 exports.updateUniversity = async (req, res) => {
   try {
-    const { name, email, phone, address, zipcode, state, contactPerson } = req.body;
+    const { name, email, phone, address, zipcode, state, contactPerson, status } = req.body;
     const university = await University.findById(req.params.id);
 
     if (!university) {
@@ -124,6 +124,11 @@ exports.updateUniversity = async (req, res) => {
     university.zipcode = zipcode || university.zipcode;
     university.state = state || university.state;
     university.contactPerson = contactPerson || university.contactPerson;
+
+    // Handle status update if provided
+    if (status !== undefined) {
+      university.status = Number(status);
+    }
 
     await university.save();
     res.json(university);

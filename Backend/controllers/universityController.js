@@ -40,11 +40,10 @@ exports.createEducator = async (req, res, next) => {
 
 exports.getEducators = async (req, res) => {
   try {
-    // Only return active educators (status = 1)
+    // Return all educators (both active and inactive)
     const educators = await User.find({
       university: req.user.id,
-      role: 'educator',
-      status: 1
+      role: 'educator'
     });
     res.json(educators);
   } catch (error) {
@@ -57,8 +56,7 @@ exports.getEducatorById = async (req, res) => {
     const educator = await User.findOne({
       _id: req.params.id,
       university: req.user.id,
-      role: 'educator',
-      status: 1
+      role: 'educator'
     });
 
     if (!educator) {
@@ -95,7 +93,7 @@ exports.deleteEducator = async (req, res) => {
 
 exports.updateEducator = async (req, res) => {
   try {
-    const { name, email, roleId, phoneNumber, address, zipcode, state } = req.body;
+    const { name, email, roleId, phoneNumber, address, zipcode, state, status } = req.body;
     const educator = await User.findById(req.params.id);
 
     if (!educator) {
@@ -106,17 +104,26 @@ exports.updateEducator = async (req, res) => {
       return res.status(403).json({ msg: 'Unauthorized' });
     }
 
-    educator.name = name || educator.name;
-    educator.email = email || educator.email;
-    educator.phoneNumber = phoneNumber || educator.phoneNumber;
+    // Only update fields that are provided
+    if (name) educator.name = name;
+    if (email) educator.email = email;
+    if (phoneNumber) educator.phoneNumber = phoneNumber;
+    if (status !== undefined) educator.status = Number(status);
 
-    // Update profile fields
-    educator.profile = {
-      ...educator.profile,
-      address: address || educator.profile?.address,
-      zipcode: zipcode || educator.profile?.zipcode,
-      state: state || educator.profile?.state
-    };
+    // Initialize profile if it doesn't exist
+    if (!educator.profile) {
+      educator.profile = {};
+    }
+
+    // Ensure socialLinks exists to prevent validation errors
+    if (!educator.profile.socialLinks) {
+      educator.profile.socialLinks = {};
+    }
+
+    // Update profile fields only if they are provided
+    if (address) educator.profile.address = address;
+    if (zipcode) educator.profile.zipcode = zipcode;
+    if (state) educator.profile.state = state;
 
     if (roleId) {
       educator.roleRef = roleId;

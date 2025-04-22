@@ -1,13 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { createEducatorThunk, updateEducatorThunk, getEducatorsThunk } from "../redux/university/universitySlice";
+import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/EducatorAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
 
 const EducatorAccountForm = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
   const educatorData = location.state?.educator || null;
   const isEditMode = !!educatorData;
+
+  // Get roles from Redux store
+  const { roles } = useSelector((state) => state.role);
+
+  // Fetch roles on component mount
+  useEffect(() => {
+    dispatch(getRolesThunk());
+  }, [dispatch]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   const [formData, setFormData] = useState({
     professorName: "",
@@ -18,29 +33,33 @@ const EducatorAccountForm = () => {
     address: "",
     zipcode: "",
     state: "",
-    loginPhone: "",
-    loginEmail: "",
     password: "",
+    roleId: "",
     profileImage: null,
     profileImageUrl: "",
+    status: 1,
   });
 
   useEffect(() => {
     if (isEditMode && educatorData) {
+      // Strip the '+91' prefix from phone number if exists
+      const phoneNumber = educatorData.mobile ?
+                        educatorData.mobile.replace(/^\+91\s*/, '').trim() :
+                        "";
+
       setFormData({
         professorName: educatorData.professor || "",
         schoolName: educatorData.school || "",
         category: educatorData.category || "",
-        email: "jacksonchristian@gmail.com", // Default value
-        phoneNumber: educatorData.mobile?.replace("+91 ", "") || "",
-        address:
-          "Jay Ambenagar Rd, opp. Sardar Patel Institute, Patel Society, Jai Ambe Nagar, Thaltej, Ahmedabad", // Default value
-        zipcode: "380054", // Default value
-        state: "Gujarat", // Default value
-        loginPhone: "98765 43210", // Default value
-        loginEmail: "udgamschoolforchildren@gmail.com", // Default value
-        password: "Udgamschool@43210", // Default value
+        email: educatorData.email || "",
+        phoneNumber: phoneNumber,
+        address: educatorData.address || "",
+        zipcode: educatorData.zipcode || "",
+        state: educatorData.state || "",
+        password: "", // Don't populate password in edit mode
+        roleId: educatorData.roleId || "",
         profileImageUrl: educatorData.avatar || "",
+        status: educatorData.status ? 1 : 0,
       });
     }
   }, [isEditMode, educatorData]);
@@ -66,17 +85,61 @@ const EducatorAccountForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setFormErrors({});
+    setIsSubmitting(true);
 
-    // Here you would typically send the data to your backend
-    // For now, we'll just navigate back
+    // Prepare form data for API
+    const apiData = {
+      name: formData.professorName,
+      email: formData.email,
+      phoneNumber: "+91 " + formData.phoneNumber.trim(),
+      address: formData.address,
+      zipcode: formData.zipcode,
+      state: formData.state,
+      status: Number(formData.status)
+    };
+
+    // Add password only for new educators or if changed
+    if (!isEditMode || formData.password) {
+      apiData.password = formData.password;
+    }
+
+    // Add roleId if selected
+    if (formData.roleId) {
+      apiData.roleId = formData.roleId;
+    }
 
     if (isEditMode) {
-      // If editing, go back to educator details
-      navigate(-1);
+      // Update existing educator
+      dispatch(updateEducatorThunk({
+        id: educatorData.id,
+        ...apiData
+      }))
+        .unwrap()
+        .then(() => {
+          // Refresh educators list
+          dispatch(getEducatorsThunk());
+          // Navigate back
+          navigate(-1);
+        })
+        .catch(error => {
+          setFormErrors(error.errors || {});
+          setIsSubmitting(false);
+        });
     } else {
-      // If creating new, go back to educators list
-      navigate("/dashboard/admin/educators");
+      // Create new educator
+      dispatch(createEducatorThunk(apiData))
+        .unwrap()
+        .then(() => {
+          // Refresh educators list
+          dispatch(getEducatorsThunk());
+          // Navigate back to educators list
+          navigate("/dashboard/admin/educators");
+        })
+        .catch(error => {
+          setFormErrors(error.errors || {});
+          setIsSubmitting(false);
+        });
     }
   };
 
@@ -112,6 +175,7 @@ const EducatorAccountForm = () => {
                     placeholder="Enter Educator Name"
                     required
                   />
+                  {formErrors.name && <div className="error-message">{formErrors.name}</div>}
                 </div>
               </div>
               <div className="grid-row">
@@ -145,6 +209,25 @@ const EducatorAccountForm = () => {
                     </option>
                     <option value="University">University</option>
                   </select>
+                </div>
+              </div>
+              <div className="grid-row">
+                <div className="form-group">
+                  <label htmlFor="roleId">Role</label>
+                  <select
+                    id="roleId"
+                    name="roleId"
+                    value={formData.roleId}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select Role</option>
+                    {roles && roles.map(role => (
+                      <option key={role._id} value={role._id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.roleId && <div className="error-message">{formErrors.roleId}</div>}
                 </div>
               </div>
             </div>
@@ -193,6 +276,7 @@ const EducatorAccountForm = () => {
                 placeholder="Enter Email Address"
                 required
               />
+              {formErrors.email && <div className="error-message">{formErrors.email}</div>}
             </div>
             <div className="form-group">
               <label htmlFor="phoneNumber">Phone Number</label>
@@ -300,20 +384,30 @@ const EducatorAccountForm = () => {
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Enter Password"
-                required
+                required={!isEditMode} // Only required for new educators
               />
+              {formErrors.password && <div className="error-message">{formErrors.password}</div>}
             </div>
           </div>
         </div>
 
         <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={handleCancel}>
+          <button type="button" className="cancel-btn" onClick={handleCancel} disabled={isSubmitting}>
             Cancel
           </button>
-          <button type="submit" className="submit-btn">
-            {isEditMode ? "Update" : "Submit"}
+          <button type="submit" className="submit-btn" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <span className="loading-spinner-small"></span>
+            ) : (
+              isEditMode ? "Update" : "Submit"
+            )}
           </button>
         </div>
+
+        {/* General error message */}
+        {formErrors.general && (
+          <div className="error-message general-error">{formErrors.general}</div>
+        )}
       </form>
     </div>
   );
