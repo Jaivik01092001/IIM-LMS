@@ -152,7 +152,7 @@
 }
 
 .educator-details-page .edit-btn:hover {
-  background-color: var(--primary-light-color);
+  background-color: var(--primary-hover-color);
   color: white;
 }
 

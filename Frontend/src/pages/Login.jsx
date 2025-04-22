@@ -3,6 +3,7 @@ import "../assets/styles/login.css";
 import logo from "../assets/images/login_page/logo.svg";
 import login_background from "../assets/images/login_page/login_background.svg";
 import campus_img from "../assets/images/login_page/campus_img.svg";
+import bluelogo from "../assets/images/login_page/bluelogo.svg";
 import { IoPhonePortraitOutline } from "react-icons/io5";
 import { FaInfoCircle } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
@@ -192,7 +193,7 @@ const Login = () => {
 
   // Effect to check if all OTP values are entered to auto-verify
   useEffect(() => {
-    const allDigitsEntered = otpValues.every(val => val !== "");
+    const allDigitsEntered = otpValues.every((val) => val !== "");
     if (allDigitsEntered && otpValues.length === 6) {
       handleVerifyOTP();
     }
@@ -230,7 +231,9 @@ const Login = () => {
       ? phone
       : "+91" + phone.replace(/^0+/, "");
 
-    const result = await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
+    const result = await dispatch(
+      requestOTPThunk({ phoneNumber: formattedPhone, email })
+    );
     if (result.payload && result.payload.message) {
       showSuccessToast(result.payload.message);
     }
@@ -277,7 +280,9 @@ const Login = () => {
     const formattedPhone = phone.startsWith("+91")
       ? phone
       : "+91" + phone.replace(/^0+/, "");
-    const result = await dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
+    const result = await dispatch(
+      requestOTPThunk({ phoneNumber: formattedPhone, email })
+    );
     if (result.payload && result.payload.message) {
       showSuccessToast(result.payload.message);
     }
@@ -299,7 +304,9 @@ const Login = () => {
         {/* Right side with login form */}
         <div className="login-right">
           <div className="login-right-mainheading">
-            <h2>IIM AHMEDABAD</h2>
+            {/* <div className="mainlogoimg">
+              <img src={bluelogo} alt="" />
+            </div> */}
           </div>
           <div className="right-Second_part">
             {!otpRequested ? (
@@ -338,7 +345,11 @@ const Login = () => {
                 </div>
 
                 {/* Login button */}
-                <button className="login-btn" onClick={handleLogin} disabled={loading}>
+                <button
+                  className="login-btn"
+                  onClick={handleLogin}
+                  disabled={loading}
+                >
                   {loading ? "Requesting OTP..." : "Login Now"}
                 </button>
 
@@ -379,12 +390,32 @@ const Login = () => {
                   ))}
                 </div>
 
-                <p className="otp-note">Enter all 6 digits or paste your OTP to verify automatically</p>
+                <p className="otp-note">
+                  Enter all 6 digits or paste your OTP to verify automatically
+                </p>
 
                 {/* Show debug OTP in development mode */}
                 {debugOtp && (
-                  <div className="debug-otp-container" style={{ marginTop: '10px', padding: '8px', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid #ffeeba' }}>
-                    <p className="debug-otp-text" style={{ color: '#856404', fontSize: '14px', textAlign: 'center' }}>Development OTP: <strong>{debugOtp}</strong></p>
+                  <div
+                    className="debug-otp-container"
+                    style={{
+                      marginTop: "10px",
+                      padding: "8px",
+                      backgroundColor: "#fff3cd",
+                      borderRadius: "4px",
+                      border: "1px solid #ffeeba",
+                    }}
+                  >
+                    <p
+                      className="debug-otp-text"
+                      style={{
+                        color: "#856404",
+                        fontSize: "14px",
+                        textAlign: "center",
+                      }}
+                    >
+                      Development OTP: <strong>{debugOtp}</strong>
+                    </p>
                   </div>
                 )}
 
@@ -421,6 +452,3 @@ const Login = () => {
 };
 
 export default Login;
-
-
-

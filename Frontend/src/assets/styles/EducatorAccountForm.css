@@ -194,7 +194,7 @@
 }
 
 .educator-form-container .upload-photo-btn:hover {
-  background-color: var(--primary-light-color);
+  background-color: var(--primary-hover-color);
 }
 
 .educator-form-container .form-actions {
@@ -231,7 +231,7 @@
 }
 
 .educator-form-container .submit-btn:hover {
-  background-color: var(--primary-light-color);
+  background-color: var(--primary-hover-color);
 }
 
 /* Responsive styles */

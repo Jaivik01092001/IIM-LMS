@@ -19,16 +19,19 @@ p {
 /* Root Variables */
 :root {
   /* Colors */
-  --primary-color: #5038ed;
-  --primary-light-color: #9181f4;
+  --primary-color: #1a2e6e;
+  --primary-color-rgb: 26, 46, 110; /* RGB values for #1a2e6e */
+  --primary-hover-color: #2a3f80; /* Slightly lighter shade for hover */
+  --primary-light-color: #3a4f90; /* Lighter shade of primary color */
+  --primary-light-bg: #e8eaf6;
 
   --text-color: #1c1c1c;
-  --text-primary: #5038ed;
+  --text-primary: #1a2e6e;
   --text-gray: #84868a;
 
   --bg-gray: #f5f7f9;
   --bg-white: #ffffff;
-  --bg-primary: #5038ed;
+  --bg-primary: #1a2e6e;
   --border-gray: #f0edff;
   --dark-gray: #c3c3c3;
 
@@ -59,7 +62,7 @@ p {
   --z-index-header: 900;
 
   /* font-family */
-  --font-Coiny: "Coiny", system-ui;
+  --font-Coiny: "Poppins", sans-serif;
   --font-Poppins: "Poppins", sans-serif;
 }
 /* Container Styling */
@@ -219,7 +222,7 @@ select {
 }
 
 .scroll-to-top-btn:hover {
-  background-color: var(--primary-light-color);
+  background-color: var(--primary-hover-color);
   transform: translateY(-3px);
 }
 

@@ -162,7 +162,8 @@
 }
 
 .edit-btn:hover {
-  background-color: var(--primary-light-color);
+  background-color: var(--primary-hover-color);
+  color: white;
 }
 
 @media (max-width: 1130px) {

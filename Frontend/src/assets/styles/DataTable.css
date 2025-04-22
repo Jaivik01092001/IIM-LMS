@@ -34,8 +34,8 @@
 }
 
 .data-table-container .search-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
 }
 
 /* Override react-data-table-component styles */
@@ -92,7 +92,7 @@
 }
 
 .data-table-container .status-indicator.active {
-  background-color: #6366f1;
+  background-color: var(--primary-color);
 }
 
 .data-table-container .status-indicator.active::after {
@@ -114,7 +114,7 @@
 }
 
 .data-table-container .action-button.edit {
-  background-color: #eef2ff;
+  background-color: var(--primary-light-bg);
   color: var(--primary-color);
 }
 
