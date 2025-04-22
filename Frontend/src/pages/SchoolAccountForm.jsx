@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk } from "../redux/admin/adminSlice";
 import "../assets/styles/SchoolAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
 
 const SchoolAccountForm = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const schoolData = location.state?.school || null;
+  const dispatch = useDispatch();
+  
+  // Get school data from localStorage instead of location state
+  const storedSchoolData = localStorage.getItem('editSchool');
+  const schoolData = storedSchoolData ? JSON.parse(storedSchoolData) : null;
   const isEditMode = !!schoolData;
 
   const [formData, setFormData] = useState({
@@ -66,21 +71,51 @@ const SchoolAccountForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-
-    // Here you would typically send the data to your backend
-    // For now, we'll just navigate back
+    
+    // Prepare form data for API
+    const apiData = {
+      name: formData.schoolName,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      password: formData.password,
+      // Add other fields as needed
+    };
 
     if (isEditMode) {
-      // If editing, go back to school details
-      navigate(-1);
+      // Call update API 
+      dispatch(updateUniversityThunk({
+        id: schoolData.id,
+        ...apiData
+      }))
+        .unwrap()
+        .then(() => {
+          // Clear localStorage
+          localStorage.removeItem('editSchool');
+          // Refresh data and navigate back
+          dispatch(getUniversitiesThunk());
+          navigate("/dashboard/admin/schools");
+        })
+        .catch(error => {
+          console.error("Error updating university:", error);
+        });
     } else {
-      // If creating new, go back to schools list
-      navigate("/dashboard/admin/schools");
+      // Call create API
+      dispatch(createUniversityThunk(apiData))
+        .unwrap()
+        .then(() => {
+          // Refresh data and navigate back
+          dispatch(getUniversitiesThunk());
+          navigate("/dashboard/admin/schools");
+        })
+        .catch(error => {
+          console.error("Error creating university:", error);
+        });
     }
   };
 
   const handleCancel = () => {
+    // Clean up localStorage
+    localStorage.removeItem('editSchool');
     navigate(-1);
   };
 
@@ -309,11 +344,11 @@ const SchoolAccountForm = () => {
         </div>
 
         <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={handleCancel}>
+          <button type="button" onClick={handleCancel} className="cancel-btn">
             Cancel
           </button>
           <button type="submit" className="submit-btn">
-            {isEditMode ? "Update" : "Submit"}
+            {isEditMode ? "Update" : "Create"}
           </button>
         </div>
       </form>
