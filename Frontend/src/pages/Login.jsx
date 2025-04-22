@@ -3,7 +3,6 @@ import "../assets/styles/login.css";
 import logo from "../assets/images/login_page/logo.svg";
 import login_background from "../assets/images/login_page/login_background.svg";
 import campus_img from "../assets/images/login_page/campus_img.svg";
-import bluelogo from "../assets/images/login_page/bluelogo.svg";
 import { IoPhonePortraitOutline } from "react-icons/io5";
 import { FaInfoCircle } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";

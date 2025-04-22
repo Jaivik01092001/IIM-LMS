@@ -153,6 +153,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           {/* Logo & close button container for mobile */}
           <div className="sidebar-header">
             <img src={bluelogo} alt="" />
+            <h1 className="sidebar-logo">IIM Ahmedabad</h1>
             <button className="close-sidebar-btn" onClick={toggleSidebar}>
               <FaTimes />
             </button>
