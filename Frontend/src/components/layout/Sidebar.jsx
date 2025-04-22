@@ -6,12 +6,11 @@ import {
   FaGraduationCap,
   FaHome,
   FaUsers,
-  FaCog,
-  FaBell,
   FaTimes,
   FaChevronDown,
   FaUniversity,
   FaUserTie,
+  FaUserShield,
 } from "react-icons/fa";
 import "../../assets/styles/Sidebar.css";
 
@@ -53,18 +52,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         icon: <FaGraduationCap className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/courses`,
       },
-      {
-        id: "notification",
-        name: "Notifications",
-        icon: <FaBell className="menu-icon" />,
-        path: `/dashboard/${getDashboardPath()}/notification`,
-      },
-      {
-        id: "settings",
-        name: "Settings",
-        icon: <FaCog className="menu-icon" />,
-        path: `/dashboard/${getDashboardPath()}/settings`,
-      },
     ];
 
     // Add role-specific items
@@ -89,6 +76,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             icon: <FaUserTie />,
           },
         ],
+      });
+
+      // Add Role/Permission tab for superadmin only
+      items.push({
+        id: "role-permission",
+        name: "Role & Permission",
+        icon: <FaUserShield className="menu-icon" />,
+        path: `/dashboard/admin/role-permission`,
       });
     } else if (userRole === "educator") {
       // Insert after courses

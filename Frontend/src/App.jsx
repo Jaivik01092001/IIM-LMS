@@ -31,7 +31,7 @@ import Educators from "./pages/Educators.jsx";
 import EducatorDetails from "./pages/EducatorDetails.jsx";
 import EducatorAccountForm from "./pages/EducatorAccountForm.jsx";
 import Notification from "./pages/Notification.jsx";
-import Settings from "./pages/Settings.jsx";
+import RolePermission from "./pages/RolePermission.jsx";
 
 const App = () => {
   return (
@@ -96,8 +96,8 @@ const App = () => {
               element={<Notification userType="admin" />}
             />
             <Route
-              path="admin/settings"
-              element={<Settings userType="admin" />}
+              path="admin/role-permission"
+              element={<RolePermission />}
             />
 
             {/* School routes */}
@@ -115,10 +115,7 @@ const App = () => {
               path="school/notification"
               element={<Notification userType="school" />}
             />
-            <Route
-              path="school/settings"
-              element={<Settings userType="school" />}
-            />
+
 
             {/* Tutor routes */}
             <Route path="tutor" element={<TutorDashboard />} />
@@ -131,10 +128,7 @@ const App = () => {
               path="tutor/notification"
               element={<Notification userType="tutor" />}
             />
-            <Route
-              path="tutor/settings"
-              element={<Settings userType="tutor" />}
-            />
+
 
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />

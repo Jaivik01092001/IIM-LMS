@@ -326,7 +326,7 @@
   background-color: #e0e0e0;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  /* border: 2px solid transparent; */
   position: relative;
   flex-shrink: 0;
 }

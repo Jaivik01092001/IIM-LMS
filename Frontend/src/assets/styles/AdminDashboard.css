@@ -242,7 +242,7 @@
   height: 16px;
   border-radius: 50%;
   background-color: white;
-  top: 1px;
+  top: 2px;
   left: 2px;
   transition: transform 0.3s ease;
 }
