@@ -4,15 +4,32 @@ const University = require('../models/University');
 const User = require('../models/User');
 const Module = require('../models/Module');
 const bcrypt = require('bcryptjs');
+const { formatPhoneNumber } = require('../utils/phoneUtils');
 
 exports.getUniversities = async (req, res) => {
-  const universities = await University.find().populate('educators');
-  res.json(universities);
+  try {
+    // Only return active universities (status = 1)
+    const universities = await University.find({ status: 1 }).populate('educators');
+    res.json(universities);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving universities', error: error.message });
+  }
 };
 
 exports.createUniversity = async (req, res, next) => {
   try {
-    const { name, email, password, roleId, phoneNumber } = req.body;
+    const {
+      name,
+      email,
+      password,
+      roleId,
+      phoneNumber,
+      address,
+      zipcode,
+      state,
+      contactPerson
+    } = req.body;
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const universityUser = new User({
       email,
@@ -21,33 +38,113 @@ exports.createUniversity = async (req, res, next) => {
       name,
       phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
       roleRef: roleId || undefined, // Assign role if provided
+      profile: {
+        address,
+        zipcode,
+        state
+      }
     });
+
     await universityUser.save();
-    const university = new University({ name, educators: [] });
+
+    const university = new University({
+      name,
+      email,
+      phone: phoneNumber,
+      address,
+      zipcode,
+      state,
+      contactPerson,
+      educators: []
+    });
+
     universityUser.university = university._id;
     await university.save();
     await universityUser.save();
+
     res.json(university);
   } catch (error) {
     next(error);
   }
 };
 
+exports.getUniversityById = async (req, res) => {
+  try {
+    const university = await University.findOne({ _id: req.params.id, status: 1 })
+      .populate('educators', 'name email phoneNumber');
+
+    if (!university) {
+      return res.status(404).json({ message: 'University not found' });
+    }
+
+    res.json(university);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving university', error: error.message });
+  }
+};
+
+exports.deleteUniversity = async (req, res) => {
+  try {
+    const university = await University.findById(req.params.id);
+
+    if (!university) {
+      return res.status(404).json({ message: 'University not found' });
+    }
+
+    // Soft delete - update status to 0 (inactive)
+    university.status = 0;
+    await university.save();
+
+    // Also update the associated university user to inactive
+    const universityUser = await User.findOne({ university: university._id, role: 'university' });
+    if (universityUser) {
+      universityUser.status = 0;
+      await universityUser.save();
+    }
+
+    res.json({ message: 'University deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting university', error: error.message });
+  }
+};
+
 exports.updateUniversity = async (req, res) => {
-  const { name } = req.body;
-  const university = await University.findById(req.params.id);
-  university.name = name || university.name;
-  await university.save();
-  res.json(university);
+  try {
+    const { name, email, phone, address, zipcode, state, contactPerson } = req.body;
+    const university = await University.findById(req.params.id);
+
+    if (!university) {
+      return res.status(404).json({ message: 'University not found' });
+    }
+
+    university.name = name || university.name;
+    university.email = email || university.email;
+    university.phone = phone || university.phone;
+    university.address = address || university.address;
+    university.zipcode = zipcode || university.zipcode;
+    university.state = state || university.state;
+    university.contactPerson = contactPerson || university.contactPerson;
+
+    await university.save();
+    res.json(university);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating university', error: error.message });
+  }
 };
 
 exports.getContent = async (req, res) => {
-  const { search, filter } = req.query;
-  let query = {};
-  if (search) query.title = { $regex: search, $options: 'i' };
-  if (filter) query.status = filter;
-  const content = await Content.find(query).populate('creator', 'name');
-  res.json(content);
+  try {
+    const { search, filter } = req.query;
+    let query = { activeStatus: 1 }; // Only return active content
+
+    if (search) query.title = { $regex: search, $options: 'i' };
+    if (filter) query.status = filter;
+
+    const content = await Content.find(query).populate('creator', 'name');
+    res.json(content);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving content', error: error.message });
+  }
 };
 
 // exports.createContent = async (req, res) => {
@@ -145,20 +242,38 @@ exports.rejectContent = async (req, res) => {
 };
 
 exports.deleteContent = async (req, res) => {
-  await Content.findByIdAndDelete(req.params.id);
-  res.json({ msg: 'Content deleted' });
+  try {
+    const content = await Content.findById(req.params.id);
+
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+
+    // Soft delete - update activeStatus to 0 (inactive)
+    content.activeStatus = 0;
+    await content.save();
+
+    res.json({ message: 'Content deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting content', error: error.message });
+  }
 };
 
-// Predefined courses (seed data can be added separately)
+// Get all active courses
 exports.getCourses = async (req, res) => {
-  const courses = await Course.find().populate('creator', 'name');
-  res.json(courses);
+  try {
+    // Only return active courses (status = 1)
+    const courses = await Course.find({ status: 1 }).populate('creator', 'name');
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving courses', error: error.message });
+  }
 };
 
 // Get a specific course with its content and quizzes
 exports.getCourse = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id)
+    const course = await Course.findOne({ _id: req.params.id, status: 1 })
       .populate('creator', 'name')
       .populate('content')
       .populate('quizzes');
@@ -222,7 +337,7 @@ exports.updateCourse = async (req, res) => {
   }
 };
 
-// Delete a course
+// Delete a course (soft delete)
 exports.deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -230,12 +345,9 @@ exports.deleteCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    const Quiz = require('../models/Quiz');
-    // Delete all quizzes associated with the course
-    await Quiz.deleteMany({ course: course._id });
-
-    // Delete the course
-    await Course.findByIdAndDelete(req.params.id);
+    // Soft delete - update status to 0 (inactive)
+    course.status = 0;
+    await course.save();
 
     res.json({ message: 'Course deleted successfully' });
   } catch (error) {

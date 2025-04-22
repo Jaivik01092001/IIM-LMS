@@ -4,14 +4,22 @@ const Module = require('../models/Module');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
+const { formatPhoneNumber } = require('../utils/phoneUtils');
 
 const getCourses = async (req, res) => {
-  const { search, filter } = req.query;
-  let query = {};
-  if (search) query.title = { $regex: search, $options: 'i' };
-  if (filter) query.status = filter;
-  const courses = await Course.find(query).populate('creator', 'name');
-  res.json(courses);
+  try {
+    const { search, filter } = req.query;
+    let query = { status: 1 }; // Only return active courses
+
+    if (search) query.title = { $regex: search, $options: 'i' };
+    if (filter && filter !== 'all') query.status = filter;
+
+    const courses = await Course.find(query).populate('creator', 'name');
+    res.json(courses);
+  } catch (error) {
+    console.error('Error getting courses:', error);
+    res.status(500).json({ message: 'Error retrieving courses', error: error.message });
+  }
 };
 
 const enrollCourse = async (req, res) => {
@@ -50,14 +58,24 @@ const enrollCourse = async (req, res) => {
 };
 
 const getMyCourses = async (req, res) => {
-  const courses = await Course.find({ 'enrolledUsers.user': req.user.id }).populate('content');
-  res.json(courses);
+  try {
+    // Only return active courses (status = 1) that the user is enrolled in
+    const courses = await Course.find({
+      'enrolledUsers.user': req.user.id,
+      status: 1
+    }).populate('content');
+
+    res.json(courses);
+  } catch (error) {
+    console.error('Error getting my courses:', error);
+    res.status(500).json({ message: 'Error retrieving courses', error: error.message });
+  }
 };
 
 const getCourseDetail = async (req, res) => {
-
   try {
-    const course = await Course.findById(req.params.id)
+    // Only return active courses (status = 1)
+    const course = await Course.findOne({ _id: req.params.id, status: 1 })
       .populate('creator', 'name')
       .populate('content')
       .populate('quizzes')
@@ -116,7 +134,10 @@ const getContent = async (req, res) => {
     const { search, filter, type } = req.query;
 
     // Build query
-    let query = { status: 'approved' };
+    let query = {
+      status: 'approved',
+      activeStatus: 1 // Only return active content
+    };
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -178,7 +199,11 @@ const addComment = async (req, res) => {
 
 const getMyContent = async (req, res) => {
   try {
-    const content = await Content.find({ creator: req.user.id })
+    // Only return active content (activeStatus = 1)
+    const content = await Content.find({
+      creator: req.user.id,
+      activeStatus: 1
+    })
       .populate('creator', 'name')
       .populate('comments.user', 'name')
       .sort({ createdAt: -1 });
@@ -303,7 +328,7 @@ const submitQuiz = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, phone, address, bio } = req.body;
+    const { name, phone, phoneNumber, address, bio, zipcode, state } = req.body;
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -311,6 +336,11 @@ const updateProfile = async (req, res) => {
     }
 
     user.name = name || user.name;
+
+    // Update phone number if provided
+    if (phoneNumber) {
+      user.phoneNumber = phoneNumber;
+    }
 
     // Initialize profile if it doesn't exist
     if (!user.profile) {
@@ -320,6 +350,8 @@ const updateProfile = async (req, res) => {
     // Update profile fields
     user.profile.phone = phone || user.profile.phone;
     user.profile.address = address || user.profile.address;
+    user.profile.zipcode = zipcode || user.profile.zipcode;
+    user.profile.state = state || user.profile.state;
     user.profile.bio = bio || user.profile.bio;
 
     await user.save();

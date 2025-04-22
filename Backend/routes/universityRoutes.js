@@ -8,7 +8,9 @@ const router = express.Router();
 
 router.post('/educator', protect, universityController.createEducator);
 router.get('/educators', protect, universityController.getEducators);
+router.get('/educator/:id', protect, universityController.getEducatorById);
 router.put('/educator/:id', protect, universityController.updateEducator);
+router.delete('/educator/:id', protect, universityController.deleteEducator);
 router.put('/profile', protect, universityController.updateProfile);
 router.put('/password', protect, universityController.updatePassword);
 

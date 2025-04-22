@@ -17,10 +17,13 @@ const courseSchema = new mongoose.Schema({
   }],
   description: { type: String },
   duration: { type: String },
+  category: { type: String },
+  language: { type: String, default: 'en' },
   level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
   tags: [{ type: String }],
   thumbnail: { type: String }, // URL to course thumbnail image
   hasModules: { type: Boolean, default: false }, // Flag to indicate if course uses the new module structure
+  status: { type: Number, default: 1 } // 1: active, 0: inactive (soft delete)
 }, { timestamps: true });
 
 module.exports = mongoose.model('Course', courseSchema);
