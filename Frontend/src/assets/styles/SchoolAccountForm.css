@@ -100,14 +100,25 @@
   border-radius: var(--border-medium-small-radius);
   font-size: var(--basefont);
   color: var(--text-color);
+  width: 100%;
   background-color: var(--bg-white);
   transition: border-color 0.3s;
+  pointer-events: auto;
+  opacity: 1;
 }
 
 .school-form-container .form-group input:focus,
 .school-form-container .form-group select:focus {
   border-color: var(--primary-color);
   outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.school-form-container .form-group input:disabled,
+.school-form-container .form-group select:disabled {
+  background-color: var(--bg-gray);
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .school-form-container .phone-input-wrapper {

@@ -3,8 +3,18 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL;
 const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('accessToken') } });
 
+export const getUsers = async () => {
+  const response = await axios.get(`${API_URL}/admin/users`, getConfig());
+  return response.data;
+};
+
 export const getUniversities = async () => {
   const response = await axios.get(`${API_URL}/admin/universities`, getConfig());
+  return response.data;
+};
+
+export const getUniversityById = async (id) => {
+  const response = await axios.get(`${API_URL}/admin/university/${id}`, getConfig());
   return response.data;
 };
 
@@ -15,6 +25,11 @@ export const createUniversity = async (data) => {
 
 export const updateUniversity = async (id, data) => {
   const response = await axios.put(`${API_URL}/admin/university/${id}`, data, getConfig());
+  return response.data;
+};
+
+export const deleteUniversity = async (id) => {
+  const response = await axios.delete(`${API_URL}/admin/university/${id}`, getConfig());
   return response.data;
 };
 

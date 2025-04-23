@@ -87,6 +87,38 @@ export const updateProgressThunk = createAsyncThunk('educator/updateProgress', a
   }
 });
 
+// Certificate-related thunks
+export const getMyCertificatesThunk = createAsyncThunk('educator/getMyCertificates', async (_, { rejectWithValue }) => {
+  try {
+    const data = await api.getMyCertificates();
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to fetch certificates');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to fetch certificates');
+  }
+});
+
+export const generateCertificateThunk = createAsyncThunk('educator/generateCertificate', async (courseId, { rejectWithValue }) => {
+  try {
+    const data = await api.generateCertificate(courseId);
+    showSuccessToast('Certificate generated successfully');
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to generate certificate');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to generate certificate');
+  }
+});
+
+export const getCertificateThunk = createAsyncThunk('educator/getCertificate', async (id, { rejectWithValue }) => {
+  try {
+    const data = await api.getCertificate(id);
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to fetch certificate');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to fetch certificate');
+  }
+});
+
 const educatorSlice = createSlice({
   name: 'educator',
   initialState: {
@@ -96,6 +128,8 @@ const educatorSlice = createSlice({
     myContent: [],
     courseDetail: null,
     quizResult: null,
+    certificates: [],
+    currentCertificate: null,
     loading: false,
     error: null,
   },
@@ -122,7 +156,35 @@ const educatorSlice = createSlice({
       .addCase(submitQuizThunk.fulfilled, (state, action) => { state.quizResult = action.payload; state.loading = false; })
       .addCase(updateProgressThunk.fulfilled, (state, action) => {
         if (state.courseDetail && state.courseDetail.enrolledUsers && state.courseDetail.enrolledUsers.length > 0) {
+          // Update progress in the course detail
           state.courseDetail.enrolledUsers[0].progress = action.payload.progress;
+          state.courseDetail.enrolledUsers[0].status = action.payload.status;
+
+          // If the course is completed, update the status and completedAt date
+          if (action.payload.status === 'completed') {
+            state.courseDetail.enrolledUsers[0].completedAt = new Date().toISOString();
+          }
+
+          // Also update the progress in the myCourses list if the course exists there
+          if (state.myCourses && state.myCourses.length > 0) {
+            const courseIndex = state.myCourses.findIndex(course => course._id === state.courseDetail._id);
+            if (courseIndex !== -1 && state.myCourses[courseIndex].enrolledUsers && state.myCourses[courseIndex].enrolledUsers.length > 0) {
+              // Find the user's enrollment in the course
+              const userEnrollmentIndex = state.myCourses[courseIndex].enrolledUsers.findIndex(
+                enrollment => enrollment.user === state.courseDetail.enrolledUsers[0].user
+              );
+
+              if (userEnrollmentIndex !== -1) {
+                // Update progress in myCourses
+                state.myCourses[courseIndex].enrolledUsers[userEnrollmentIndex].progress = action.payload.progress;
+                state.myCourses[courseIndex].enrolledUsers[userEnrollmentIndex].status = action.payload.status;
+
+                if (action.payload.status === 'completed') {
+                  state.myCourses[courseIndex].enrolledUsers[userEnrollmentIndex].completedAt = new Date().toISOString();
+                }
+              }
+            }
+          }
         }
       })
 
@@ -137,6 +199,40 @@ const educatorSlice = createSlice({
         state.loading = false;
       })
       .addCase(submitQuizThunk.rejected, (state, action) => { state.error = action.error.message; state.loading = false; })
+
+      // Certificate actions
+      .addCase(getMyCertificatesThunk.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(getMyCertificatesThunk.fulfilled, (state, action) => {
+        state.certificates = action.payload;
+        state.loading = false;
+      })
+      .addCase(getMyCertificatesThunk.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+      })
+
+      .addCase(generateCertificateThunk.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(generateCertificateThunk.fulfilled, (state, action) => {
+        state.currentCertificate = action.payload;
+        if (!state.certificates.find(cert => cert._id === action.payload._id)) {
+          state.certificates.push(action.payload);
+        }
+        state.loading = false;
+      })
+      .addCase(generateCertificateThunk.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+      })
+
+      .addCase(getCertificateThunk.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(getCertificateThunk.fulfilled, (state, action) => {
+        state.currentCertificate = action.payload;
+        state.loading = false;
+      })
+      .addCase(getCertificateThunk.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+      })
       .addMatcher(
         (action) => action.type.endsWith('/pending'),
         (state) => { state.loading = true; }

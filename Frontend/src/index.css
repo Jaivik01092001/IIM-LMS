@@ -34,6 +34,7 @@ p {
   --bg-primary: #1a2e6e;
   --border-gray: #f0edff;
   --dark-gray: #c3c3c3;
+  --white: #ffffff; /* ← Add this line */
 
   /* Font Sizes */
   --heading1: 50px;

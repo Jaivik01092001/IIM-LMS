@@ -17,6 +17,7 @@ const contentSchema = new mongoose.Schema({
     text: String,
     date: { type: Date, default: Date.now }
   }],
+  activeStatus: { type: Number, default: 1 }, // 1: active, 0: inactive (soft delete)
 }, { timestamps: true });
 
 // Helper method to determine if content is playable media

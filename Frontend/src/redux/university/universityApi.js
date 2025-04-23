@@ -13,6 +13,11 @@ export const getEducators = async () => {
   return response.data;
 };
 
+export const getEducatorById = async (id) => {
+  const response = await axios.get(`${API_URL}/university/educator/${id}`, getConfig());
+  return response.data;
+};
+
 export const updateEducator = async (id, data) => {
   const response = await axios.put(`${API_URL}/university/educator/${id}`, data, getConfig());
   return response.data;

@@ -1,88 +1,155 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk, getUniversityByIdThunk } from "../redux/admin/adminSlice";
 import "../assets/styles/SchoolAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
 
 const SchoolAccountForm = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const schoolData = location.state?.school || null;
-  const isEditMode = !!schoolData;
+  const dispatch = useDispatch();
+  const { id } = useParams();
+  const { currentUniversity, loading } = useSelector((state) => state.admin);
+
+  // Determine if we're in edit mode based on the presence of an ID parameter
+  const isEditMode = !!id;
 
   const [formData, setFormData] = useState({
     schoolName: "",
-    category: "",
     ownerName: "",
     email: "",
     phoneNumber: "",
     address: "",
     zipcode: "",
     state: "",
-    loginPhone: "",
-    loginEmail: "",
-    password: "",
+    status: 1,
     profileImage: null,
     profileImageUrl: "",
   });
 
+  // Fetch university data if in edit mode
   useEffect(() => {
-    if (isEditMode && schoolData) {
+    if (isEditMode && id) {
+      dispatch(getUniversityByIdThunk(id));
+    }
+  }, [dispatch, isEditMode, id]);
+
+  // Update form when university data is loaded
+  useEffect(() => {
+    if (isEditMode && currentUniversity) {
+      // Strip the '+91' prefix from phone number if exists
+      const phoneNumber = currentUniversity.phone ?
+        currentUniversity.phone.replace(/^\+91\s*/, '').trim() :
+        "";
+
+      console.log("Setting form data from API:", {
+        schoolName: currentUniversity.name || "",
+        ownerName: currentUniversity.contactPerson || "",
+        email: currentUniversity.email || "",
+        phoneNumber: phoneNumber,
+        address: currentUniversity.address || "",
+        zipcode: currentUniversity.zipcode || "",
+        state: currentUniversity.state || "",
+        status: currentUniversity.status === 1 ? 1 : 0,
+      });
+
+      // Set form data from API response
       setFormData({
-        schoolName: schoolData.school || "",
-        category: schoolData.category || "",
-        ownerName: schoolData.owner || "",
-        email: schoolData.email || "jacksonchristian@gmail.com", // Using default from SchoolDetails
-        phoneNumber: schoolData.mobile || "",
-        address:
-          "Jay Ambenagar Rd, opp. Sardar Patel Institute, Patel Society, Jai Ambe Nagar, Thaltej, Ahmedabad", // Default from SchoolDetails
-        zipcode: "380054", // Default from SchoolDetails
-        state: "Gujarat", // Default from SchoolDetails
-        loginPhone: "+91 98765 43210", // Default from SchoolDetails
-        loginEmail: "udgamschoolforchildren@gmail.com", // Default from SchoolDetails
-        password: "Udgamschool@43210", // Default from SchoolDetails
-        profileImageUrl: schoolData.ownerAvatar || "",
+        schoolName: currentUniversity.name || "",
+        ownerName: currentUniversity.contactPerson || "",
+        email: currentUniversity.email || "",
+        phoneNumber: phoneNumber,
+        address: currentUniversity.address || "",
+        zipcode: currentUniversity.zipcode || "",
+        state: currentUniversity.state || "",
+        status: currentUniversity.status === 1 ? 1 : 0,
+        profileImageUrl: "https://randomuser.me/api/portraits/men/1.jpg", // Default avatar or from API if available
       });
     }
-  }, [isEditMode, schoolData]);
+  }, [isEditMode, currentUniversity]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    console.log(`Field ${name} changed to: ${value}`);
+
+    // Force update the form data
+    setFormData(prevData => ({
+      ...prevData,
       [name]: value,
-    });
+    }));
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({
-        ...formData,
+      setFormData(prevData => ({
+        ...prevData,
         profileImage: file,
         profileImageUrl: URL.createObjectURL(file),
-      });
+      }));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
 
-    // Here you would typically send the data to your backend
-    // For now, we'll just navigate back
+    // Log form data before submission
+    console.log("Form data to be submitted:", formData);
+
+    // Prepare form data for API
+    const apiData = {
+      name: formData.schoolName,
+      email: formData.email,
+      phone: "+91 " + formData.phoneNumber.trim(),
+      address: formData.address,
+      zipcode: formData.zipcode,
+      state: formData.state,
+      contactPerson: formData.ownerName,
+      status: Number(formData.status) // Ensure status is a number
+    };
+
+    console.log("API data to be sent:", apiData);
 
     if (isEditMode) {
-      // If editing, go back to school details
-      navigate(-1);
+      // Call update API
+      dispatch(updateUniversityThunk({
+        id: id, // Use ID from URL params
+        ...apiData
+      }))
+        .unwrap()
+        .then(() => {
+          dispatch(getUniversitiesThunk());
+          navigate("/dashboard/admin/schools");
+        })
+        .catch(error => {
+          console.error("Error updating university:", error);
+        });
     } else {
-      // If creating new, go back to schools list
-      navigate("/dashboard/admin/schools");
+      // Call create API
+      dispatch(createUniversityThunk(apiData))
+        .unwrap()
+        .then(() => {
+          dispatch(getUniversitiesThunk());
+          navigate("/dashboard/admin/schools");
+        })
+        .catch(error => {
+          console.error("Error creating university:", error);
+        });
     }
   };
 
   const handleCancel = () => {
     navigate(-1);
   };
+
+  // Show loading spinner when in edit mode and data is being fetched
+  if (isEditMode && loading && !currentUniversity) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="school-form-container">
@@ -101,7 +168,7 @@ const SchoolAccountForm = () => {
         <div className="form-section">
           <h2>General Information</h2>
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group full-width">
               <label htmlFor="schoolName">School/University Account Name</label>
               <input
                 type="text"
@@ -112,23 +179,6 @@ const SchoolAccountForm = () => {
                 placeholder="Enter School/University Account Name"
                 required
               />
-            </div>
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Category</option>
-                <option value="CBSE school">CBSE school</option>
-                <option value="International school">
-                  International school
-                </option>
-                <option value="University">University</option>
-              </select>
             </div>
           </div>
 
@@ -213,107 +263,66 @@ const SchoolAccountForm = () => {
               </div>
               <div className="grid-row">
                 <div className="form-group">
-                  <label htmlFor="ownerName">School/University Name</label>
+                  <label htmlFor="ownerName">Contact Person</label>
                   <input
                     type="text"
                     id="ownerName"
                     name="ownerName"
                     value={formData.ownerName}
                     onChange={handleInputChange}
-                    placeholder="Enter School/University Name"
+                    placeholder="Enter Contact Person Name"
                     required
                   />
                 </div>
               </div>
-            </div>
-            <div>
-              <div className="form-group profile-image-container">
-                <label>Owner Profile Image</label>
-                <div className="profile-image-upload">
-                  <div className="profile-image">
-                    {formData.profileImageUrl ? (
-                      <img src={formData.profileImageUrl} alt="Profile" />
-                    ) : (
-                      <div className="placeholder-image"></div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="upload-photo-btn"
-                    onClick={() =>
-                      document.getElementById("profileImage").click()
-                    }
+              <div className="grid-row">
+                <div className="form-group">
+                  <label htmlFor="status">Status</label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    required
                   >
-                    Upload Photo
-                  </button>
-                  <input
-                    type="file"
-                    id="profileImage"
-                    name="profileImage"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: "none" }}
-                  />
+                    <option value={1}>Active</option>
+                    <option value={0}>Inactive</option>
+                  </select>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h2>Credentials</h2>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="loginPhone">Phone Number</label>
-              <div className="phone-input-wrapper">
-                <span className="phone-prefix">+91</span>
+            <div className="profile-image-container">
+              <label>Profile Image</label>
+              <div className="profile-image-upload">
+                <div className="profile-image">
+                  {formData.profileImageUrl ? (
+                    <img src={formData.profileImageUrl} alt="Profile" />
+                  ) : (
+                    <div className="upload-icon">+</div>
+                  )}
+                </div>
                 <input
-                  type="tel"
-                  id="loginPhone"
-                  name="loginPhone"
-                  value={formData.loginPhone}
-                  onChange={handleInputChange}
-                  placeholder="Enter Phone Number"
-                  required
+                  type="file"
+                  id="profileImage"
+                  name="profileImage"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
               </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="loginEmail">Email Address</label>
-              <input
-                type="email"
-                id="loginEmail"
-                name="loginEmail"
-                value={formData.loginEmail}
-                onChange={handleInputChange}
-                placeholder="Enter Email Address"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter Password"
-                required
-              />
             </div>
           </div>
         </div>
 
         <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={handleCancel}>
+          <button
+            type="button"
+            className="cancel-btn"
+            onClick={handleCancel}
+          >
             Cancel
           </button>
           <button type="submit" className="submit-btn">
-            {isEditMode ? "Update" : "Submit"}
+            {isEditMode ? "Update" : "Create"}
           </button>
         </div>
       </form>

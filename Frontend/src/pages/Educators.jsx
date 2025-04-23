@@ -1,115 +1,112 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getEducatorsThunk,
+  deleteEducatorThunk,
+  updateEducatorThunk
+} from "../redux/university/universitySlice";
+import { getUniversitiesThunk } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import "../assets/styles/Educators.css";
 
 const Educators = () => {
   const navigate = useNavigate();
-  const [tableData, setTableData] = useState([
-    {
-      id: 1,
-      professor: "Jackson Christian",
-      school: "Udgam School for Children",
-      category: "CBSE school",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      mobile: "+91 9587543210",
-      status: false,
-    },
-    {
-      id: 2,
-      professor: "Smita Agrawal",
-      school: "Greenwood High",
-      category: "International school",
-      avatar: "https://randomuser.me/api/portraits/women/28.jpg",
-      mobile: "+91 9876543210",
-      status: true,
-    },
-    {
-      id: 3,
-      professor: "John Doe",
-      school: "Delhi Public School",
-      category: "CBSE school",
-      avatar: "https://randomuser.me/api/portraits/men/3.jpg",
-      mobile: "+91 9123456780",
-      status: true,
-    },
-    {
-      id: 4,
-      professor: "Mark Zuckerberg",
-      school: "Stanford University",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/4.jpg",
-      mobile: "+91 9988776655",
-      status: false,
-    },
-    {
-      id: 5,
-      professor: "Bill Gates",
-      school: "Harvard University",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/5.jpg",
-      mobile: "+91 9876543211",
-      status: true,
-    },
-    {
-      id: 6,
-      professor: "Elon Musk",
-      school: "MIT",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/6.jpg",
-      mobile: "+91 9876543212",
-      status: true,
-    },
-    {
-      id: 7,
-      professor: "Tim Cook",
-      school: "Oxford University",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/7.jpg",
-      mobile: "+91 9876543213",
-      status: false,
-    },
-    {
-      id: 8,
-      professor: "Sundar Pichai",
-      school: "Cambridge University",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/8.jpg",
-      mobile: "+91 9876543214",
-      status: true,
-    },
-    {
-      id: 9,
-      professor: "Satya Nadella",
-      school: "IIT Bombay",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/9.jpg",
-      mobile: "+91 9876543215",
-      status: false,
-    },
-    {
-      id: 10,
-      professor: "Jeff Bezos",
-      school: "IIT Delhi",
-      category: "University",
-      avatar: "https://randomuser.me/api/portraits/men/10.jpg",
-      mobile: "+91 9876543216",
-      status: true,
-    },
-  ]);
+  const dispatch = useDispatch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get data from Redux store
+  const { educators, loading } = useSelector((state) => state.university);
+  const { universities } = useSelector((state) => state.admin);
+
+  // Update loading state when Redux loading state changes
+  useEffect(() => {
+    setIsLoading(loading);
+  }, [loading]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    dispatch(getEducatorsThunk());
+    dispatch(getUniversitiesThunk());
+  }, [dispatch]);
+
+  // Transform educators data for the table
+  const [tableData, setTableData] = useState([]);
+
+  // Extract unique categories
+  const [categories, setCategories] = useState([]);
+
+  // Update tableData when educators change
+  useEffect(() => {
+    if (educators && educators.length > 0) {
+      // Find university name for each educator
+      const formattedEducators = educators.map((educator, index) => {
+        // Find the university this educator belongs to
+        const university = universities?.find(uni =>
+          uni._id === educator.university ||
+          uni.educators?.includes(educator._id)
+        );
+
+        return {
+          id: educator._id,
+          professor: educator.name || 'Unknown',
+          school: university?.name || 'N/A',
+          category: university?.category || 'University',
+          avatar: educator.avatar || `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
+          mobile: educator.phoneNumber || 'N/A',
+          status: educator.status === 1,
+          email: educator.email || 'N/A',
+          address: educator.profile?.address || 'N/A',
+          zipcode: educator.profile?.zipcode || 'N/A',
+          state: educator.profile?.state || 'N/A',
+        };
+      });
+
+      setTableData(formattedEducators);
+
+      // Extract unique categories
+      const uniqueCategories = [...new Set(formattedEducators.map(edu => edu.category))];
+      setCategories(uniqueCategories);
+    }
+  }, [educators, universities]);
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    const updatedData = tableData.map((item) =>
-      item.id === row.id ? { ...item, status: !item.status } : item
-    );
-    setTableData(updatedData);
+    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.professor}"?`)) {
+      // Only send the id and status to avoid issues with socialLinks
+      dispatch(updateEducatorThunk({
+        id: row.id,
+        status: row.status ? 0 : 1
+      }))
+        .unwrap()
+        .then(() => {
+          console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.professor}`);
+          // Refresh educators data
+          dispatch(getEducatorsThunk());
+        })
+        .catch(error => {
+          console.error(`Error updating educator status:`, error);
+        });
+    }
   };
 
   // View handler
   const handleView = (row) => {
-    navigate("/dashboard/admin/educator-details", { state: { educator: row } });
+    // Pass the educator data to the details page
+    // Make sure we're passing the correct ID for API call
+    navigate("/dashboard/admin/educator-details", {
+      state: {
+        educator: {
+          ...row,
+          // Ensure we're using the MongoDB _id for API calls
+          id: row.id
+        }
+      }
+    });
   };
 
   // Edit handler
@@ -121,8 +118,18 @@ const Educators = () => {
 
   // Delete handler
   const handleDelete = (row) => {
-    const updatedData = tableData.filter((item) => item.id !== row.id);
-    setTableData(updatedData);
+    if (window.confirm(`Are you sure you want to delete "${row.professor}"? This action cannot be undone.`)) {
+      dispatch(deleteEducatorThunk(row.id))
+        .unwrap()
+        .then(() => {
+          console.log(`Successfully deleted ${row.professor}`);
+          // Refresh educators data
+          dispatch(getEducatorsThunk());
+        })
+        .catch(error => {
+          console.error(`Error deleting educator:`, error);
+        });
+    }
   };
 
   // Table columns configuration
@@ -161,14 +168,19 @@ const Educators = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleStatusToggle(row)}
-        />
+        <div className="status-cell">
+          <div
+            className={`status-indicator ${row.status ? "active" : ""}`}
+            onClick={() => handleStatusToggle(row)}
+            title={row.status ? "Click to deactivate" : "Click to activate"}
+          />
+          <span className={row.status ? "text-green-600" : "text-red-600"}>
+            {row.status ? "Active" : "Inactive"}
+          </span>
+        </div>
       ),
       sortable: true,
-      width: "100px",
-      center: true,
+      width: "120px",
     },
     {
       name: "Action",
@@ -207,19 +219,29 @@ const Educators = () => {
             type="text"
             placeholder="Search Educators"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
 
-          <select className="filter-select">
-            <option>Select Category</option>
-            <option>CBSE school</option>
-            <option>International school</option>
-            <option>University</option>
+          <select
+            className="filter-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map((category, index) => (
+              <option key={index} value={category}>{category}</option>
+            ))}
           </select>
-          <select className="filter-select">
-            <option>Sort by</option>
-            <option>Name (A-Z)</option>
-            <option>Name (Z-A)</option>
-            <option>Status</option>
+          <select
+            className="filter-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="">Sort by</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="status">Status</option>
           </select>
 
           <button
@@ -231,9 +253,38 @@ const Educators = () => {
         </div>
       </div>
 
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <p>Loading educators data...</p>
+        </div>
+      )}
+
       <DataTableComponent
         columns={columns}
-        data={tableData}
+        data={tableData
+          // Apply search filter
+          .filter(item =>
+            item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.mobile.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          // Apply category filter
+          .filter(item =>
+            !categoryFilter || item.category === categoryFilter
+          )
+          // Apply sorting
+          .sort((a, b) => {
+            if (!sortBy) return 0;
+
+            switch (sortBy) {
+              case "name-asc": return a.professor.localeCompare(b.professor);
+              case "name-desc": return b.professor.localeCompare(a.professor);
+              case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
+              default: return 0;
+            }
+          })
+        }
         showSearch={false}
       />
     </div>

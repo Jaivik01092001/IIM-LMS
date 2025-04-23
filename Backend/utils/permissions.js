@@ -68,8 +68,21 @@ const PERMISSIONS = {
 // Create a flat array of all permissions for seeding the database
 const getAllPermissions = () => {
   const permissionsList = [];
-  
+
+  // Categories to exclude from seeding
+  const excludedCategories = [
+    'USER_MANAGEMENT',
+    'CERTIFICATE_MANAGEMENT',
+    'REPORTS_ANALYTICS',
+    'SYSTEM_SETTINGS'
+  ];
+
   Object.keys(PERMISSIONS).forEach(category => {
+    // Skip excluded categories
+    if (excludedCategories.includes(category)) {
+      return;
+    }
+
     Object.keys(PERMISSIONS[category]).forEach(permission => {
       permissionsList.push({
         name: PERMISSIONS[category][permission],
@@ -78,7 +91,7 @@ const getAllPermissions = () => {
       });
     });
   });
-  
+
   return permissionsList;
 };
 
@@ -93,11 +106,11 @@ const formatPermissionName = (permissionName) => {
 // Get permissions by category
 const getPermissionsByCategory = () => {
   const permissionsByCategory = {};
-  
+
   Object.keys(PERMISSIONS).forEach(category => {
     permissionsByCategory[category.toLowerCase()] = Object.values(PERMISSIONS[category]);
   });
-  
+
   return permissionsByCategory;
 };
 

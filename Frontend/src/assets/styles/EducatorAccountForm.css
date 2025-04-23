@@ -234,6 +234,43 @@
   background-color: var(--primary-hover-color);
 }
 
+/* Error messages */
+.educator-form-container .error-message {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.educator-form-container .general-error {
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background-color: #ffebee;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Loading spinner */
+.loading-spinner-small {
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Disabled buttons */
+.educator-form-container .form-actions button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* Responsive styles */
 @media (max-width: 1200px) {
   .educator-form-container .educator-form {

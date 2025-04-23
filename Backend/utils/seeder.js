@@ -24,21 +24,105 @@ const seedDatabase = async () => {
 
         // Insert Users with phone numbers instead of passwords
         const users = await User.insertMany([
-            { email: 'zeel.fabaf@gmail.com', phoneNumber: '+919904424789', role: 'university', name: 'Zeel' },
-            { email: 'anandkumarbarot@gmail.com', phoneNumber: '+918140977185', role: 'educator', name: 'Anand' },
-            { email: 'jaivik.patel@fabaf.in', phoneNumber: '+919664774890', role: 'admin', name: 'Jaivik' },
-            { email: 'nishant@fabaf.in', phoneNumber: '+918980905254', role: 'admin', name: 'Nishant' },
-            { email: 'fabaf2021@gmail.com', phoneNumber: '+919924294542', role: 'admin', name: 'Nishant' },
-
+            {
+                email: 'zeel.fabaf@gmail.com',
+                phoneNumber: '+919904424789',
+                role: 'university',
+                name: 'Zeel',
+                profile: {
+                    address: '123 University St, Ahmedabad',
+                    zipcode: '380001',
+                    state: 'Gujarat'
+                }
+            },
+            {
+                email: 'anandkumarbarot@gmail.com',
+                phoneNumber: '+918140977185',
+                role: 'educator',
+                name: 'Anand',
+                profile: {
+                    address: '456 Educator Ave, Ahmedabad',
+                    zipcode: '380015',
+                    state: 'Gujarat'
+                }
+            },
+            {
+                email: 'jaivik.patel@fabaf.in',
+                phoneNumber: '+919664774890',
+                role: 'admin',
+                name: 'Jaivik'
+            },
+            {
+                email: 'nishant@fabaf.in',
+                phoneNumber: '+918980905254',
+                role: 'admin',
+                name: 'Nishant'
+            },
+            {
+                email: 'fabaf2021@gmail.com',
+                phoneNumber: '+919924294542',
+                role: 'admin',
+                name: 'Nishant'
+            },
         ]);
 
         // Predefined Courses
         const courses = [
-            { title: 'Developing a positive social-emotional climate in schools', creator: users[2]._id },
-            { title: 'Bullying prevention for safer schooling experiences', creator: users[2]._id },
-            { title: 'Effective School Leadership', creator: users[2]._id },
-            { title: 'Managing Self and Regulating Emotions', creator: users[2]._id },
-            { title: 'Innovative Educational Pedagogies', creator: users[2]._id },
+            {
+                title: 'Developing a positive social-emotional climate in schools',
+                creator: users[2]._id,
+                description: 'Learn how to create a positive social-emotional climate in schools',
+                duration: '4 weeks',
+                category: 'Education',
+                language: 'en',
+                level: 'intermediate',
+                tags: ['education', 'social-emotional', 'school climate'],
+                thumbnail: 'https://example.com/thumbnail1.jpg'
+            },
+            {
+                title: 'Bullying prevention for safer schooling experiences',
+                creator: users[2]._id,
+                description: 'Strategies to prevent bullying in schools',
+                duration: '3 weeks',
+                category: 'Education',
+                language: 'en',
+                level: 'beginner',
+                tags: ['education', 'bullying', 'safety'],
+                thumbnail: 'https://example.com/thumbnail2.jpg'
+            },
+            {
+                title: 'Effective School Leadership',
+                creator: users[2]._id,
+                description: 'Develop leadership skills for school administrators',
+                duration: '6 weeks',
+                category: 'Leadership',
+                language: 'en',
+                level: 'advanced',
+                tags: ['education', 'leadership', 'administration'],
+                thumbnail: 'https://example.com/thumbnail3.jpg'
+            },
+            {
+                title: 'Managing Self and Regulating Emotions',
+                creator: users[2]._id,
+                description: 'Learn techniques for emotional regulation',
+                duration: '4 weeks',
+                category: 'Psychology',
+                language: 'en',
+                level: 'beginner',
+                tags: ['psychology', 'emotions', 'self-regulation'],
+                thumbnail: 'https://example.com/thumbnail4.jpg'
+            },
+            {
+                title: 'Innovative Educational Pedagogies',
+                creator: users[2]._id,
+                description: 'Explore innovative teaching methods',
+                duration: '5 weeks',
+                category: 'Education',
+                language: 'en',
+                level: 'intermediate',
+                tags: ['education', 'pedagogy', 'innovation'],
+                thumbnail: 'https://example.com/thumbnail5.jpg'
+            },
         ];
 
         await Course.deleteMany({});
@@ -47,8 +131,26 @@ const seedDatabase = async () => {
 
         // Insert Universities
         await University.insertMany([
-            { name: 'University 1', educators: [] },
-            { name: 'University 2', educators: [] },
+            {
+                name: 'University of Technology',
+                email: 'info@uot.edu',
+                phone: '+919876543210',
+                address: '123 University Road, Ahmedabad',
+                zipcode: '380001',
+                state: 'Gujarat',
+                contactPerson: 'Dr. Patel',
+                educators: []
+            },
+            {
+                name: 'Global Institute of Sciences',
+                email: 'contact@gis.edu',
+                phone: '+919876543211',
+                address: '456 Institute Avenue, Mumbai',
+                zipcode: '400001',
+                state: 'Maharashtra',
+                contactPerson: 'Dr. Sharma',
+                educators: []
+            },
         ]);
 
         // Seed Permissions

@@ -13,14 +13,7 @@ function CourseDetail() {
 
   useEffect(() => {
     if (id) {
-      console.log('Fetching course detail for ID:', id);
-      dispatch(getCourseDetailThunk(id))
-        .then(response => {
-          console.log('Course detail response:', response);
-        })
-        .catch(error => {
-          console.error('Error fetching course detail:', error);
-        });
+      dispatch(getCourseDetailThunk(id));
     }
   }, [dispatch, id]);
 

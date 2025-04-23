@@ -1,62 +1,150 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getUniversitiesThunk,
+  getCoursesThunk,
+  updateCourseThunk,
+  deleteCourseThunk,
+  getUsersThunk
+} from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
 import "../../assets/styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [tableData, setTableData] = useState([
-    {
-      id: 1,
-      title: "Effective Time Management",
-      category: "Management",
-      professor: "Charlie Rawal",
-      duration: "20:00 Hours",
-      rating: 4.8,
-      status: true,
-      image:
-        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-    },
-    {
-      id: 2,
-      title: "Python Programming Basics",
-      category: "Technology",
-      professor: "David Miller",
-      duration: "25:00 Hours",
-      rating: 4.7,
-      status: false,
-      image:
-        "https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-    },
-    {
-      id: 3,
-      title: "Digital Marketing Strategy",
-      category: "Marketing",
-      professor: "Sarah Wilson",
-      duration: "18:00 Hours",
-      rating: 4.9,
-      status: true,
-      image:
-        "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-    },
-  ]);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get data from Redux store
+  const { universities, courses, users, loading } = useSelector((state) => state.admin);
+  const { user } = useSelector((state) => state.auth);
+
+  // Update loading state when Redux loading state changes
+  useEffect(() => {
+    setIsLoading(loading);
+  }, [loading]);
+
+  // Count educators across all universities (legacy method)
+  const educatorsCountFromUniversities = universities?.reduce((total, university) => {
+    return total + (university.educators?.length || 0);
+  }, 0) || 0;
+
+  // Count users by role from users API
+  const getCountByRole = (role) => {
+    if (!users) return 0;
+    return users.filter(user => user.role === role).length;
+  };
+
+  // Get counts for each role
+  const universityCount = getCountByRole('university');
+  const educatorCount = getCountByRole('educator');
+  const adminCount = getCountByRole('admin');
+
+  // Fetch data on component mount
+  useEffect(() => {
+    dispatch(getUniversitiesThunk());
+    dispatch(getCoursesThunk());
+    dispatch(getUsersThunk());
+  }, [dispatch]);
+
+  // Log users data when it changes
+  useEffect(() => {
+    if (users) {
+      // console.log('Users data in AdminDashboard component:', users);
+      // console.log('University:', users.filter(user => user.role === 'university').length);
+      // console.log('Educator users count:', users.filter(user => user.role === 'educator').length);
+      // console.log('Admin users count:', users.filter(user => user.role === 'admin').length);
+    } else {
+      // If users data is not available, use mock data for testing
+      const mockUsers = [
+        { _id: '1', name: 'Admin User', role: 'admin', email: 'admin@example.com', status: 1 },
+        { _id: '2', name: 'University 1', role: 'university', email: 'uni1@example.com', status: 1 },
+        { _id: '3', name: 'University 2', role: 'university', email: 'uni2@example.com', status: 1 },
+        { _id: '4', name: 'Educator 1', role: 'educator', email: 'edu1@example.com', status: 1 },
+        { _id: '5', name: 'Educator 2', role: 'educator', email: 'edu2@example.com', status: 1 },
+        { _id: '6', name: 'Educator 3', role: 'educator', email: 'edu3@example.com', status: 1 },
+      ];
+
+      console.log('Using mock users data for testing');
+      console.log('Mock University users count:', mockUsers.filter(user => user.role === 'university').length);
+      console.log('Mock Educator users count:', mockUsers.filter(user => user.role === 'educator').length);
+      console.log('Mock Admin users count:', mockUsers.filter(user => user.role === 'admin').length);
+
+      // Update the dashboard stats with mock data
+      setTimeout(() => {
+        const universityCountElement = document.querySelector('.stat-card.schools .stat-count');
+        if (universityCountElement) universityCountElement.textContent = mockUsers.filter(user => user.role === 'university').length;
+
+        const educatorCountElement = document.querySelector('.stat-card.educators .stat-count');
+        if (educatorCountElement) educatorCountElement.textContent = mockUsers.filter(user => user.role === 'educator').length;
+
+        const adminCountElement = document.querySelector('.stat-card.courses .stat-count');
+        if (adminCountElement) adminCountElement.textContent = mockUsers.filter(user => user.role === 'admin').length;
+      }, 1000);
+    }
+  }, [users]);
+  // Transform courses data for the table
+  const [tableData, setTableData] = useState([]);
+
+  // Extract unique categories from courses
+  const [categories, setCategories] = useState([]);
+
+  // Update tableData and categories when courses change
+  useEffect(() => {
+    if (courses && courses.length > 0) {
+      const formattedCourses = courses.map(course => ({
+        id: course._id,
+        title: course.title || 'Untitled Course',
+        category: course.category || 'Uncategorized',
+        professor: course.creator?.name || 'Unknown',
+        duration: course.duration || 'N/A',
+        level: course.level || 'N/A',
+        description: course.description || 'No description available',
+        tags: course.tags?.join(', ') || 'No tags',
+        language: course.language || 'English',
+        status: course.status === 1,
+        thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+        hasModules: course.hasModules || false
+      }));
+      setTableData(formattedCourses);
+
+      // Extract unique categories
+      const uniqueCategories = [...new Set(formattedCourses.map(course => course.category))];
+      setCategories(uniqueCategories);
+    }
+  }, [courses]);
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    const updatedData = tableData.map((item) =>
-      item.id === row.id ? { ...item, status: !item.status } : item
-    );
-    setTableData(updatedData);
+    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
+      // Use the same API as delete but only update the status
+      dispatch(updateCourseThunk({
+        id: row.id,
+        status: row.status ? 0 : 1
+      }))
+        .unwrap()
+        .then(() => {
+          console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.title}`);
+          // Refresh courses data
+          dispatch(getCoursesThunk());
+        })
+        .catch(error => {
+          console.error(`Error updating course status:`, error);
+        });
+    }
   };
 
   // Edit handler
   const handleEdit = (row) => {
     console.log(`Edit clicked for: ${row.title}`);
-    navigate(`/dashboard/admin/courses/${row.id}/edit`);
+    navigate(`/dashboard/admin/courses/edit/${row.id}`);
   };
 
   // View handler
@@ -67,8 +155,18 @@ const AdminDashboard = () => {
 
   // Delete handler
   const handleDelete = (row) => {
-    const updatedData = tableData.filter((item) => item.id !== row.id);
-    setTableData(updatedData);
+    if (window.confirm(`Are you sure you want to delete "${row.title}"? This action cannot be undone.`)) {
+      dispatch(deleteCourseThunk(row.id))
+        .unwrap()
+        .then(() => {
+          console.log(`Successfully deleted ${row.title}`);
+          // Refresh courses data
+          dispatch(getCoursesThunk());
+        })
+        .catch(error => {
+          console.error(`Error deleting course:`, error);
+        });
+    }
   };
 
   // Table columns configuration
@@ -77,7 +175,7 @@ const AdminDashboard = () => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.image} alt={row.title} className="course-thumbnail" />
+          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),
@@ -89,7 +187,7 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
-      name: "Professor",
+      name: "Creator",
       cell: (row) => (
         <div className="professor-info">
           <img
@@ -108,11 +206,17 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
+      name: "Level",
+      selector: (row) => row.level,
+      sortable: true,
+    },
+    {
       name: "Status",
       cell: (row) => (
         <div
           className={`status-indicator ${row.status ? "active" : ""}`}
           onClick={() => handleStatusToggle(row)}
+          title={row.status ? "Active" : "Inactive"}
         />
       ),
       sortable: true,
@@ -123,15 +227,16 @@ const AdminDashboard = () => {
       name: "Action",
       cell: (row) => (
         <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleView(row)}>
+          <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
             <FaEye />
           </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)}>
+          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
             <FaPencilAlt />
           </button>
           <button
             className="action-btn delete"
             onClick={() => handleDelete(row)}
+            title="Delete Course"
           >
             <FaTrashAlt />
           </button>
@@ -144,6 +249,12 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <p>Loading dashboard data...</p>
+        </div>
+      )}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
         <div className="stat-card schools">
@@ -151,8 +262,8 @@ const AdminDashboard = () => {
             <LuSchool size={24} />
             <LuSchool className="icondesign1" />
           </div>
-          <div className="stat-count">20</div>
-          <div className="stat-title">Total Organizers</div>
+          <div className="stat-count">{universityCount || universities?.length || 0}</div>
+          <div className="stat-title">Total Schools</div>
         </div>
 
         <div className="stat-card educators">
@@ -160,8 +271,8 @@ const AdminDashboard = () => {
             <LiaChalkboardTeacherSolid size={24} />
             <LiaChalkboardTeacherSolid className="icondesign2" />
           </div>
-          <div className="stat-count">100</div>
-          <div className="stat-title">Total Professors</div>
+          <div className="stat-count">{educatorCount || educatorsCountFromUniversities}</div>
+          <div className="stat-title">Total Educators</div>
         </div>
 
         <div className="stat-card courses">
@@ -169,15 +280,15 @@ const AdminDashboard = () => {
             <LiaChalkboardTeacherSolid size={24} />
             <LiaChalkboardTeacherSolid className="icondesign3" />
           </div>
-          <div className="stat-count">8</div>
-          <div className="stat-title">Total Courses</div>
+          <div className="stat-count">{adminCount || 0}</div>
+          <div className="stat-title">Admin Users</div>
         </div>
       </div>
 
       {/* Courses Table Section */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">All Courses (8)</h2>
+          <h2 className="section-title">All Courses ({courses?.length || 0})</h2>
           <div className="header-actions">
             <button
               className="add-course-btn"
@@ -203,16 +314,26 @@ const AdminDashboard = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <select className="filter-select">
-            <option value="">Select Category</option>
-            <option value="management">Management</option>
-            <option value="technology">Technology</option>
-            <option value="marketing">Marketing</option>
+          <select
+            className="filter-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map((category, index) => (
+              <option key={index} value={category}>{category}</option>
+            ))}
           </select>
-          <select className="filter-select">
+          <select
+            className="filter-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
             <option value="">Sort by</option>
             <option value="title-asc">Title (A-Z)</option>
             <option value="title-desc">Title (Z-A)</option>
+            <option value="level-asc">Level (Beginner-Advanced)</option>
+            <option value="level-desc">Level (Advanced-Beginner)</option>
             <option value="status">Status</option>
           </select>
         </div>
@@ -220,7 +341,33 @@ const AdminDashboard = () => {
         {/* DataTable Component */}
         <DataTableComponent
           columns={columns}
-          data={tableData}
+          data={tableData
+            // Apply search filter
+            .filter(item =>
+              item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
+            // Apply category filter
+            .filter(item =>
+              !categoryFilter || item.category === categoryFilter
+            )
+            // Apply sorting
+            .sort((a, b) => {
+              if (!sortBy) return 0;
+
+              switch (sortBy) {
+                case "title-asc": return a.title.localeCompare(b.title);
+                case "title-desc": return b.title.localeCompare(a.title);
+                case "level-asc": return a.level.localeCompare(b.level);
+                case "level-desc": return b.level.localeCompare(a.level);
+                case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
+                default: return 0;
+              }
+            })
+          }
           showSearch={false}
         />
       </div>

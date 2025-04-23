@@ -3,7 +3,6 @@ import "../assets/styles/login.css";
 import logo from "../assets/images/login_page/logo.svg";
 import login_background from "../assets/images/login_page/login_background.svg";
 import campus_img from "../assets/images/login_page/campus_img.svg";
-import bluelogo from "../assets/images/login_page/bluelogo.svg";
 import { IoPhonePortraitOutline } from "react-icons/io5";
 import { FaInfoCircle } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
@@ -115,10 +114,12 @@ const Login = () => {
           // Redirect user based on role
           if (userData.role === "admin") {
             navigate("/dashboard/admin");
-          } else if (userData.role === "educator") {
+          } else if (userData.role === "university") {
             navigate("/dashboard/school");
-          } else {
+          } else if (userData.role === "educator") {
             navigate("/dashboard/tutor");
+          } else {
+            navigate("/dashboard/tutor"); // Default fallback
           }
         }
       } catch {
@@ -171,10 +172,12 @@ const Login = () => {
       // Navigate based on user role
       if (user.role === "admin") {
         navigate("/dashboard/admin");
-      } else if (user.role === "educator") {
+      } else if (user.role === "university") {
         navigate("/dashboard/school");
-      } else {
+      } else if (user.role === "educator") {
         navigate("/dashboard/tutor");
+      } else {
+        navigate("/dashboard/tutor"); // Default fallback
       }
 
       if (result.payload && result.payload.message) {

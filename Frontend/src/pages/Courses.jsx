@@ -1,196 +1,141 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaBook,
   FaUserGraduate,
   FaClock,
-  FaStar,
-  FaSearch,
   FaPencilAlt,
   FaTrashAlt,
   FaEye,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getCoursesThunk,
+  updateCourseThunk,
+  deleteCourseThunk,
+  getUsersThunk
+} from "../redux/admin/adminSlice";
+// No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
 import "../assets/styles/Courses.css";
 
 const Courses = ({ userType }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [tableData, setTableData] = useState([
-    {
-      id: 1,
-      title: "Effective Time Management",
-      category: "Management",
-      language: "English",
-      description: "Master proven techniques to maximize productivity and achieve work-life balance through effective time management strategies.",
-      instructor: "Charlie Rawal",
-      lessons: 24,
-      students: 82,
-      duration: "20:00 hrs",
-      rating: 4.9,
-      status: true,
-      createdAt: "2023-10-15",
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 2,
-      title: "Introduction to Python Programming",
-      category: "Programming",
-      language: "English",
-      description: "Learn Python programming from scratch with hands-on exercises and real-world projects to build a solid foundation in coding.",
-      instructor: "Emma Watson",
-      lessons: 36,
-      students: 124,
-      duration: "28:30 hrs",
-      rating: 4.8,
-      status: true,
-      createdAt: "2023-09-28",
-      image: "https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2342&q=80"
-    },
-    {
-      id: 3,
-      title: "Digital Marketing Fundamentals",
-      category: "Marketing",
-      language: "English",
-      description: "Discover essential digital marketing strategies including SEO, social media, email marketing, and analytics to grow your online presence.",
-      instructor: "John Doe",
-      lessons: 18,
-      students: 95,
-      duration: "15:45 hrs",
-      rating: 4.7,
-      status: false,
-      createdAt: "2023-11-05",
-      image: "https://images.unsplash.com/photo-1432888622747-4eb9a8f5a70d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 4,
-      title: "UI/UX Design Principles",
-      category: "Design",
-      language: "English",
-      description: "Master the principles of user interface and user experience design to create intuitive, engaging, and user-friendly digital products.",
-      instructor: "Sarah Johnson",
-      lessons: 22,
-      students: 78,
-      duration: "18:20 hrs",
-      rating: 4.9,
-      status: true,
-      createdAt: "2023-10-20",
-      image: "https://images.unsplash.com/photo-1545235617-9465d2a55698?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 5,
-      title: "Financial Planning and Investment",
-      category: "Finance",
-      language: "English",
-      description: "Learn how to create a solid financial plan, understand investment options, and build wealth through strategic financial management.",
-      instructor: "Michael Brown",
-      lessons: 30,
-      students: 65,
-      duration: "25:15 hrs",
-      rating: 4.6,
-      status: true,
-      createdAt: "2023-09-15",
-      image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2342&q=80"
-    },
-    {
-      id: 6,
-      title: "Advanced JavaScript Development",
-      category: "Programming",
-      language: "English",
-      description: "Take your JavaScript skills to the next level with advanced concepts, frameworks, and modern development practices.",
-      instructor: "David Miller",
-      lessons: 40,
-      students: 112,
-      duration: "32:40 hrs",
-      rating: 4.8,
-      status: false,
-      createdAt: "2023-08-30",
-      image: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2274&q=80"
-    },
-    {
-      id: 7,
-      title: "Content Creation Masterclass",
-      category: "Marketing",
-      language: "English",
-      description: "Learn to create compelling content across various platforms to engage audiences and drive conversions for your brand.",
-      instructor: "Jennifer Lee",
-      lessons: 25,
-      students: 89,
-      duration: "21:30 hrs",
-      rating: 4.7,
-      status: true,
-      createdAt: "2023-11-10",
-      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 8,
-      title: "Data Science Essentials",
-      category: "Data Science",
-      language: "English",
-      description: "Explore the fundamentals of data science including data analysis, visualization, machine learning, and statistical modeling.",
-      instructor: "Robert Chen",
-      lessons: 32,
-      students: 105,
-      duration: "27:15 hrs",
-      rating: 4.9,
-      status: true,
-      createdAt: "2023-10-05",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 9,
-      title: "Leadership and Management Skills",
-      category: "Management",
-      language: "English",
-      description: "Develop essential leadership and management skills to effectively lead teams, manage projects, and drive organizational success.",
-      instructor: "Amanda Wilson",
-      lessons: 28,
-      students: 72,
-      duration: "23:45 hrs",
-      rating: 4.8,
-      status: false,
-      createdAt: "2023-09-20",
-      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-    {
-      id: 10,
-      title: "Graphic Design for Beginners",
-      category: "Design",
-      language: "Hindi",
-      description: "Start your graphic design journey with this comprehensive course covering design principles, tools, and practical techniques.",
-      instructor: "Rajesh Kumar",
-      lessons: 20,
-      students: 68,
-      duration: "16:30 hrs",
-      rating: 4.6,
-      status: true,
-      createdAt: "2023-11-15",
-      image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-    },
-  ]);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Handle status toggle
-  const handleStatusToggle = (row) => {
-    const updatedData = tableData.map((item) =>
-      item.id === row.id ? { ...item, status: !item.status } : item
-    );
-    setTableData(updatedData);
+  // Get data from Redux store
+  const { courses, users, loading } = useSelector((state) => state.admin);
+
+  // Update loading state when Redux loading state changes
+  useEffect(() => {
+    setIsLoading(loading);
+  }, [loading]);
+
+  // Count users by role from users API
+  const getCountByRole = (role) => {
+    if (!users) return 0;
+    return users.filter(user => user.role === role).length;
   };
 
-  // Handle view course details
+  // Get counts for each role
+  const universityCount = getCountByRole('university');
+  const educatorCount = getCountByRole('educator');
+  const adminCount = getCountByRole('admin');
+
+  // Log user counts when users data changes
+  useEffect(() => {
+    if (users) {
+      // Only log in development environment
+      if (import.meta.env.NODE_ENV === 'development') {
+        console.log('University users count:', universityCount);
+        console.log('Educator users count:', educatorCount);
+        console.log('Admin users count:', adminCount);
+      }
+    }
+  }, [users, universityCount, educatorCount, adminCount]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    dispatch(getCoursesThunk());
+    dispatch(getUsersThunk());
+  }, [dispatch]);
+
+  // Transform courses data for the table
+  const [tableData, setTableData] = useState([]);
+
+  // Extract unique categories from courses
+  const [categories, setCategories] = useState([]);
+
+  // Update tableData and categories when courses change
+  useEffect(() => {
+    if (courses && courses.length > 0) {
+      const formattedCourses = courses.map(course => ({
+        id: course._id,
+        title: course.title || 'Untitled Course',
+        category: course.category || 'Uncategorized',
+        professor: course.creator?.name || 'Unknown',
+        duration: course.duration || 'N/A',
+        level: course.level || 'N/A',
+        description: course.description || 'No description available',
+        tags: course.tags?.join(', ') || 'No tags',
+        language: course.language || 'English',
+        status: course.status === 1,
+        thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+        hasModules: course.hasModules || false
+      }));
+      setTableData(formattedCourses);
+
+      // Extract unique categories
+      const uniqueCategories = [...new Set(formattedCourses.map(course => course.category))];
+      setCategories(uniqueCategories);
+    }
+  }, [courses]);
+
+  // Status toggle handler
+  const handleStatusToggle = (row) => {
+    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
+      dispatch(updateCourseThunk({
+        id: row.id,
+        status: row.status ? 0 : 1
+      }))
+        .unwrap()
+        .then(() => {
+          // Refresh courses data
+          dispatch(getCoursesThunk());
+        })
+        .catch(error => {
+          console.error(`Error updating course status:`, error);
+        });
+    }
+  };
+
+  // View handler
   const handleView = (row) => {
     navigate(`/dashboard/${userType}/courses/${row.id}`);
   };
 
-  // Handle edit course
+  // Edit handler
   const handleEdit = (row) => {
     navigate(`/dashboard/${userType}/courses/edit/${row.id}`);
   };
 
-  // Handle delete course
+  // Delete handler
   const handleDelete = (row) => {
-    const updatedData = tableData.filter((item) => item.id !== row.id);
-    setTableData(updatedData);
+    if (window.confirm(`Are you sure you want to delete "${row.title}"? This action cannot be undone.`)) {
+      dispatch(deleteCourseThunk(row.id))
+        .unwrap()
+        .then(() => {
+          // Refresh courses data
+          dispatch(getCoursesThunk());
+        })
+        .catch(error => {
+          console.error(`Error deleting course:`, error);
+        });
+    }
   };
 
   // Table columns configuration
@@ -199,7 +144,7 @@ const Courses = ({ userType }) => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.image} alt={row.title} className="course-thumbnail" />
+          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),
@@ -211,15 +156,15 @@ const Courses = ({ userType }) => {
       sortable: true,
     },
     {
-      name: "Professor",
+      name: "Creator",
       cell: (row) => (
         <div className="professor-info">
           <img
             src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
-            alt={row.instructor}
+            alt={row.professor}
             className="professor-avatar"
           />
-          <span>{row.instructor}</span>
+          <span>{row.professor}</span>
         </div>
       ),
       sortable: true,
@@ -230,30 +175,42 @@ const Courses = ({ userType }) => {
       sortable: true,
     },
     {
+      name: "Level",
+      selector: (row) => row.level,
+      sortable: true,
+    },
+    {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleStatusToggle(row)}
-        />
+        <div className="status-cell">
+          <div
+            className={`status-indicator ${row.status ? "active" : ""}`}
+            onClick={() => handleStatusToggle(row)}
+            title={row.status ? "Active" : "Inactive"}
+          />
+          <span className={row.status ? "text-green-600" : "text-red-600"}>
+            {row.status ? "Active" : "Inactive"}
+          </span>
+        </div>
       ),
       sortable: true,
-      width: "100px",
+      width: "150px",
       center: true,
     },
     {
       name: "Action",
       cell: (row) => (
         <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleView(row)}>
+          <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
             <FaEye />
           </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)}>
+          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
             <FaPencilAlt />
           </button>
           <button
             className="action-btn delete"
             onClick={() => handleDelete(row)}
+            title="Delete Course"
           >
             <FaTrashAlt />
           </button>
@@ -266,35 +223,12 @@ const Courses = ({ userType }) => {
 
   return (
     <div className="courses-container admin-dashboard">
-      {/* Dashboard Stats */}
-      <div className="dashboard-stats">
-        <div className="stat-card schools">
-          <div className="stat-icon1">
-            <FaBook size={24} />
-            <FaBook className="icondesign1" />
-          </div>
-          <div className="stat-count">{tableData.length}</div>
-          <div className="stat-title">Total Courses</div>
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <p>Loading courses data...</p>
         </div>
-
-        <div className="stat-card educators">
-          <div className="stat-icon2">
-            <FaUserGraduate size={24} />
-            <FaUserGraduate className="icondesign2" />
-          </div>
-          <div className="stat-count">100</div>
-          <div className="stat-title">Total Students</div>
-        </div>
-
-        <div className="stat-card courses">
-          <div className="stat-icon3">
-            <FaClock size={24} />
-            <FaClock className="icondesign3" />
-          </div>
-          <div className="stat-count">8</div>
-          <div className="stat-title">Hours of Content</div>
-        </div>
-      </div>
+      )}
 
       {/* Courses Table Section */}
       <div className="dashboard-section">
@@ -325,34 +259,61 @@ const Courses = ({ userType }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
 
-          <select className="filter-select">
-            <option>Select Category</option>
-            <option>Management</option>
-            <option>Programming</option>
-            <option>Design</option>
-            <option>Marketing</option>
+          <select
+            className="filter-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            {categories.map((category, index) => (
+              <option key={index} value={category}>{category}</option>
+            ))}
           </select>
 
-          <select className="filter-select">
-            <option>Select Language</option>
-            <option>English</option>
-            <option>Hindi</option>
-            <option>Spanish</option>
-            <option>French</option>
-          </select>
-
-          <select className="filter-select">
-            <option>Sort By</option>
-            <option>Newest</option>
-            <option>Most Popular</option>
-            <option>Highest Rated</option>
+          <select
+            className="filter-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="">Sort by</option>
+            <option value="title-asc">Title (A-Z)</option>
+            <option value="title-desc">Title (Z-A)</option>
+            <option value="level-asc">Level (Beginner-Advanced)</option>
+            <option value="level-desc">Level (Advanced-Beginner)</option>
+            <option value="status">Status</option>
           </select>
         </div>
 
         <div className="table-responsive">
           <DataTableComponent
             columns={columns}
-            data={tableData}
+            data={tableData
+              // Apply search filter
+              .filter(item =>
+                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+              )
+              // Apply category filter
+              .filter(item =>
+                !categoryFilter || item.category === categoryFilter
+              )
+              // Apply sorting
+              .sort((a, b) => {
+                if (!sortBy) return 0;
+
+                switch (sortBy) {
+                  case "title-asc": return a.title.localeCompare(b.title);
+                  case "title-desc": return b.title.localeCompare(a.title);
+                  case "level-asc": return a.level.localeCompare(b.level);
+                  case "level-desc": return b.level.localeCompare(a.level);
+                  case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
+                  default: return 0;
+                }
+              })
+            }
             showSearch={false}
           />
         </div>

@@ -5,10 +5,11 @@ const sendEmail = require('../utils/email');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { sendOTP, verifyOTP } = require('../utils/otp');
+const { formatPhoneNumber } = require('../utils/phoneUtils');
 
 // Generate JWT token
 const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
 // Generate refresh token
@@ -27,10 +28,7 @@ exports.requestOTP = catchAsync(async (req, res, next) => {
   }
 
   // Format phone number to ensure it has +91 prefix
-  let formattedPhoneNumber = phoneNumber;
-  if (!phoneNumber.startsWith('+91')) {
-    formattedPhoneNumber = '+91' + phoneNumber.replace(/^0+/, '');
-  }
+  const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
 
   // 3) Check if user exists
   let user = await User.findOne({ email, phoneNumber: formattedPhoneNumber });
@@ -183,8 +181,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   // Ensure phone number has +91 prefix for SMS delivery
-  if (user.phoneNumber && !user.phoneNumber.startsWith('+91')) {
-    user.phoneNumber = '+91' + user.phoneNumber.replace(/^0+/, '');
+  if (user.phoneNumber) {
+    user.phoneNumber = formatPhoneNumber(user.phoneNumber);
   }
 
   // 2) Generate and send OTP

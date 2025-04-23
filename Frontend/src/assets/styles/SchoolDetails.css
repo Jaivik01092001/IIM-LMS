@@ -198,3 +198,36 @@
     width: 100%;
   }
 }
+
+.status-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-toggle-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  color: white;
+}
+
+.status-toggle-btn.activate {
+  background-color: #4CAF50;
+}
+
+.status-toggle-btn.activate:hover {
+  background-color: #43A047;
+}
+
+.status-toggle-btn.deactivate {
+  background-color: #F44336;
+}
+
+.status-toggle-btn.deactivate:hover {
+  background-color: #E53935;
+}

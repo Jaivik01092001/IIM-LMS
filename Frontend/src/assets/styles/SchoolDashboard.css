@@ -1,0 +1,347 @@
+/* Use the same styling as Courses.css */
+.school-dashboard {
+  padding: 24px;
+  background-color: var(--bg-gray);
+  position: relative;
+  min-height: 100vh;
+  font-family: var(--font-Poppins);
+}
+
+/* Loading Overlay */
+.school-dashboard .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.school-dashboard .loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--bg-gray);
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Stats Cards */
+.school-dashboard .dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.school-dashboard .stat-card {
+  position: relative;
+  border-radius: var(--border-large-radius);
+  padding: 24px;
+  overflow: hidden;
+  box-shadow: var(--box-shadow-light);
+}
+
+.school-dashboard .stat-card.professors {
+  background-color: #e8ffef;
+}
+
+.school-dashboard .stat-card.courses {
+  background-color: #fff8e8;
+}
+
+.school-dashboard .stat-count {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 8px 0;
+  color: var(--text-color);
+}
+
+.school-dashboard .stat-title {
+  font-size: var(--smallfont);
+  color: var(--text-gray);
+}
+
+.school-dashboard .stat-icon1,
+.school-dashboard .stat-icon2,
+.school-dashboard .stat-icon3 {
+  position: relative;
+  display: inline-block;
+}
+
+.school-dashboard .icondesign1,
+.school-dashboard .icondesign2,
+.school-dashboard .icondesign3 {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  opacity: 0.2;
+  font-size: 40px;
+  z-index: 0;
+}
+
+/* Dashboard Sections */
+.school-dashboard .dashboard-section {
+  background-color: var(--bg-white);
+  border-radius: var(--border-large-radius);
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: var(--box-shadow-light);
+}
+
+.school-dashboard .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-gray);
+  padding-bottom: 16px;
+}
+
+.school-dashboard .section-title {
+  font-size: var(--heading5);
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.school-dashboard .header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.school-dashboard .add-course-btn,
+.school-dashboard .add-educator-btn {
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-small-radius);
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: var(--font-Poppins);
+}
+
+.school-dashboard .add-course-btn:hover,
+.school-dashboard .add-educator-btn:hover {
+  background-color: var(--primary-hover-color);
+}
+
+.school-dashboard .view-all-btn {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--border-small-radius);
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  font-family: var(--font-Poppins);
+}
+
+.school-dashboard .view-all-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+/* Table Styles */
+.school-dashboard .data-table-container {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--border-medium-radius);
+}
+
+.school-dashboard .rdt_TableHeader {
+  background-color: var(--bg-white);
+  padding: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.school-dashboard .rdt_TableHeadRow {
+  background-color: var(--bg-gray);
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.school-dashboard .rdt_TableRow {
+  border-bottom: 1px solid var(--border-gray);
+  transition: background-color 0.2s;
+}
+
+.school-dashboard .rdt_TableRow:hover {
+  background-color: rgba(26, 46, 110, 0.05);
+}
+
+.school-dashboard .course-info,
+.school-dashboard .professor-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.school-dashboard .course-thumbnail {
+  width: 48px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: var(--border-small-radius);
+}
+
+.school-dashboard .professor-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.school-dashboard .professor-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Action Buttons - Match Courses.css */
+.school-dashboard .action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.school-dashboard .action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.school-dashboard .action-btn.view {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
+.school-dashboard .action-btn.edit {
+  background-color: #eef2ff;
+  color: var(--primary-color);
+}
+
+.school-dashboard .action-btn.delete {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.school-dashboard .action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.school-dashboard .action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Status Indicator - Match Courses.css */
+.school-dashboard .status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.school-dashboard .status-indicator {
+  width: 36px;
+  height: 20px;
+  border-radius: 20px;
+  background-color: #e5e7eb;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.school-dashboard .status-indicator::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+}
+
+.school-dashboard .status-indicator.active {
+  background-color: var(--bg-primary);
+}
+
+.school-dashboard .status-indicator.active::before {
+  transform: translateX(16px);
+}
+
+.school-dashboard .text-green-600 {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.school-dashboard .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Search Input */
+.school-dashboard .search-container {
+  margin-bottom: 16px;
+}
+
+.school-dashboard .search-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-gray);
+  border-radius: var(--border-small-radius);
+  font-family: var(--font-Poppins);
+  font-size: var(--smallfont);
+  transition: border-color 0.2s;
+}
+
+.school-dashboard .search-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .school-dashboard .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .school-dashboard .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .school-dashboard .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .school-dashboard .search-input {
+    max-width: 100%;
+  }
+}

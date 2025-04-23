@@ -2,28 +2,83 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as api from './adminApi';
 import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toast';
 
+export const getUsersThunk = createAsyncThunk('admin/getUsers', async () => {
+  try {
+    const data = await api.getUsers();
+    //  console.log('getUsersThunk response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in getUsersThunk:', error);
+    throw error;
+  }
+});
+
 export const getUniversitiesThunk = createAsyncThunk('admin/getUniversities', api.getUniversities);
+
+export const getUniversityByIdThunk = createAsyncThunk(
+  'admin/getUniversityById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const data = await api.getUniversityById(id);
+      return data;
+    } catch (error) {
+      showErrorToast(error.response?.data?.msg || 'Failed to fetch university details');
+      return rejectWithValue(error.response?.data?.msg || 'Failed to fetch university details');
+    }
+  }
+);
+
 export const createUniversityThunk = createAsyncThunk('admin/createUniversity', async (universityData, { rejectWithValue }) => {
   try {
     const data = await api.createUniversity(universityData);
     showSuccessToast(data.msg || 'University created successfully');
     return data;
   } catch (error) {
-    showErrorToast(error.response?.data?.msg || 'Failed to create university');
-    return rejectWithValue(error.response?.data?.msg || 'Failed to create university');
+    // Check for specific error messages from the backend
+    const errorMessage = error.response?.data?.message || 'Failed to create university';
+    const fieldErrors = error.response?.data?.errors;
+
+    // If we have field-specific errors, show the first one
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      const firstErrorField = Object.keys(fieldErrors)[0];
+      showErrorToast(fieldErrors[firstErrorField]);
+    } else {
+      showErrorToast(errorMessage);
+    }
+
+    return rejectWithValue({
+      message: errorMessage,
+      errors: fieldErrors
+    });
   }
 });
 
-export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async ({ id, ...universityData }, { rejectWithValue }) => {
+export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async ({ id, ...universityData }, { rejectWithValue, dispatch }) => {
   try {
     const data = await api.updateUniversity(id, universityData);
     showSuccessToast(data.msg || 'University updated successfully');
+
+    // Refresh the universities list to ensure data consistency
+    dispatch(getUniversitiesThunk());
+
     return data;
   } catch (error) {
     showErrorToast(error.response?.data?.msg || 'Failed to update university');
     return rejectWithValue(error.response?.data?.msg || 'Failed to update university');
   }
 });
+
+export const deleteUniversityThunk = createAsyncThunk('admin/deleteUniversity', async (id, { rejectWithValue }) => {
+  try {
+    const data = await api.deleteUniversity(id);
+    showSuccessToast(data.msg || 'University deleted successfully');
+    return id; // Return the ID for state updates
+  } catch (error) {
+    showErrorToast(error.response?.data?.msg || 'Failed to delete university');
+    return rejectWithValue(error.response?.data?.msg || 'Failed to delete university');
+  }
+});
+
 export const getContentThunk = createAsyncThunk('admin/getContent', api.getContent);
 export const createContentThunk = createAsyncThunk('admin/createContent', async (contentData, { rejectWithValue }) => {
   try {
@@ -250,7 +305,9 @@ export const unpublishPageThunk = createAsyncThunk('admin/unpublishPage', async 
 const adminSlice = createSlice({
   name: 'admin',
   initialState: {
+    users: [],
     universities: [],
+    currentUniversity: null,
     content: [],
     courses: [],
     currentCourse: null,
@@ -263,7 +320,17 @@ const adminSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(getUsersThunk.fulfilled, (state, action) => { state.users = action.payload; })
       .addCase(getUniversitiesThunk.fulfilled, (state, action) => { state.universities = action.payload; })
+      .addCase(getUniversityByIdThunk.fulfilled, (state, action) => { state.currentUniversity = action.payload; })
+      .addCase(createUniversityThunk.fulfilled, (state, action) => { state.universities.push(action.payload); })
+      .addCase(updateUniversityThunk.fulfilled, (state, action) => {
+        const index = state.universities.findIndex(uni => uni._id === action.payload._id);
+        if (index !== -1) state.universities[index] = action.payload;
+      })
+      .addCase(deleteUniversityThunk.fulfilled, (state, action) => {
+        state.universities = state.universities.filter(uni => uni._id !== action.payload);
+      })
       .addCase(getContentThunk.fulfilled, (state, action) => { state.content = action.payload; })
       .addCase(getCoursesThunk.fulfilled, (state, action) => { state.courses = action.payload; })
       .addCase(getCourseThunk.fulfilled, (state, action) => { state.currentCourse = action.payload; })

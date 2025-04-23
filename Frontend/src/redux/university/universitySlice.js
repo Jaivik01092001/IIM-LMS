@@ -8,12 +8,39 @@ export const createEducatorThunk = createAsyncThunk('university/createEducator',
     showSuccessToast(data.msg || 'Educator created successfully');
     return data;
   } catch (error) {
-    showErrorToast(error.response?.data?.msg || 'Failed to create educator');
-    return rejectWithValue(error.response?.data?.msg || 'Failed to create educator');
+    // Check for specific error messages from the backend
+    const errorMessage = error.response?.data?.message || 'Failed to create educator';
+    const fieldErrors = error.response?.data?.errors;
+
+    // If we have field-specific errors, show the first one
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      const firstErrorField = Object.keys(fieldErrors)[0];
+      showErrorToast(fieldErrors[firstErrorField]);
+    } else {
+      showErrorToast(errorMessage);
+    }
+
+    return rejectWithValue({
+      message: errorMessage,
+      errors: fieldErrors
+    });
   }
 });
 
 export const getEducatorsThunk = createAsyncThunk('university/getEducators', api.getEducators);
+
+export const getEducatorByIdThunk = createAsyncThunk(
+  'university/getEducatorById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const data = await api.getEducatorById(id);
+      return data;
+    } catch (error) {
+      showErrorToast(error.response?.data?.msg || 'Failed to fetch educator details');
+      return rejectWithValue(error.response?.data?.msg || 'Failed to fetch educator details');
+    }
+  }
+);
 
 export const deleteEducatorThunk = createAsyncThunk('university/deleteEducator', async (id, { rejectWithValue }) => {
   try {
@@ -63,19 +90,29 @@ const universitySlice = createSlice({
   name: 'university',
   initialState: {
     educators: [],
+    currentEducator: null,
     loading: false,
     error: null,
   },
   extraReducers: (builder) => {
     builder
       .addCase(getEducatorsThunk.fulfilled, (state, action) => { state.educators = action.payload; })
+      .addCase(getEducatorByIdThunk.fulfilled, (state, action) => { state.currentEducator = action.payload; })
       .addCase(createEducatorThunk.fulfilled, (state, action) => { state.educators.push(action.payload); })
       .addCase(updateEducatorThunk.fulfilled, (state, action) => {
         const index = state.educators.findIndex(educator => educator._id === action.payload._id);
         if (index !== -1) state.educators[index] = action.payload;
+        // Also update currentEducator if it's the same educator
+        if (state.currentEducator && state.currentEducator._id === action.payload._id) {
+          state.currentEducator = action.payload;
+        }
       })
       .addCase(deleteEducatorThunk.fulfilled, (state, action) => {
         state.educators = state.educators.filter(educator => educator._id !== action.payload);
+        // Clear currentEducator if it was deleted
+        if (state.currentEducator && state.currentEducator._id === action.payload) {
+          state.currentEducator = null;
+        }
       })
       .addMatcher(
         (action) => action.type.endsWith('/pending'),

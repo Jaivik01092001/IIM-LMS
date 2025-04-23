@@ -108,6 +108,7 @@
 }
 
 .courses-container .add-course-btn,
+.courses-container .add-educator-btn,
 .courses-container .view-all-btn {
   padding: 8px 16px;
   border-radius: 8px;
@@ -118,15 +119,19 @@
 }
 
 .courses-container .add-course-btn {
-  background-color: #4f46e5;
+  background-color: var(--bg-primary);
   color: white;
   border: none;
 }
-
+.courses-container .add-educator-btn{
+  background-color: var(--bg-primary);
+  color: white;
+  border: none;
+}
 .courses-container .view-all-btn {
   background-color: transparent;
-  color: #4f46e5;
-  border: 1px solid #4f46e5;
+  color: var(--bg-primary);
+  border: 1px solid var(--bg-primary);
 }
 
 .courses-container .add-course-btn:hover {
@@ -170,7 +175,7 @@
 }
 
 .courses-container .search-input:focus {
-  border-color: #4f46e5;
+  border-color: var(--bg-primary);
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -191,7 +196,7 @@
 }
 
 .courses-container .filter-select:focus {
-  border-color: #4f46e5;
+  border-color: var(--bg-primary);
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -273,6 +278,12 @@
 }
 
 /* Status Indicator */
+.courses-container .status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .courses-container .status-indicator {
   width: 36px;
   height: 20px;
@@ -296,11 +307,23 @@
 }
 
 .courses-container .status-indicator.active {
-  background-color: #6366f1;
+  background-color: var(--bg-primary);
 }
 
 .courses-container .status-indicator.active::before {
   transform: translateX(16px);
+}
+
+.courses-container .text-green-600 {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.courses-container .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Action Buttons */

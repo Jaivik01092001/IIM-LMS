@@ -30,8 +30,9 @@ import SchoolAccountForm from "./pages/SchoolAccountForm.jsx";
 import Educators from "./pages/Educators.jsx";
 import EducatorDetails from "./pages/EducatorDetails.jsx";
 import EducatorAccountForm from "./pages/EducatorAccountForm.jsx";
+import CourseForm from "./pages/CourseForm.jsx";
 import Notification from "./pages/Notification.jsx";
-import Settings from "./pages/Settings.jsx";
+import RolePermission from "./pages/RolePermission.jsx";
 
 const App = () => {
   return (
@@ -65,15 +66,21 @@ const App = () => {
               path="admin/courses"
               element={<Courses userType="admin" />}
             />
+            <Route path="admin/courses/add" element={<CourseForm />} />
+            <Route path="admin/courses/edit/:id" element={<CourseForm />} />
             <Route path="admin/courses/:id" element={<CourseDetail />} />
             <Route path="admin/schools" element={<Schools />} />
             <Route
-              path="admin/school-details"
+              path="admin/school-details/:id"
               element={
                 <Suspense fallback={<div>Loading...</div>}>
                   <SchoolDetails />
                 </Suspense>
               }
+            />
+            <Route
+              path="admin/school-account-form/:id"
+              element={<SchoolAccountForm />}
             />
             <Route
               path="admin/school-account-form"
@@ -96,8 +103,8 @@ const App = () => {
               element={<Notification userType="admin" />}
             />
             <Route
-              path="admin/settings"
-              element={<Settings userType="admin" />}
+              path="admin/role-permission"
+              element={<RolePermission />}
             />
 
             {/* School routes */}
@@ -106,6 +113,8 @@ const App = () => {
               path="school/courses"
               element={<Courses userType="school" />}
             />
+            <Route path="school/courses/add" element={<CourseForm />} />
+            <Route path="school/courses/edit/:id" element={<CourseForm />} />
             <Route path="school/courses/:id" element={<CourseDetail />} />
             <Route
               path="school/educators"
@@ -115,10 +124,7 @@ const App = () => {
               path="school/notification"
               element={<Notification userType="school" />}
             />
-            <Route
-              path="school/settings"
-              element={<Settings userType="school" />}
-            />
+
 
             {/* Tutor routes */}
             <Route path="tutor" element={<TutorDashboard />} />
@@ -126,15 +132,14 @@ const App = () => {
               path="tutor/courses"
               element={<Courses userType="tutor" />}
             />
+            <Route path="tutor/courses/add" element={<CourseForm />} />
+            <Route path="tutor/courses/edit/:id" element={<CourseForm />} />
             <Route path="tutor/courses/:id" element={<CourseDetail />} />
             <Route
               path="tutor/notification"
               element={<Notification userType="tutor" />}
             />
-            <Route
-              path="tutor/settings"
-              element={<Settings userType="tutor" />}
-            />
+
 
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />

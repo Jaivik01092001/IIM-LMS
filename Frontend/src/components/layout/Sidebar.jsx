@@ -6,12 +6,11 @@ import {
   FaGraduationCap,
   FaHome,
   FaUsers,
-  FaCog,
-  FaBell,
   FaTimes,
   FaChevronDown,
   FaUniversity,
   FaUserTie,
+  FaUserShield,
 } from "react-icons/fa";
 import "../../assets/styles/Sidebar.css";
 
@@ -53,18 +52,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         icon: <FaGraduationCap className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/courses`,
       },
-      {
-        id: "notification",
-        name: "Notifications",
-        icon: <FaBell className="menu-icon" />,
-        path: `/dashboard/${getDashboardPath()}/notification`,
-      },
-      {
-        id: "settings",
-        name: "Settings",
-        icon: <FaCog className="menu-icon" />,
-        path: `/dashboard/${getDashboardPath()}/settings`,
-      },
     ];
 
     // Add role-specific items
@@ -90,7 +77,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           },
         ],
       });
-    } else if (userRole === "educator") {
+
+      // Add Role/Permission tab for superadmin only
+      items.push({
+        id: "role-permission",
+        name: "Role & Permission",
+        icon: <FaUserShield className="menu-icon" />,
+        path: `/dashboard/admin/role-permission`,
+      });
+    } else if (userRole === "university") {
       // Insert after courses
       items.splice(2, 0, {
         id: "educators",
@@ -107,10 +102,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const getDashboardPath = () => {
     if (userRole === "admin") {
       return "admin";
-    } else if (userRole === "educator") {
+    } else if (userRole === "university") {
       return "school";
-    } else {
+    } else if (userRole === "educator") {
       return "tutor";
+    } else {
+      return "tutor"; // Default fallback
     }
   };
 
@@ -153,6 +150,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           {/* Logo & close button container for mobile */}
           <div className="sidebar-header">
             <img src={bluelogo} alt="" />
+            <h1 className="sidebar-logo">IIM Ahmedabad</h1>
             <button className="close-sidebar-btn" onClick={toggleSidebar}>
               <FaTimes />
             </button>
