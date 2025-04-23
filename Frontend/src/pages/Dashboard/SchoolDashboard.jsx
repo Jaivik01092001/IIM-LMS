@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaPencilAlt, FaTrashAlt, FaEye } from 'react-icons/fa';
+import { FaPencilAlt, FaTrashAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher } from 'react-icons/fa';
+import { IoBookOutline } from 'react-icons/io5';
 import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
 import { getCoursesThunk, updateCourseThunk, deleteCourseThunk, getUsersThunk } from '../../redux/admin/adminSlice';
 import DataTableComponent from '../../components/DataTable';
@@ -12,6 +13,7 @@ const SchoolDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
+  const [educatorSearchTerm, setEducatorSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -239,14 +241,19 @@ const SchoolDashboard = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleCourseStatusToggle(row)}
-          title={row.status ? "Active" : "Inactive"}
-        />
+        <div className="status-cell">
+          <div
+            className={`status-indicator ${row.status ? "active" : ""}`}
+            onClick={() => handleCourseStatusToggle(row)}
+            title={row.status ? "Active" : "Inactive"}
+          />
+          <span className={row.status ? "text-green-600" : "text-red-600"}>
+            {row.status ? "Active" : "Inactive"}
+          </span>
+        </div>
       ),
       sortable: true,
-      width: "100px",
+      width: "150px",
       center: true,
     },
     {
@@ -309,14 +316,19 @@ const SchoolDashboard = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleEducatorStatusToggle(row)}
-          title={row.status ? "Active" : "Inactive"}
-        />
+        <div className="status-cell">
+          <div
+            className={`status-indicator ${row.status ? "active" : ""}`}
+            onClick={() => handleEducatorStatusToggle(row)}
+            title={row.status ? "Active" : "Inactive"}
+          />
+          <span className={row.status ? "text-green-600" : "text-red-600"}>
+            {row.status ? "Active" : "Inactive"}
+          </span>
+        </div>
       ),
       sortable: true,
-      width: "100px",
+      width: "150px",
       center: true,
     },
     {
@@ -347,6 +359,25 @@ const SchoolDashboard = () => {
           <p>Loading dashboard data...</p>
         </div>
       )}
+
+      {/* Stats Cards */}
+      <div className="dashboard-stats">
+        <div className="stat-card courses">
+          <div className="stat-icon3">
+            <FaBook size={24} />
+          </div>
+          <div className="stat-count">{courseTableData.length || 0}</div>
+          <div className="stat-title">Our Courses</div>
+        </div>
+
+        <div className="stat-card educators">
+          <div className="stat-icon2">
+            <FaChalkboardTeacher size={24} />
+          </div>
+          <div className="stat-count">{educatorTableData.length || 0}</div>
+          <div className="stat-title">Our Educators</div>
+        </div>
+      </div>
 
       {/* Courses Table Section */}
       <div className="dashboard-section">
@@ -443,7 +474,7 @@ const SchoolDashboard = () => {
           <h2 className="section-title">Our Educators ({educatorTableData.length || 0})</h2>
           <div className="header-actions">
             <button
-              className="add-educator-btn"
+              className="add-course-btn"
               onClick={() => navigate("/dashboard/school/educator-account-form")}
             >
               Add Educator
@@ -457,14 +488,31 @@ const SchoolDashboard = () => {
           </div>
         </div>
 
-        <DataTableComponent
-          columns={educatorColumns}
-          data={educatorTableData}
-          title="Educator List"
-          showSearch={true}
-          searchPlaceholder="Search educators..."
-          pagination={true}
-        />
+        <div className="search-filter-container">
+          <input
+            type="text"
+            placeholder="Search educators..."
+            className="search-input"
+            value={educatorSearchTerm}
+            onChange={(e) => setEducatorSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="table-responsive">
+          <DataTableComponent
+            columns={educatorColumns}
+            data={educatorTableData
+              // Apply search filter
+              .filter(item =>
+                item.professor.toLowerCase().includes(educatorSearchTerm.toLowerCase()) ||
+                item.email?.toLowerCase().includes(educatorSearchTerm.toLowerCase()) ||
+                item.mobile?.toLowerCase().includes(educatorSearchTerm.toLowerCase())
+              )
+            }
+            showSearch={false}
+            pagination={true}
+          />
+        </div>
       </div>
     </div>
   );
