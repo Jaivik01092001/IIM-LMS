@@ -71,12 +71,16 @@ const App = () => {
             <Route path="admin/courses/:id" element={<CourseDetail />} />
             <Route path="admin/schools" element={<Schools />} />
             <Route
-              path="admin/school-details"
+              path="admin/school-details/:id"
               element={
                 <Suspense fallback={<div>Loading...</div>}>
                   <SchoolDetails />
                 </Suspense>
               }
+            />
+            <Route
+              path="admin/school-account-form/:id"
+              element={<SchoolAccountForm />}
             />
             <Route
               path="admin/school-account-form"

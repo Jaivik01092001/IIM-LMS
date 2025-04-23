@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk } from "../redux/admin/adminSlice";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk, getUniversityByIdThunk } from "../redux/admin/adminSlice";
 import "../assets/styles/SchoolAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
 
 const SchoolAccountForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { id } = useParams();
+  const { currentUniversity, loading } = useSelector((state) => state.admin);
 
-  // Get school data from localStorage instead of location state
-  const storedSchoolData = localStorage.getItem('editSchool');
-  const schoolData = storedSchoolData ? JSON.parse(storedSchoolData) : null;
-  const isEditMode = !!schoolData;
+  // Determine if we're in edit mode based on the presence of an ID parameter
+  const isEditMode = !!id;
 
   const [formData, setFormData] = useState({
     schoolName: "",
-    category: "",
     ownerName: "",
     email: "",
     phoneNumber: "",
@@ -28,43 +27,46 @@ const SchoolAccountForm = () => {
     profileImageUrl: "",
   });
 
-  // Debugging to check if schoolData is correctly loaded
-  console.log("SchoolData from localStorage:", schoolData);
-
+  // Fetch university data if in edit mode
   useEffect(() => {
-    if (isEditMode && schoolData) {
-      // Strip the '+91' prefix from phone number if exists
-      const phoneNumber = schoolData.mobile ?
-                          schoolData.mobile.replace(/^\+91\s*/, '').trim() :
-                          "";
+    if (isEditMode && id) {
+      dispatch(getUniversityByIdThunk(id));
+    }
+  }, [dispatch, isEditMode, id]);
 
-      console.log("Setting form data in edit mode:", {
-        schoolName: schoolData.school || "",
-        category: schoolData.category || "",
-        ownerName: schoolData.owner || "",
-        email: schoolData.email || "",
+  // Update form when university data is loaded
+  useEffect(() => {
+    if (isEditMode && currentUniversity) {
+      // Strip the '+91' prefix from phone number if exists
+      const phoneNumber = currentUniversity.phone ?
+        currentUniversity.phone.replace(/^\+91\s*/, '').trim() :
+        "";
+
+      console.log("Setting form data from API:", {
+        schoolName: currentUniversity.name || "",
+        ownerName: currentUniversity.contactPerson || "",
+        email: currentUniversity.email || "",
         phoneNumber: phoneNumber,
-        address: schoolData.address || "",
-        zipcode: schoolData.zipcode || "",
-        state: schoolData.state || "",
-        status: schoolData.status ? 1 : 0,
+        address: currentUniversity.address || "",
+        zipcode: currentUniversity.zipcode || "",
+        state: currentUniversity.state || "",
+        status: currentUniversity.status === 1 ? 1 : 0,
       });
 
-      // Set form data immediately without setTimeout
+      // Set form data from API response
       setFormData({
-        schoolName: schoolData.school || "",
-        category: schoolData.category || "",
-        ownerName: schoolData.owner || "",
-        email: schoolData.email || "",
+        schoolName: currentUniversity.name || "",
+        ownerName: currentUniversity.contactPerson || "",
+        email: currentUniversity.email || "",
         phoneNumber: phoneNumber,
-        address: schoolData.address || "",
-        zipcode: schoolData.zipcode || "",
-        state: schoolData.state || "",
-        status: schoolData.status ? 1 : 0,
-        profileImageUrl: schoolData.ownerAvatar || "",
+        address: currentUniversity.address || "",
+        zipcode: currentUniversity.zipcode || "",
+        state: currentUniversity.state || "",
+        status: currentUniversity.status === 1 ? 1 : 0,
+        profileImageUrl: "https://randomuser.me/api/portraits/men/1.jpg", // Default avatar or from API if available
       });
     }
-  }, [isEditMode, schoolData]);
+  }, [isEditMode, currentUniversity]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -111,12 +113,11 @@ const SchoolAccountForm = () => {
     if (isEditMode) {
       // Call update API
       dispatch(updateUniversityThunk({
-        id: schoolData.id,
+        id: id, // Use ID from URL params
         ...apiData
       }))
         .unwrap()
         .then(() => {
-          localStorage.removeItem('editSchool');
           dispatch(getUniversitiesThunk());
           navigate("/dashboard/admin/schools");
         })
@@ -138,9 +139,17 @@ const SchoolAccountForm = () => {
   };
 
   const handleCancel = () => {
-    localStorage.removeItem('editSchool');
     navigate(-1);
   };
+
+  // Show loading spinner when in edit mode and data is being fetched
+  if (isEditMode && loading && !currentUniversity) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="school-form-container">
@@ -159,7 +168,7 @@ const SchoolAccountForm = () => {
         <div className="form-section">
           <h2>General Information</h2>
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group full-width">
               <label htmlFor="schoolName">School/University Account Name</label>
               <input
                 type="text"
@@ -170,21 +179,6 @@ const SchoolAccountForm = () => {
                 placeholder="Enter School/University Account Name"
                 required
               />
-            </div>
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Category</option>
-                <option value="CBSE school">CBSE school</option>
-                <option value="International school">International school</option>
-                <option value="University">University</option>
-              </select>
             </div>
           </div>
 

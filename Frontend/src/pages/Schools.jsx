@@ -84,13 +84,12 @@ const Schools = () => {
 
   // Row action handlers
   const handleView = (row) => {
-    navigate("/dashboard/admin/school-details", { state: { school: row } });
+    navigate(`/dashboard/admin/school-details/${row.id}`);
   };
 
   const handleEdit = (row) => {
-    // Store the school data in localStorage instead of router state
-    localStorage.setItem('editSchool', JSON.stringify(row));
-    navigate("/dashboard/admin/school-account-form");
+    // Pass the ID via router params instead of using localStorage
+    navigate(`/dashboard/admin/school-account-form/${row.id}`);
   };
 
   const handleDelete = (row) => {
@@ -110,8 +109,7 @@ const Schools = () => {
 
   // Handle create new school/university
   const handleCreateAccount = () => {
-    // Clear any existing school data
-    localStorage.removeItem('editSchool');
+    // Navigate to create form without an ID
     navigate("/dashboard/admin/school-account-form");
   };
 
@@ -231,7 +229,7 @@ const Schools = () => {
   return (
     <div className="schools-container">
       <div className="schools-header">
-      
+
         <div className="search-filter-container">
           <input
             type="text"

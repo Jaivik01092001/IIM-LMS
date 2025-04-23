@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getUniversityByIdThunk, deleteUniversityThunk, updateUniversityThunk } from "../redux/admin/adminSlice";
 import "../assets/styles/SchoolDetails.css";
 import { LuSchool } from "react-icons/lu";
 
 const SchoolDetails = () => {
-  const location = useLocation();
+  const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentUniversity, loading } = useSelector((state) => state.admin);
@@ -14,19 +14,12 @@ const SchoolDetails = () => {
   // State to hold formatted school data
   const [schoolData, setSchoolData] = useState(null);
 
-  // Get school from router state initially to display something immediately
-  const schoolFromState = location.state?.school;
-
-  // Extract ID from router state or URL
+  // Fetch university data using ID from URL params
   useEffect(() => {
-    const fetchUniversityData = async () => {
-      if (schoolFromState && schoolFromState.id) {
-        dispatch(getUniversityByIdThunk(schoolFromState.id));
-      }
-    };
-
-    fetchUniversityData();
-  }, [dispatch, schoolFromState]);
+    if (id) {
+      dispatch(getUniversityByIdThunk(id));
+    }
+  }, [dispatch, id]);
 
   // Format API data for UI display when it's loaded
   useEffect(() => {
@@ -46,12 +39,8 @@ const SchoolDetails = () => {
         state: currentUniversity.state || "N/A",
         educators: currentUniversity.educators || []
       });
-    } else if (schoolFromState) {
-      // Fallback to router state if API data is not available yet
-      console.log('Using school data from state:', schoolFromState);
-      setSchoolData(schoolFromState);
     }
-  }, [currentUniversity, schoolFromState]);
+  }, [currentUniversity]);
 
   const handleDelete = () => {
     if (window.confirm(`Are you sure you want to delete "${schoolData.school}"?`)) {
@@ -177,9 +166,8 @@ const SchoolDetails = () => {
         <button
           className="edit-btn"
           onClick={() => {
-            // Store the school data in localStorage for the edit form
-            localStorage.setItem('editSchool', JSON.stringify(schoolData));
-            navigate("/dashboard/admin/school-account-form");
+            // Navigate to edit form with ID in URL
+            navigate(`/dashboard/admin/school-account-form/${schoolData.id}`);
           }}
         >
           Edit
