@@ -299,16 +299,9 @@ const Courses = ({ userType }) => {
           <div className="header-actions">
             <button
               className="add-course-btn"
-              onClick={() => navigate(`/dashboard/${userType}/courses/add`)}
+              onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
             >
               Add Course
-            </button>
-            <button
-              className="add-course-advanced-btn"
-              onClick={(event) => navigate(`/dashboard/${userType}/courses/create`)}
-              title="Create course with step-by-step flow"
-            >
-              Create Course (Advanced)
             </button>
             <button
               className="view-all-btn"

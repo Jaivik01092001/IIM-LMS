@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CourseDetail from "./pages/CourseDetail";
+import EnrollCourseDetail from "./pages/EnrollCourseDetail";
 // Dashboard layout
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -58,9 +59,13 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/course/:id" element={<CourseDetail />} />
+          {/* Moved to dashboard layout */}
 
           {/* Dashboard routes with shared layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
+            {/* Shared routes */}
+            <Route path="enroll-course-detail/:id" element={<EnrollCourseDetail />} />
+            
             {/* Admin routes */}
             <Route path="admin" element={<AdminDashboard />} />
             <Route

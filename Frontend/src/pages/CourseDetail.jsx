@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaPlay, FaClock, FaBook, FaUserGraduate, FaStar, FaChevronDown, FaFileAlt } from 'react-icons/fa';
 import './CourseDetail.css';
-import { useDispatch, useSelector } from 'react-redux';
 import { getCourse } from '../redux/admin/adminApi';
+import { enrollCourse } from '../redux/educator/educatorApi';
+import { toast } from 'react-toastify';
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -11,13 +12,13 @@ const CourseDetail = () => {
   const [activeTab, setActiveTab] = useState('information');
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
   const [showModuleContent, setShowModuleContent] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizResults, setQuizResults] = useState(null);
-  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
@@ -132,6 +133,20 @@ const CourseDetail = () => {
     } catch (error) {
       console.error('Error submitting quiz:', error);
       alert('Failed to submit quiz. Please try again.');
+    }
+  };
+
+  const handleEnrollNow = async () => {
+    try {
+      setEnrolling(true);
+      await enrollCourse(id);
+      toast.success('Successfully enrolled in the course!');
+      navigate(`/dashboard/enroll-course-detail/${id}`);
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      toast.error(error.response?.data?.message || 'Failed to enroll in the course');
+    } finally {
+      setEnrolling(false);
     }
   };
 
@@ -517,7 +532,13 @@ const CourseDetail = () => {
               </div>
             </div>
             <div className="course-price-section">
-              <button className="enroll-button">Enroll Now</button>
+              <button 
+                className="enroll-button" 
+                onClick={handleEnrollNow}
+                disabled={enrolling}
+              >
+                {enrolling ? 'Enrolling...' : 'Enroll Now'}
+              </button>
             </div>
             <div className="course-stats">
               <div className="stat-item">
