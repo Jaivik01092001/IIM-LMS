@@ -85,7 +85,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         icon: <FaUserShield className="menu-icon" />,
         path: `/dashboard/admin/role-permission`,
       });
-    } else if (userRole === "educator") {
+    } else if (userRole === "university") {
       // Insert after courses
       items.splice(2, 0, {
         id: "educators",
@@ -102,10 +102,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const getDashboardPath = () => {
     if (userRole === "admin") {
       return "admin";
-    } else if (userRole === "educator") {
+    } else if (userRole === "university") {
       return "school";
-    } else {
+    } else if (userRole === "educator") {
       return "tutor";
+    } else {
+      return "tutor"; // Default fallback
     }
   };
 

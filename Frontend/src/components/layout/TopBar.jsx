@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaBars, FaBell, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../../assets/styles/TopBar.css';
@@ -30,10 +30,12 @@ const TopBar = ({ toggleSidebar }) => {
         // Set formatted role title
         if (role === 'admin') {
           setDashboardType('Admin');
-        } else if (role === 'educator') {
+        } else if (role === 'university') {
           setDashboardType('School');
-        } else {
+        } else if (role === 'educator') {
           setDashboardType('Tutor');
+        } else {
+          setDashboardType('Tutor'); // Default fallback
         }
       } catch (error) {
         console.error('Error parsing user data:', error);
@@ -41,14 +43,8 @@ const TopBar = ({ toggleSidebar }) => {
     }
   }, []);
 
-  // Update page title based on current route
-  useEffect(() => {
-    const path = location.pathname;
-    setPageTitle(getPageTitle(path));
-  }, [location, dashboardType]);
-
   // Function to get page title based on route
-  const getPageTitle = (path) => {
+  const getPageTitle = useCallback((path) => {
     // Extract the path segments
     const pathSegments = path.split('/');
 
@@ -76,7 +72,13 @@ const TopBar = ({ toggleSidebar }) => {
 
     // Default to dashboard type if no specific page is found
     return `${dashboardType} Dashboard`;
-  };
+  }, [dashboardType]);
+
+  // Update page title based on current route
+  useEffect(() => {
+    const path = location.pathname;
+    setPageTitle(getPageTitle(path));
+  }, [location, getPageTitle]);
 
   // Handle profile dropdown toggle
   const toggleDropdown = () => {
@@ -133,7 +135,8 @@ const TopBar = ({ toggleSidebar }) => {
             <span className="user-name">{userName}</span>
             <span className="user-role">
               {userRole === 'admin' ? 'Administrator' :
-               userRole === 'educator' ? 'School Admin' : 'Tutor'}
+               userRole === 'university' ? 'School Admin' :
+               userRole === 'educator' ? 'Tutor' : 'User'}
             </span>
           </div>
 

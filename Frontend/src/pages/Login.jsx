@@ -114,10 +114,12 @@ const Login = () => {
           // Redirect user based on role
           if (userData.role === "admin") {
             navigate("/dashboard/admin");
-          } else if (userData.role === "educator") {
+          } else if (userData.role === "university") {
             navigate("/dashboard/school");
-          } else {
+          } else if (userData.role === "educator") {
             navigate("/dashboard/tutor");
+          } else {
+            navigate("/dashboard/tutor"); // Default fallback
           }
         }
       } catch {
@@ -170,10 +172,12 @@ const Login = () => {
       // Navigate based on user role
       if (user.role === "admin") {
         navigate("/dashboard/admin");
-      } else if (user.role === "educator") {
+      } else if (user.role === "university") {
         navigate("/dashboard/school");
-      } else {
+      } else if (user.role === "educator") {
         navigate("/dashboard/tutor");
+      } else {
+        navigate("/dashboard/tutor"); // Default fallback
       }
 
       if (result.payload && result.payload.message) {
