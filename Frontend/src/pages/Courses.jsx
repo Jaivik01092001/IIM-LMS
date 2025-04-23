@@ -50,7 +50,7 @@ const Courses = ({ userType }) => {
   useEffect(() => {
     if (users) {
       // Only log in development environment
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.NODE_ENV === 'development') {
         console.log('University users count:', universityCount);
         console.log('Educator users count:', educatorCount);
         console.log('Admin users count:', adminCount);
@@ -224,35 +224,6 @@ const Courses = ({ userType }) => {
           <p>Loading courses data...</p>
         </div>
       )}
-      {/* Dashboard Stats */}
-      <div className="dashboard-stats">
-        <div className="stat-card schools">
-          <div className="stat-icon1">
-            <FaBook size={24} />
-            <FaBook className="icondesign1" />
-          </div>
-          <div className="stat-count">{universityCount || 0}</div>
-          <div className="stat-title">Total Schools</div>
-        </div>
-
-        <div className="stat-card educators">
-          <div className="stat-icon2">
-            <FaUserGraduate size={24} />
-            <FaUserGraduate className="icondesign2" />
-          </div>
-          <div className="stat-count">{educatorCount || 0}</div>
-          <div className="stat-title">Total Educators</div>
-        </div>
-
-        <div className="stat-card courses">
-          <div className="stat-icon3">
-            <FaClock size={24} />
-            <FaClock className="icondesign3" />
-          </div>
-          <div className="stat-count">{adminCount || 0}</div>
-          <div className="stat-title">Admin Users</div>
-        </div>
-      </div>
 
       {/* Courses Table Section */}
       <div className="dashboard-section">
