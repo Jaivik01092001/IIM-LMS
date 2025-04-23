@@ -14,6 +14,9 @@ const CourseDetail = () => {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
   const [showModuleContent, setShowModuleContent] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizResults, setQuizResults] = useState(null);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -79,6 +82,57 @@ const CourseDetail = () => {
   const closeModulePreview = () => {
     setShowModuleContent(false);
     setSelectedModule(null);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizResults(null);
+  };
+
+  const handleQuizAnswerChange = (questionId, answer) => {
+    setQuizAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
+
+  const handleQuizSubmit = async () => {
+    if (!selectedModule || !selectedModule.quiz) return;
+
+    try {
+      // Find the quiz object
+      const quizObject = course.quizzes?.find(q => q._id === selectedModule.quiz._id);
+      if (!quizObject) return;
+
+      // Check if all questions have been answered
+      const allQuestionsAnswered = quizObject.questions.every(q =>
+        quizAnswers[q._id] !== undefined
+      );
+
+      if (!allQuestionsAnswered) {
+        alert('Please answer all questions before submitting.');
+        return;
+      }
+
+      // Submit quiz answers to the backend
+      const response = await fetch(`/api/courses/${course._id}/quizzes/${quizObject._id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers: quizAnswers, quizId: quizObject._id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit quiz');
+      }
+
+      const results = await response.json();
+      setQuizResults(results);
+      setQuizSubmitted(true);
+
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      alert('Failed to submit quiz. Please try again.');
+    }
   };
 
   if (loading) {
@@ -183,7 +237,8 @@ const CourseDetail = () => {
                   {/* Find the quiz object using the quiz ID */}
                   {(() => {
                     // Get the quiz object
-                    const quizObject = course.quizzes?.find(q => q._id === selectedModule.quiz);
+                    const quizId = typeof selectedModule.quiz === 'string' ? selectedModule.quiz : selectedModule.quiz._id;
+                    const quizObject = course.quizzes?.find(q => q._id === quizId);
 
                     if (quizObject) {
                       return (
@@ -196,28 +251,75 @@ const CourseDetail = () => {
                                 {quizObject.description || 'Test your knowledge of this module'}
                               </p>
 
-                              <div className="quiz-questions-preview">
-                                {quizObject.questions.slice(0, 1).map((question, qIndex) => (
-                                  <div key={qIndex} className="quiz-question-preview">
-                                    <h4>Sample Question: {question.question}</h4>
-                                    <div className="quiz-options-preview">
-                                      {question.options.map((option, oIndex) => (
-                                        <div key={oIndex} className="quiz-option">
-                                          <input
-                                            type="radio"
-                                            id={`option-${oIndex}`}
-                                            name="sample-question"
-                                            disabled
-                                          />
-                                          <label htmlFor={`option-${oIndex}`}>{option}</label>
-                                        </div>
-                                      ))}
+                              {!quizSubmitted ? (
+                                // Quiz Questions Form
+                                <div className="quiz-questions-form">
+                                  {quizObject.questions.map((question, qIndex) => (
+                                    <div key={question._id || qIndex} className="quiz-question">
+                                      <h4>Question {qIndex + 1}: {question.question}</h4>
+                                      <div className="quiz-options">
+                                        {question.options.map((option, oIndex) => (
+                                          <div key={oIndex} className="quiz-option">
+                                            <input
+                                              type="radio"
+                                              id={`question-${question._id}-option-${oIndex}`}
+                                              name={`question-${question._id}`}
+                                              value={option}
+                                              onChange={() => handleQuizAnswerChange(question._id, option)}
+                                              checked={quizAnswers[question._id] === option}
+                                            />
+                                            <label htmlFor={`question-${question._id}-option-${oIndex}`}>{option}</label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                  <div className="quiz-submit-container">
+                                    <button
+                                      className="quiz-submit-button"
+                                      onClick={handleQuizSubmit}
+                                    >
+                                      Submit Quiz
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Quiz Results
+                                <div className="quiz-results">
+                                  <div className="quiz-result-header">
+                                    <h4 className={quizResults.passed ? "result-passed" : "result-failed"}>
+                                      {quizResults.passed ? "Congratulations! You passed the quiz." : "You didn't pass the quiz. Try again."}
+                                    </h4>
+                                  </div>
+
+                                  <div className="quiz-score-summary">
+                                    <div className="score-item">
+                                      <span className="score-label">Score:</span>
+                                      <span className="score-value">{quizResults.score} / {quizResults.totalPoints}</span>
+                                    </div>
+                                    <div className="score-item">
+                                      <span className="score-label">Percentage:</span>
+                                      <span className="score-value">{quizResults.percentage}%</span>
+                                    </div>
+                                    <div className="score-item">
+                                      <span className="score-label">Passing Score:</span>
+                                      <span className="score-value">{quizObject.passingScore}%</span>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
 
-                              <p className="quiz-note">This is just a preview. Enroll in the course to take the full quiz.</p>
+                                  <button
+                                    className="quiz-retry-button"
+                                    onClick={() => {
+                                      setQuizAnswers({});
+                                      setQuizSubmitted(false);
+                                      setQuizResults(null);
+                                    }}
+                                  >
+                                    Try Again
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <p className="no-questions-message">This quiz has no questions yet.</p>
