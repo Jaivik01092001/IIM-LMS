@@ -42,7 +42,6 @@ const ProtectedRoute = ({ children, role, permissions }) => {
     // Special case for educators with course management permissions
     if (role === 'admin' && user.role === 'educator' && user.permissions !== null &&
       permissions && permissions.some(perm => hasPermission(user, perm))) {
-      console.log('Allowing educator with admin permissions to access admin route');
       // Allow educators with specific permissions to access admin-like routes
       return children;
     }
@@ -51,11 +50,8 @@ const ProtectedRoute = ({ children, role, permissions }) => {
 
   // Check permissions if specified
   if (permissions && permissions.length > 0) {
-    console.log('ProtectedRoute checking permissions:', { permissions, user });
-
     // If permissions is null, user has no permissions
     if (user.permissions === null) {
-      console.log('User has null permissions, redirecting to dashboard');
       return <Navigate to="/dashboard" />;
     }
 
@@ -63,13 +59,10 @@ const ProtectedRoute = ({ children, role, permissions }) => {
       permission,
       hasPermission: hasPermission(user, permission)
     }));
-    console.log('Permission check results:', permissionResults);
 
     const userHasPermission = permissionResults.some(result => result.hasPermission);
-    console.log('Final permission result:', userHasPermission);
 
     if (!userHasPermission) {
-      console.log('User does not have required permissions, redirecting to dashboard');
       return <Navigate to="/dashboard" />;
     }
   }
@@ -111,9 +104,8 @@ function App() {
   // Force refresh localStorage user data to ensure it's up to date
   useEffect(() => {
     if (user) {
-      console.log('Current user in Redux state:', user);
       const localStorageUser = JSON.parse(localStorage.getItem('user') || 'null');
-      console.log('Current user in localStorage:', localStorageUser);
+      // Sync localStorage if needed
     }
   }, [user]);
   return (

@@ -217,7 +217,6 @@ exports.createContent = async (req, res) => {
 
     res.json(content);
   } catch (error) {
-    console.error('Error creating content:', error);
     res.status(500).json({ msg: error.message || 'Server Error' });
   }
 };
@@ -516,29 +515,24 @@ exports.updateProfile = async (req, res) => {
 };
 exports.updatePassword = async (req, res) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
-  console.debug(`Updating password for userId: ${req.user.id}`);
 
   // Validate passwords match
   if (newPassword !== confirmPassword) {
-    console.warn(`Password confirmation mismatch for userId: ${req.user.id}`);
     return res.status(400).json({ msg: 'New passwords do not match' });
   }
 
   const user = await User.findById(req.user.id);
   if (!user) {
-    console.error(`User not found for userId: ${req.user.id}`);
     return res.status(404).json({ msg: 'User not found' });
   }
 
   const isMatch = await bcrypt.compare(currentPassword, user.password);
   if (!isMatch) {
-    console.warn(`Invalid current password attempt for userId: ${req.user.id}`);
     return res.status(400).json({ msg: 'Invalid current password' });
   }
 
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
-  console.debug(`Password updated successfully for userId: ${req.user.id}`);
   res.json({ msg: 'Password updated' });
 };
 
@@ -547,10 +541,8 @@ exports.getAllUsers = async (req, res) => {
   try {
     // Return all users regardless of status
     const users = await User.find().select('-password');
-    console.log('getAllUsers API response:', JSON.stringify(users, null, 2));
     res.json(users);
   } catch (error) {
-    console.error('Error in getAllUsers:', error);
     res.status(500).json({ message: 'Error retrieving users', error: error.message });
   }
 };

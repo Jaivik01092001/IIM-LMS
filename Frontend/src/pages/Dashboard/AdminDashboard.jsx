@@ -57,10 +57,10 @@ const AdminDashboard = () => {
   // Log users data when it changes
   useEffect(() => {
     if (users) {
-      console.log('Users data in AdminDashboard component:', users);
-      console.log('University:', users.filter(user => user.role === 'university').length);
-      console.log('Educator users count:', users.filter(user => user.role === 'educator').length);
-      console.log('Admin users count:', users.filter(user => user.role === 'admin').length);
+      // console.log('Users data in AdminDashboard component:', users);
+      // console.log('University:', users.filter(user => user.role === 'university').length);
+      // console.log('Educator users count:', users.filter(user => user.role === 'educator').length);
+      // console.log('Admin users count:', users.filter(user => user.role === 'admin').length);
     } else {
       // If users data is not available, use mock data for testing
       const mockUsers = [

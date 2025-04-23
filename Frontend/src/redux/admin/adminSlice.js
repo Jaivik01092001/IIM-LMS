@@ -5,7 +5,7 @@ import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toa
 export const getUsersThunk = createAsyncThunk('admin/getUsers', async () => {
   try {
     const data = await api.getUsers();
-    console.log('getUsersThunk response:', data);
+    //  console.log('getUsersThunk response:', data);
     return data;
   } catch (error) {
     console.error('Error in getUsersThunk:', error);
