@@ -108,6 +108,7 @@
 }
 
 .courses-container .add-course-btn,
+.courses-container .add-educator-btn,
 .courses-container .view-all-btn {
   padding: 8px 16px;
   border-radius: 8px;
@@ -122,7 +123,11 @@
   color: white;
   border: none;
 }
-
+.courses-container .add-educator-btn{
+  background-color: var(--bg-primary);
+  color: white;
+  border: none;
+}
 .courses-container .view-all-btn {
   background-color: transparent;
   color: var(--bg-primary);
@@ -273,6 +278,12 @@
 }
 
 /* Status Indicator */
+.courses-container .status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .courses-container .status-indicator {
   width: 36px;
   height: 20px;
@@ -301,6 +312,18 @@
 
 .courses-container .status-indicator.active::before {
   transform: translateX(16px);
+}
+
+.courses-container .text-green-600 {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.courses-container .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Action Buttons */

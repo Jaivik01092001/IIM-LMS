@@ -182,14 +182,19 @@ const Courses = ({ userType }) => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleStatusToggle(row)}
-          title={row.status ? "Active" : "Inactive"}
-        />
+        <div className="status-cell">
+          <div
+            className={`status-indicator ${row.status ? "active" : ""}`}
+            onClick={() => handleStatusToggle(row)}
+            title={row.status ? "Active" : "Inactive"}
+          />
+          <span className={row.status ? "text-green-600" : "text-red-600"}>
+            {row.status ? "Active" : "Inactive"}
+          </span>
+        </div>
       ),
       sortable: true,
-      width: "100px",
+      width: "150px",
       center: true,
     },
     {
