@@ -2,7 +2,7 @@ const express = require('express');
 const adminController = require('../controllers/adminController');
 const upload = require('../middleware/upload');
 const router = express.Router();
-const { protect, restrictTo } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 // Apply authentication and authorization middleware to all routes
 router.use(protect);
@@ -28,9 +28,9 @@ router.delete('/content/:id', adminController.deleteContent);
 
 // Course routes
 router.get('/courses', adminController.getCourses);
-router.post('/course', adminController.createCourse);
+router.post('/course', upload.any(), adminController.createCourse);
 router.get('/course/:id', adminController.getCourse);
-router.put('/course/:id', adminController.updateCourse);
+router.put('/course/:id', upload.any(), adminController.updateCourse);
 router.delete('/course/:id', adminController.deleteCourse);
 router.post('/course/content', adminController.addContentToCourse);
 router.post('/course/quiz', adminController.addQuizToCourse);

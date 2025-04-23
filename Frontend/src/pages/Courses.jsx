@@ -119,8 +119,70 @@ const Courses = ({ userType }) => {
   };
 
   // Edit handler
-  const handleEdit = (row) => {
-    navigate(`/dashboard/${userType}/courses/edit/${row.id}`);
+  const handleEdit = (row, event) => {
+    // Create dropdown menu for edit options
+    const editMenu = document.createElement('div');
+    editMenu.className = 'edit-dropdown';
+    editMenu.innerHTML = `
+      <div class="edit-option" data-action="standard">Standard Edit</div>
+      <div class="edit-option" data-action="advanced">Advanced Edit</div>
+    `;
+
+    // Position the dropdown near the edit button
+    const editButton = event.currentTarget;
+    const rect = editButton.getBoundingClientRect();
+    editMenu.style.position = 'absolute';
+    editMenu.style.top = `${rect.bottom + window.scrollY}px`;
+    editMenu.style.left = `${rect.left + window.scrollX}px`;
+    editMenu.style.zIndex = '1000';
+    editMenu.style.backgroundColor = 'white';
+    editMenu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+    editMenu.style.borderRadius = '4px';
+    editMenu.style.padding = '8px 0';
+
+    // Style options
+    const options = editMenu.querySelectorAll('.edit-option');
+    options.forEach(option => {
+      option.style.padding = '8px 16px';
+      option.style.cursor = 'pointer';
+      option.style.transition = 'background-color 0.2s';
+
+      option.addEventListener('mouseover', () => {
+        option.style.backgroundColor = '#f3f4f6';
+      });
+
+      option.addEventListener('mouseout', () => {
+        option.style.backgroundColor = 'transparent';
+      });
+
+      option.addEventListener('click', () => {
+        const action = option.getAttribute('data-action');
+        if (action === 'standard') {
+          navigate(`/dashboard/${userType}/courses/edit/${row.id}`);
+        } else if (action === 'advanced') {
+          navigate(`/dashboard/${userType}/courses/edit-flow/${row.id}`);
+        }
+
+        // Remove dropdown after selection
+        document.body.removeChild(editMenu);
+      });
+    });
+
+    // Add to document
+    document.body.appendChild(editMenu);
+
+    // Close dropdown when clicking elsewhere
+    const closeDropdown = (e) => {
+      if (!editMenu.contains(e.target) && e.target !== editButton) {
+        document.body.removeChild(editMenu);
+        document.removeEventListener('click', closeDropdown);
+      }
+    };
+
+    // Add timeout to avoid immediate closing
+    setTimeout(() => {
+      document.addEventListener('click', closeDropdown);
+    }, 100);
   };
 
   // Delete handler
@@ -204,7 +266,7 @@ const Courses = ({ userType }) => {
           <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
             <FaEye />
           </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
+          <button className="action-btn edit" onClick={(e) => handleEdit(row, e)} title="Edit Course">
             <FaPencilAlt />
           </button>
           <button
@@ -240,6 +302,13 @@ const Courses = ({ userType }) => {
               onClick={() => navigate(`/dashboard/${userType}/courses/add`)}
             >
               Add Course
+            </button>
+            <button
+              className="add-course-advanced-btn"
+              onClick={(event) => navigate(`/dashboard/${userType}/courses/create`)}
+              title="Create course with step-by-step flow"
+            >
+              Create Course (Advanced)
             </button>
             <button
               className="view-all-btn"

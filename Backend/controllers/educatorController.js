@@ -1,6 +1,7 @@
 const Course = require('../models/Course');
 const Content = require('../models/Content');
 const Module = require('../models/Module');
+const Quiz = require('../models/Quiz');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
@@ -63,7 +64,15 @@ const getMyCourses = async (req, res) => {
     const courses = await Course.find({
       'enrolledUsers.user': req.user.id,
       status: 1
-    }).populate('content');
+    })
+      .populate('content')
+      .populate({
+        path: 'modules',
+        populate: {
+          path: 'content',
+          model: 'Content'
+        }
+      });
 
     res.json(courses);
   } catch (error) {
@@ -78,7 +87,24 @@ const getCourseDetail = async (req, res) => {
     const course = await Course.findOne({ _id: req.params.id, status: 1 })
       .populate('creator', 'name')
       .populate('content')
-      .populate('quizzes')
+      .populate({
+        path: 'modules',
+        populate: [
+          {
+            path: 'content',
+            model: 'Content'
+          },
+          {
+            path: 'quiz',
+            model: 'Quiz'
+          }
+        ]
+      })
+      .populate({
+        path: 'quizzes',
+        // Include all quiz fields including questions
+        select: 'title description questions timeLimit passingScore attempts'
+      })
       .populate('enrolledUsers.user', 'name');
 
     if (!course) {
@@ -112,7 +138,25 @@ const resumeCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
       .populate('creator', 'name')
-      .populate('content');
+      .populate('content')
+      .populate({
+        path: 'modules',
+        populate: [
+          {
+            path: 'content',
+            model: 'Content'
+          },
+          {
+            path: 'quiz',
+            model: 'Quiz'
+          }
+        ]
+      })
+      .populate({
+        path: 'quizzes',
+        // Include all quiz fields including questions
+        select: 'title description questions timeLimit passingScore attempts'
+      });
 
     if (!course) {
       return res.status(404).json({ msg: 'Course not found' });
@@ -280,9 +324,14 @@ const createContent = async (req, res) => {
 
 const submitQuiz = async (req, res) => {
   try {
-    const { answers } = req.body; // { questionId: answer }
-    const course = await Course.findById(req.params.id);
+    const { answers, quizId } = req.body; // { questionId: answer } and quizId
 
+    if (!quizId) {
+      return res.status(400).json({ msg: 'Quiz ID is required' });
+    }
+
+    // Find the course and quiz
+    const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ msg: 'Course not found' });
     }
@@ -292,33 +341,59 @@ const submitQuiz = async (req, res) => {
       return res.status(403).json({ msg: 'Not enrolled in this course' });
     }
 
+    // Find the quiz
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ msg: 'Quiz not found' });
+    }
+
     // Calculate score
     let score = 0;
-    let total = course.quiz.length;
+    // Calculate total possible points from all questions
+    const totalPossiblePoints = quiz.questions.reduce((sum, q) => sum + (q.points || 1), 0);
 
-    course.quiz.forEach(q => {
-      if (answers[q._id] === q.answer) score++;
+    quiz.questions.forEach(question => {
+      const questionId = question._id.toString();
+      if (answers[questionId] === question.correctAnswer) {
+        score += question.points || 1;
+      }
     });
 
-    const passed = score === total;
-    const percentage = Math.round((score / total) * 100);
+    const percentage = Math.round((score / totalPossiblePoints) * 100);
+    const passed = percentage >= quiz.passingScore;
+
+    // Create a new attempt record
+    const attempt = {
+      user: req.user.id,
+      answers,
+      score,
+      totalPoints: totalPossiblePoints,
+      percentage,
+      passed,
+      date: new Date()
+    };
+
+    // Add the attempt to the quiz
+    quiz.attempts.push(attempt);
+    await quiz.save();
 
     // Update user's enrollment status if passed
     if (passed) {
       const enrolled = course.enrolledUsers.find(e => e.user.toString() === req.user.id);
-      enrolled.status = 'completed';
-      enrolled.completedAt = new Date();
-      enrolled.progress = 100;
-
-
-      await course.save();
+      if (enrolled) {
+        enrolled.status = 'completed';
+        enrolled.completedAt = new Date();
+        enrolled.progress = 100;
+        await course.save();
+      }
     }
 
     res.json({
       score,
-      total,
+      totalPoints: totalPossiblePoints,
       percentage,
-      passed
+      passed,
+      attemptId: quiz.attempts[quiz.attempts.length - 1]._id
     });
   } catch (error) {
     console.error('Error submitting quiz:', error);

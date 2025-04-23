@@ -74,10 +74,27 @@ const seedDatabase = async () => {
                 description: 'Learn how to create a positive social-emotional climate in schools',
                 duration: '4 weeks',
                 category: 'Education',
+                subcategory: 'School Administration',
                 language: 'en',
                 level: 'intermediate',
                 tags: ['education', 'social-emotional', 'school climate'],
-                thumbnail: 'https://example.com/thumbnail1.jpg'
+                thumbnail: 'https://example.com/thumbnail1.jpg',
+                hasModules: true,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Create a positive classroom environment',
+                    'Implement effective emotional regulation strategies',
+                    'Develop school-wide social-emotional support systems'
+                ],
+                requirements: [
+                    'Basic understanding of educational psychology',
+                    'Experience in a school setting'
+                ],
+                targetAudience: 'School administrators, teachers, and counselors',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Bullying prevention for safer schooling experiences',
@@ -85,10 +102,26 @@ const seedDatabase = async () => {
                 description: 'Strategies to prevent bullying in schools',
                 duration: '3 weeks',
                 category: 'Education',
+                subcategory: 'Student Welfare',
                 language: 'en',
                 level: 'beginner',
                 tags: ['education', 'bullying', 'safety'],
-                thumbnail: 'https://example.com/thumbnail2.jpg'
+                thumbnail: 'https://example.com/thumbnail2.jpg',
+                hasModules: false,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Identify various forms of bullying',
+                    'Implement anti-bullying programs',
+                    'Support victims of bullying effectively'
+                ],
+                requirements: [
+                    'Basic understanding of child psychology'
+                ],
+                targetAudience: 'Teachers, school counselors, and parents',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Effective School Leadership',
@@ -96,10 +129,27 @@ const seedDatabase = async () => {
                 description: 'Develop leadership skills for school administrators',
                 duration: '6 weeks',
                 category: 'Leadership',
+                subcategory: 'Education Administration',
                 language: 'en',
                 level: 'advanced',
                 tags: ['education', 'leadership', 'administration'],
-                thumbnail: 'https://example.com/thumbnail3.jpg'
+                thumbnail: 'https://example.com/thumbnail3.jpg',
+                hasModules: true,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Develop a vision for school improvement',
+                    'Build effective leadership teams',
+                    'Implement data-driven decision making'
+                ],
+                requirements: [
+                    'At least 2 years of teaching experience',
+                    'Basic understanding of educational policy'
+                ],
+                targetAudience: 'Aspiring and current school leaders, principals, and administrators',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Managing Self and Regulating Emotions',
@@ -107,10 +157,26 @@ const seedDatabase = async () => {
                 description: 'Learn techniques for emotional regulation',
                 duration: '4 weeks',
                 category: 'Psychology',
+                subcategory: 'Emotional Intelligence',
                 language: 'en',
                 level: 'beginner',
                 tags: ['psychology', 'emotions', 'self-regulation'],
-                thumbnail: 'https://example.com/thumbnail4.jpg'
+                thumbnail: 'https://example.com/thumbnail4.jpg',
+                hasModules: false,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Identify emotional triggers',
+                    'Apply mindfulness techniques',
+                    'Develop healthy coping mechanisms'
+                ],
+                requirements: [
+                    'No prerequisites required'
+                ],
+                targetAudience: 'Teachers, students, and anyone interested in emotional regulation',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Innovative Educational Pedagogies',
@@ -118,10 +184,27 @@ const seedDatabase = async () => {
                 description: 'Explore innovative teaching methods',
                 duration: '5 weeks',
                 category: 'Education',
+                subcategory: 'Teaching Methods',
                 language: 'en',
                 level: 'intermediate',
                 tags: ['education', 'pedagogy', 'innovation'],
-                thumbnail: 'https://example.com/thumbnail5.jpg'
+                thumbnail: 'https://example.com/thumbnail5.jpg',
+                hasModules: true,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Implement project-based learning',
+                    'Integrate technology in the classroom',
+                    'Design student-centered learning experiences'
+                ],
+                requirements: [
+                    'Basic teaching experience',
+                    'Familiarity with educational technology'
+                ],
+                targetAudience: 'K-12 teachers, curriculum developers, and instructional designers',
+                isDraft: false,
+                status: 1
             },
         ];
 

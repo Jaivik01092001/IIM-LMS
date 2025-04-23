@@ -31,6 +31,7 @@ import Educators from "./pages/Educators.jsx";
 import EducatorDetails from "./pages/EducatorDetails.jsx";
 import EducatorAccountForm from "./pages/EducatorAccountForm.jsx";
 import CourseForm from "./pages/CourseForm.jsx";
+import CourseCreationFlow from "./pages/CourseCreationFlow.jsx";
 import Notification from "./pages/Notification.jsx";
 import RolePermission from "./pages/RolePermission.jsx";
 
@@ -67,6 +68,8 @@ const App = () => {
               element={<Courses userType="admin" />}
             />
             <Route path="admin/courses/add" element={<CourseForm />} />
+            <Route path="admin/courses/create" element={<CourseCreationFlow />} />
+            <Route path="admin/courses/edit-flow/:id" element={<CourseCreationFlow />} />
             <Route path="admin/courses/edit/:id" element={<CourseForm />} />
             <Route path="admin/courses/:id" element={<CourseDetail />} />
             <Route path="admin/schools" element={<Schools />} />
@@ -114,6 +117,8 @@ const App = () => {
               element={<Courses userType="school" />}
             />
             <Route path="school/courses/add" element={<CourseForm />} />
+            <Route path="school/courses/create" element={<CourseCreationFlow />} />
+            <Route path="school/courses/edit-flow/:id" element={<CourseCreationFlow />} />
             <Route path="school/courses/edit/:id" element={<CourseForm />} />
             <Route path="school/courses/:id" element={<CourseDetail />} />
             <Route
@@ -133,6 +138,8 @@ const App = () => {
               element={<Courses userType="tutor" />}
             />
             <Route path="tutor/courses/add" element={<CourseForm />} />
+            <Route path="tutor/courses/create" element={<CourseCreationFlow />} />
+            <Route path="tutor/courses/edit-flow/:id" element={<CourseCreationFlow />} />
             <Route path="tutor/courses/edit/:id" element={<CourseForm />} />
             <Route path="tutor/courses/:id" element={<CourseDetail />} />
             <Route
