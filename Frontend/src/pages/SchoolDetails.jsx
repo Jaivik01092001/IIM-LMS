@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getUniversityByIdThunk, deleteUniversityThunk, updateUniversityThunk } from "../redux/admin/adminSlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/SchoolDetails.css";
 import { LuSchool } from "react-icons/lu";
 
@@ -59,31 +60,25 @@ const SchoolDetails = () => {
     const newStatus = schoolData.status ? 0 : 1;
     const statusText = newStatus === 1 ? "activate" : "deactivate";
 
-    if (window.confirm(`Are you sure you want to ${statusText} "${schoolData.school}"?`)) {
-      console.log(`Toggling status for ${schoolData.school} to ${newStatus}`);
+    console.log(`Toggling status for ${schoolData.school} to ${newStatus}`);
 
-      dispatch(updateUniversityThunk({
-        id: schoolData.id,
-        status: newStatus
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${statusText}d ${schoolData.school}`);
-          // Refresh data from server to ensure UI is in sync with backend
-          dispatch(getUniversityByIdThunk(schoolData.id));
-        })
-        .catch(error => {
-          console.error(`Error ${statusText}ing university:`, error);
-        });
-    }
+    dispatch(updateUniversityThunk({
+      id: schoolData.id,
+      status: newStatus
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${statusText}d ${schoolData.school}`);
+        // Refresh data from server to ensure UI is in sync with backend
+        dispatch(getUniversityByIdThunk(schoolData.id));
+      })
+      .catch(error => {
+        console.error(`Error ${statusText}ing university:`, error);
+      });
   };
 
   if (loading && !schoolData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner size="large" message="Loading school details..." />;
   }
 
   if (!schoolData) {

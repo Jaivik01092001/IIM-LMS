@@ -17,6 +17,7 @@ import {
 } from "../redux/admin/adminSlice";
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/Courses.css";
 
 const Courses = ({ userType }) => {
@@ -97,20 +98,18 @@ const Courses = ({ userType }) => {
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
-      dispatch(updateCourseThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating course status:`, error);
-        });
-    }
+    dispatch(updateCourseThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        // Refresh courses data
+        dispatch(getCoursesThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating course status:`, error);
+      });
   };
 
   // View handler
@@ -223,12 +222,7 @@ const Courses = ({ userType }) => {
 
   return (
     <div className="courses-container admin-dashboard">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading courses data...</p>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner overlay={true} message="Loading courses data..." />}
 
       {/* Courses Table Section */}
       <div className="dashboard-section">

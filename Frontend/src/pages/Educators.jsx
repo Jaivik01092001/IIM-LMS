@@ -8,6 +8,7 @@ import {
 } from "../redux/university/universitySlice";
 import { getUniversitiesThunk } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Educators.css";
 
@@ -79,22 +80,20 @@ const Educators = () => {
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.professor}"?`)) {
-      // Only send the id and status to avoid issues with socialLinks
-      dispatch(updateEducatorThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.professor}`);
-          // Refresh educators data
-          dispatch(getEducatorsThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating educator status:`, error);
-        });
-    }
+    // Only send the id and status to avoid issues with socialLinks
+    dispatch(updateEducatorThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.professor}`);
+        // Refresh educators data
+        dispatch(getEducatorsThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating educator status:`, error);
+      });
   };
 
   // View handler
@@ -260,12 +259,7 @@ const Educators = () => {
         </div>
       </div>
 
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading educators data...</p>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner overlay={true} message="Loading educators data..." />}
 
       <DataTableComponent
         columns={columns}

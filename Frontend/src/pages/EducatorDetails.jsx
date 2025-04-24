@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteEducatorThunk, updateEducatorThunk, getEducatorsThunk, getEducatorByIdThunk } from "../redux/university/universitySlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/EducatorDetails.css";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { LuSchool } from "react-icons/lu";
@@ -90,31 +91,25 @@ const EducatorDetails = () => {
     const newStatus = educatorData.status ? 0 : 1;
     const statusText = newStatus === 1 ? "activate" : "deactivate";
 
-    if (window.confirm(`Are you sure you want to ${statusText} "${educatorData.professor}"?`)) {
-      dispatch(updateEducatorThunk({
-        id: educatorData.id,
-        status: newStatus
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${statusText}d ${educatorData.professor}`);
-          // Refresh educator data to ensure UI is in sync with backend
-          dispatch(getEducatorByIdThunk(educatorData.id));
-          // Also refresh the educators list
-          dispatch(getEducatorsThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating educator status:`, error);
-        });
-    }
+    dispatch(updateEducatorThunk({
+      id: educatorData.id,
+      status: newStatus
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${statusText}d ${educatorData.professor}`);
+        // Refresh educator data to ensure UI is in sync with backend
+        dispatch(getEducatorByIdThunk(educatorData.id));
+        // Also refresh the educators list
+        dispatch(getEducatorsThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating educator status:`, error);
+      });
   };
 
   if (loading && !educatorData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner size="large" message="Loading educator details..." />;
   }
 
   if (!educatorData) {

@@ -6,6 +6,7 @@ import { IoBookOutline } from 'react-icons/io5';
 import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
 import { getCoursesThunk, updateCourseThunk, deleteCourseThunk, getUsersThunk } from '../../redux/admin/adminSlice';
 import DataTableComponent from '../../components/DataTable';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 import '../../assets/styles/Courses.css';
 import '../../assets/styles/SchoolDashboard.css';
 
@@ -109,38 +110,34 @@ const SchoolDashboard = () => {
 
   // Course status toggle handler
   const handleCourseStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
-      dispatch(updateCourseThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating course status:`, error);
-        });
-    }
+    dispatch(updateCourseThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        // Refresh courses data
+        dispatch(getCoursesThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating course status:`, error);
+      });
   };
 
   // Educator status toggle handler
   const handleEducatorStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.professor}"?`)) {
-      dispatch(updateEducatorThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          // Refresh educators data
-          dispatch(getEducatorsThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating educator status:`, error);
-        });
-    }
+    dispatch(updateEducatorThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        // Refresh educators data
+        dispatch(getEducatorsThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating educator status:`, error);
+      });
   };
 
   // Course view handler
@@ -353,12 +350,7 @@ const SchoolDashboard = () => {
 
   return (
     <div className="courses-container admin-dashboard">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading dashboard data...</p>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner overlay={true} message="Loading dashboard data..." />}
 
       {/* Stats Cards */}
       <div className="dashboard-stats">
