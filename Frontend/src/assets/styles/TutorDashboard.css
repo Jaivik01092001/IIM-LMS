@@ -1,0 +1,341 @@
+.tutor-dashboard {
+  background-color: var(--bg-gray, #f5f7fa);
+  min-height: 100vh;
+}
+
+/* Loading overlay */
+.tutor-dashboard .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.tutor-dashboard .loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--bg-gray);
+  border-top: 5px solid var(--primary-color, #6366f1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Stats Cards */
+.tutor-dashboard .dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.tutor-dashboard .stat-card {
+  position: relative;
+  border-radius: 16px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.tutor-dashboard .stat-card.ongoing {
+  background-color: #ffecef;
+}
+
+.tutor-dashboard .stat-card.completed {
+  background-color: #e8ffef;
+}
+
+.tutor-dashboard .stat-card.total {
+  background-color: #fff8e8;
+}
+
+.tutor-dashboard .stat-count {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 8px 0;
+  color: #333;
+}
+
+.tutor-dashboard .stat-title {
+  font-size: 14px;
+  color: #666;
+}
+
+.tutor-dashboard .stat-icon1 {
+  background-color: #fa5a7d;
+  border-radius: 50%;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.tutor-dashboard .stat-icon2 {
+  background-color: #3cd856;
+  border-radius: 50%;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.tutor-dashboard .stat-icon3 {
+  background-color: #ff947a;
+  border-radius: 50%;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.tutor-dashboard .icondesign1,
+.tutor-dashboard .icondesign2,
+.tutor-dashboard .icondesign3 {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 80px;
+  opacity: 0.1;
+}
+
+/* Dashboard Section */
+.tutor-dashboard .dashboard-section {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tutor-dashboard .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tutor-dashboard .section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.tutor-dashboard .view-all-btn {
+  padding: 8px 16px;
+  background-color: transparent;
+  color: var(--bg-primary, #6366f1);
+  border: 1px solid var(--bg-primary, #6366f1);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tutor-dashboard .view-all-btn:hover {
+  background-color: #eef2ff;
+}
+
+/* Course Info in Table */
+.tutor-dashboard .course-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tutor-dashboard .course-thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.tutor-dashboard .course-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.tutor-dashboard .course-title {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.tutor-dashboard .course-category {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Progress Bar */
+.tutor-dashboard .progress-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tutor-dashboard .progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.tutor-dashboard .progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background-color: var(--bg-primary, #6366f1);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.tutor-dashboard .progress-text {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 500;
+  width: 42px;
+  text-align: right;
+}
+
+/* Action Buttons */
+.tutor-dashboard .action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.tutor-dashboard .action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutor-dashboard .action-btn.view {
+  background-color: #eef2ff;
+  color: var(--bg-primary, #6366f1);
+}
+
+.tutor-dashboard .action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.tutor-dashboard .action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Empty Courses */
+.tutor-dashboard .empty-courses {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.tutor-dashboard .empty-message {
+  text-align: center;
+  max-width: 400px;
+}
+
+.tutor-dashboard .empty-icon {
+  font-size: 48px;
+  color: #d1d5db;
+  margin-bottom: 16px;
+}
+
+.tutor-dashboard .empty-message h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.tutor-dashboard .empty-message p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.tutor-dashboard .browse-courses-btn {
+  padding: 10px 20px;
+  background-color: var(--bg-primary, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tutor-dashboard .browse-courses-btn:hover {
+  background-color: #4f46e5;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .tutor-dashboard .dashboard-stats {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .tutor-dashboard {
+    padding: 16px;
+  }
+  
+  .tutor-dashboard .dashboard-stats {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .tutor-dashboard .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .tutor-dashboard .view-all-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .tutor-dashboard .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .tutor-dashboard .progress-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .tutor-dashboard .progress-text {
+    text-align: left;
+    width: auto;
+  }
+}

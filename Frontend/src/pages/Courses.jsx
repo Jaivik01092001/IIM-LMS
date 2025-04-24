@@ -6,6 +6,7 @@ import {
   FaPencilAlt,
   FaTrashAlt,
   FaEye,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -73,27 +74,39 @@ const Courses = ({ userType }) => {
   // Update tableData and categories when courses change
   useEffect(() => {
     if (courses && courses.length > 0) {
-      const formattedCourses = courses.map(course => ({
-        id: course._id,
-        title: course.title || 'Untitled Course',
-        category: course.category || 'Uncategorized',
-        professor: course.creator?.name || 'Unknown',
-        duration: course.duration || 'N/A',
-        level: course.level || 'N/A',
-        description: course.description || 'No description available',
-        tags: course.tags?.join(', ') || 'No tags',
-        language: course.language || 'English',
-        status: course.status === 1,
-        thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-        hasModules: course.hasModules || false
-      }));
+      const formattedCourses = courses.map(course => {
+        // For testing: mock enrollment data 
+        // In production, this should come from the API
+        const mockEnrollment = userType === 'tutor' && (
+          // For demo purposes: every other course is considered "enrolled"
+          course._id.toString().charCodeAt(course._id.toString().length - 1) % 2 === 0
+        );
+        
+        return {
+          id: course._id,
+          title: course.title || 'Untitled Course',
+          category: course.category || 'Uncategorized',
+          professor: course.creator?.name || 'Unknown',
+          duration: course.duration || 'N/A',
+          level: course.level || 'N/A',
+          description: course.description || 'No description available',
+          tags: course.tags?.join(', ') || 'No tags',
+          language: course.language || 'English',
+          status: course.status === 1,
+          thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+          hasModules: course.hasModules || false,
+          // Check if user is enrolled in the course - real implementation would check API data
+          isEnrolled: Boolean(course.progress || course.enrolled || course.isEnrolled || mockEnrollment)
+        };
+      });
+      
       setTableData(formattedCourses);
 
       // Extract unique categories
       const uniqueCategories = [...new Set(formattedCourses.map(course => course.category))];
       setCategories(uniqueCategories);
     }
-  }, [courses]);
+  }, [courses, userType]);
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
@@ -283,6 +296,97 @@ const Courses = ({ userType }) => {
     },
   ];
 
+  // Filter the data based on search and category filters
+  const filteredData = tableData
+    // Apply search filter
+    .filter(item =>
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    // Apply category filter
+    .filter(item =>
+      !categoryFilter || item.category === categoryFilter
+    )
+    // Apply sorting
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+
+      switch (sortBy) {
+        case "title-asc": return a.title.localeCompare(b.title);
+        case "title-desc": return b.title.localeCompare(a.title);
+        case "level-asc": return a.level.localeCompare(b.level);
+        case "level-desc": return b.level.localeCompare(a.level);
+        case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
+        default: return 0;
+      }
+    });
+
+  // Card view for tutor courses
+  const renderCourseCards = () => {
+    return (
+      <div className="course-cards-container">
+        <div className="course-cards-grid">
+          {filteredData.map((course) => (
+            <div key={course.id} className="course-card">
+              <div className="course-card-thumbnail">
+                <img src={course.thumbnail} alt={course.title} />
+              </div>
+              <div className="course-card-content">
+                <div className="course-card-category">Category: {course.category}</div>
+                <h3 className="course-card-title">{course.title}</h3>
+                <p className="course-card-description">
+                  {course.description && course.description.length > 100
+                    ? `${course.description.substring(0, 100)}...`
+                    : course.description}
+                </p>
+              </div>
+              <div className="course-card-footer">
+                <div className="course-card-professor">
+                  <img
+                    src={`https://i.pravatar.cc/150?img=${course.id + 30}`}
+                    alt={course.professor}
+                    className="professor-avatar-small"
+                  />
+                  <span>{course.professor}</span>
+                </div>
+                <div className="course-card-meta">
+                  <div className="course-card-meta-item">
+                    <FaClock className="meta-icon" />
+                    <span>{course.duration}</span>
+                  </div>
+                  <div className="course-card-meta-item">
+                    <FaCalendarAlt className="meta-icon" />
+                    <span>{course.level}</span>
+                  </div>
+                </div>
+                <div className="course-card-actions">
+                  {course.isEnrolled ? (
+                    <button
+                      className="resume-btn"
+                      onClick={() => handleView(course)}
+                    >
+                      Resume
+                    </button>
+                  ) : (
+                    <button
+                      className="start-learning-btn"
+                      onClick={() => handleView(course)}
+                    >
+                      Start Learning
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="courses-container admin-dashboard">
       {isLoading && (
@@ -292,10 +396,12 @@ const Courses = ({ userType }) => {
         </div>
       )}
 
-      {/* Courses Table Section */}
+      {/* Courses Section */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">All Courses ({tableData.length})</h2>
+          <h2 className="section-title">
+            {userType === 'tutor' ? 'My Courses' : `All Courses (${tableData.length})`}
+          </h2>
           <div className="header-actions">
             <button
               className="add-course-btn"
@@ -346,39 +452,17 @@ const Courses = ({ userType }) => {
           </select>
         </div>
 
-        <div className="table-responsive">
-          <DataTableComponent
-            columns={columns}
-            data={tableData
-              // Apply search filter
-              .filter(item =>
-                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
-              )
-              // Apply category filter
-              .filter(item =>
-                !categoryFilter || item.category === categoryFilter
-              )
-              // Apply sorting
-              .sort((a, b) => {
-                if (!sortBy) return 0;
-
-                switch (sortBy) {
-                  case "title-asc": return a.title.localeCompare(b.title);
-                  case "title-desc": return b.title.localeCompare(a.title);
-                  case "level-asc": return a.level.localeCompare(b.level);
-                  case "level-desc": return b.level.localeCompare(a.level);
-                  case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
-                  default: return 0;
-                }
-              })
-            }
-            showSearch={false}
-          />
-        </div>
+        {userType === 'tutor' ? (
+          renderCourseCards()
+        ) : (
+          <div className="table-responsive">
+            <DataTableComponent
+              columns={columns}
+              data={filteredData}
+              showSearch={false}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
