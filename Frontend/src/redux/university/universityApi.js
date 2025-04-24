@@ -4,7 +4,15 @@ const API_URL = import.meta.env.VITE_API_URL;
 const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('accessToken') } });
 
 export const createEducator = async (data) => {
-  const response = await axios.post(`${API_URL}/university/educator`, data, getConfig());
+  // Use different config for FormData to ensure correct content-type
+  const config = { 
+    headers: { 
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    } 
+  };
+
+  const response = await axios.post(`${API_URL}/university/educator`, data, config);
   return response.data;
 };
 
@@ -19,7 +27,15 @@ export const getEducatorById = async (id) => {
 };
 
 export const updateEducator = async (id, data) => {
-  const response = await axios.put(`${API_URL}/university/educator/${id}`, data, getConfig());
+  // Use different config for FormData to ensure correct content-type
+  const config = { 
+    headers: { 
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    } 
+  };
+
+  const response = await axios.put(`${API_URL}/university/educator/${id}`, data, config);
   return response.data;
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaEye, FaBook } from "react-icons/fa";
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,6 @@ const AdminDashboard = () => {
 
   // Get data from Redux store
   const { universities, courses, users, loading } = useSelector((state) => state.admin);
-  const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading state changes
   useEffect(() => {
@@ -45,7 +44,6 @@ const AdminDashboard = () => {
   // Get counts for each role
   const universityCount = getCountByRole('university');
   const educatorCount = getCountByRole('educator');
-  const adminCount = getCountByRole('admin');
 
   // Fetch data on component mount
   useEffect(() => {
@@ -60,7 +58,6 @@ const AdminDashboard = () => {
       // console.log('Users data in AdminDashboard component:', users);
       // console.log('University:', users.filter(user => user.role === 'university').length);
       // console.log('Educator users count:', users.filter(user => user.role === 'educator').length);
-      // console.log('Admin users count:', users.filter(user => user.role === 'admin').length);
     } else {
       // If users data is not available, use mock data for testing
       const mockUsers = [
@@ -75,18 +72,17 @@ const AdminDashboard = () => {
       console.log('Using mock users data for testing');
       console.log('Mock University users count:', mockUsers.filter(user => user.role === 'university').length);
       console.log('Mock Educator users count:', mockUsers.filter(user => user.role === 'educator').length);
-      console.log('Mock Admin users count:', mockUsers.filter(user => user.role === 'admin').length);
 
       // Update the dashboard stats with mock data
       setTimeout(() => {
+        const coursesCountElement = document.querySelector('.stat-card.courses .stat-count');
+        if (coursesCountElement) coursesCountElement.textContent = courses?.length || 5; // Default to 5 courses if none available
+
         const universityCountElement = document.querySelector('.stat-card.schools .stat-count');
         if (universityCountElement) universityCountElement.textContent = mockUsers.filter(user => user.role === 'university').length;
 
         const educatorCountElement = document.querySelector('.stat-card.educators .stat-count');
         if (educatorCountElement) educatorCountElement.textContent = mockUsers.filter(user => user.role === 'educator').length;
-
-        const adminCountElement = document.querySelector('.stat-card.courses .stat-count');
-        if (adminCountElement) adminCountElement.textContent = mockUsers.filter(user => user.role === 'admin').length;
       }, 1000);
     }
   }, [users]);
@@ -257,6 +253,15 @@ const AdminDashboard = () => {
       )}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
+        <div className="stat-card courses">
+          <div className="stat-icon3">
+            <FaBook size={24} />
+            <FaBook className="icondesign3" />
+          </div>
+          <div className="stat-count">{courses?.length || 0}</div>
+          <div className="stat-title">Total Courses</div>
+        </div>
+
         <div className="stat-card schools">
           <div className="stat-icon1">
             <LuSchool size={24} />
@@ -274,15 +279,6 @@ const AdminDashboard = () => {
           <div className="stat-count">{educatorCount || educatorsCountFromUniversities}</div>
           <div className="stat-title">Total Educators</div>
         </div>
-
-        <div className="stat-card courses">
-          <div className="stat-icon3">
-            <LiaChalkboardTeacherSolid size={24} />
-            <LiaChalkboardTeacherSolid className="icondesign3" />
-          </div>
-          <div className="stat-count">{adminCount || 0}</div>
-          <div className="stat-title">Admin Users</div>
-        </div>
       </div>
 
       {/* Courses Table Section */}
@@ -292,7 +288,7 @@ const AdminDashboard = () => {
           <div className="header-actions">
             <button
               className="add-course-btn"
-              onClick={() => navigate("/dashboard/admin/courses/add")}
+              onClick={() => navigate("/dashboard/admin/courses/create")}
             >
               Add Course
             </button>

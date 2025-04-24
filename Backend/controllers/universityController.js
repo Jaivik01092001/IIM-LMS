@@ -16,6 +16,20 @@ exports.createEducator = async (req, res, next) => {
     } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Prepare profile object
+    const profile = {
+      address,
+      zipcode,
+      state,
+      socialLinks: {}
+    };
+    
+    // Add avatar if profile image was uploaded
+    if (req.file) {
+      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
+    
     const educator = new User({
       email,
       password: hashedPassword,
@@ -24,11 +38,7 @@ exports.createEducator = async (req, res, next) => {
       phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
       university: req.user.id,
       roleRef: roleId || undefined, // Assign role if provided
-      profile: {
-        address,
-        zipcode,
-        state
-      }
+      profile
     });
 
     await educator.save();
@@ -124,6 +134,11 @@ exports.updateEducator = async (req, res) => {
     if (address) educator.profile.address = address;
     if (zipcode) educator.profile.zipcode = zipcode;
     if (state) educator.profile.state = state;
+    
+    // Update avatar if profile image was uploaded
+    if (req.file) {
+      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
 
     if (roleId) {
       educator.roleRef = roleId;

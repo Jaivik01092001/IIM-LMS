@@ -217,30 +217,28 @@ const Login = () => {
    * Validates form and requests OTP
    */
   const handleLogin = async () => {
-    // Validate phone number
     if (!/^[0-9]{10}$/.test(phone)) {
       showErrorToast("Phone number must be exactly 10 digits.");
       return;
     }
-
-    // Validate email
+  
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showErrorToast("Please enter a valid email address.");
       return;
     }
-
-    // Format phone number and request OTP
+  
     const formattedPhone = phone.startsWith("+91")
       ? phone
       : "+91" + phone.replace(/^0+/, "");
-
-    const result = await dispatch(
-      requestOTPThunk({ phoneNumber: formattedPhone, email })
-    );
-    if (result.payload && result.payload.message) {
-      showSuccessToast(result.payload.message);
-    }
+  
+    // Instantly flip to OTP screen
+    dispatch({ type: "auth/otpRequestedManually" });
+  
+    // Dispatch OTP request
+    dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
   };
+  
+  
 
   /**
    * Handles OTP input changes
