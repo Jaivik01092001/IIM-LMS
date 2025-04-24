@@ -3,6 +3,7 @@ const Course = require('../models/Course');
 const University = require('../models/University');
 const User = require('../models/User');
 const Module = require('../models/Module');
+const Quiz = require('../models/Quiz');
 const bcrypt = require('bcryptjs');
 const { formatPhoneNumber } = require('../utils/phoneUtils');
 
@@ -274,13 +275,30 @@ exports.getCourses = async (req, res) => {
   }
 };
 
-// Get a specific course with its content and quizzes
+// Get a specific course with its content, modules, and quizzes
 exports.getCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
       .populate('creator', 'name')
       .populate('content')
-      .populate('quizzes');
+      .populate({
+        path: 'modules',
+        populate: [
+          {
+            path: 'content',
+            model: 'Content'
+          },
+          {
+            path: 'quiz',
+            model: 'Quiz'
+          }
+        ]
+      })
+      .populate({
+        path: 'quizzes',
+        // Include all quiz fields including questions
+        select: 'title description questions timeLimit passingScore attempts'
+      });
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
@@ -288,60 +306,641 @@ exports.getCourse = async (req, res) => {
 
     res.json(course);
   } catch (error) {
+    console.error('Error retrieving course:', error);
     res.status(500).json({ message: 'Error retrieving course', error: error.message });
   }
 };
 
-// Create a new course
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, duration, level, tags, thumbnail } = req.body;
+    console.log("Create course route hit");
+    console.log("Request headers:", req.headers);
+    console.log("Request body:", req.body);
 
+    // Debug uploaded files
+    console.log("Uploaded Files:");
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((f, i) => {
+        console.log(`${i + 1}. ${f.fieldname} -> ${f.originalname}`);
+      });
+    }
 
+    // Destructure fields from request body
+    const {
+      title,
+      description,
+      duration,
+      category,
+      subcategory,
+      language,
+      targetAudience,
+      level,
+      tags,
+      thumbnailUrl,
+      hasModules,
+      modules,
+      content,
+      quizzes,
+      learningOutcomes,
+      requirements,
+      status,
+      isDraft
+    } = req.body;
+
+    // ✅ Use thumbnail from req.files (upload.any())
+    let thumbnail = thumbnailUrl;
+    const thumbnailFile = req.files?.find(f => f.fieldname === 'thumbnail');
+    if (thumbnailFile) {
+      thumbnail = thumbnailFile.path;
+    }
+
+    // 🧠 Helper function to parse JSON safely
+    const tryParse = (data) => {
+      try {
+        return typeof data === 'string' ? JSON.parse(data) : data;
+      } catch (err) {
+        console.error('Parse error:', err.message);
+        return [];
+      }
+    };
+
+    const parsedModules = tryParse(modules);
+    const parsedContent = tryParse(content);
+    const parsedQuizzes = tryParse(quizzes);
+    const parsedTags = tryParse(tags);
+    const parsedLearningOutcomes = tryParse(learningOutcomes);
+    const parsedRequirements = tryParse(requirements);
+
+    // 🔎 Parse contentFileIds
+    let contentFileIds = req.body.contentFileIds || [];
+    if (!Array.isArray(contentFileIds)) {
+      contentFileIds = [contentFileIds];
+    }
+
+    const contentItems = [];
+
+    // ✅ Process uploaded files
+    if (req.files && req.files.length > 0) {
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        if (file.fieldname === 'thumbnail') continue;
+
+        const fieldnameParts = file.fieldname.match(/\[(\d+)\]/);
+        if (!fieldnameParts) continue;
+
+        const index = parseInt(fieldnameParts[1]);
+        const contentId = contentFileIds[index];
+        if (!contentId) continue;
+
+        const contentItem = parsedContent.find(item => item._id === contentId);
+        if (!contentItem) continue;
+
+        const fileExt = file.originalname.split('.').pop().toLowerCase();
+        const mimeType = file.mimetype;
+
+        let mediaType = 'document';
+        if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) mediaType = 'video';
+        else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) mediaType = 'image';
+
+        const contentDoc = new Content({
+          title: contentItem.title,
+          description: contentItem.description,
+          fileUrl: file.path,
+          creator: req.user.id,
+          status: 'approved',
+          type: contentItem.type || mediaType,
+          mediaType,
+          mimeType,
+          size: file.size,
+          module: null
+        });
+
+        await contentDoc.save();
+        contentItems.push({ id: contentId, dbId: contentDoc._id });
+      }
+    }
+
+    // ✅ Create course
     const course = new Course({
       title,
       description,
       duration,
+      category,
+      subcategory,
+      language: language || 'en',
+      targetAudience,
       level: level || 'beginner',
-      tags: tags || [],
+      tags: parsedTags,
       thumbnail,
-      creator: req.user.id,
-      content: [],
-      quizzes: []
+      hasModules: hasModules === 'true' || hasModules === true,
+      modules: [],
+      content: contentItems.map(item => item.dbId),
+      quizzes: [],
+      learningOutcomes: parsedLearningOutcomes,
+      requirements: parsedRequirements,
+      status: status !== undefined ? Number(status) : 1,
+      isDraft: isDraft === 'true' || isDraft === true,
+      creator: req.user.id
     });
 
     await course.save();
-    res.status(201).json(course);
+
+    // ✅ Handle Modules + Quizzes
+    if (parsedModules && parsedModules.length > 0) {
+      for (const moduleData of parsedModules) {
+        const newModule = new Module({
+          title: moduleData.title || 'Untitled Module',
+          description: moduleData.description || '',
+          course: course._id,
+          order: moduleData.order || 0,
+          content: []
+        });
+
+        await newModule.save();
+        course.modules.push(newModule._id);
+
+        // Module content
+        if (Array.isArray(moduleData.content)) {
+          for (const contentId of moduleData.content) {
+            const newContentItem = contentItems.find(item => item.id === contentId);
+            if (newContentItem) {
+              const dbContentId = newContentItem.dbId;
+              newModule.content.push(dbContentId);
+
+              const contentExists = await Content.findById(dbContentId);
+              if (contentExists) {
+                contentExists.module = newModule._id;
+                await contentExists.save();
+              }
+            } else if (!contentId.startsWith('temp_')) {
+              try {
+                const contentExists = await Content.findById(contentId);
+                if (contentExists) {
+                  newModule.content.push(contentId);
+                  contentExists.module = newModule._id;
+                  await contentExists.save();
+                }
+              } catch (err) {
+                console.error(`Invalid content ID: ${contentId}`);
+              }
+            }
+          }
+          await newModule.save();
+        }
+
+        // Module quiz
+        if (moduleData.quiz) {
+          const quizData = moduleData.quiz;
+
+          const quiz = new Quiz({
+            title: quizData.title || `${newModule.title} Quiz`,
+            description: quizData.description || `Quiz for ${newModule.title}`,
+            course: course._id,
+            questions: quizData.questions || [],
+            timeLimit: quizData.timeLimit || 30,
+            passingScore: quizData.passingScore || 60
+          });
+
+          await quiz.save();
+          newModule.quiz = quiz._id;
+          await newModule.save();
+          course.quizzes.push(quiz._id);
+        }
+      }
+
+      await course.save();
+    }
+
+    // ✅ Final Response
+    res.status(201).json({
+      message: 'Course created successfully',
+      course,
+      contentItemsCreated: contentItems.map(c => c.dbId),
+      uploadedFiles: req.files.map(f => f.fieldname)
+    });
   } catch (error) {
+    console.error('Course creation error:', error);
     res.status(500).json({ message: 'Error creating course', error: error.message });
   }
 };
 
+
 // Update a course
 exports.updateCourse = async (req, res) => {
   try {
-    const { title, description, duration, level, tags, thumbnail, status } = req.body;
+    const {
+      title,
+      description,
+      duration,
+      category,
+      subcategory,
+      language,
+      targetAudience,
+      level,
+      tags,
+      thumbnailUrl,
+      hasModules,
+      modules,
+      content,
+      quizzes,
+      learningOutcomes,
+      requirements,
+      status,
+      isDraft
+    } = req.body;
+
+    console.log("Update course data:", req.body);
+    console.log("Request file:", req.file);
 
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    course.title = title || course.title;
-    course.description = description || course.description;
-    course.duration = duration || course.duration;
+    // Update fields if provided
+    if (title) course.title = title;
+    if (description) course.description = description;
+    if (duration) course.duration = duration;
+    if (category) course.category = category;
+    if (subcategory) course.subcategory = subcategory;
+    if (language) course.language = language;
+    if (targetAudience) course.targetAudience = targetAudience;
     if (level) course.level = level;
-    if (tags) course.tags = tags;
-    if (thumbnail) course.thumbnail = thumbnail;
 
-    // Handle status update if provided
+    // Handle thumbnail update
+    if (req.file) {
+      course.thumbnail = req.file.path;
+    } else if (thumbnailUrl) {
+      course.thumbnail = thumbnailUrl;
+    }
+
+    // Parse and update array fields with proper error handling
+    // Parse JSON strings for arrays if they are strings
+    if (tags) {
+      try {
+        course.tags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+      } catch (err) {
+        console.error("Error parsing tags JSON:", err);
+      }
+    }
+
+    if (learningOutcomes) {
+      try {
+        course.learningOutcomes = typeof learningOutcomes === 'string' ? JSON.parse(learningOutcomes) : learningOutcomes;
+      } catch (err) {
+        console.error("Error parsing learningOutcomes JSON:", err);
+      }
+    }
+
+    if (requirements) {
+      try {
+        course.requirements = typeof requirements === 'string' ? JSON.parse(requirements) : requirements;
+      } catch (err) {
+        console.error("Error parsing requirements JSON:", err);
+      }
+    }
+
+    if (hasModules !== undefined) {
+      course.hasModules = hasModules === 'true' || hasModules === true;
+    }
+
+    if (modules) {
+      try {
+        const parsedModules = typeof modules === 'string' ? JSON.parse(modules) : modules;
+        console.log("Parsed modules in update:", parsedModules);
+
+        // Handle module updates
+        if (Array.isArray(parsedModules)) {
+          // Get existing module IDs
+          const existingModuleIds = course.modules.map(id => id.toString());
+
+          // Process each module in the update
+          for (const moduleData of parsedModules) {
+            if (moduleData._id && existingModuleIds.includes(moduleData._id.toString())) {
+              // Update existing module
+              const existingModule = await Module.findById(moduleData._id);
+              if (existingModule) {
+                existingModule.title = moduleData.title || existingModule.title;
+                existingModule.description = moduleData.description || existingModule.description;
+                existingModule.order = moduleData.order !== undefined ? moduleData.order : existingModule.order;
+
+                // Update content associations if provided
+                if (moduleData.content && Array.isArray(moduleData.content)) {
+                  // Replace temporary content IDs with database IDs
+                  const updatedContent = [];
+
+                  for (const contentId of moduleData.content) {
+                    // Check if this is a newly created content item
+                    const newContentItem = contentItems.find(item => item.id === contentId);
+
+                    if (newContentItem) {
+                      // Use the database ID for newly created content
+                      updatedContent.push(newContentItem.dbId);
+                    } else if (!contentId.startsWith('temp_')) {
+                      // Only include non-temporary IDs that are valid ObjectIds
+                      try {
+                        // Verify this is a valid content ID
+                        const contentExists = await Content.findById(contentId);
+                        if (contentExists) {
+                          updatedContent.push(contentId);
+                        }
+                      } catch (err) {
+                        console.error(`Error finding content with ID ${contentId}:`, err.message);
+                        // Skip this content ID if it's invalid
+                      }
+                    }
+                  }
+
+                  // Update module content
+                  existingModule.content = updatedContent;
+
+                  // Update content items to reference this module
+                  for (const contentId of updatedContent) {
+                    try {
+                      const contentExists = await Content.findById(contentId);
+                      if (contentExists) {
+                        contentExists.module = existingModule._id;
+                        await contentExists.save();
+                      }
+                    } catch (err) {
+                      console.error(`Error updating content reference for ID ${contentId}:`, err.message);
+                    }
+                  }
+                }
+
+                // Update quiz if provided
+                if (moduleData.quiz) {
+                  const quizData = moduleData.quiz;
+
+                  // Check if quiz has an ID (existing quiz)
+                  if (quizData._id) {
+                    // Update existing quiz
+                    const existingQuiz = await Quiz.findById(quizData._id);
+                    if (existingQuiz) {
+                      existingQuiz.title = quizData.title || existingQuiz.title;
+                      existingQuiz.description = quizData.description || existingQuiz.description;
+                      existingQuiz.questions = quizData.questions || existingQuiz.questions;
+                      existingQuiz.timeLimit = quizData.timeLimit || existingQuiz.timeLimit;
+                      existingQuiz.passingScore = quizData.passingScore || existingQuiz.passingScore;
+
+                      await existingQuiz.save();
+                    }
+                  } else {
+                    // Create new quiz
+                    const quiz = new Quiz({
+                      title: quizData.title || `${existingModule.title} Quiz`,
+                      description: quizData.description || `Quiz for ${existingModule.title}`,
+                      course: course._id,
+                      questions: quizData.questions || [],
+                      timeLimit: quizData.timeLimit || 30,
+                      passingScore: quizData.passingScore || 60
+                    });
+
+                    await quiz.save();
+
+                    // Associate quiz with module
+                    existingModule.quiz = quiz._id;
+
+                    // Add quiz to course's quizzes array
+                    if (!course.quizzes.includes(quiz._id)) {
+                      course.quizzes.push(quiz._id);
+                    }
+                  }
+                }
+
+                await existingModule.save();
+              }
+            } else {
+              // Create new module
+              const newModule = new Module({
+                title: moduleData.title || 'Untitled Module',
+                description: moduleData.description || '',
+                course: course._id,
+                order: moduleData.order || 0,
+                content: [] // Initialize with empty content array
+              });
+
+              await newModule.save();
+
+              // Add to course modules
+              course.modules.push(newModule._id);
+
+              // If module has content, associate it
+              if (moduleData.content && moduleData.content.length > 0) {
+                // Replace temporary content IDs with database IDs
+                const updatedContent = [];
+
+                for (const contentId of moduleData.content) {
+                  // Check if this is a newly created content item
+                  const newContentItem = contentItems.find(item => item.id === contentId);
+
+                  if (newContentItem) {
+                    // Use the database ID for newly created content
+                    updatedContent.push(newContentItem.dbId);
+                  } else if (!contentId.startsWith('temp_')) {
+                    // Only include non-temporary IDs that are valid ObjectIds
+                    try {
+                      // Verify this is a valid content ID
+                      const contentExists = await Content.findById(contentId);
+                      if (contentExists) {
+                        updatedContent.push(contentId);
+                      }
+                    } catch (err) {
+                      console.error(`Error finding content with ID ${contentId}:`, err.message);
+                      // Skip this content ID if it's invalid
+                    }
+                  }
+                }
+
+                // Update module content
+                newModule.content = updatedContent;
+
+                // Update content items to reference this module
+                for (const contentId of updatedContent) {
+                  try {
+                    const contentExists = await Content.findById(contentId);
+                    if (contentExists) {
+                      contentExists.module = newModule._id;
+                      await contentExists.save();
+                    }
+                  } catch (err) {
+                    console.error(`Error updating content reference for ID ${contentId}:`, err.message);
+                  }
+                }
+
+                await newModule.save();
+              }
+
+              // If module has a quiz, create it and associate it with the module
+              if (moduleData.quiz) {
+                const quizData = moduleData.quiz;
+
+                // Create a new quiz
+                const quiz = new Quiz({
+                  title: quizData.title || `${newModule.title} Quiz`,
+                  description: quizData.description || `Quiz for ${newModule.title}`,
+                  course: course._id,
+                  questions: quizData.questions || [],
+                  timeLimit: quizData.timeLimit || 30,
+                  passingScore: quizData.passingScore || 60
+                });
+
+                await quiz.save();
+
+                // Associate quiz with module
+                newModule.quiz = quiz._id;
+                await newModule.save();
+
+                // Add quiz to course's quizzes array
+                if (!course.quizzes.includes(quiz._id)) {
+                  course.quizzes.push(quiz._id);
+                }
+              }
+            }
+          }
+
+          // Remove modules that are no longer in the update
+          const updatedModuleIds = parsedModules
+            .filter(m => m._id)
+            .map(m => m._id.toString());
+
+          const modulesToRemove = existingModuleIds.filter(id => !updatedModuleIds.includes(id));
+
+          if (modulesToRemove.length > 0) {
+            // Remove modules from course
+            course.modules = course.modules.filter(id => !modulesToRemove.includes(id.toString()));
+
+            // Delete the modules
+            for (const moduleId of modulesToRemove) {
+              // Update content items to remove module reference
+              await Content.updateMany(
+                { module: moduleId },
+                { $unset: { module: "" } }
+              );
+
+              // Delete the module
+              await Module.findByIdAndDelete(moduleId);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error processing modules update:", err);
+      }
+    }
+
+    // Process content files if they exist
+    const contentFileIds = req.body.contentFileIds ?
+      Array.isArray(req.body.contentFileIds) ? req.body.contentFileIds : [req.body.contentFileIds] : [];
+
+    // Create content items for uploaded files
+    const contentItems = [];
+
+    // Check if we have content files in the request
+    if (req.files && req.files.length > 0) {
+      console.log("Processing content files for update:", req.files.length);
+
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        // Skip the thumbnail file
+        if (file.fieldname === 'thumbnail') continue;
+
+        // Extract the index from the fieldname (contentFiles[0], contentFiles[1], etc.)
+        const fieldnameParts = file.fieldname.match(/\[(\d+)\]/);
+        if (!fieldnameParts) continue;
+
+        const index = parseInt(fieldnameParts[1]);
+        const contentId = contentFileIds[index];
+
+        if (!contentId) continue;
+
+        // Parse content if it's a string
+        let parsedContent;
+        try {
+          parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+        } catch (err) {
+          console.error("Error parsing content JSON:", err);
+          parsedContent = [];
+        }
+
+        // Find the corresponding content item in parsedContent
+        const contentItem = parsedContent.find(item => item._id === contentId);
+        if (!contentItem) continue;
+
+        // Determine media type based on file extension
+        let mediaType = 'document';
+        let mimeType = file.mimetype;
+        const fileExt = file.originalname.split('.').pop().toLowerCase();
+
+        if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) {
+          mediaType = 'video';
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+          mediaType = 'image';
+        }
+
+        // Create a new content item
+        const newContent = new Content({
+          title: contentItem.title,
+          description: contentItem.description,
+          fileUrl: file.path,
+          creator: req.user.id,
+          status: 'approved',
+          type: contentItem.type || (mediaType === 'video' ? 'video' : mediaType === 'image' ? 'image' : 'document'),
+          mediaType,
+          mimeType,
+          size: file.size,
+          module: contentItem.module || null
+        });
+
+        await newContent.save();
+        contentItems.push({
+          id: contentId,
+          dbId: newContent._id
+        });
+      }
+    }
+
+    // Update course content
+    if (content) {
+      try {
+        let parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+
+        // Replace temporary IDs with database IDs for newly created content
+        if (contentItems.length > 0) {
+          // Filter out content items that have been replaced with new uploads
+          parsedContent = parsedContent.filter(item => !contentItems.some(newItem => newItem.id === item._id));
+
+          // Add the newly created content items
+          course.content = [...parsedContent, ...contentItems.map(item => item.dbId)];
+        } else {
+          course.content = parsedContent;
+        }
+      } catch (err) {
+        console.error("Error processing content update:", err);
+      }
+    }
+
+    if (quizzes) {
+      try {
+        course.quizzes = typeof quizzes === 'string' ? JSON.parse(quizzes) : quizzes;
+      } catch (err) {
+        console.error("Error parsing quizzes JSON:", err);
+      }
+    }
+
+    // Handle status and draft status update if provided
     if (status !== undefined) {
       course.status = Number(status);
     }
 
+    if (isDraft !== undefined) {
+      course.isDraft = isDraft === 'true' || isDraft === true;
+    }
+
+    // Save the updated course
     await course.save();
     res.json(course);
   } catch (error) {
+    console.error('Course update error:', error);
     res.status(500).json({ message: 'Error updating course', error: error.message });
   }
 };
@@ -475,7 +1074,7 @@ exports.updateQuiz = async (req, res) => {
 };
 
 // Get all quizzes
-exports.getQuizzes = async (req, res) => {
+exports.getQuizzes = async (_, res) => {
   try {
     const Quiz = require('../models/Quiz');
     const quizzes = await Quiz.find()
@@ -537,164 +1136,12 @@ exports.updatePassword = async (req, res) => {
 };
 
 // Get all users (admin, university, educator)
-exports.getAllUsers = async (req, res) => {
+exports.getAllUsers = async (_, res) => {
   try {
     // Return all users regardless of status
     const users = await User.find().select('-password');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users', error: error.message });
-  }
-};
-
-// Get all educators regardless of university
-exports.getAllEducators = async (req, res) => {
-  try {
-    // Return all educators regardless of university or status
-    // Populate the university field to get university name
-    const educators = await User.find({ role: 'educator' })
-      .select('-password')
-      .populate('university', 'name category');
-    res.json(educators);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educators', error: error.message });
-  }
-};
-
-// Get a specific educator by ID regardless of university
-exports.getEducatorById = async (req, res) => {
-  try {
-    const educator = await User.findOne({
-      _id: req.params.id,
-      role: 'educator'
-    }).select('-password');
-
-    if (!educator) {
-      return res.status(404).json({ message: 'Educator not found' });
-    }
-
-    res.json(educator);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educator', error: error.message });
-  }
-};
-
-// Create a new educator (for admin)
-exports.createEducator = async (req, res, next) => {
-  try {
-    const {
-      email,
-      password,
-      name,
-      roleId,
-      phoneNumber,
-      address,
-      zipcode,
-      state,
-      university,
-      category, // Add category field
-      schoolName // Add school/university name field
-    } = req.body;
-
-    // Generate a random default password if none is provided
-    // This is just a placeholder as the system uses OTP for authentication
-    const defaultPassword = Math.random().toString(36).slice(-8);
-    const passwordToHash = password || defaultPassword;
-
-    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
-
-    // Prepare profile object
-    const profile = {
-      address,
-      zipcode,
-      state,
-      category, // Add category field
-      schoolName, // Add school/university name field
-      socialLinks: {}
-    };
-
-    // Add avatar if profile image was uploaded
-    if (req.file) {
-      profile.avatar = `/uploads/profiles/${req.file.filename}`;
-    }
-
-    const educator = new User({
-      email,
-      password: hashedPassword,
-      role: 'educator',
-      name,
-      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
-      university: university || req.user.id, // Allow admin to specify university or default to admin
-      roleRef: roleId || undefined, // Assign role if provided
-      profile,
-      createdBy: req.user.id // Track who created this educator
-    });
-
-    await educator.save();
-    res.json({
-      educator,
-      msg: 'Educator created successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Update a specific educator by ID regardless of university
-exports.updateEducator = async (req, res) => {
-  try {
-    const { name, email, roleId, phoneNumber, address, zipcode, state, status, category, schoolName } = req.body;
-    const educator = await User.findOne({
-      _id: req.params.id,
-      role: 'educator'
-    });
-
-    if (!educator) {
-      return res.status(404).json({ msg: 'Educator not found' });
-    }
-
-    // Only update fields that are provided
-    if (name) educator.name = name;
-    if (email) educator.email = email;
-    if (phoneNumber) educator.phoneNumber = phoneNumber;
-    if (status !== undefined) educator.status = Number(status);
-
-    // Initialize profile if it doesn't exist
-    if (!educator.profile) {
-      educator.profile = {};
-    }
-
-    // Ensure socialLinks exists to prevent validation errors
-    if (!educator.profile.socialLinks) {
-      educator.profile.socialLinks = {};
-    }
-
-    // Update profile fields only if they are provided
-    if (address) educator.profile.address = address;
-    if (zipcode) educator.profile.zipcode = zipcode;
-    if (state) educator.profile.state = state;
-    if (category) educator.profile.category = category; // Add category field
-    if (schoolName) educator.profile.schoolName = schoolName; // Add school/university name field
-
-    // Update avatar if profile image was uploaded
-    if (req.file) {
-      console.log('Profile image uploaded:', req.file);
-      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
-      console.log('Updated avatar path:', educator.profile.avatar);
-    } else {
-      console.log('No profile image uploaded in the request');
-    }
-
-    if (roleId) {
-      educator.roleRef = roleId;
-    }
-
-    await educator.save();
-    res.json({
-      educator,
-      msg: 'Educator updated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating educator', error: error.message });
   }
 };

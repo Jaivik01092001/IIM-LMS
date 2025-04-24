@@ -100,12 +100,19 @@ export const getCourse = async (id) => {
 };
 
 export const createCourse = async (data) => {
-  const response = await axios.post(`${API_URL}/admin/course`, data, getConfig());
+  console.log("data....", data);
+  const response = await axios.post(`${API_URL}/admin/course`, data, {
+    ...getConfig(),
+    headers: { ...getConfig().headers, 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
 
 export const updateCourse = async (id, data) => {
-  const response = await axios.put(`${API_URL}/admin/course/${id}`, data, getConfig());
+  const response = await axios.put(`${API_URL}/admin/course/${id}`, data, {
+    ...getConfig(),
+    headers: { ...getConfig().headers, 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
 

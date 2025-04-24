@@ -196,11 +196,13 @@ export const createCourseThunk = createAsyncThunk('admin/createCourse', async (c
   }
 });
 
-export const updateCourseThunk = createAsyncThunk('admin/updateCourse', async ({ id, ...courseData }, { rejectWithValue }) => {
+export const updateCourseThunk = createAsyncThunk('admin/updateCourse', async ({ id, formData }, { rejectWithValue }) => {
   try {
-    const data = await api.updateCourse(id, courseData);
+    // If formData is provided directly, use it - otherwise create it from courseData
+    const data = formData || {};
+    const response = await api.updateCourse(id, data);
     showSuccessToast('Course updated successfully');
-    return data;
+    return response;
   } catch (error) {
     showErrorToast(error.response?.data?.message || 'Failed to update course');
     return rejectWithValue(error.response?.data?.message || 'Failed to update course');
