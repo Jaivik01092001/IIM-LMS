@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk, getUniversityByIdThunk } from "../redux/admin/adminSlice";
 import "../assets/styles/SchoolAccountForm.css";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
 
 const SchoolAccountForm = () => {
   const navigate = useNavigate();
@@ -25,6 +25,8 @@ const SchoolAccountForm = () => {
     status: 1,
     profileImage: null,
     profileImageUrl: "",
+    loginEmail: "",
+    loginPhone: ""
   });
 
   // Fetch university data if in edit mode
@@ -51,6 +53,7 @@ const SchoolAccountForm = () => {
         zipcode: currentUniversity.zipcode || "",
         state: currentUniversity.state || "",
         status: currentUniversity.status === 1 ? 1 : 0,
+        avatar: currentUniversity.avatar || null,
       });
 
       // Set form data from API response
@@ -63,20 +66,27 @@ const SchoolAccountForm = () => {
         zipcode: currentUniversity.zipcode || "",
         state: currentUniversity.state || "",
         status: currentUniversity.status === 1 ? 1 : 0,
-        profileImageUrl: "https://randomuser.me/api/portraits/men/1.jpg", // Default avatar or from API if available
+        profileImageUrl: currentUniversity.avatar 
+          ? `http://localhost:5000${currentUniversity.avatar}` 
+          : null,
+        loginEmail: currentUniversity.email || "",
+        loginPhone: phoneNumber
       });
     }
   }, [isEditMode, currentUniversity]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Field ${name} changed to: ${value}`);
-
-    // Force update the form data
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value,
-    }));
+    const updatedFormData = { ...formData, [name]: value };
+    
+    // Keep login credentials in sync with general information
+    if (name === 'email') {
+      updatedFormData.loginEmail = value;
+    } else if (name === 'phoneNumber') {
+      updatedFormData.loginPhone = value;
+    }
+    
+    setFormData(updatedFormData);
   };
 
   const handleImageUpload = (e) => {
@@ -93,28 +103,27 @@ const SchoolAccountForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Log form data before submission
-    console.log("Form data to be submitted:", formData);
+    // Create FormData object for file upload
+    const formDataObj = new FormData();
+    formDataObj.append('name', formData.schoolName);
+    formDataObj.append('email', formData.email);
+    formDataObj.append('phone', "+91 " + formData.phoneNumber.trim());
+    formDataObj.append('address', formData.address);
+    formDataObj.append('zipcode', formData.zipcode);
+    formDataObj.append('state', formData.state);
+    formDataObj.append('contactPerson', formData.ownerName);
+    formDataObj.append('status', Number(formData.status)); // Ensure status is a number
 
-    // Prepare form data for API
-    const apiData = {
-      name: formData.schoolName,
-      email: formData.email,
-      phone: "+91 " + formData.phoneNumber.trim(),
-      address: formData.address,
-      zipcode: formData.zipcode,
-      state: formData.state,
-      contactPerson: formData.ownerName,
-      status: Number(formData.status) // Ensure status is a number
-    };
-
-    console.log("API data to be sent:", apiData);
+    // Append profile image if selected
+    if (formData.profileImage) {
+      formDataObj.append('profileImage', formData.profileImage);
+    }
 
     if (isEditMode) {
       // Call update API
       dispatch(updateUniversityThunk({
         id: id, // Use ID from URL params
-        ...apiData
+        formData: formDataObj
       }))
         .unwrap()
         .then(() => {
@@ -126,7 +135,7 @@ const SchoolAccountForm = () => {
         });
     } else {
       // Call create API
-      dispatch(createUniversityThunk(apiData))
+      dispatch(createUniversityThunk(formDataObj))
         .unwrap()
         .then(() => {
           dispatch(getUniversitiesThunk());
@@ -167,69 +176,79 @@ const SchoolAccountForm = () => {
       <form onSubmit={handleSubmit} className="school-form">
         <div className="form-section">
           <h2>General Information</h2>
+          
           <div className="form-row">
-            <div className="form-group full-width">
-              <label htmlFor="schoolName">School/University Account Name</label>
-              <input
-                type="text"
-                id="schoolName"
-                name="schoolName"
-                value={formData.schoolName}
-                onChange={handleInputChange}
-                placeholder="Enter School/University Account Name"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter Email Address"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="phoneNumber">Phone Number</label>
-              <div className="phone-input-wrapper">
-                <span className="phone-prefix">+91</span>
+            <div className="form-column">
+              <div className="form-group">
+                <label htmlFor="schoolName">School/University Name</label>
                 <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
+                  type="text"
+                  id="schoolName"
+                  name="schoolName"
+                  value={formData.schoolName}
                   onChange={handleInputChange}
-                  placeholder="Enter Phone Number"
+                  placeholder="Enter School/University Name"
                   required
                 />
               </div>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label htmlFor="address">Address</label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                placeholder="Enter Address"
-                required
-              />
-            </div>
-          </div>
 
-          <div className="form-grid">
-            <div>
-              <div className="grid-row">
-                <div className="form-group">
+              <div className="form-group">
+                <label htmlFor="ownerName">Contact Person</label>
+                <input
+                  type="text"
+                  id="ownerName"
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleInputChange}
+                  placeholder="Enter Contact Person Name"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter Email Address"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="phoneNumber">Phone Number</label>
+                <div className="phone-input-wrapper">
+                  <span className="phone-prefix">+91</span>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="Enter Phone Number"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="address">Address</label>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  placeholder="Enter Address"
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group half-width">
                   <label htmlFor="zipcode">Zipcode</label>
                   <input
                     type="text"
@@ -241,9 +260,7 @@ const SchoolAccountForm = () => {
                     required
                   />
                 </div>
-              </div>
-              <div className="grid-row">
-                <div className="form-group">
+                <div className="form-group half-width">
                   <label htmlFor="state">State</label>
                   <select
                     id="state"
@@ -261,54 +278,88 @@ const SchoolAccountForm = () => {
                   </select>
                 </div>
               </div>
-              <div className="grid-row">
-                <div className="form-group">
-                  <label htmlFor="ownerName">Contact Person</label>
+              
+              <div className="form-group">
+                <label htmlFor="status">Status</label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value={1}>Active</option>
+                  <option value={0}>Inactive</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="form-column">
+              <div className="profile-image-container">
+                <label>School Logo</label>
+                <div className="profile-image-upload">
+                  {formData.profileImageUrl ? (
+                    <img 
+                      src={formData.profileImageUrl} 
+                      alt="School Logo" 
+                      className="profile-preview-image" 
+                    />
+                  ) : (
+                    <div className="profile-placeholder">
+                      <FaUserCircle className="placeholder-icon" />
+                    </div>
+                  )}
+                  <button type="button" className="upload-photo-btn" onClick={() => document.getElementById('profileImage').click()}>
+                    Upload Photo
+                  </button>
                   <input
-                    type="text"
-                    id="ownerName"
-                    name="ownerName"
-                    value={formData.ownerName}
-                    onChange={handleInputChange}
-                    placeholder="Enter Contact Person Name"
-                    required
+                    type="file"
+                    id="profileImage"
+                    name="profileImage"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden-input"
                   />
                 </div>
               </div>
-              <div className="grid-row">
-                <div className="form-group">
-                  <label htmlFor="status">Status</label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value={1}>Active</option>
-                    <option value={0}>Inactive</option>
-                  </select>
-                </div>
-              </div>
             </div>
-            <div className="profile-image-container">
-              <label>Profile Image</label>
-              <div className="profile-image-upload">
-                <div className="profile-image">
-                  {formData.profileImageUrl ? (
-                    <img src={formData.profileImageUrl} alt="Profile" />
-                  ) : (
-                    <div className="upload-icon">+</div>
-                  )}
-                </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h2>Login Information</h2>
+          
+          <div className="login-info-notice">
+            Login information is automatically synced with the general information. Users will log in using their email or phone number with OTP verification.
+          </div>
+          
+          <div className="form-row">
+            <div className="form-group half-width">
+              <label htmlFor="loginPhone">Login Phone Number</label>
+              <div className="phone-input-wrapper">
+                <span className="phone-prefix">+91</span>
                 <input
-                  type="file"
-                  id="profileImage"
-                  name="profileImage"
-                  accept="image/*"
-                  onChange={handleImageUpload}
+                  type="tel"
+                  id="loginPhone"
+                  name="loginPhone"
+                  value={formData.loginPhone}
+                  onChange={handleInputChange}
+                  placeholder="Same as Phone Number above"
+                  required
+                  disabled={true}
                 />
               </div>
+            </div>
+            <div className="form-group half-width">
+              <label htmlFor="loginEmail">Login Email Address</label>
+              <input
+                type="text"
+                id="loginEmail"
+                name="loginEmail"
+                value={formData.loginEmail}
+                placeholder="Same as Email Address above"
+                disabled={true}
+              />
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@ import {
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
 const Schools = () => {
@@ -43,7 +43,7 @@ const Schools = () => {
       owner: uni.contactPerson || "N/A",
       email: uni.email || "N/A",
       mobile: uni.phone || "N/A",
-      ownerAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
+      avatar: uni.avatar ? `http://localhost:5000${uni.avatar}` : null,
       status: uni.status === 1,
       address: uni.address || "N/A",
       zipcode: uni.zipcode || "N/A",
@@ -155,7 +155,16 @@ const Schools = () => {
     },
     {
       name: "School/University",
-      selector: (row) => row.school,
+      cell: (row) => (
+        <div className="school-cell">
+          {row.avatar ? (
+            <img src={row.avatar} alt="School Logo" className="school-avatar" />
+          ) : (
+            <FaUserCircle className="school-avatar-placeholder" />
+          )}
+          <span>{row.school}</span>
+        </div>
+      ),
       sortable: true,
     },
     {
@@ -167,7 +176,7 @@ const Schools = () => {
       name: "Owner",
       cell: (row) => (
         <div className="owner-cell">
-          <img src={row.ownerAvatar} alt="Owner" className="owner-avatar" />
+          <img src={row.avatar} alt="Owner" className="owner-avatar" />
           <span>{row.owner}</span>
         </div>
       ),
