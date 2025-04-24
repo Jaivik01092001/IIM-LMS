@@ -12,6 +12,7 @@ import {
   getUsersThunk
 } from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import "../../assets/styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
@@ -119,22 +120,20 @@ const AdminDashboard = () => {
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
-      // Use the same API as delete but only update the status
-      dispatch(updateCourseThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.title}`);
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating course status:`, error);
-        });
-    }
+    // Use the same API as delete but only update the status
+    dispatch(updateCourseThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.title}`);
+        // Refresh courses data
+        dispatch(getCoursesThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating course status:`, error);
+      });
   };
 
   // Edit handler
@@ -245,12 +244,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading dashboard data...</p>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner overlay={true} message="Loading dashboard data..." />}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
         <div className="stat-card courses">

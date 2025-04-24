@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteEducatorThunk, updateEducatorThunk, getEducatorsThunk, getEducatorByIdThunk } from "../redux/university/universitySlice";
+import { deleteEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk, getEducatorByIdThunk as getUniversityEducatorByIdThunk } from "../redux/university/universitySlice";
+import { getEducatorsThunk as getAdminEducatorsThunk, getEducatorByIdThunk as getAdminEducatorByIdThunk, updateEducatorThunk as updateAdminEducatorThunk } from "../redux/admin/adminSlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/EducatorDetails.css";
-import { LiaChalkboardTeacherSolid } from "react-icons/lia";
+
 import { LuSchool } from "react-icons/lu";
 import { FaUserCircle } from "react-icons/fa";
 
@@ -13,7 +15,18 @@ const EducatorDetails = () => {
   const dispatch = useDispatch();
   const [isDeleting, setIsDeleting] = useState(false);
   const [educatorData, setEducatorData] = useState(null);
-  const { loading, currentEducator } = useSelector((state) => state.university);
+
+  // Get user and educator data from Redux store
+  const { user } = useSelector((state) => state.auth);
+  const { loading: universityLoading, currentEducator: universityEducator } = useSelector((state) => state.university);
+  const { loading: adminLoading, currentEducator: adminEducator } = useSelector((state) => state.admin);
+
+  // Determine if user is admin
+  const isAdmin = user?.role === 'admin';
+
+  // Use the appropriate loading and currentEducator based on user role
+  const loading = isAdmin ? adminLoading : universityLoading;
+  const currentEducator = isAdmin ? adminEducator : universityEducator;
 
   // Get educator from router state for initial ID
   const educatorFromState = location.state?.educator;
@@ -21,9 +34,14 @@ const EducatorDetails = () => {
   // Fetch educator data from API when component mounts
   useEffect(() => {
     if (educatorFromState && educatorFromState.id) {
-      dispatch(getEducatorByIdThunk(educatorFromState.id));
+      // Use the appropriate thunk based on user role
+      if (isAdmin) {
+        dispatch(getAdminEducatorByIdThunk(educatorFromState.id));
+      } else {
+        dispatch(getUniversityEducatorByIdThunk(educatorFromState.id));
+      }
     }
-  }, [dispatch, educatorFromState]);
+  }, [dispatch, educatorFromState, isAdmin]);
 
   // Format API data for UI display
   useEffect(() => {
@@ -90,31 +108,32 @@ const EducatorDetails = () => {
     const newStatus = educatorData.status ? 0 : 1;
     const statusText = newStatus === 1 ? "activate" : "deactivate";
 
-    if (window.confirm(`Are you sure you want to ${statusText} "${educatorData.professor}"?`)) {
-      dispatch(updateEducatorThunk({
-        id: educatorData.id,
-        status: newStatus
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${statusText}d ${educatorData.professor}`);
-          // Refresh educator data to ensure UI is in sync with backend
-          dispatch(getEducatorByIdThunk(educatorData.id));
-          // Also refresh the educators list
-          dispatch(getEducatorsThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating educator status:`, error);
-        });
-    }
+    // Use the appropriate thunk based on user role
+    const updateThunk = isAdmin ? updateAdminEducatorThunk : updateUniversityEducatorThunk;
+
+    dispatch(updateThunk({
+      id: educatorData.id,
+      status: newStatus
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${statusText}d ${educatorData.professor}`);
+        // Refresh educator data to ensure UI is in sync with backend
+        if (isAdmin) {
+          dispatch(getAdminEducatorByIdThunk(educatorData.id));
+          dispatch(getAdminEducatorsThunk());
+        } else {
+          dispatch(getUniversityEducatorByIdThunk(educatorData.id));
+          dispatch(getUniversityEducatorsThunk());
+        }
+      })
+      .catch(error => {
+        console.error(`Error updating educator status:`, error);
+      });
   };
 
   if (loading && !educatorData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner size="large" message="Loading educator details..." />;
   }
 
   if (!educatorData) {

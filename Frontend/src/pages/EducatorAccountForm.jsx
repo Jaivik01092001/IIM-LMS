@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createEducatorThunk, updateEducatorThunk, getEducatorsThunk } from "../redux/university/universitySlice";
+import { createEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk } from "../redux/university/universitySlice";
+import { updateEducatorThunk as updateAdminEducatorThunk, getEducatorsThunk as getAdminEducatorsThunk } from "../redux/admin/adminSlice";
 import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/EducatorAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
@@ -13,8 +14,12 @@ const EducatorAccountForm = () => {
   const educatorData = location.state?.educator || null;
   const isEditMode = !!educatorData;
 
-  // Get roles from Redux store
+  // Get user and roles from Redux store
+  const { user } = useSelector((state) => state.auth);
   const { roles } = useSelector((state) => state.role);
+
+  // Determine if user is admin
+  const isAdmin = user?.role === 'admin';
 
   // Fetch roles on component mount
   useEffect(() => {
@@ -33,11 +38,12 @@ const EducatorAccountForm = () => {
     address: "",
     zipcode: "",
     state: "",
-    password: "",
     roleId: "",
     profileImage: null,
     profileImageUrl: "",
     status: 1,
+    loginEmail: "",
+    loginPhone: "",
   });
 
   useEffect(() => {
@@ -46,6 +52,19 @@ const EducatorAccountForm = () => {
       const phoneNumber = educatorData.mobile ?
                         educatorData.mobile.replace(/^\+91\s*/, '').trim() :
                         "";
+
+      console.log('Educator data for edit mode:', educatorData);
+
+      // Check if avatar is directly on the educator object or in the profile object
+      let avatarUrl = educatorData.avatar || (educatorData.profile && educatorData.profile.avatar) || "";
+
+      // If the avatar URL is a full URL (starts with http), use it directly for display
+      // Otherwise, it's a relative path, so prepend the API base URL
+      if (avatarUrl && !avatarUrl.startsWith('http')) {
+        avatarUrl = `${import.meta.env.VITE_API_URL}${avatarUrl}`;
+      }
+
+      console.log('Avatar URL from educator data:', avatarUrl);
 
       setFormData({
         professorName: educatorData.professor || "",
@@ -56,20 +75,33 @@ const EducatorAccountForm = () => {
         address: educatorData.address || "",
         zipcode: educatorData.zipcode || "",
         state: educatorData.state || "",
-        password: "", // Don't populate password in edit mode
         roleId: educatorData.roleId || "",
-        profileImageUrl: educatorData.avatar || "",
+        profileImageUrl: avatarUrl,
         status: educatorData.status ? 1 : 0,
+        // Set login credentials to match the general information
+        loginEmail: educatorData.email || "",
+        loginPhone: phoneNumber,
+      });
+
+      console.log('Form data after initialization:', {
+        ...formData,
+        profileImageUrl: educatorData.avatar || ""
       });
     }
   }, [isEditMode, educatorData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    const updatedFormData = { ...formData, [name]: value };
+
+    // Keep login credentials in sync with general information
+    if (name === 'email') {
+      updatedFormData.loginEmail = value;
+    } else if (name === 'phoneNumber') {
+      updatedFormData.loginPhone = value;
+    }
+
+    setFormData(updatedFormData);
   };
 
   const handleImageUpload = (e) => {
@@ -90,7 +122,7 @@ const EducatorAccountForm = () => {
 
     // Create FormData object for file upload
     const formDataObj = new FormData();
-    
+
     // Append text data
     formDataObj.append('name', formData.professorName);
     formDataObj.append('email', formData.email);
@@ -99,11 +131,10 @@ const EducatorAccountForm = () => {
     formDataObj.append('zipcode', formData.zipcode);
     formDataObj.append('state', formData.state);
     formDataObj.append('status', Number(formData.status));
+    formDataObj.append('category', formData.category); // Add category field
+    formDataObj.append('schoolName', formData.schoolName); // Add school/university name field
 
-    // Add password only for new educators or if changed
-    if (!isEditMode || formData.password) {
-      formDataObj.append('password', formData.password);
-    }
+    // No password field needed
 
     // Add roleId if selected
     if (formData.roleId) {
@@ -112,12 +143,19 @@ const EducatorAccountForm = () => {
 
     // Add profile image if selected
     if (formData.profileImage) {
+      console.log('Adding profile image to form data:', formData.profileImage.name);
       formDataObj.append('profileImage', formData.profileImage);
+    } else {
+      console.log('No profile image selected for upload');
     }
 
     if (isEditMode) {
       // Update existing educator
-      dispatch(updateEducatorThunk({
+      // Use the appropriate thunk based on user role
+      const updateThunk = isAdmin ? updateAdminEducatorThunk : updateUniversityEducatorThunk;
+      const getEducatorsThunk = isAdmin ? getAdminEducatorsThunk : getUniversityEducatorsThunk;
+
+      dispatch(updateThunk({
         id: educatorData.id,
         formData: formDataObj
       }))
@@ -138,6 +176,8 @@ const EducatorAccountForm = () => {
         .unwrap()
         .then(() => {
           // Refresh educators list
+          // Use the appropriate thunk based on user role
+          const getEducatorsThunk = isAdmin ? getAdminEducatorsThunk : getUniversityEducatorsThunk;
           dispatch(getEducatorsThunk());
           // Navigate back to educators list
           navigate("/dashboard/admin/educators");
@@ -209,10 +249,7 @@ const EducatorAccountForm = () => {
                     required
                   >
                     <option value="">Select Category</option>
-                    <option value="CBSE school">CBSE school</option>
-                    <option value="International school">
-                      International school
-                    </option>
+                    <option value="School">School</option>
                     <option value="University">University</option>
                   </select>
                 </div>
@@ -243,7 +280,15 @@ const EducatorAccountForm = () => {
                 <div className="profile-image-upload">
                   <div className="profile-image">
                     {formData.profileImageUrl ? (
-                      <img src={formData.profileImageUrl} alt="Profile" />
+                      <img
+                        src={formData.profileImageUrl}
+                        alt="Profile"
+                        onError={(e) => {
+                          console.error("Error loading image:", e);
+                          e.target.onerror = null;
+                          e.target.src = "https://randomuser.me/api/portraits/men/1.jpg";
+                        }}
+                      />
                     ) : (
                       <div className="placeholder-image"></div>
                     )}
@@ -349,10 +394,13 @@ const EducatorAccountForm = () => {
         </div>
 
         <div className="form-section">
-          <h2>Credentials</h2>
+          <h2>Login Information</h2>
+          <div className="credentials-note">
+            <p>Login information is automatically synced with the general information. Users will log in using their email or phone number with OTP verification.</p>
+          </div>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="loginPhone">Phone Number</label>
+              <label htmlFor="loginPhone">Login Phone Number</label>
               <div className="phone-input-wrapper">
                 <span className="phone-prefix">+91</span>
                 <input
@@ -361,38 +409,26 @@ const EducatorAccountForm = () => {
                   name="loginPhone"
                   value={formData.loginPhone}
                   onChange={handleInputChange}
-                  placeholder="Enter Phone Number"
+                  placeholder="Same as Phone Number above"
                   required
+                  disabled={isEditMode}
+                  className={isEditMode ? "disabled-input" : ""}
                 />
               </div>
             </div>
             <div className="form-group">
-              <label htmlFor="loginEmail">Email Address</label>
+              <label htmlFor="loginEmail">Login Email Address</label>
               <input
                 type="email"
                 id="loginEmail"
                 name="loginEmail"
                 value={formData.loginEmail}
                 onChange={handleInputChange}
-                placeholder="Enter Email Address"
+                placeholder="Same as Email Address above"
                 required
+                disabled={isEditMode}
+                className={isEditMode ? "disabled-input" : ""}
               />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter Password"
-                required={!isEditMode} // Only required for new educators
-              />
-              {formErrors.password && <div className="error-message">{formErrors.password}</div>}
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   updateUniversityThunk
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
@@ -63,23 +64,21 @@ const Schools = () => {
     const newStatus = row.status ? 0 : 1;
     const statusText = newStatus === 1 ? "activate" : "deactivate";
 
-    if (window.confirm(`Are you sure you want to ${statusText} "${row.school}"?`)) {
-      console.log(`Toggling status for ${row.school} to ${newStatus}`);
+    console.log(`Toggling status for ${row.school} to ${newStatus}`);
 
-      dispatch(updateUniversityThunk({
-        id: row.id,
-        status: newStatus
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${statusText}d ${row.school}`);
-          // Get fresh data from the server to ensure state is in sync with backend
-          dispatch(getUniversitiesThunk());
-        })
-        .catch(error => {
-          console.error(`Error ${statusText}ing university:`, error);
-        });
-    }
+    dispatch(updateUniversityThunk({
+      id: row.id,
+      status: newStatus
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${statusText}d ${row.school}`);
+        // Get fresh data from the server to ensure state is in sync with backend
+        dispatch(getUniversitiesThunk());
+      })
+      .catch(error => {
+        console.error(`Error ${statusText}ing university:`, error);
+      });
   };
 
   // Row action handlers
@@ -218,11 +217,7 @@ const Schools = () => {
 
   // Show loading spinner
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner size="large" message="Loading schools data..." />;
   }
 
 
@@ -245,8 +240,7 @@ const Schools = () => {
             onChange={(e) => handleFilterChange("category", e.target.value)}
           >
             <option value="">Select Category</option>
-            <option value="CBSE school">CBSE school</option>
-            <option value="International school">International school</option>
+            <option value="School">School</option>
             <option value="University">University</option>
           </select>
 

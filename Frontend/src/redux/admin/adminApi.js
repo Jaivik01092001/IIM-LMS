@@ -8,6 +8,29 @@ export const getUsers = async () => {
   return response.data;
 };
 
+export const getEducators = async () => {
+  const response = await axios.get(`${API_URL}/admin/educators`, getConfig());
+  return response.data;
+};
+
+export const getEducatorById = async (id) => {
+  const response = await axios.get(`${API_URL}/admin/educator/${id}`, getConfig());
+  return response.data;
+};
+
+export const updateEducator = async (id, data) => {
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  const response = await axios.put(`${API_URL}/admin/educator/${id}`, data, config);
+  return response.data;
+};
+
 export const getUniversities = async () => {
   const response = await axios.get(`${API_URL}/admin/universities`, getConfig());
   return response.data;

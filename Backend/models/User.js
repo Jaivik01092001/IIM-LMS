@@ -19,6 +19,8 @@ const userSchema = new mongoose.Schema({
     zipcode: { type: String },
     state: { type: String },
     bio: { type: String },
+    category: { type: String }, // Added category field
+    schoolName: { type: String }, // Added school/university name field
     avatar: { type: String }, // URL to profile image
     socialLinks: {
       website: { type: String },
