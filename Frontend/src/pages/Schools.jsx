@@ -240,8 +240,7 @@ const Schools = () => {
             onChange={(e) => handleFilterChange("category", e.target.value)}
           >
             <option value="">Select Category</option>
-            <option value="CBSE school">CBSE school</option>
-            <option value="International school">International school</option>
+            <option value="School">School</option>
             <option value="University">University</option>
           </select>
 

@@ -90,19 +90,35 @@ const SchoolDashboard = () => {
         return educator.university === user.id;
       });
 
-      const formattedEducators = universityEducators.map((educator, index) => ({
-        id: educator._id,
-        professor: educator.name || 'Unknown',
-        school: user?.name || 'N/A',
-        category: 'University',
-        avatar: educator.avatar || `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
-        mobile: educator.phoneNumber || 'N/A',
-        status: educator.status === 1,
-        email: educator.email || 'N/A',
-        address: educator.profile?.address || 'N/A',
-        zipcode: educator.profile?.zipcode || 'N/A',
-        state: educator.profile?.state || 'N/A',
-      }));
+      // Format educators data for display
+      const formattedEducators = universityEducators.map((educator, index) => {
+        // Get university name from populated university field or use current user's name
+        let universityName = user?.name || 'N/A';
+        let universityCategory = 'University';
+
+        // First try to get from populated university field
+        if (educator.university && typeof educator.university === 'object') {
+          universityName = educator.university.name || user?.name || 'N/A';
+          universityCategory = educator.university.category || 'University';
+        }
+
+        // Use schoolName from profile if available, otherwise use university name
+        const schoolName = educator.profile?.schoolName || universityName;
+
+        return {
+          id: educator._id,
+          professor: educator.name || 'Unknown',
+          school: schoolName,
+          category: educator.profile?.category || universityCategory,
+          avatar: educator.avatar || `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
+          mobile: educator.phoneNumber || 'N/A',
+          status: educator.status === 1,
+          email: educator.email || 'N/A',
+          address: educator.profile?.address || 'N/A',
+          zipcode: educator.profile?.zipcode || 'N/A',
+          state: educator.profile?.state || 'N/A'
+        };
+      });
 
       setEducatorTableData(formattedEducators);
     }

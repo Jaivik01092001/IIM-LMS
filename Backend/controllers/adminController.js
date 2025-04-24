@@ -546,3 +546,155 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving users', error: error.message });
   }
 };
+
+// Get all educators regardless of university
+exports.getAllEducators = async (req, res) => {
+  try {
+    // Return all educators regardless of university or status
+    // Populate the university field to get university name
+    const educators = await User.find({ role: 'educator' })
+      .select('-password')
+      .populate('university', 'name category');
+    res.json(educators);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving educators', error: error.message });
+  }
+};
+
+// Get a specific educator by ID regardless of university
+exports.getEducatorById = async (req, res) => {
+  try {
+    const educator = await User.findOne({
+      _id: req.params.id,
+      role: 'educator'
+    }).select('-password');
+
+    if (!educator) {
+      return res.status(404).json({ message: 'Educator not found' });
+    }
+
+    res.json(educator);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving educator', error: error.message });
+  }
+};
+
+// Create a new educator (for admin)
+exports.createEducator = async (req, res, next) => {
+  try {
+    const {
+      email,
+      password,
+      name,
+      roleId,
+      phoneNumber,
+      address,
+      zipcode,
+      state,
+      university,
+      category, // Add category field
+      schoolName // Add school/university name field
+    } = req.body;
+
+    // Generate a random default password if none is provided
+    // This is just a placeholder as the system uses OTP for authentication
+    const defaultPassword = Math.random().toString(36).slice(-8);
+    const passwordToHash = password || defaultPassword;
+
+    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
+
+    // Prepare profile object
+    const profile = {
+      address,
+      zipcode,
+      state,
+      category, // Add category field
+      schoolName, // Add school/university name field
+      socialLinks: {}
+    };
+
+    // Add avatar if profile image was uploaded
+    if (req.file) {
+      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    const educator = new User({
+      email,
+      password: hashedPassword,
+      role: 'educator',
+      name,
+      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+      university: university || req.user.id, // Allow admin to specify university or default to admin
+      roleRef: roleId || undefined, // Assign role if provided
+      profile,
+      createdBy: req.user.id // Track who created this educator
+    });
+
+    await educator.save();
+    res.json({
+      educator,
+      msg: 'Educator created successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update a specific educator by ID regardless of university
+exports.updateEducator = async (req, res) => {
+  try {
+    const { name, email, roleId, phoneNumber, address, zipcode, state, status, category, schoolName } = req.body;
+    const educator = await User.findOne({
+      _id: req.params.id,
+      role: 'educator'
+    });
+
+    if (!educator) {
+      return res.status(404).json({ msg: 'Educator not found' });
+    }
+
+    // Only update fields that are provided
+    if (name) educator.name = name;
+    if (email) educator.email = email;
+    if (phoneNumber) educator.phoneNumber = phoneNumber;
+    if (status !== undefined) educator.status = Number(status);
+
+    // Initialize profile if it doesn't exist
+    if (!educator.profile) {
+      educator.profile = {};
+    }
+
+    // Ensure socialLinks exists to prevent validation errors
+    if (!educator.profile.socialLinks) {
+      educator.profile.socialLinks = {};
+    }
+
+    // Update profile fields only if they are provided
+    if (address) educator.profile.address = address;
+    if (zipcode) educator.profile.zipcode = zipcode;
+    if (state) educator.profile.state = state;
+    if (category) educator.profile.category = category; // Add category field
+    if (schoolName) educator.profile.schoolName = schoolName; // Add school/university name field
+
+    // Update avatar if profile image was uploaded
+    if (req.file) {
+      console.log('Profile image uploaded:', req.file);
+      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      console.log('Updated avatar path:', educator.profile.avatar);
+    } else {
+      console.log('No profile image uploaded in the request');
+    }
+
+    if (roleId) {
+      educator.roleRef = roleId;
+    }
+
+    await educator.save();
+    res.json({
+      educator,
+      msg: 'Educator updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating educator', error: error.message });
+  }
+};

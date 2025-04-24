@@ -12,24 +12,33 @@ exports.createEducator = async (req, res, next) => {
       phoneNumber,
       address,
       zipcode,
-      state
+      state,
+      category, // Add category field
+      schoolName // Add school/university name field
     } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
+    // Generate a random default password if none is provided
+    // This is just a placeholder as the system uses OTP for authentication
+    const defaultPassword = Math.random().toString(36).slice(-8);
+    const passwordToHash = password || defaultPassword;
+
+    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
+
     // Prepare profile object
     const profile = {
       address,
       zipcode,
       state,
+      category, // Add category field
+      schoolName, // Add school/university name field
       socialLinks: {}
     };
-    
+
     // Add avatar if profile image was uploaded
     if (req.file) {
       profile.avatar = `/uploads/profiles/${req.file.filename}`;
     }
-    
+
     const educator = new User({
       email,
       password: hashedPassword,
@@ -54,7 +63,7 @@ exports.getEducators = async (req, res) => {
     const educators = await User.find({
       university: req.user.id,
       role: 'educator'
-    });
+    }).populate('university', 'name category');
     res.json(educators);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving educators', error: error.message });
@@ -103,7 +112,7 @@ exports.deleteEducator = async (req, res) => {
 
 exports.updateEducator = async (req, res) => {
   try {
-    const { name, email, roleId, phoneNumber, address, zipcode, state, status } = req.body;
+    const { name, email, roleId, phoneNumber, address, zipcode, state, status, category, schoolName } = req.body;
     const educator = await User.findById(req.params.id);
 
     if (!educator) {
@@ -134,10 +143,16 @@ exports.updateEducator = async (req, res) => {
     if (address) educator.profile.address = address;
     if (zipcode) educator.profile.zipcode = zipcode;
     if (state) educator.profile.state = state;
-    
+    if (category) educator.profile.category = category; // Add category field
+    if (schoolName) educator.profile.schoolName = schoolName; // Add school/university name field
+
     // Update avatar if profile image was uploaded
     if (req.file) {
+      console.log('University controller - Profile image uploaded:', req.file);
       educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      console.log('University controller - Updated avatar path:', educator.profile.avatar);
+    } else {
+      console.log('University controller - No profile image uploaded in the request');
     }
 
     if (roleId) {
