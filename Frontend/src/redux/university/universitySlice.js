@@ -53,9 +53,9 @@ export const deleteEducatorThunk = createAsyncThunk('university/deleteEducator',
   }
 });
 
-export const updateEducatorThunk = createAsyncThunk('university/updateEducator', async ({ id, ...educatorData }, { rejectWithValue }) => {
+export const updateEducatorThunk = createAsyncThunk('university/updateEducator', async ({ id, formData }, { rejectWithValue }) => {
   try {
-    const data = await api.updateEducator(id, educatorData);
+    const data = await api.updateEducator(id, formData);
     showSuccessToast(data.msg || 'Educator updated successfully');
     return data;
   } catch (error) {

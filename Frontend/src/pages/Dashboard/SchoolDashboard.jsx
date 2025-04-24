@@ -386,7 +386,7 @@ const SchoolDashboard = () => {
           <div className="header-actions">
             <button
               className="add-course-btn"
-              onClick={() => navigate("/dashboard/school/courses/add")}
+              onClick={() => navigate("/dashboard/school/courses/create")}
             >
               Add Course
             </button>

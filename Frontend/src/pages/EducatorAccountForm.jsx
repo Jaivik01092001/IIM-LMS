@@ -88,32 +88,38 @@ const EducatorAccountForm = () => {
     setFormErrors({});
     setIsSubmitting(true);
 
-    // Prepare form data for API
-    const apiData = {
-      name: formData.professorName,
-      email: formData.email,
-      phoneNumber: "+91 " + formData.phoneNumber.trim(),
-      address: formData.address,
-      zipcode: formData.zipcode,
-      state: formData.state,
-      status: Number(formData.status)
-    };
+    // Create FormData object for file upload
+    const formDataObj = new FormData();
+    
+    // Append text data
+    formDataObj.append('name', formData.professorName);
+    formDataObj.append('email', formData.email);
+    formDataObj.append('phoneNumber', "+91 " + formData.phoneNumber.trim());
+    formDataObj.append('address', formData.address);
+    formDataObj.append('zipcode', formData.zipcode);
+    formDataObj.append('state', formData.state);
+    formDataObj.append('status', Number(formData.status));
 
     // Add password only for new educators or if changed
     if (!isEditMode || formData.password) {
-      apiData.password = formData.password;
+      formDataObj.append('password', formData.password);
     }
 
     // Add roleId if selected
     if (formData.roleId) {
-      apiData.roleId = formData.roleId;
+      formDataObj.append('roleId', formData.roleId);
+    }
+
+    // Add profile image if selected
+    if (formData.profileImage) {
+      formDataObj.append('profileImage', formData.profileImage);
     }
 
     if (isEditMode) {
       // Update existing educator
       dispatch(updateEducatorThunk({
         id: educatorData.id,
-        ...apiData
+        formData: formDataObj
       }))
         .unwrap()
         .then(() => {
@@ -128,7 +134,7 @@ const EducatorAccountForm = () => {
         });
     } else {
       // Create new educator
-      dispatch(createEducatorThunk(apiData))
+      dispatch(createEducatorThunk(formDataObj))
         .unwrap()
         .then(() => {
           // Refresh educators list
