@@ -37,6 +37,15 @@
   object-fit: cover;
 }
 
+.educator-details-page .educator-avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: #aaa;
+  background-color: #f0f0f0;
+  padding: 5px;
+}
+
 .educator-details-page .educator-text h1 {
   font-size: var(--heading4);
   color: white;

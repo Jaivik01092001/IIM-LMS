@@ -8,8 +8,10 @@ import {
 } from "../redux/university/universitySlice";
 import { getUniversitiesThunk } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
-import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Educators.css";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Educators = () => {
   const navigate = useNavigate();
@@ -44,7 +46,7 @@ const Educators = () => {
   useEffect(() => {
     if (educators && educators.length > 0) {
       // Find university name for each educator
-      const formattedEducators = educators.map((educator, index) => {
+      const formattedEducators = educators.map((educator) => {
         // Find the university this educator belongs to
         const university = universities?.find(uni =>
           uni._id === educator.university ||
@@ -56,13 +58,14 @@ const Educators = () => {
           professor: educator.name || 'Unknown',
           school: university?.name || 'N/A',
           category: university?.category || 'University',
-          avatar: educator.avatar || `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
+          avatar: educator.profile?.avatar ? `http://localhost:5000${educator.profile.avatar}` : null,
           mobile: educator.phoneNumber || 'N/A',
           status: educator.status === 1,
           email: educator.email || 'N/A',
           address: educator.profile?.address || 'N/A',
           zipcode: educator.profile?.zipcode || 'N/A',
           state: educator.profile?.state || 'N/A',
+          roleId: educator.roleRef || '',
         };
       });
 
@@ -136,7 +139,7 @@ const Educators = () => {
   const columns = [
     {
       name: "No.",
-      selector: (row) => row.id,
+      selector: (row, index) => index + 1,
       sortable: true,
       width: "70px",
     },
@@ -144,7 +147,11 @@ const Educators = () => {
       name: "Professors",
       cell: (row) => (
         <div className="professor-cell">
-          <img src={row.avatar} alt="Professor" className="professor-avatar" />
+          {row.avatar ? (
+            <img src={row.avatar} alt="Professor" className="professor-avatar" />
+          ) : (
+            <FaUserCircle className="professor-avatar-placeholder" />
+          )}
           <span>{row.professor}</span>
         </div>
       ),

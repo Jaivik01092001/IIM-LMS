@@ -5,6 +5,7 @@ import { deleteEducatorThunk, updateEducatorThunk, getEducatorsThunk, getEducato
 import "../assets/styles/EducatorDetails.css";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { LuSchool } from "react-icons/lu";
+import { FaUserCircle } from "react-icons/fa";
 
 const EducatorDetails = () => {
   const location = useLocation();
@@ -33,7 +34,7 @@ const EducatorDetails = () => {
         professor: currentEducator.name || "N/A",
         school: educatorFromState?.school || "N/A", // Use from state as API might not have this
         category: educatorFromState?.category || "University",
-        avatar: currentEducator.profile?.avatar || "https://randomuser.me/api/portraits/men/1.jpg",
+        avatar: currentEducator.profile?.avatar ? `http://localhost:5000${currentEducator.profile.avatar}` : null,
         mobile: currentEducator.phoneNumber || "N/A",
         email: currentEducator.email || "N/A",
         status: currentEducator.status === 1,
@@ -53,7 +54,7 @@ const EducatorDetails = () => {
         professor: educatorFromState.professor || "N/A",
         school: educatorFromState.school || "N/A",
         category: educatorFromState.category || "N/A",
-        avatar: educatorFromState.avatar || "https://randomuser.me/api/portraits/men/1.jpg",
+        avatar: educatorFromState.avatar || null,
         mobile: educatorFromState.mobile || "N/A",
         email: educatorFromState.email || "N/A",
         status: educatorFromState.status,
@@ -124,11 +125,15 @@ const EducatorDetails = () => {
     <div className="educator-details-page">
       <div className="educator-header">
         <div className="educator-info">
-          <img
-            src={educatorData.avatar}
-            alt={educatorData.professor}
-            className="educator-avatar"
-          />
+          {educatorData.avatar ? (
+            <img
+              src={educatorData.avatar}
+              alt={educatorData.professor}
+              className="educator-avatar"
+            />
+          ) : (
+            <FaUserCircle className="educator-avatar-placeholder" size={80} />
+          )}
           <div className="educator-text">
             <h1>{educatorData.professor}</h1>
             <span className="category">Category: {educatorData.category}</span>

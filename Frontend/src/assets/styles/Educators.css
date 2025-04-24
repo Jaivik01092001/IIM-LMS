@@ -126,6 +126,14 @@
   object-fit: cover;
 }
 
+.educators-container .professor-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #aaa;
+  background-color: #f0f0f0;
+}
+
 /* Status cell styling */
 .educators-container .status-cell {
   display: flex;
