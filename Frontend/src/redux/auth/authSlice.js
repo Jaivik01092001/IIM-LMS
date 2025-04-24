@@ -112,14 +112,13 @@ const authSlice = createSlice({
     debugOtp: null, // Add debug OTP for development environment
   },
   reducers: {
-    // Manual logout (without API call)
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;
       state.otpRequested = false;
       state.userId = null;
-      state.debugOtp = null; // Clear debug OTP
+      state.debugOtp = null;
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
@@ -128,9 +127,14 @@ const authSlice = createSlice({
     resetOTPState: (state) => {
       state.otpRequested = false;
       state.userId = null;
-      state.debugOtp = null; // Clear debug OTP
+      state.debugOtp = null;
+    },
+    // 👇 Add this reducer
+    otpRequestedManually: (state) => {
+      state.otpRequested = true;
     },
   },
+  
   extraReducers: (builder) => {
     builder
       // Request OTP cases

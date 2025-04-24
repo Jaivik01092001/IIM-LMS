@@ -41,6 +41,11 @@ exports.requestOTP = catchAsync(async (req, res, next) => {
     user = userAlt;
   }
 
+  // Check if user is inactive
+  if (user.status === 0) {
+    return next(new AppError('Your account is inactive. Please contact the administrator.', 403));
+  }
+
   // 4) Generate and send OTP
   const otpResult = await sendOTP(user);
 
@@ -129,6 +134,11 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
   const user = await User.findById(decoded.id).populate('roleRef');
   if (!user || user.refreshToken !== refreshToken) {
     return next(new AppError('Invalid refresh token', 401));
+  }
+
+  // Check if user is inactive
+  if (user.status === 0) {
+    return next(new AppError('Your account is inactive. Please contact the administrator.', 403));
   }
 
   // 3) Generate new access token

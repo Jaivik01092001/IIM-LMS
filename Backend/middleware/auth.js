@@ -28,6 +28,11 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new AppError('The user belonging to this token no longer exists.', 401));
   }
 
+  // Check if user is inactive
+  if (user.status === 0) {
+    return next(new AppError('Your account is inactive. Please contact the administrator.', 403));
+  }
+
   // 4) Grant access to protected route
   req.user = user;
 
