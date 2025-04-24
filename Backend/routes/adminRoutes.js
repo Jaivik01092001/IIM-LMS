@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
 const upload = require('../middleware/upload');
+const uploads = require('../middleware/uploads');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 
@@ -28,9 +29,9 @@ router.delete('/content/:id', adminController.deleteContent);
 
 // Course routes
 router.get('/courses', adminController.getCourses);
-router.post('/course', upload.any(), adminController.createCourse);
+router.post('/course', uploads.single('thumbnail'), adminController.createCourse);
 router.get('/course/:id', adminController.getCourse);
-router.put('/course/:id', upload.any(), adminController.updateCourse);
+router.put('/course/:id', uploads.single('thumbnail'), adminController.updateCourse);
 router.delete('/course/:id', adminController.deleteCourse);
 router.post('/course/content', adminController.addContentToCourse);
 router.post('/course/quiz', adminController.addQuizToCourse);

@@ -316,8 +316,19 @@ exports.createCourse = async (req, res) => {
   try {
     console.log("Create course route hit");
     console.log("Request headers:", req.headers);
-    console.log("Request body:", req.body);
-    console.log("Request file:", req.file);
+    console.log("Request body size:", JSON.stringify(req.body).length);
+    console.log("Number of files:", req.files ? req.files.length : 0);
+    
+    if (req.file) {
+      console.log("Thumbnail file:", {
+        size: req.file.size,
+        type: req.file.mimetype,
+        name: req.file.originalname
+      });
+    }
+
+    // Start timing the request
+    const startTime = Date.now();
 
     // Destructure fields from request body
     const {
@@ -341,7 +352,7 @@ exports.createCourse = async (req, res) => {
       isDraft
     } = req.body;
 
-    console.log("req.bodyreq.body", req.body);
+    console.log("Time after destructuring:", Date.now() - startTime, "ms");
     // Validate required fields
     if (!title) {
       return res.status(400).json({
@@ -361,7 +372,7 @@ exports.createCourse = async (req, res) => {
     try {
       if (modules && typeof modules === 'string') {
         parsedModules = JSON.parse(modules);
-        console.log("Parsed modules:", parsedModules);
+        console.log("Time after parsing modules:", Date.now() - startTime, "ms");
       }
     } catch (err) {
       console.error("Error parsing modules JSON:", err);
@@ -427,7 +438,8 @@ exports.createCourse = async (req, res) => {
 
     // Check if we have content files in the request
     if (req.files && req.files.length > 0) {
-      console.log("Processing content files:", req.files.length);
+      console.log("Starting content file processing at:", Date.now() - startTime, "ms");
+      console.log("Number of files to process:", req.files.length);
 
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
@@ -447,16 +459,7 @@ exports.createCourse = async (req, res) => {
         const contentItem = parsedContent.find(item => item._id === contentId);
         if (!contentItem) continue;
 
-        // Determine media type based on file extension
-        let mediaType = 'document';
-        let mimeType = file.mimetype;
-        const fileExt = file.originalname.split('.').pop().toLowerCase();
-
-        if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) {
-          mediaType = 'video';
-        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-          mediaType = 'image';
-        }
+        console.log(`Processing file ${i + 1}/${req.files.length} at:`, Date.now() - startTime, "ms");
 
         // Create a new content item
         const content = new Content({
@@ -469,16 +472,24 @@ exports.createCourse = async (req, res) => {
           mediaType,
           mimeType,
           size: file.size,
-          module: null // We'll set this later when processing modules
+          module: null
         });
 
-        await content.save();
-        contentItems.push({
-          id: contentId,
-          dbId: content._id
-        });
+        try {
+          await content.save();
+          console.log(`Saved content ${i + 1}/${req.files.length} at:`, Date.now() - startTime, "ms");
+          contentItems.push({
+            id: contentId,
+            dbId: content._id
+          });
+        } catch (err) {
+          console.error(`Error saving content ${i + 1}:`, err);
+          throw err;
+        }
       }
     }
+
+    console.log("Starting course creation at:", Date.now() - startTime, "ms");
 
     // Create course with all provided fields
     const course = new Course({
@@ -494,107 +505,26 @@ exports.createCourse = async (req, res) => {
       thumbnail,
       hasModules: hasModules === 'true' || hasModules === true,
       modules: [], // Initialize with empty array, we'll add modules after saving
-      content: contentItems.map(item => item.dbId), // Add the newly created content items
+      content: contentItems.map(item => item.dbId),
       quizzes: parsedQuizzes || [],
       learningOutcomes: parsedLearningOutcomes || [],
       requirements: parsedRequirements || [],
-      status: status !== undefined ? Number(status) : 1,
-      isDraft: isDraft === 'true' || isDraft === true,
-      creator: req.user.id
+      creator: req.user.id,
+      status: status || 'draft',
+      isDraft: isDraft === 'true' || isDraft === true
     });
 
-    // Save the course first
-    await course.save();
-
-    // If modules are provided, create them and associate with the course
-    if (parsedModules && parsedModules.length > 0) {
-      for (const moduleData of parsedModules) {
-        const newModule = new Module({
-          title: moduleData.title || 'Untitled Module',
-          description: moduleData.description || '',
-          course: course._id,
-          order: moduleData.order || 0,
-          content: [] // Initialize with empty content array
-        });
-
-        await newModule.save();
-
-        // Add module reference to course
-        course.modules.push(newModule._id);
-
-        // If module has content, associate it
-        if (moduleData.content && moduleData.content.length > 0) {
-          for (const contentId of moduleData.content) {
-            // First check if this is a newly created content item
-            const newContentItem = contentItems.find(item => item.id === contentId);
-
-            if (newContentItem) {
-              // This is a newly created content item, use its database ID
-              const dbContentId = newContentItem.dbId;
-              newModule.content.push(dbContentId);
-
-              // Update the content item to reference this module
-              const contentExists = await Content.findById(dbContentId);
-              if (contentExists) {
-                contentExists.module = newModule._id;
-                await contentExists.save();
-              }
-            } else {
-              // Check if this is an existing content item with a valid ObjectId
-              // Skip temporary IDs that start with 'temp_'
-              if (!contentId.startsWith('temp_')) {
-                try {
-                  const contentExists = await Content.findById(contentId);
-                  if (contentExists) {
-                    newModule.content.push(contentId);
-                    contentExists.module = newModule._id;
-                    await contentExists.save();
-                  }
-                } catch (err) {
-                  console.error(`Error finding content with ID ${contentId}:`, err.message);
-                  // Skip this content ID if it's invalid
-                }
-              }
-            }
-          }
-          await newModule.save();
-        }
-
-        // If module has a quiz, create it and associate it with the module
-        if (moduleData.quiz) {
-          const quizData = moduleData.quiz;
-
-          // Create a new quiz
-          const quiz = new Quiz({
-            title: quizData.title || `${newModule.title} Quiz`,
-            description: quizData.description || `Quiz for ${newModule.title}`,
-            course: course._id,
-            questions: quizData.questions || [],
-            timeLimit: quizData.timeLimit || 30,
-            passingScore: quizData.passingScore || 60
-          });
-
-          await quiz.save();
-
-          // Associate quiz with module
-          newModule.quiz = quiz._id;
-          await newModule.save();
-
-          // Add quiz to course's quizzes array
-          if (!course.quizzes.includes(quiz._id)) {
-            course.quizzes.push(quiz._id);
-          }
-        }
-      }
-
-      // Save the course again with module references
+    try {
       await course.save();
+      console.log("Course saved at:", Date.now() - startTime, "ms");
+      res.json(course);
+    } catch (err) {
+      console.error("Error saving course:", err);
+      throw err;
     }
 
-    // Return the created course
-    res.status(201).json(course);
   } catch (error) {
-    console.error('Course creation error:', error);
+    console.error("Final error in createCourse:", error);
     res.status(500).json({ message: 'Error creating course', error: error.message });
   }
 };
