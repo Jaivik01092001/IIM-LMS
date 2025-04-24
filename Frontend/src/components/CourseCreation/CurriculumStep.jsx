@@ -46,8 +46,8 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
                 return moduleData;
             }) : [],
-            content: hasModules ? [] : content, // Only use content array if not using modules
-            quizzes: hasModules ? [] : quizzes  // Only use quizzes array if not using modules
+            content, // Only use content array if not using modules
+            quizzes // Only use quizzes array if not using modules
         });
     }, [hasModules, modules, content, quizzes, updateCourseData]);
 
@@ -171,10 +171,12 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // Save content
     const saveContent = () => {
-        // For now, we'll just update the local state
-        // In a real implementation, you would upload the file to the server first
-        // and then update the content with the returned fileUrl
-
+        console.log("🧠 Saving content...");
+        console.log("🔧 Editing Content ID:", editingContentId);
+        console.log("📝 Content Form Data:", contentFormData);
+    
+        const moduleOfEditingContent = content.find(item => item._id === editingContentId)?.module;
+    
         const updatedContent = content.map(item =>
             item._id === editingContentId
                 ? {
@@ -182,22 +184,23 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                     title: contentFormData.title,
                     description: contentFormData.description,
                     type: contentFormData.type,
-                    // Store file information for later upload during form submission
                     file: contentFormData.file,
-                    // If there's a file, we'll create a temporary preview URL
-                    fileUrl: contentFormData.file ?
-                        URL.createObjectURL(contentFormData.file) :
-                        item.fileUrl,
-                    // Ensure we keep the temporary ID format if it's a new item
-                    _id: item._id.startsWith('temp_') ? item._id : item._id
+                    fileUrl: contentFormData.file ? URL.createObjectURL(contentFormData.file) : item.fileUrl,
+                    _id: item._id.startsWith('temp_') ? item._id : item._id,
+                    module: moduleOfEditingContent || item.module
                 }
                 : item
         );
-
+    
+        const savedItem = updatedContent.find(item => item._id === editingContentId);
+        console.log("✅ Updated Content Item:", savedItem);
+        console.log("✅ Updated Content Item updatedContent:", updatedContent);
+    
         setContent(updatedContent);
         setEditingContentId(null);
         setContentFormData({ title: "", description: "", type: "video", file: null });
     };
+    
 
     // Delete content
     const deleteContent = (contentId, moduleId = null) => {

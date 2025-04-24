@@ -311,24 +311,19 @@ exports.getCourse = async (req, res) => {
   }
 };
 
-// Create a new course
 exports.createCourse = async (req, res) => {
   try {
     console.log("Create course route hit");
     console.log("Request headers:", req.headers);
-    console.log("Request body size:", JSON.stringify(req.body).length);
-    console.log("Number of files:", req.files ? req.files.length : 0);
-    
-    if (req.file) {
-      console.log("Thumbnail file:", {
-        size: req.file.size,
-        type: req.file.mimetype,
-        name: req.file.originalname
+    console.log("Request body:", req.body);
+
+    // Debug uploaded files
+    console.log("Uploaded Files:");
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((f, i) => {
+        console.log(`${i + 1}. ${f.fieldname} -> ${f.originalname}`);
       });
     }
-
-    // Start timing the request
-    const startTime = Date.now();
 
     // Destructure fields from request body
     const {
@@ -352,146 +347,80 @@ exports.createCourse = async (req, res) => {
       isDraft
     } = req.body;
 
-    console.log("Time after destructuring:", Date.now() - startTime, "ms");
-    // Validate required fields
-    if (!title) {
-      return res.status(400).json({
-        message: 'Error creating course',
-        error: 'Course validation failed: title: Path `title` is required.'
-      });
-    }
-
-    // Prepare thumbnail URL
+    // ✅ Use thumbnail from req.files (upload.any())
     let thumbnail = thumbnailUrl;
-    if (req.file) {
-      thumbnail = req.file.path;
+    const thumbnailFile = req.files?.find(f => f.fieldname === 'thumbnail');
+    if (thumbnailFile) {
+      thumbnail = thumbnailFile.path;
     }
 
-    // Parse JSON strings for arrays if they are strings
-    let parsedModules = modules;
-    try {
-      if (modules && typeof modules === 'string') {
-        parsedModules = JSON.parse(modules);
-        console.log("Time after parsing modules:", Date.now() - startTime, "ms");
+    // 🧠 Helper function to parse JSON safely
+    const tryParse = (data) => {
+      try {
+        return typeof data === 'string' ? JSON.parse(data) : data;
+      } catch (err) {
+        console.error('Parse error:', err.message);
+        return [];
       }
-    } catch (err) {
-      console.error("Error parsing modules JSON:", err);
-      parsedModules = [];
+    };
+
+    const parsedModules = tryParse(modules);
+    const parsedContent = tryParse(content);
+    const parsedQuizzes = tryParse(quizzes);
+    const parsedTags = tryParse(tags);
+    const parsedLearningOutcomes = tryParse(learningOutcomes);
+    const parsedRequirements = tryParse(requirements);
+
+    // 🔎 Parse contentFileIds
+    let contentFileIds = req.body.contentFileIds || [];
+    if (!Array.isArray(contentFileIds)) {
+      contentFileIds = [contentFileIds];
     }
 
-    let parsedContent = content;
-    try {
-      if (content && typeof content === 'string') {
-        parsedContent = JSON.parse(content);
-      }
-    } catch (err) {
-      console.error("Error parsing content JSON:", err);
-      parsedContent = [];
-    }
-
-    let parsedQuizzes = quizzes;
-    try {
-      if (quizzes && typeof quizzes === 'string') {
-        parsedQuizzes = JSON.parse(quizzes);
-      }
-    } catch (err) {
-      console.error("Error parsing quizzes JSON:", err);
-      parsedQuizzes = [];
-    }
-
-    let parsedTags = tags;
-    try {
-      if (tags && typeof tags === 'string') {
-        parsedTags = JSON.parse(tags);
-      }
-    } catch (err) {
-      console.error("Error parsing tags JSON:", err);
-      parsedTags = [];
-    }
-
-    let parsedLearningOutcomes = learningOutcomes;
-    try {
-      if (learningOutcomes && typeof learningOutcomes === 'string') {
-        parsedLearningOutcomes = JSON.parse(learningOutcomes);
-      }
-    } catch (err) {
-      console.error("Error parsing learningOutcomes JSON:", err);
-      parsedLearningOutcomes = [];
-    }
-
-    let parsedRequirements = requirements;
-    try {
-      if (requirements && typeof requirements === 'string') {
-        parsedRequirements = JSON.parse(requirements);
-      }
-    } catch (err) {
-      console.error("Error parsing requirements JSON:", err);
-      parsedRequirements = [];
-    }
-
-    // Process content files if they exist
-    const contentFileIds = req.body.contentFileIds ?
-      Array.isArray(req.body.contentFileIds) ? req.body.contentFileIds : [req.body.contentFileIds] : [];
-
-    // Create content items for uploaded files
     const contentItems = [];
 
-    // Check if we have content files in the request
+    // ✅ Process uploaded files
     if (req.files && req.files.length > 0) {
-      console.log("Starting content file processing at:", Date.now() - startTime, "ms");
-      console.log("Number of files to process:", req.files.length);
-
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
-        // Skip the thumbnail file
         if (file.fieldname === 'thumbnail') continue;
 
-        // Extract the index from the fieldname (contentFiles[0], contentFiles[1], etc.)
         const fieldnameParts = file.fieldname.match(/\[(\d+)\]/);
         if (!fieldnameParts) continue;
 
         const index = parseInt(fieldnameParts[1]);
         const contentId = contentFileIds[index];
-
         if (!contentId) continue;
 
-        // Find the corresponding content item in parsedContent
         const contentItem = parsedContent.find(item => item._id === contentId);
         if (!contentItem) continue;
 
-        console.log(`Processing file ${i + 1}/${req.files.length} at:`, Date.now() - startTime, "ms");
+        const fileExt = file.originalname.split('.').pop().toLowerCase();
+        const mimeType = file.mimetype;
 
-        // Create a new content item
-        const content = new Content({
+        let mediaType = 'document';
+        if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) mediaType = 'video';
+        else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) mediaType = 'image';
+
+        const contentDoc = new Content({
           title: contentItem.title,
           description: contentItem.description,
           fileUrl: file.path,
           creator: req.user.id,
           status: 'approved',
-          type: contentItem.type || (mediaType === 'video' ? 'video' : mediaType === 'image' ? 'image' : 'document'),
+          type: contentItem.type || mediaType,
           mediaType,
           mimeType,
           size: file.size,
           module: null
         });
 
-        try {
-          await content.save();
-          console.log(`Saved content ${i + 1}/${req.files.length} at:`, Date.now() - startTime, "ms");
-          contentItems.push({
-            id: contentId,
-            dbId: content._id
-          });
-        } catch (err) {
-          console.error(`Error saving content ${i + 1}:`, err);
-          throw err;
-        }
+        await contentDoc.save();
+        contentItems.push({ id: contentId, dbId: contentDoc._id });
       }
     }
 
-    console.log("Starting course creation at:", Date.now() - startTime, "ms");
-
-    // Create course with all provided fields
+    // ✅ Create course
     const course = new Course({
       title,
       description,
@@ -501,33 +430,100 @@ exports.createCourse = async (req, res) => {
       language: language || 'en',
       targetAudience,
       level: level || 'beginner',
-      tags: parsedTags || [],
+      tags: parsedTags,
       thumbnail,
       hasModules: hasModules === 'true' || hasModules === true,
-      modules: [], // Initialize with empty array, we'll add modules after saving
+      modules: [],
       content: contentItems.map(item => item.dbId),
-      quizzes: parsedQuizzes || [],
-      learningOutcomes: parsedLearningOutcomes || [],
-      requirements: parsedRequirements || [],
-      creator: req.user.id,
-      status: status || 'draft',
-      isDraft: isDraft === 'true' || isDraft === true
+      quizzes: [],
+      learningOutcomes: parsedLearningOutcomes,
+      requirements: parsedRequirements,
+      status: status !== undefined ? Number(status) : 1,
+      isDraft: isDraft === 'true' || isDraft === true,
+      creator: req.user.id
     });
 
-    try {
+    await course.save();
+
+    // ✅ Handle Modules + Quizzes
+    if (parsedModules && parsedModules.length > 0) {
+      for (const moduleData of parsedModules) {
+        const newModule = new Module({
+          title: moduleData.title || 'Untitled Module',
+          description: moduleData.description || '',
+          course: course._id,
+          order: moduleData.order || 0,
+          content: []
+        });
+
+        await newModule.save();
+        course.modules.push(newModule._id);
+
+        // Module content
+        if (Array.isArray(moduleData.content)) {
+          for (const contentId of moduleData.content) {
+            const newContentItem = contentItems.find(item => item.id === contentId);
+            if (newContentItem) {
+              const dbContentId = newContentItem.dbId;
+              newModule.content.push(dbContentId);
+
+              const contentExists = await Content.findById(dbContentId);
+              if (contentExists) {
+                contentExists.module = newModule._id;
+                await contentExists.save();
+              }
+            } else if (!contentId.startsWith('temp_')) {
+              try {
+                const contentExists = await Content.findById(contentId);
+                if (contentExists) {
+                  newModule.content.push(contentId);
+                  contentExists.module = newModule._id;
+                  await contentExists.save();
+                }
+              } catch (err) {
+                console.error(`Invalid content ID: ${contentId}`);
+              }
+            }
+          }
+          await newModule.save();
+        }
+
+        // Module quiz
+        if (moduleData.quiz) {
+          const quizData = moduleData.quiz;
+
+          const quiz = new Quiz({
+            title: quizData.title || `${newModule.title} Quiz`,
+            description: quizData.description || `Quiz for ${newModule.title}`,
+            course: course._id,
+            questions: quizData.questions || [],
+            timeLimit: quizData.timeLimit || 30,
+            passingScore: quizData.passingScore || 60
+          });
+
+          await quiz.save();
+          newModule.quiz = quiz._id;
+          await newModule.save();
+          course.quizzes.push(quiz._id);
+        }
+      }
+
       await course.save();
-      console.log("Course saved at:", Date.now() - startTime, "ms");
-      res.json(course);
-    } catch (err) {
-      console.error("Error saving course:", err);
-      throw err;
     }
 
+    // ✅ Final Response
+    res.status(201).json({
+      message: 'Course created successfully',
+      course,
+      contentItemsCreated: contentItems.map(c => c.dbId),
+      uploadedFiles: req.files.map(f => f.fieldname)
+    });
   } catch (error) {
-    console.error("Final error in createCourse:", error);
+    console.error('Course creation error:', error);
     res.status(500).json({ message: 'Error creating course', error: error.message });
   }
 };
+
 
 // Update a course
 exports.updateCourse = async (req, res) => {
@@ -1147,157 +1143,5 @@ exports.getAllUsers = async (_, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users', error: error.message });
-  }
-};
-
-// Get all educators regardless of university
-exports.getAllEducators = async (req, res) => {
-  try {
-    // Return all educators regardless of university or status
-    // Populate the university field to get university name
-    const educators = await User.find({ role: 'educator' })
-      .select('-password')
-      .populate('university', 'name category');
-    res.json(educators);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educators', error: error.message });
-  }
-};
-
-// Get a specific educator by ID regardless of university
-exports.getEducatorById = async (req, res) => {
-  try {
-    const educator = await User.findOne({
-      _id: req.params.id,
-      role: 'educator'
-    }).select('-password');
-
-    if (!educator) {
-      return res.status(404).json({ message: 'Educator not found' });
-    }
-
-    res.json(educator);
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educator', error: error.message });
-  }
-};
-
-// Create a new educator (for admin)
-exports.createEducator = async (req, res, next) => {
-  try {
-    const {
-      email,
-      password,
-      name,
-      roleId,
-      phoneNumber,
-      address,
-      zipcode,
-      state,
-      university,
-      category, // Add category field
-      schoolName // Add school/university name field
-    } = req.body;
-
-    // Generate a random default password if none is provided
-    // This is just a placeholder as the system uses OTP for authentication
-    const defaultPassword = Math.random().toString(36).slice(-8);
-    const passwordToHash = password || defaultPassword;
-
-    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
-
-    // Prepare profile object
-    const profile = {
-      address,
-      zipcode,
-      state,
-      category, // Add category field
-      schoolName, // Add school/university name field
-      socialLinks: {}
-    };
-
-    // Add avatar if profile image was uploaded
-    if (req.file) {
-      profile.avatar = `/uploads/profiles/${req.file.filename}`;
-    }
-
-    const educator = new User({
-      email,
-      password: hashedPassword,
-      role: 'educator',
-      name,
-      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
-      university: university || req.user.id, // Allow admin to specify university or default to admin
-      roleRef: roleId || undefined, // Assign role if provided
-      profile,
-      createdBy: req.user.id // Track who created this educator
-    });
-
-    await educator.save();
-    res.json({
-      educator,
-      msg: 'Educator created successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Update a specific educator by ID regardless of university
-exports.updateEducator = async (req, res) => {
-  try {
-    const { name, email, roleId, phoneNumber, address, zipcode, state, status, category, schoolName } = req.body;
-    const educator = await User.findOne({
-      _id: req.params.id,
-      role: 'educator'
-    });
-
-    if (!educator) {
-      return res.status(404).json({ msg: 'Educator not found' });
-    }
-
-    // Only update fields that are provided
-    if (name) educator.name = name;
-    if (email) educator.email = email;
-    if (phoneNumber) educator.phoneNumber = phoneNumber;
-    if (status !== undefined) educator.status = Number(status);
-
-    // Initialize profile if it doesn't exist
-    if (!educator.profile) {
-      educator.profile = {};
-    }
-
-    // Ensure socialLinks exists to prevent validation errors
-    if (!educator.profile.socialLinks) {
-      educator.profile.socialLinks = {};
-    }
-
-    // Update profile fields only if they are provided
-    if (address) educator.profile.address = address;
-    if (zipcode) educator.profile.zipcode = zipcode;
-    if (state) educator.profile.state = state;
-    if (category) educator.profile.category = category; // Add category field
-    if (schoolName) educator.profile.schoolName = schoolName; // Add school/university name field
-
-    // Update avatar if profile image was uploaded
-    if (req.file) {
-      console.log('Profile image uploaded:', req.file);
-      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
-      console.log('Updated avatar path:', educator.profile.avatar);
-    } else {
-      console.log('No profile image uploaded in the request');
-    }
-
-    if (roleId) {
-      educator.roleRef = roleId;
-    }
-
-    await educator.save();
-    res.json({
-      educator,
-      msg: 'Educator updated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating educator', error: error.message });
   }
 };

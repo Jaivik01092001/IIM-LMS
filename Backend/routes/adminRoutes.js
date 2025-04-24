@@ -11,9 +11,9 @@ router.use(protect);
 
 // User routes
 router.get('/users', adminController.getAllUsers);
-router.get('/educators', adminController.getAllEducators);
-router.get('/educator/:id', adminController.getEducatorById);
-router.put('/educator/:id', upload.single('profileImage'), adminController.updateEducator);
+// router.get('/educators', adminController.getAllEducators);
+// router.get('/educator/:id', adminController.getEducatorById);
+// router.put('/educator/:id', upload.single('profileImage'), adminController.updateEducator);
 
 // University routes
 router.get('/universities', adminController.getUniversities);
@@ -32,9 +32,9 @@ router.delete('/content/:id', adminController.deleteContent);
 
 // Course routes
 router.get('/courses', adminController.getCourses);
-router.post('/course', uploads.single('thumbnail'), adminController.createCourse);
+router.post('/course', upload.any(), adminController.createCourse);
 router.get('/course/:id', adminController.getCourse);
-router.put('/course/:id', uploads.single('thumbnail'), adminController.updateCourse);
+router.put('/course/:id', upload.any(), adminController.updateCourse);
 router.delete('/course/:id', adminController.deleteCourse);
 router.post('/course/content', adminController.addContentToCourse);
 router.post('/course/quiz', adminController.addQuizToCourse);

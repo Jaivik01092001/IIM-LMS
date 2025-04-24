@@ -364,12 +364,12 @@ const CourseDetail = () => {
             >
               Information
             </button>
-            <button
+            {/* <button
               className={`tab-button ${activeTab === 'content' ? 'active' : ''}`}
               onClick={() => setActiveTab('content')}
             >
               Content ({course.modules?.length || 0})
-            </button>
+            </button> */}
             <button
               className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
               onClick={() => setActiveTab('reviews')}
