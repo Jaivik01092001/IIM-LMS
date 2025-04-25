@@ -82,7 +82,7 @@ const Courses = ({ userType }) => {
           // For demo purposes: every other course is considered "enrolled"
           course._id.toString().charCodeAt(course._id.toString().length - 1) % 2 === 0
         );
-        
+
         return {
           id: course._id,
           title: course.title || 'Untitled Course',
@@ -100,7 +100,7 @@ const Courses = ({ userType }) => {
           isEnrolled: Boolean(course.progress || course.enrolled || course.isEnrolled || mockEnrollment)
         };
       });
-      
+
       setTableData(formattedCourses);
 
       // Extract unique categories
@@ -331,7 +331,7 @@ const Courses = ({ userType }) => {
           {filteredData.map((course) => (
             <div key={course.id} className="course-card">
               <div className="course-card-thumbnail">
-                <img src={course.thumbnail} alt={course.title} />
+                <img src={`http://localhost:5000/${course.thumbnail}`} alt={course.title} />
               </div>
               <div className="course-card-content">
                 <div className="course-card-category">Category: {course.category}</div>
