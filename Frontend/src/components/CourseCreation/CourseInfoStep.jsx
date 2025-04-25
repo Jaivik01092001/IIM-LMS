@@ -13,35 +13,14 @@ const CourseInfoStep = ({
     const [localData, setLocalData] = useState({
         title: courseData.title || "",
         shortDescription: courseData.shortDescription || "",
-        language: courseData.language || "en",
-        category: courseData.category || "",
-        subcategory: courseData.subcategory || "",
-        tagsInput: courseData.tags?.join(", ") || ""
+        language: courseData.language || "en"
     });
 
     // Handle form field changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setLocalData({ ...localData, [name]: value });
-
-        // Update parent state for all fields except tags (which need special handling)
-        if (name !== "tagsInput") {
-            updateCourseData({ [name]: value });
-        }
-    };
-
-    // Handle tags input - convert comma-separated string to array
-    const handleTagsChange = (e) => {
-        const tagsInput = e.target.value;
-        setLocalData({ ...localData, tagsInput });
-
-        // Convert to array and update parent state
-        const tagsArray = tagsInput
-            .split(",")
-            .map(tag => tag.trim())
-            .filter(tag => tag !== "");
-
-        updateCourseData({ tags: tagsArray });
+        updateCourseData({ [name]: value });
     };
 
     // Handle thumbnail upload
@@ -76,41 +55,7 @@ const CourseInfoStep = ({
         { value: "de", label: "German" }
     ];
 
-    // Category options
-    const categoryOptions = [
-        { value: "programming", label: "Programming" },
-        { value: "business", label: "Business" },
-        { value: "finance", label: "Finance" },
-        { value: "design", label: "Design" },
-        { value: "marketing", label: "Marketing" },
-        { value: "education", label: "Education" },
-        { value: "science", label: "Science" },
-        { value: "health", label: "Health & Fitness" }
-    ];
-
-    // Subcategory options (depending on selected category)
-    const getSubcategoryOptions = () => {
-        switch (localData.category) {
-            case "programming":
-                return [
-                    { value: "web-development", label: "Web Development" },
-                    { value: "mobile-development", label: "Mobile Development" },
-                    { value: "game-development", label: "Game Development" },
-                    { value: "databases", label: "Databases" },
-                    { value: "programming-languages", label: "Programming Languages" }
-                ];
-            case "business":
-                return [
-                    { value: "entrepreneurship", label: "Entrepreneurship" },
-                    { value: "management", label: "Management" },
-                    { value: "strategy", label: "Strategy" },
-                    { value: "operations", label: "Operations" }
-                ];
-            // Add more subcategories for other categories as needed
-            default:
-                return [];
-        }
-    };
+    // No category or subcategory options needed
 
     return (
         <div className="course-info-step">
@@ -158,84 +103,23 @@ const CourseInfoStep = ({
                     </p>
                 </div>
 
-                <div className="form-row">
-                    <div className="form-group">
-                        <label htmlFor="language">
-                            Language <span className="required">*</span>
-                        </label>
-                        <select
-                            id="language"
-                            name="language"
-                            value={localData.language}
-                            onChange={handleInputChange}
-                            required
-                        >
-                            {languageOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="category">
-                            Category <span className="required">*</span>
-                        </label>
-                        <select
-                            id="category"
-                            name="category"
-                            value={localData.category}
-                            onChange={handleInputChange}
-                            required
-                        >
-                            <option value="">Select a category</option>
-                            {categoryOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                <div className="form-row">
-                    <div className="form-group">
-                        <label htmlFor="subcategory">
-                            Subcategory
-                        </label>
-                        <select
-                            id="subcategory"
-                            name="subcategory"
-                            value={localData.subcategory}
-                            onChange={handleInputChange}
-                            disabled={!localData.category}
-                        >
-                            <option value="">Select a subcategory</option>
-                            {getSubcategoryOptions().map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="tagsInput">
-                            Tags
-                        </label>
-                        <input
-                            type="text"
-                            id="tagsInput"
-                            name="tagsInput"
-                            value={localData.tagsInput}
-                            onChange={handleTagsChange}
-                            placeholder="e.g. javascript, react, web development"
-                        />
-                        <p className="field-hint">
-                            Enter comma-separated tags to help students find your course.
-                        </p>
-                    </div>
+                <div className="form-group">
+                    <label htmlFor="language">
+                        Language <span className="required">*</span>
+                    </label>
+                    <select
+                        id="language"
+                        name="language"
+                        value={localData.language}
+                        onChange={handleInputChange}
+                        required
+                    >
+                        {languageOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="form-group thumbnail-section">
@@ -282,4 +166,4 @@ const CourseInfoStep = ({
     );
 };
 
-export default CourseInfoStep; 
+export default CourseInfoStep;

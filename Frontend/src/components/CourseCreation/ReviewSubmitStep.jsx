@@ -10,24 +10,12 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                     courseData.title &&
                     courseData.shortDescription &&
                     courseData.language &&
-                    courseData.category &&
                     (thumbnailPreview || courseData.thumbnail)
                 );
             case 2: // Curriculum
-                if (courseData.hasModules) {
-                    return courseData.modules && courseData.modules.length > 0;
-                } else {
-                    return courseData.content && courseData.content.length > 0;
-                }
+                return courseData.modules && courseData.modules.length > 0;
             case 3: // Course Settings
-                return !!(
-                    courseData.duration &&
-                    courseData.targetAudience &&
-                    courseData.learningOutcomes &&
-                    courseData.learningOutcomes.length > 0
-                );
-            case 4: // Access & Status
-                return true; // No required fields in this step
+                return !!courseData.duration;
             default:
                 return false;
         }
@@ -45,29 +33,18 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                 if (!courseData.shortDescription) {
                     messages.push("Short description is required");
                 }
-                if (!courseData.category) {
-                    messages.push("Category is required");
-                }
                 if (!thumbnailPreview && !courseData.thumbnail) {
                     messages.push("Course thumbnail is required");
                 }
                 break;
             case 2: // Curriculum
-                if (courseData.hasModules && (!courseData.modules || courseData.modules.length === 0)) {
+                if (!courseData.modules || courseData.modules.length === 0) {
                     messages.push("At least one module is required");
-                } else if (!courseData.hasModules && (!courseData.content || courseData.content.length === 0)) {
-                    messages.push("At least one content item is required");
                 }
                 break;
             case 3: // Course Settings
                 if (!courseData.duration) {
                     messages.push("Course duration is required");
-                }
-                if (!courseData.targetAudience) {
-                    messages.push("Target audience is required");
-                }
-                if (!courseData.learningOutcomes || courseData.learningOutcomes.length === 0) {
-                    messages.push("At least one learning outcome is required");
                 }
                 break;
             default:
@@ -78,7 +55,7 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
     };
 
     // Check if the course is ready to publish
-    const isReadyToPublish = validateStep(1) && validateStep(2) && validateStep(3) && validateStep(4);
+    const isReadyToPublish = validateStep(1) && validateStep(2) && validateStep(3);
 
     return (
         <div className="review-submit-step">
@@ -125,25 +102,8 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                             </div>
 
                             <div className="review-item">
-                                <span className="label">Category:</span>
-                                <span className="value">{courseData.category || 'Not set'}</span>
-                                {courseData.subcategory && (
-                                    <span className="value sub">({courseData.subcategory})</span>
-                                )}
-                            </div>
-
-                            <div className="review-item">
                                 <span className="label">Language:</span>
                                 <span className="value">{courseData.language || 'Not set'}</span>
-                            </div>
-
-                            <div className="review-item">
-                                <span className="label">Tags:</span>
-                                <span className="value tags">
-                                    {courseData.tags && courseData.tags.length > 0
-                                        ? courseData.tags.join(", ")
-                                        : 'None'}
-                                </span>
                             </div>
                         </div>
                     </div>
@@ -174,41 +134,27 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                         <div className="review-details wide">
                             <div className="review-item">
                                 <span className="label">Structure:</span>
-                                <span className="value">{courseData.hasModules ? 'Module-based' : 'Flat structure'}</span>
+                                <span className="value">Module-based</span>
                             </div>
 
-                            {courseData.hasModules ? (
-                                <div className="review-item">
-                                    <span className="label">Modules:</span>
-                                    <span className="value">{courseData.modules?.length || 0} module(s)</span>
+                            <div className="review-item">
+                                <span className="label">Modules:</span>
+                                <span className="value">{courseData.modules?.length || 0} module(s)</span>
 
-                                    {courseData.modules && courseData.modules.length > 0 && (
-                                        <ul className="modules-list">
-                                            {courseData.modules.map((module, index) => (
-                                                <li key={module._id || index}>
-                                                    <strong>{module.title}</strong>
-                                                    <span className="content-count">
-                                                        {module.content?.length || 0} content item(s)
-                                                        {module.quiz && ', 1 quiz'}
-                                                    </span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="review-item">
-                                        <span className="label">Content:</span>
-                                        <span className="value">{courseData.content?.length || 0} content item(s)</span>
-                                    </div>
-
-                                    <div className="review-item">
-                                        <span className="label">Quizzes:</span>
-                                        <span className="value">{courseData.quizzes?.length || 0} quiz(zes)</span>
-                                    </div>
-                                </>
-                            )}
+                                {courseData.modules && courseData.modules.length > 0 && (
+                                    <ul className="modules-list">
+                                        {courseData.modules.map((module, index) => (
+                                            <li key={module._id || index}>
+                                                <strong>{module.title}</strong>
+                                                <span className="content-count">
+                                                    {module.content?.length || 0} content item(s)
+                                                    {module.quiz && ', 1 quiz'}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -242,63 +188,6 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                             </div>
 
                             <div className="review-item">
-                                <span className="label">Target Audience:</span>
-                                <span className="value">{courseData.targetAudience || 'Not set'}</span>
-                            </div>
-
-                            <div className="review-item">
-                                <span className="label">Learning Outcomes:</span>
-                                {courseData.learningOutcomes && courseData.learningOutcomes.length > 0 ? (
-                                    <ul className="outcomes-list">
-                                        {courseData.learningOutcomes.map((outcome, index) => (
-                                            <li key={index}>{outcome}</li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <span className="value">None</span>
-                                )}
-                            </div>
-
-                            <div className="review-item">
-                                <span className="label">Prerequisites:</span>
-                                {courseData.requirements && courseData.requirements.length > 0 ? (
-                                    <ul className="requirements-list">
-                                        {courseData.requirements.map((requirement, index) => (
-                                            <li key={index}>{requirement}</li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <span className="value">None</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Validation messages */}
-                    {!validateStep(3) && (
-                        <div className="validation-messages">
-                            {getValidationMessages(3).map((message, index) => (
-                                <p key={index} className="validation-message">
-                                    <FaExclamationTriangle />
-                                    <span>{message}</span>
-                                </p>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Step 4: Access & Status */}
-                <div className="review-section valid">
-                    <div className="review-header">
-                        <h3>Access & Status</h3>
-                        <span className="validation-status">
-                            <FaCheck className="valid-icon" />
-                        </span>
-                    </div>
-
-                    <div className="review-content">
-                        <div className="review-details wide">
-                            <div className="review-item">
                                 <span className="label">Status:</span>
                                 <span className="value status">
                                     {courseData.status === 1 ? 'Active' : 'Inactive'}
@@ -320,7 +209,21 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Validation messages */}
+                    {!validateStep(3) && (
+                        <div className="validation-messages">
+                            {getValidationMessages(3).map((message, index) => (
+                                <p key={index} className="validation-message">
+                                    <FaExclamationTriangle />
+                                    <span>{message}</span>
+                                </p>
+                            ))}
+                        </div>
+                    )}
                 </div>
+
+                {/* Publication status shown in Course Settings section */}
 
                 {/* Overall submission readiness */}
                 <div className="submission-readiness">
@@ -355,4 +258,4 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
     );
 };
 
-export default ReviewSubmitStep; 
+export default ReviewSubmitStep;

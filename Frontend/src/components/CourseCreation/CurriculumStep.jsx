@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaTrash, FaEdit, FaGripVertical, FaVideo, FaFileAlt, FaFileUpload, FaQuestionCircle, FaToggleOn, FaToggleOff, FaFileAlt as FaFileText } from "react-icons/fa";
+import { FaPlus, FaTrash, FaEdit, FaGripVertical, FaVideo, FaFileAlt, FaFileUpload, FaQuestionCircle, FaFileAlt as FaFileText } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import SummernoteEditor from "../Editor/SummernoteEditor";
 
 const CurriculumStep = ({ courseData, updateCourseData }) => {
     // Local state for curriculum management
-    const [hasModules, setHasModules] = useState(courseData.hasModules || false);
     const [modules, setModules] = useState(courseData.modules || []);
     const [content, setContent] = useState(courseData.content || []);
     const [quizzes, setQuizzes] = useState(courseData.quizzes || []);
@@ -32,8 +31,8 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     // Update parent component state when local states change
     useEffect(() => {
         updateCourseData({
-            hasModules,
-            modules: hasModules ? modules.map(module => {
+            hasModules: true, // Always use modules
+            modules: modules.map(module => {
                 // Ensure module has the correct structure for backend
                 const moduleData = {
                     _id: module._id,
@@ -52,16 +51,11 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                 }
 
                 return moduleData;
-            }) : [],
-            content, // Only use content array if not using modules
-            quizzes // Only use quizzes array if not using modules
+            }),
+            content, // Keep for legacy support
+            quizzes // Keep for legacy support
         });
-    }, [hasModules, modules, content, quizzes, updateCourseData]);
-
-    // Toggle between module-based and content-based curriculum
-    const toggleModules = () => {
-        setHasModules(!hasModules);
-    };
+    }, [modules, content, quizzes, updateCourseData]);
 
     // ===== MODULE MANAGEMENT =====
 
@@ -453,427 +447,408 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                 Structure your course content in a way that's easy for students to follow.
             </p>
 
-            <div className="module-toggle">
-                <label className="toggle-label">
-                    Use Modules
+            {/* Always use modules */}
+            <div className="modules-container">
+                <div className="section-header">
+                    <h3>Modules</h3>
                     <button
                         type="button"
-                        className={`toggle-button ${hasModules ? 'active' : ''}`}
-                        onClick={toggleModules}
+                        className="add-button"
+                        onClick={addModule}
                     >
-                        {hasModules ? <FaToggleOn /> : <FaToggleOff />}
+                        <FaPlus />
+                        <span>Add Module</span>
                     </button>
-                </label>
-                <p className="toggle-hint">
-                    {hasModules
-                        ? "Your course will be organized into modules, each with its own content and quiz."
-                        : "Your course will have a flat structure with content and quizzes."}
-                </p>
-            </div>
+                </div>
 
-            {hasModules ? (
-                <div className="modules-container">
-                    <div className="section-header">
-                        <h3>Modules</h3>
-                        <button
-                            type="button"
-                            className="add-button"
-                            onClick={addModule}
-                        >
-                            <FaPlus />
-                            <span>Add Module</span>
-                        </button>
+                {/* Module Editor */}
+                {editingModuleId && (
+                    <div className="module-editor">
+                        <h4>{moduleFormData.title ? `Edit: ${moduleFormData.title}` : 'New Module'}</h4>
+                        <div className="form-group">
+                            <label htmlFor="moduleTitle">Module Title</label>
+                            <input
+                                type="text"
+                                id="moduleTitle"
+                                value={moduleFormData.title}
+                                onChange={(e) => setModuleFormData({ ...moduleFormData, title: e.target.value })}
+                                placeholder="Enter module title"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="moduleDescription">Description (Optional)</label>
+                            <textarea
+                                id="moduleDescription"
+                                value={moduleFormData.description}
+                                onChange={(e) => setModuleFormData({ ...moduleFormData, description: e.target.value })}
+                                placeholder="Enter module description"
+                                rows={3}
+                            />
+                        </div>
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                className="cancel-button"
+                                onClick={() => setEditingModuleId(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="save-button"
+                                onClick={saveModule}
+                            >
+                                Save Module
+                            </button>
+                        </div>
                     </div>
+                )}
 
-                    {/* Module Editor */}
-                    {editingModuleId && (
-                        <div className="module-editor">
-                            <h4>{moduleFormData.title ? `Edit: ${moduleFormData.title}` : 'New Module'}</h4>
-                            <div className="form-group">
-                                <label htmlFor="moduleTitle">Module Title</label>
-                                <input
-                                    type="text"
-                                    id="moduleTitle"
-                                    value={moduleFormData.title}
-                                    onChange={(e) => setModuleFormData({ ...moduleFormData, title: e.target.value })}
-                                    placeholder="Enter module title"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="moduleDescription">Description (Optional)</label>
-                                <textarea
-                                    id="moduleDescription"
-                                    value={moduleFormData.description}
-                                    onChange={(e) => setModuleFormData({ ...moduleFormData, description: e.target.value })}
-                                    placeholder="Enter module description"
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="form-actions">
-                                <button
-                                    type="button"
-                                    className="cancel-button"
-                                    onClick={() => setEditingModuleId(null)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="save-button"
-                                    onClick={saveModule}
-                                >
-                                    Save Module
-                                </button>
-                            </div>
+                {/* Content Editor */}
+                {editingContentId && (
+                    <div className="content-editor">
+                        <h4>{contentFormData.title ? `Edit: ${contentFormData.title}` : 'New Content'}</h4>
+                        <div className="form-group">
+                            <label htmlFor="contentTitle">Content Title</label>
+                            <input
+                                type="text"
+                                id="contentTitle"
+                                value={contentFormData.title}
+                                onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
+                                placeholder="Enter content title"
+                            />
                         </div>
-                    )}
-
-                    {/* Content Editor */}
-                    {editingContentId && (
-                        <div className="content-editor">
-                            <h4>{contentFormData.title ? `Edit: ${contentFormData.title}` : 'New Content'}</h4>
+                        <div className="form-group">
+                            <label htmlFor="contentType">Content Type</label>
+                            <select
+                                id="contentType"
+                                value={contentFormData.type}
+                                onChange={(e) => setContentFormData({ ...contentFormData, type: e.target.value })}
+                            >
+                                <option value="video">Video</option>
+                                <option value="document">Document/PDF</option>
+                                <option value="text">Text</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="contentDescription">Description (Optional)</label>
+                            <textarea
+                                id="contentDescription"
+                                value={contentFormData.description}
+                                onChange={(e) => setContentFormData({ ...contentFormData, description: e.target.value })}
+                                placeholder="Enter content description"
+                                rows={3}
+                            />
+                        </div>
+                        {contentFormData.type === 'text' ? (
                             <div className="form-group">
-                                <label htmlFor="contentTitle">Content Title</label>
-                                <input
-                                    type="text"
-                                    id="contentTitle"
-                                    value={contentFormData.title}
-                                    onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
-                                    placeholder="Enter content title"
+                                <label htmlFor="textEditor">Text Content</label>
+                                <SummernoteEditor
+                                    value={contentFormData.textContent}
+                                    onChange={(content) => setContentFormData({ ...contentFormData, textContent: content })}
+                                    placeholder="Enter your text content here..."
                                 />
                             </div>
+                        ) : (
                             <div className="form-group">
-                                <label htmlFor="contentType">Content Type</label>
-                                <select
-                                    id="contentType"
-                                    value={contentFormData.type}
-                                    onChange={(e) => setContentFormData({ ...contentFormData, type: e.target.value })}
-                                >
-                                    <option value="video">Video</option>
-                                    <option value="document">Document/PDF</option>
-                                    <option value="text">Text</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="contentDescription">Description (Optional)</label>
-                                <textarea
-                                    id="contentDescription"
-                                    value={contentFormData.description}
-                                    onChange={(e) => setContentFormData({ ...contentFormData, description: e.target.value })}
-                                    placeholder="Enter content description"
-                                    rows={3}
-                                />
-                            </div>
-                            {contentFormData.type === 'text' ? (
-                                <div className="form-group">
-                                    <label htmlFor="textEditor">Text Content</label>
-                                    <SummernoteEditor
-                                        value={contentFormData.textContent}
-                                        onChange={(content) => setContentFormData({ ...contentFormData, textContent: content })}
-                                        placeholder="Enter your text content here..."
+                                <label htmlFor="contentFile">
+                                    Upload {contentFormData.type === 'video' ? 'Video' : 'Document'}
+                                </label>
+                                <div className="file-upload">
+                                    <input
+                                        type="file"
+                                        id="contentFile"
+                                        onChange={(e) => setContentFormData({ ...contentFormData, file: e.target.files[0] })}
+                                        accept={contentFormData.type === 'video' ? 'video/*' : 'application/pdf,application/msword'}
                                     />
-                                </div>
-                            ) : (
-                                <div className="form-group">
-                                    <label htmlFor="contentFile">
-                                        Upload {contentFormData.type === 'video' ? 'Video' : 'Document'}
+                                    <label htmlFor="contentFile" className="file-upload-label">
+                                        <FaFileUpload />
+                                        <span>Choose File</span>
                                     </label>
-                                    <div className="file-upload">
-                                        <input
-                                            type="file"
-                                            id="contentFile"
-                                            onChange={(e) => setContentFormData({ ...contentFormData, file: e.target.files[0] })}
-                                            accept={contentFormData.type === 'video' ? 'video/*' : 'application/pdf,application/msword'}
-                                        />
-                                        <label htmlFor="contentFile" className="file-upload-label">
-                                            <FaFileUpload />
-                                            <span>Choose File</span>
-                                        </label>
-                                        {contentFormData.file && (
-                                            <span className="file-name">{contentFormData.file.name}</span>
-                                        )}
-                                    </div>
+                                    {contentFormData.file && (
+                                        <span className="file-name">{contentFormData.file.name}</span>
+                                    )}
                                 </div>
-                            )}
-                            <div className="form-actions">
-                                <button
-                                    type="button"
-                                    className="cancel-button"
-                                    onClick={() => setEditingContentId(null)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="save-button"
-                                    onClick={saveContent}
-                                >
-                                    Save Content
-                                </button>
                             </div>
+                        )}
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                className="cancel-button"
+                                onClick={() => setEditingContentId(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="save-button"
+                                onClick={saveContent}
+                            >
+                                Save Content
+                            </button>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {/* Quiz Editor */}
-                    {editingQuizId && (
-                        <div className="quiz-editor">
-                            <h4>{quizFormData.title ? `Edit: ${quizFormData.title}` : 'New Quiz'}</h4>
+                {/* Quiz Editor */}
+                {editingQuizId && (
+                    <div className="quiz-editor">
+                        <h4>{quizFormData.title ? `Edit: ${quizFormData.title}` : 'New Quiz'}</h4>
+                        <div className="form-group">
+                            <label htmlFor="quizTitle">Quiz Title</label>
+                            <input
+                                type="text"
+                                id="quizTitle"
+                                value={quizFormData.title}
+                                onChange={(e) => setQuizFormData({ ...quizFormData, title: e.target.value })}
+                                placeholder="Enter quiz title"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="quizDescription">Description (Optional)</label>
+                            <textarea
+                                id="quizDescription"
+                                value={quizFormData.description}
+                                onChange={(e) => setQuizFormData({ ...quizFormData, description: e.target.value })}
+                                placeholder="Enter quiz description"
+                                rows={3}
+                            />
+                        </div>
+
+                        {/* Questions List */}
+                        <div className="questions-list">
+                            <h5>Questions ({quizFormData.questions.length})</h5>
+                            {quizFormData.questions.map((q, index) => (
+                                <div key={index} className="question-item">
+                                    <h6>Question {index + 1}: {q.question}</h6>
+                                    <ul className="options-list">
+                                        {q.options.map((option, optIndex) => (
+                                            <li key={optIndex} className={optIndex === q.correctAnswer ? 'correct' : ''}>
+                                                {option} {optIndex === q.correctAnswer && ' (Correct)'}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button
+                                        type="button"
+                                        className="remove-question"
+                                        onClick={() => removeQuestion(index)}
+                                    >
+                                        <FaTrash />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add Question Form */}
+                        <div className="add-question-form">
+                            <h5>Add New Question</h5>
                             <div className="form-group">
-                                <label htmlFor="quizTitle">Quiz Title</label>
+                                <label htmlFor="questionText">Question</label>
                                 <input
                                     type="text"
-                                    id="quizTitle"
-                                    value={quizFormData.title}
-                                    onChange={(e) => setQuizFormData({ ...quizFormData, title: e.target.value })}
-                                    placeholder="Enter quiz title"
+                                    id="questionText"
+                                    value={currentQuestion.question}
+                                    onChange={handleQuestionChange}
+                                    placeholder="Enter question"
                                 />
                             </div>
-                            <div className="form-group">
-                                <label htmlFor="quizDescription">Description (Optional)</label>
-                                <textarea
-                                    id="quizDescription"
-                                    value={quizFormData.description}
-                                    onChange={(e) => setQuizFormData({ ...quizFormData, description: e.target.value })}
-                                    placeholder="Enter quiz description"
-                                    rows={3}
-                                />
-                            </div>
-
-                            {/* Questions List */}
-                            <div className="questions-list">
-                                <h5>Questions ({quizFormData.questions.length})</h5>
-                                {quizFormData.questions.map((q, index) => (
-                                    <div key={index} className="question-item">
-                                        <h6>Question {index + 1}: {q.question}</h6>
-                                        <ul className="options-list">
-                                            {q.options.map((option, optIndex) => (
-                                                <li key={optIndex} className={optIndex === q.correctAnswer ? 'correct' : ''}>
-                                                    {option} {optIndex === q.correctAnswer && ' (Correct)'}
-                                                </li>
-                                            ))}
-                                        </ul>
+                            <div className="options-container">
+                                <label>Options (select one as correct)</label>
+                                {currentQuestion.options.map((option, index) => (
+                                    <div key={index} className="option-row">
+                                        <input
+                                            type="text"
+                                            value={option}
+                                            onChange={(e) => handleOptionChange(index, e.target.value)}
+                                            placeholder={`Option ${index + 1}`}
+                                        />
                                         <button
                                             type="button"
-                                            className="remove-question"
-                                            onClick={() => removeQuestion(index)}
+                                            className={`correct-toggle ${index === currentQuestion.correctAnswer ? 'active' : ''}`}
+                                            onClick={() => setCorrectAnswer(index)}
                                         >
-                                            <FaTrash />
+                                            {index === currentQuestion.correctAnswer ? 'Correct' : 'Mark as Correct'}
                                         </button>
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Add Question Form */}
-                            <div className="add-question-form">
-                                <h5>Add New Question</h5>
-                                <div className="form-group">
-                                    <label htmlFor="questionText">Question</label>
-                                    <input
-                                        type="text"
-                                        id="questionText"
-                                        value={currentQuestion.question}
-                                        onChange={handleQuestionChange}
-                                        placeholder="Enter question"
-                                    />
-                                </div>
-                                <div className="options-container">
-                                    <label>Options (select one as correct)</label>
-                                    {currentQuestion.options.map((option, index) => (
-                                        <div key={index} className="option-row">
-                                            <input
-                                                type="text"
-                                                value={option}
-                                                onChange={(e) => handleOptionChange(index, e.target.value)}
-                                                placeholder={`Option ${index + 1}`}
-                                            />
-                                            <button
-                                                type="button"
-                                                className={`correct-toggle ${index === currentQuestion.correctAnswer ? 'active' : ''}`}
-                                                onClick={() => setCorrectAnswer(index)}
-                                            >
-                                                {index === currentQuestion.correctAnswer ? 'Correct' : 'Mark as Correct'}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button
-                                    type="button"
-                                    className="add-question-button"
-                                    onClick={addQuestionToQuiz}
-                                >
-                                    <FaPlus />
-                                    <span>Add Question</span>
-                                </button>
-                            </div>
-
-                            <div className="form-actions">
-                                <button
-                                    type="button"
-                                    className="cancel-button"
-                                    onClick={() => setEditingQuizId(null)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="save-button"
-                                    onClick={saveQuiz}
-                                >
-                                    Save Quiz
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                className="add-question-button"
+                                onClick={addQuestionToQuiz}
+                            >
+                                <FaPlus />
+                                <span>Add Question</span>
+                            </button>
                         </div>
-                    )}
 
-                    {/* Modules List with Drag and Drop */}
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <Droppable droppableId="modules">
-                            {(provided) => (
-                                <div
-                                    {...provided.droppableProps}
-                                    ref={provided.innerRef}
-                                    className="modules-list"
-                                >
-                                    {modules.length === 0 ? (
-                                        <div className="no-modules">
-                                            <p>No modules yet. Click "Add Module" to create your first module.</p>
-                                        </div>
-                                    ) : (
-                                        modules.map((module, index) => (
-                                            <Draggable key={module._id} draggableId={module._id} index={index}>
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        className="module-card"
-                                                    >
-                                                        <div className="module-header">
-                                                            <div {...provided.dragHandleProps} className="drag-handle">
-                                                                <FaGripVertical />
-                                                            </div>
-                                                            <h4>
-                                                                {index + 1}. {module.title}
-                                                            </h4>
-                                                            <div className="module-actions">
-                                                                <button onClick={() => startEditModule(module)}>
-                                                                    <FaEdit />
-                                                                </button>
-                                                                <button onClick={() => deleteModule(module._id)}>
-                                                                    <FaTrash />
-                                                                </button>
-                                                            </div>
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                className="cancel-button"
+                                onClick={() => setEditingQuizId(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="save-button"
+                                onClick={saveQuiz}
+                            >
+                                Save Quiz
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modules List with Drag and Drop */}
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="modules">
+                        {(provided) => (
+                            <div
+                                {...provided.droppableProps}
+                                ref={provided.innerRef}
+                                className="modules-list"
+                            >
+                                {modules.length === 0 ? (
+                                    <div className="no-modules">
+                                        <p>No modules yet. Click "Add Module" to create your first module.</p>
+                                    </div>
+                                ) : (
+                                    modules.map((module, index) => (
+                                        <Draggable key={module._id} draggableId={module._id} index={index}>
+                                            {(provided) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    className="module-card"
+                                                >
+                                                    <div className="module-header">
+                                                        <div {...provided.dragHandleProps} className="drag-handle">
+                                                            <FaGripVertical />
                                                         </div>
-
-                                                        {module.description && (
-                                                            <p className="module-description">{module.description}</p>
-                                                        )}
-
-                                                        {/* Module Content */}
-                                                        <div className="module-content">
-                                                            <h5>Content</h5>
-                                                            <div className="content-list">
-                                                                {module.content && module.content.length > 0 ? (
-                                                                    content
-                                                                        .filter(item => module.content.includes(item._id))
-                                                                        .map(item => renderContentItem(item, module._id))
-                                                                ) : (
-                                                                    <p className="no-items">No content in this module yet.</p>
-                                                                )}
-                                                                <button
-                                                                    className="add-content-button"
-                                                                    onClick={() => addContentToModule(module._id)}
-                                                                >
-                                                                    <FaPlus />
-                                                                    <span>Add Content</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Module Quiz */}
-                                                        <div className="module-quiz">
-                                                            <h5>Quiz</h5>
-                                                            {module.quiz ? (
-                                                                <div className="quiz-container">
-                                                                    {renderQuizItem(quizzes.find(q => q._id === module.quiz), module._id)}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="no-quiz">
-                                                                    <p>No quiz for this module yet.</p>
-                                                                    <button
-                                                                        className="add-quiz-button"
-                                                                        onClick={() => addQuizToModule(module._id)}
-                                                                    >
-                                                                        <FaPlus />
-                                                                        <span>Add Quiz</span>
-                                                                    </button>
-                                                                </div>
-                                                            )}
+                                                        <h4>
+                                                            {index + 1}. {module.title}
+                                                        </h4>
+                                                        <div className="module-actions">
+                                                            <button onClick={() => startEditModule(module)}>
+                                                                <FaEdit />
+                                                            </button>
+                                                            <button onClick={() => deleteModule(module._id)}>
+                                                                <FaTrash />
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                )}
-                                            </Draggable>
-                                        ))
-                                    )}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
-                </div>
+
+                                                    {module.description && (
+                                                        <p className="module-description">{module.description}</p>
+                                                    )}
+
+                                                    {/* Module Content */}
+                                                    <div className="module-content">
+                                                        <h5>Content</h5>
+                                                        <div className="content-list">
+                                                            {module.content && module.content.length > 0 ? (
+                                                                content
+                                                                    .filter(item => module.content.includes(item._id))
+                                                                    .map(item => renderContentItem(item, module._id))
+                                                            ) : (
+                                                                <p className="no-items">No content in this module yet.</p>
+                                                            )}
+                                                            <button
+                                                                className="add-content-button"
+                                                                onClick={() => addContentToModule(module._id)}
+                                                            >
+                                                                <FaPlus />
+                                                                <span>Add Content</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Module Quiz */}
+                                                    <div className="module-quiz">
+                                                        <h5>Quiz</h5>
+                                                        {module.quiz ? (
+                                                            <div className="quiz-container">
+                                                                {renderQuizItem(quizzes.find(q => q._id === module.quiz), module._id)}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="no-quiz">
+                                                                <p>No quiz for this module yet.</p>
+                                                                <button
+                                                                    className="add-quiz-button"
+                                                                    onClick={() => addQuizToModule(module._id)}
+                                                                >
+                                                                    <FaPlus />
+                                                                    <span>Add Quiz</span>
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ))
+                                )}
+                                {provided.placeholder}
+                            </div>
+                        )}
+                    </Droppable>
+                </DragDropContext>
+            </div>
             ) : (
-                // Standalone Content and Quizzes
-                <div className="standalone-curriculum">
-                    {/* Standalone Content */}
-                    <div className="content-section">
-                        <div className="section-header">
-                            <h3>Course Content</h3>
-                            <button
-                                type="button"
-                                className="add-button"
-                                onClick={addStandaloneContent}
-                            >
-                                <FaPlus />
-                                <span>Add Content</span>
-                            </button>
-                        </div>
-
-                        <div className="content-list">
-                            {content.length === 0 ? (
-                                <div className="no-content">
-                                    <p>No content yet. Click "Add Content" to create your first content item.</p>
-                                </div>
-                            ) : (
-                                content.map(item => renderContentItem(item))
-                            )}
-                        </div>
+            // Standalone Content and Quizzes
+            <div className="standalone-curriculum">
+                {/* Standalone Content */}
+                <div className="content-section">
+                    <div className="section-header">
+                        <h3>Course Content</h3>
+                        <button
+                            type="button"
+                            className="add-button"
+                            onClick={addStandaloneContent}
+                        >
+                            <FaPlus />
+                            <span>Add Content</span>
+                        </button>
                     </div>
 
-                    {/* Standalone Quizzes */}
-                    <div className="quizzes-section">
-                        <div className="section-header">
-                            <h3>Course Quizzes</h3>
-                            <button
-                                type="button"
-                                className="add-button"
-                                onClick={addStandaloneQuiz}
-                            >
-                                <FaPlus />
-                                <span>Add Quiz</span>
-                            </button>
-                        </div>
-
-                        <div className="quizzes-list">
-                            {quizzes.length === 0 ? (
-                                <div className="no-quizzes">
-                                    <p>No quizzes yet. Click "Add Quiz" to create your first quiz.</p>
-                                </div>
-                            ) : (
-                                quizzes.map(quiz => renderQuizItem(quiz))
-                            )}
-                        </div>
+                    <div className="content-list">
+                        {content.length === 0 ? (
+                            <div className="no-content">
+                                <p>No content yet. Click "Add Content" to create your first content item.</p>
+                            </div>
+                        ) : (
+                            content.map(item => renderContentItem(item))
+                        )}
                     </div>
                 </div>
-            )}
+
+                {/* Standalone Quizzes */}
+                <div className="quizzes-section">
+                    <div className="section-header">
+                        <h3>Course Quizzes</h3>
+                        <button
+                            type="button"
+                            className="add-button"
+                            onClick={addStandaloneQuiz}
+                        >
+                            <FaPlus />
+                            <span>Add Quiz</span>
+                        </button>
+                    </div>
+
+                    <div className="quizzes-list">
+                        {quizzes.length === 0 ? (
+                            <div className="no-quizzes">
+                                <p>No quizzes yet. Click "Add Quiz" to create your first quiz.</p>
+                            </div>
+                        ) : (
+                            quizzes.map(quiz => renderQuizItem(quiz))
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

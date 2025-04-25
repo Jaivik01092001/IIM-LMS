@@ -330,19 +330,13 @@ exports.createCourse = async (req, res) => {
       title,
       description,
       duration,
-      category,
-      subcategory,
       language,
-      targetAudience,
       level,
-      tags,
       thumbnailUrl,
       hasModules,
       modules,
       content,
       quizzes,
-      learningOutcomes,
-      requirements,
       status,
       isDraft
     } = req.body;
@@ -367,9 +361,6 @@ exports.createCourse = async (req, res) => {
     const parsedModules = tryParse(modules);
     const parsedContent = tryParse(content);
     const parsedQuizzes = tryParse(quizzes);
-    const parsedTags = tryParse(tags);
-    const parsedLearningOutcomes = tryParse(learningOutcomes);
-    const parsedRequirements = tryParse(requirements);
 
     // 🔎 Parse contentFileIds
     let contentFileIds = req.body.contentFileIds || [];
@@ -458,19 +449,13 @@ exports.createCourse = async (req, res) => {
       title,
       description,
       duration,
-      category,
-      subcategory,
       language: language || 'en',
-      targetAudience,
       level: level || 'beginner',
-      tags: parsedTags,
       thumbnail,
-      hasModules: hasModules === 'true' || hasModules === true,
+      hasModules: true, // Always use modules
       modules: [],
       content: contentItems.map(item => item.dbId),
       quizzes: [],
-      learningOutcomes: parsedLearningOutcomes,
-      requirements: parsedRequirements,
       status: status !== undefined ? Number(status) : 1,
       isDraft: isDraft === 'true' || isDraft === true,
       creator: req.user.id
@@ -565,19 +550,12 @@ exports.updateCourse = async (req, res) => {
       title,
       description,
       duration,
-      category,
-      subcategory,
       language,
-      targetAudience,
       level,
-      tags,
       thumbnailUrl,
-      hasModules,
       modules,
       content,
       quizzes,
-      learningOutcomes,
-      requirements,
       status,
       isDraft
     } = req.body;
@@ -594,10 +572,7 @@ exports.updateCourse = async (req, res) => {
     if (title) course.title = title;
     if (description) course.description = description;
     if (duration) course.duration = duration;
-    if (category) course.category = category;
-    if (subcategory) course.subcategory = subcategory;
     if (language) course.language = language;
-    if (targetAudience) course.targetAudience = targetAudience;
     if (level) course.level = level;
 
     // Handle thumbnail update
@@ -607,35 +582,10 @@ exports.updateCourse = async (req, res) => {
       course.thumbnail = thumbnailUrl;
     }
 
-    // Parse and update array fields with proper error handling
-    // Parse JSON strings for arrays if they are strings
-    if (tags) {
-      try {
-        course.tags = typeof tags === 'string' ? JSON.parse(tags) : tags;
-      } catch (err) {
-        console.error("Error parsing tags JSON:", err);
-      }
-    }
+    // No array fields to parse anymore
 
-    if (learningOutcomes) {
-      try {
-        course.learningOutcomes = typeof learningOutcomes === 'string' ? JSON.parse(learningOutcomes) : learningOutcomes;
-      } catch (err) {
-        console.error("Error parsing learningOutcomes JSON:", err);
-      }
-    }
-
-    if (requirements) {
-      try {
-        course.requirements = typeof requirements === 'string' ? JSON.parse(requirements) : requirements;
-      } catch (err) {
-        console.error("Error parsing requirements JSON:", err);
-      }
-    }
-
-    if (hasModules !== undefined) {
-      course.hasModules = hasModules === 'true' || hasModules === true;
-    }
+    // Always use modules
+    course.hasModules = true;
 
     if (modules) {
       try {

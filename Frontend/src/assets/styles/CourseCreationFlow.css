@@ -741,7 +741,7 @@ textarea:focus {
   margin-top: 30px;
 }
 
-.back-button, .next-button, .submit-button {
+.back-button, .next-button, .submit-button, .save-draft-button {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -781,6 +781,17 @@ textarea:focus {
 
 .submit-button:hover {
   background-color: #059669;
+}
+
+.save-draft-button {
+  background-color: #f59e0b;
+  border: none;
+  color: white;
+  margin-right: 10px;
+}
+
+.save-draft-button:hover {
+  background-color: #d97706;
 }
 
 /* Loading spinner */
@@ -953,12 +964,12 @@ textarea:focus {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .review-content {
     flex-direction: column;
   }
-  
+
   .thumbnail-container {
     flex-direction: column;
   }
-} 
+}

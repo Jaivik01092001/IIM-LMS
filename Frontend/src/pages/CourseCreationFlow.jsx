@@ -35,24 +35,16 @@ const CourseCreationFlow = () => {
         title: "",
         shortDescription: "",
         language: "en",
-        category: "",
-        subcategory: "",
-        tags: [],
         thumbnail: "",
 
         // Step 2: Curriculum
-        hasModules: false,
+        hasModules: true, // Always use modules
         modules: [], // Array of { title, description, content: [], quiz: null }
-        content: [], // For non-module courses
-        quizzes: [], // For non-module courses
+        content: [], // For legacy support
+        quizzes: [], // For legacy support
 
-        // Step 3: Course Settings
+        // Step 3: Course Settings & Status
         duration: "",
-        targetAudience: "",
-        learningOutcomes: [],
-        requirements: [],
-
-        // Step 4: Access & Status
         status: 1, // 1=active, 0=inactive
         isDraft: true, // true=draft, false=published
         enrolledUsers: []
@@ -68,30 +60,19 @@ const CourseCreationFlow = () => {
     // Populate form with existing course data in edit mode
     useEffect(() => {
         if (isEditMode && currentCourse) {
-            // Extract tags as array if stored as string
-            const tagsArray = Array.isArray(currentCourse.tags)
-                ? currentCourse.tags
-                : (currentCourse.tags || "").split(",").filter(tag => tag.trim());
-
             // Set initial form data from existing course
             setCourseData({
                 title: currentCourse.title || "",
                 shortDescription: currentCourse.description?.substring(0, 200) || "",
                 language: currentCourse.language || "en",
-                category: currentCourse.category || "",
-                subcategory: currentCourse.subcategory || "",
-                tags: tagsArray,
                 thumbnail: currentCourse.thumbnail || "",
 
-                hasModules: currentCourse.hasModules || false,
+                hasModules: true, // Always use modules
                 modules: currentCourse.modules || [],
                 content: currentCourse.content || [],
                 quizzes: currentCourse.quizzes || [],
 
                 duration: currentCourse.duration || "",
-                targetAudience: currentCourse.targetAudience || "",
-                learningOutcomes: currentCourse.learningOutcomes || [],
-                requirements: currentCourse.requirements || [],
 
                 status: currentCourse.status ?? 1,
                 isDraft: currentCourse.isDraft ?? true,
@@ -107,7 +88,7 @@ const CourseCreationFlow = () => {
 
     // Navigate between steps
     const handleNext = () => {
-        setActiveStep((prevStep) => Math.min(prevStep + 1, 4));
+        setActiveStep((prevStep) => Math.min(prevStep + 1, 3));
     };
 
     const handleBack = () => {
@@ -137,29 +118,17 @@ const CourseCreationFlow = () => {
         // Basic validation for required fields
         if (!courseData.title) errors.title = "Course title is required";
         if (!courseData.shortDescription) errors.shortDescription = "Short description is required";
-        if (!courseData.category) errors.category = "Category is required";
         if (!thumbnailFile && !courseData.thumbnail) errors.thumbnail = "Thumbnail is required";
 
         // Curriculum validation
-        if (courseData.hasModules) {
-            if (!courseData.modules || courseData.modules.length === 0) {
-                errors.modules = "At least one module is required";
-            }
-        } else {
-            if (!courseData.content || courseData.content.length === 0) {
-                errors.content = "At least one content item is required";
-            }
-        }
-
-        // Learning outcomes validation
-        if (!courseData.learningOutcomes || courseData.learningOutcomes.length === 0) {
-            errors.learningOutcomes = "At least one learning outcome is required";
+        if (!courseData.modules || courseData.modules.length === 0) {
+            errors.modules = "At least one module is required";
         }
 
         // If there are validation errors, display them and stop submission
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
-            setActiveStep(4); // Go to review step to show errors
+            setActiveStep(3); // Go to review step to show errors
             return;
         }
 
@@ -177,13 +146,10 @@ const CourseCreationFlow = () => {
             formData.append("title", courseData.title || "");
             formData.append("description", courseData.shortDescription || "");
             formData.append("language", courseData.language || "en");
-            formData.append("category", courseData.category || "");
-            formData.append("subcategory", courseData.subcategory || "");
             formData.append("duration", courseData.duration || "");
-            formData.append("targetAudience", courseData.targetAudience || "");
             formData.append("status", courseData.status !== undefined ? courseData.status : 1);
             formData.append("isDraft", courseData.isDraft !== undefined ? courseData.isDraft : true);
-            formData.append("hasModules", courseData.hasModules !== undefined ? courseData.hasModules : false);
+            formData.append("hasModules", true); // Always use modules
 
             // Add arrays as JSON strings
             // Use a helper function to safely stringify arrays
@@ -195,10 +161,6 @@ const CourseCreationFlow = () => {
                     return "[]";
                 }
             };
-
-            formData.append("tags", safeStringify(courseData.tags));
-            formData.append("learningOutcomes", safeStringify(courseData.learningOutcomes));
-            formData.append("requirements", safeStringify(courseData.requirements));
 
             // Handle modules - we need to process quizzes and remove file objects before stringifying
             const modulesForSubmission = courseData.modules.map(module => {
@@ -312,13 +274,6 @@ const CourseCreationFlow = () => {
                 );
             case 3:
                 return (
-                    <AccessSettingsStep
-                        courseData={courseData}
-                        updateCourseData={updateCourseData}
-                    />
-                );
-            case 4:
-                return (
                     <ReviewSubmitStep
                         courseData={courseData}
                         formErrors={formErrors}
@@ -335,7 +290,6 @@ const CourseCreationFlow = () => {
         "Course Info + Media",
         "Curriculum",
         "Course Settings",
-        "Access & Status",
         "Review & Submit"
     ];
 
@@ -383,32 +337,60 @@ const CourseCreationFlow = () => {
                     </button>
                 )}
 
-                {activeStep < 4 && (
-                    <button
-                        className="next-button"
-                        onClick={handleNext}
-                        disabled={isSubmitting}
-                    >
-                        <span>Next</span>
-                        <FaArrowRight />
-                    </button>
+                {activeStep < 3 && (
+                    <>
+                        <button
+                            className="save-draft-button"
+                            onClick={() => {
+                                // Set isDraft to true and submit
+                                updateCourseData({ isDraft: true });
+                                handleSubmit();
+                            }}
+                            disabled={isSubmitting}
+                        >
+                            <span>Save Draft</span>
+                        </button>
+
+                        <button
+                            className="next-button"
+                            onClick={handleNext}
+                            disabled={isSubmitting}
+                        >
+                            <span>Next</span>
+                            <FaArrowRight />
+                        </button>
+                    </>
                 )}
 
-                {activeStep === 4 && (
-                    <button
-                        className="submit-button"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? (
-                            <span className="loading-spinner"></span>
-                        ) : (
-                            <>
-                                <span>{isEditMode ? "Update Course" : "Create Course"}</span>
-                                <FaCheck />
-                            </>
-                        )}
-                    </button>
+                {activeStep === 3 && (
+                    <>
+                        <button
+                            className="save-draft-button"
+                            onClick={() => {
+                                // Set isDraft to true and submit
+                                updateCourseData({ isDraft: true });
+                                handleSubmit();
+                            }}
+                            disabled={isSubmitting}
+                        >
+                            <span>Save Draft</span>
+                        </button>
+
+                        <button
+                            className="submit-button"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <span className="loading-spinner"></span>
+                            ) : (
+                                <>
+                                    <span>{isEditMode ? "Update Course" : "Create Course"}</span>
+                                    <FaCheck />
+                                </>
+                            )}
+                        </button>
+                    </>
                 )}
             </div>
         </div>
