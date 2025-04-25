@@ -37,7 +37,7 @@ exports.createUniversity = async (req, res, next) => {
       password: hashedPassword,
       role: 'university',
       name,
-      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+      phoneNumber,
       roleRef: roleId || undefined, // Assign role if provided
       profile: {
         address,
@@ -1181,5 +1181,161 @@ exports.getAllUsers = async (_, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users', error: error.message });
+  }
+};
+// Get all educators
+exports.getAllEducators = async (_, res) => {
+  try {
+    // Return all educators regardless of status or university
+    const educators = await User.find({ role: 'educator' })
+      .populate('university', 'name category')
+      .populate('roleRef', 'name') // Populate the role reference
+      .select('-password');
+    res.json(educators);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving educators', error: error.message });
+  }
+};
+
+// Create educator
+exports.createEducator = async (req, res, next) => {
+  try {
+    const {
+      email,
+      password,
+      name,
+      roleId,
+      phoneNumber,
+      address,
+      zipcode,
+      state,
+      category,
+      schoolName
+    } = req.body;
+
+    console.log('Admin creating educator with roleId:', roleId);
+
+    // Generate a random default password if none is provided
+    const defaultPassword = Math.random().toString(36).slice(-8);
+    const passwordToHash = password || defaultPassword;
+
+    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
+
+    // Prepare profile object
+    const profile = {
+      address,
+      zipcode,
+      state,
+      category,
+      schoolName,
+      socialLinks: {}
+    };
+
+    // Add avatar if profile image was uploaded
+    if (req.file) {
+      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    // Determine the role based on roleId
+    let roleName = 'educator'; // Default role
+    if (roleId) {
+      const Role = require('../models/Role');
+      const role = await Role.findById(roleId);
+      if (role) {
+        roleName = role.name.toLowerCase(); // Convert to lowercase
+        console.log('Admin controller - Using role name:', roleName);
+      }
+    }
+
+    const educator = new User({
+      email,
+      password: hashedPassword,
+      role: roleName, // Use the determined role name
+      name,
+      phoneNumber,
+      roleRef: roleId || undefined, // Assign role if provided
+      profile
+    });
+
+    await educator.save();
+    res.json(educator);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get educator by ID
+exports.getEducatorById = async (req, res) => {
+  try {
+    const educator = await User.findOne({
+      _id: req.params.id,
+      role: 'educator'
+    })
+    .populate('roleRef', 'name') // Populate the role reference
+    .select('-password');
+
+    if (!educator) {
+      return res.status(404).json({ message: 'Educator not found' });
+    }
+
+    console.log('Educator with populated roleRef:', educator);
+    res.json(educator);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving educator', error: error.message });
+  }
+};
+
+// Update educator
+exports.updateEducator = async (req, res) => {
+  try {
+    const { name, email, phoneNumber, address, zipcode, state, status, category, schoolName, roleId } = req.body;
+    const educator = await User.findById(req.params.id);
+
+    if (!educator) {
+      return res.status(404).json({ message: 'Educator not found' });
+    }
+
+    // Only update fields that are provided
+    if (name) educator.name = name;
+    if (email) educator.email = email;
+    if (phoneNumber) educator.phoneNumber = phoneNumber;
+    if (status !== undefined) educator.status = Number(status);
+
+    // Update roleRef and role if roleId is provided
+    if (roleId) {
+      educator.roleRef = roleId;
+      console.log('Admin controller - Updated roleRef:', roleId);
+
+      // Fetch the role to get its name
+      const Role = require('../models/Role');
+      const role = await Role.findById(roleId);
+      if (role) {
+        // Update the role field based on the role name (convert to lowercase)
+        educator.role = role.name.toLowerCase();
+        console.log('Admin controller - Updated role to:', educator.role);
+      }
+    }
+
+    // Initialize profile if it doesn't exist
+    if (!educator.profile) {
+      educator.profile = {};
+    }
+
+    // Update profile fields if provided
+    if (address) educator.profile.address = address;
+    if (zipcode) educator.profile.zipcode = zipcode;
+    if (state) educator.profile.state = state;
+    if (category) educator.profile.category = category;
+    if (schoolName) educator.profile.schoolName = schoolName;
+
+    // Handle profile image upload
+    if (req.file) {
+      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    await educator.save();
+    res.json(educator);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating educator', error: error.message });
   }
 };

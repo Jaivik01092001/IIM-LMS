@@ -195,10 +195,7 @@ const EducatorDetails = () => {
               <label>Role:</label>
               <span>{educatorData.role ? educatorData.role.charAt(0).toUpperCase() + educatorData.role.slice(1) : "N/A"}</span>
             </div>
-            <div className="info-row">
-              <label>Role ID:</label>
-              <span title="Reference to role permissions">{educatorData.roleRef}</span>
-            </div>
+           
             <div className="info-row">
               <label>University ID:</label>
               <span title="Reference to associated university/school">{educatorData.university}</span>

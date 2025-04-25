@@ -18,6 +18,19 @@ export const getEducatorById = async (id) => {
   return response.data;
 };
 
+export const createEducator = async (data) => {
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  const response = await axios.post(`${API_URL}/admin/educators`, data, config);
+  return response.data;
+};
+
 export const updateEducator = async (id, data) => {
   // Use different config for FormData to ensure correct content-type
   const config = {

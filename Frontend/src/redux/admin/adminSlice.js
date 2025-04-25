@@ -36,6 +36,26 @@ export const getEducatorByIdThunk = createAsyncThunk(
   }
 );
 
+export const createEducatorThunk = createAsyncThunk(
+  'admin/createEducator',
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      console.log('Creating educator with formData:', formData);
+      const data = await api.createEducator(formData);
+      showSuccessToast(data.msg || 'Educator created successfully');
+
+      // Refresh the educators list
+      dispatch(getEducatorsThunk());
+
+      return data;
+    } catch (error) {
+      console.error('Error in createEducatorThunk:', error);
+      showErrorToast(error.response?.data?.message || 'Failed to create educator');
+      return rejectWithValue(error.response?.data?.message || 'Failed to create educator');
+    }
+  }
+);
+
 export const updateEducatorThunk = createAsyncThunk(
   'admin/updateEducator',
   async (payload, { rejectWithValue, dispatch }) => {
@@ -373,6 +393,9 @@ const adminSlice = createSlice({
       .addCase(getUsersThunk.fulfilled, (state, action) => { state.users = action.payload; })
       .addCase(getEducatorsThunk.fulfilled, (state, action) => { state.educators = action.payload; })
       .addCase(getEducatorByIdThunk.fulfilled, (state, action) => { state.currentEducator = action.payload; })
+      .addCase(createEducatorThunk.fulfilled, (state, action) => {
+        if (action.payload) state.educators.push(action.payload);
+      })
       .addCase(updateEducatorThunk.fulfilled, (state, action) => { state.currentEducator = action.payload; })
       .addCase(getUniversitiesThunk.fulfilled, (state, action) => { state.universities = action.payload; })
       .addCase(getUniversityByIdThunk.fulfilled, (state, action) => { state.currentUniversity = action.payload; })

@@ -9,7 +9,14 @@ const catchAsync = require('../utils/catchAsync');
  * @access Private (Admin only)
  */
 exports.getStaffMembers = catchAsync(async (req, res, next) => {
-  const staffMembers = await User.find({ role: 'admin' }).populate('roleRef');
+  // Find the Super Admin role
+  const Role = require('../models/Role');
+  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+
+  // Find all users with the Super Admin role
+  const staffMembers = await User.find({
+    roleRef: superAdminRole ? superAdminRole._id : null
+  }).populate('roleRef');
 
   res.status(200).json({
     status: 'success',
@@ -24,9 +31,14 @@ exports.getStaffMembers = catchAsync(async (req, res, next) => {
  * @access Private (Admin only)
  */
 exports.getStaffMemberById = catchAsync(async (req, res, next) => {
+  // Find the Super Admin role
+  const Role = require('../models/Role');
+  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+
   const staffMember = await User.findById(req.params.id).populate('roleRef');
 
-  if (!staffMember || staffMember.role !== 'admin') {
+  // Check if the user exists and has the Super Admin role
+  if (!staffMember || (superAdminRole && staffMember.roleRef?.toString() !== superAdminRole._id.toString())) {
     return next(new AppError('No staff member found with that ID', 404));
   }
 
@@ -72,8 +84,8 @@ exports.createStaffMember = catchAsync(async (req, res, next) => {
     name,
     email,
     password: hashedPassword,
-    role: 'admin', // Set role to admin for staff members
-    phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+    role: superAdminRole.name.toLowerCase(), // Use the lowercase role name from the Role model
+    phoneNumber, // No default phone number, must be provided by user
     roleRef: superAdminRole._id, // Always assign Super Admin role
   });
 
@@ -131,6 +143,7 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
       name: name || staffMember.name,
       email: email || staffMember.email,
       phoneNumber: phoneNumber || staffMember.phoneNumber,
+      role: superAdminRole.name.toLowerCase(), // Use the lowercase role name from the Role model
       roleRef: superAdminRole._id // Always use Super Admin role
     },
     { new: true, runValidators: true }
@@ -148,9 +161,15 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
  * @access Private (Admin only)
  */
 exports.deleteStaffMember = catchAsync(async (req, res, next) => {
+  // Find the Super Admin role
+  const Role = require('../models/Role');
+  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+
   // Check if staff member exists
-  const staffMember = await User.findById(req.params.id);
-  if (!staffMember || staffMember.role !== 'admin') {
+  const staffMember = await User.findById(req.params.id).populate('roleRef');
+
+  // Check if the user exists and has the Super Admin role
+  if (!staffMember || (superAdminRole && staffMember.roleRef?.toString() !== superAdminRole._id.toString())) {
     return next(new AppError('No staff member found with that ID', 404));
   }
 
@@ -171,9 +190,15 @@ exports.deleteStaffMember = catchAsync(async (req, res, next) => {
 exports.updateStaffMemberPassword = catchAsync(async (req, res, next) => {
   const { password } = req.body;
 
+  // Find the Super Admin role
+  const Role = require('../models/Role');
+  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+
   // Check if staff member exists
-  const staffMember = await User.findById(req.params.id);
-  if (!staffMember || staffMember.role !== 'admin') {
+  const staffMember = await User.findById(req.params.id).populate('roleRef');
+
+  // Check if the user exists and has the Super Admin role
+  if (!staffMember || (superAdminRole && staffMember.roleRef?.toString() !== superAdminRole._id.toString())) {
     return next(new AppError('No staff member found with that ID', 404));
   }
 

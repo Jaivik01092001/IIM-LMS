@@ -213,28 +213,7 @@ const seedDatabase = async () => {
         console.log('Courses seeded');
 
         // Insert Universities
-        await University.insertMany([
-            {
-                name: 'University of Technology',
-                email: 'info@uot.edu',
-                phone: '+919876543210',
-                address: '123 University Road, Ahmedabad',
-                zipcode: '380001',
-                state: 'Gujarat',
-                contactPerson: 'Dr. Patel',
-                educators: []
-            },
-            {
-                name: 'Global Institute of Sciences',
-                email: 'contact@gis.edu',
-                phone: '+919876543211',
-                address: '456 Institute Avenue, Mumbai',
-                zipcode: '400001',
-                state: 'Maharashtra',
-                contactPerson: 'Dr. Sharma',
-                educators: []
-            },
-        ]);
+       
 
         // Seed Permissions
         if (permissionCount === 0) {

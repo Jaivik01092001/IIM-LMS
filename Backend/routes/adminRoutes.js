@@ -1,7 +1,6 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
-const upload = require('../middleware/uploads'); // Changed from upload to uploads for consistency
-const uploads = require('../middleware/uploads');
+const upload = require('../middleware/uploads'); // For file uploads
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 
@@ -11,9 +10,10 @@ router.use(protect);
 
 // User routes
 router.get('/users', adminController.getAllUsers);
-// router.get('/educators', adminController.getAllEducators);
-// router.get('/educator/:id', adminController.getEducatorById);
-// router.put('/educator/:id', upload.single('profileImage'), adminController.updateEducator);
+router.get('/educators', adminController.getAllEducators);
+router.post('/educators', upload.single('profileImage'), adminController.createEducator);
+router.get('/educator/:id', adminController.getEducatorById);
+router.put('/educator/:id', upload.single('profileImage'), adminController.updateEducator);
 
 // University routes
 router.get('/universities', adminController.getUniversities);

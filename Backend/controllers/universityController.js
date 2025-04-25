@@ -39,16 +39,32 @@ exports.createEducator = async (req, res, next) => {
       profile.avatar = `/uploads/profiles/${req.file.filename}`;
     }
 
+    console.log('University controller - Creating educator with roleId:', roleId);
+
+    // Determine the role based on roleId
+    let roleName = 'educator'; // Default role
+    if (roleId) {
+      const Role = require('../models/Role');
+      const role = await Role.findById(roleId);
+      if (role) {
+        roleName = role.name.toLowerCase(); // Convert to lowercase
+        console.log('University controller - Using role name:', roleName);
+      }
+    }
+
     const educator = new User({
       email,
       password: hashedPassword,
-      role: 'educator',
+      role: roleName, // Use the determined role name
       name,
-      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+      phoneNumber, // No default phone number, must be provided by user
       university: req.user.id,
       roleRef: roleId || undefined, // Assign role if provided
       profile
     });
+
+    console.log('University controller - Created educator with roleRef:', educator.roleRef);
+    console.log('University controller - Created educator with role:', educator.role);
 
     await educator.save();
     res.json(educator);
@@ -63,7 +79,11 @@ exports.getEducators = async (req, res) => {
     const educators = await User.find({
       university: req.user.id,
       role: 'educator'
-    }).populate('university', 'name category');
+    })
+    .populate('university', 'name category')
+    .populate('roleRef', 'name') // Populate the role reference
+    .select('-password');
+
     res.json(educators);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving educators', error: error.message });
@@ -76,12 +96,15 @@ exports.getEducatorById = async (req, res) => {
       _id: req.params.id,
       university: req.user.id,
       role: 'educator'
-    });
+    })
+    .populate('roleRef', 'name') // Populate the role reference
+    .select('-password');
 
     if (!educator) {
       return res.status(404).json({ message: 'Educator not found' });
     }
 
+    console.log('University controller - Educator with populated roleRef:', educator);
     res.json(educator);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving educator', error: error.message });
@@ -156,7 +179,18 @@ exports.updateEducator = async (req, res) => {
     }
 
     if (roleId) {
+      console.log('University controller - Updating educator roleId:', roleId);
       educator.roleRef = roleId;
+      console.log('University controller - Updated educator roleRef:', educator.roleRef);
+
+      // Fetch the role to get its name
+      const Role = require('../models/Role');
+      const role = await Role.findById(roleId);
+      if (role) {
+        // Update the role field based on the role name (convert to lowercase)
+        educator.role = role.name.toLowerCase();
+        console.log('University controller - Updated role to:', educator.role);
+      }
     }
 
     await educator.save();

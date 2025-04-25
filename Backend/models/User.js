@@ -4,7 +4,7 @@ const { formatPhoneNumber, isValidIndianPhoneNumber } = require('../utils/phoneU
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phoneNumber: { type: String, required: true, unique: true },
-  role: { type: String, enum: ['educator', 'university', 'admin'], required: true },
+  role: { type: String, required: true }, // Role name (no enum restriction to allow dynamic roles)
   // Reference to the Role model for fine-grained permissions
   roleRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
   name: { type: String, required: true },

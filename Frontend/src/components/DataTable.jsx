@@ -12,6 +12,25 @@ const DataTableComponent = ({
 }) => {
   const [filterText, setFilterText] = useState("");
 
+  // Process columns to convert boolean attributes to strings
+  const processedColumns = useMemo(() => {
+    return columns.map(column => {
+      const newColumn = { ...column };
+
+      // Convert boolean 'center' attribute to string
+      if (newColumn.center === true) {
+        newColumn.center = "true";
+      }
+
+      // Convert boolean 'right' attribute to string
+      if (newColumn.right === true) {
+        newColumn.right = "true";
+      }
+
+      return newColumn;
+    });
+  }, [columns]);
+
   const filteredItems = useMemo(() => {
     if (!filterText) return data;
 
@@ -42,7 +61,7 @@ const DataTableComponent = ({
     <div className="data-table-container">
       <DataTable
         title={title}
-        columns={columns}
+        columns={processedColumns}
         data={filteredItems}
         pagination={pagination}
         subHeader={showSearch}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk } from "../redux/university/universitySlice";
-import { updateEducatorThunk as updateAdminEducatorThunk, getEducatorsThunk as getAdminEducatorsThunk } from "../redux/admin/adminSlice";
+import { createEducatorThunk as createUniversityEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk } from "../redux/university/universitySlice";
+import { createEducatorThunk as createAdminEducatorThunk, updateEducatorThunk as updateAdminEducatorThunk, getEducatorsThunk as getAdminEducatorsThunk } from "../redux/admin/adminSlice";
 import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/EducatorAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
@@ -26,6 +26,11 @@ const EducatorAccountForm = () => {
     dispatch(getRolesThunk());
   }, [dispatch]);
 
+  // Log roles when they change
+  useEffect(() => {
+    console.log('Available roles:', roles);
+  }, [roles]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
@@ -42,9 +47,18 @@ const EducatorAccountForm = () => {
     profileImage: null,
     profileImageUrl: "",
     status: 1,
-    loginEmail: "",
-    loginPhone: "",
   });
+
+  // Check if roleId matches any role when formData is initialized
+  // This useEffect must be placed after formData state initialization
+  useEffect(() => {
+    // If in edit mode and we have both educatorData and roles, check if roleId matches any role
+    if (isEditMode && educatorData && roles && roles.length > 0 && formData.roleId) {
+      console.log('Checking if roleId matches any role:', formData.roleId);
+      const matchingRole = roles.find(role => role._id === formData.roleId);
+      console.log('Matching role:', matchingRole);
+    }
+  }, [roles, isEditMode, educatorData, formData.roleId]);
 
   useEffect(() => {
     if (isEditMode && educatorData) {
@@ -54,6 +68,32 @@ const EducatorAccountForm = () => {
                         "";
 
       console.log('Educator data for edit mode:', educatorData);
+      console.log('Educator roleRef:', educatorData.roleRef);
+      console.log('Educator _id:', educatorData._id);
+      console.log('Educator id:', educatorData.id);
+
+      // Log all properties of educatorData
+      console.log('All educatorData properties:');
+      for (const key in educatorData) {
+        console.log(`${key}: ${JSON.stringify(educatorData[key])}`);
+      }
+
+      // If roleRef is an object (populated), extract the _id
+      let roleId = '';
+
+      if (educatorData.roleRef) {
+        if (typeof educatorData.roleRef === 'object') {
+          roleId = educatorData.roleRef._id;
+          console.log('roleRef is an object, extracted _id:', roleId);
+        } else {
+          roleId = educatorData.roleRef;
+          console.log('roleRef is a string:', roleId);
+        }
+      } else {
+        console.log('No roleRef found in educatorData');
+      }
+
+      console.log('Final extracted roleId:', roleId);
 
       // Check if avatar is directly on the educator object or in the profile object
       let avatarUrl = educatorData.avatar || (educatorData.profile && educatorData.profile.avatar) || "";
@@ -75,33 +115,21 @@ const EducatorAccountForm = () => {
         address: educatorData.address || "",
         zipcode: educatorData.zipcode || "",
         state: educatorData.state || "",
-        roleId: educatorData.roleId || "",
+        roleId: roleId, // Use the extracted roleId
         profileImageUrl: avatarUrl,
         status: educatorData.status ? 1 : 0,
-        // Set login credentials to match the general information
-        loginEmail: educatorData.email || "",
-        loginPhone: phoneNumber,
       });
 
       console.log('Form data after initialization:', {
-        ...formData,
         profileImageUrl: educatorData.avatar || ""
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, educatorData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const updatedFormData = { ...formData, [name]: value };
-
-    // Keep login credentials in sync with general information
-    if (name === 'email') {
-      updatedFormData.loginEmail = value;
-    } else if (name === 'phoneNumber') {
-      updatedFormData.loginPhone = value;
-    }
-
-    setFormData(updatedFormData);
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleImageUpload = (e) => {
@@ -126,7 +154,21 @@ const EducatorAccountForm = () => {
     // Append text data
     formDataObj.append('name', formData.professorName);
     formDataObj.append('email', formData.email);
-    formDataObj.append('phoneNumber', "+91 " + formData.phoneNumber.trim());
+
+    // Format phone number properly - ensure it's not empty
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
+      setFormErrors({...formErrors, phoneNumber: 'Phone number is required'});
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Add +91 prefix only if it doesn't already have it
+    const phoneNumber = formData.phoneNumber.trim();
+    const formattedPhoneNumber = phoneNumber.startsWith('+91')
+      ? phoneNumber
+      : "+91 " + phoneNumber;
+
+    formDataObj.append('phoneNumber', formattedPhoneNumber);
     formDataObj.append('address', formData.address);
     formDataObj.append('zipcode', formData.zipcode);
     formDataObj.append('state', formData.state);
@@ -136,9 +178,18 @@ const EducatorAccountForm = () => {
 
     // No password field needed
 
-    // Add roleId if selected
+    // Add roleId if selected, otherwise set default role to 'educator'
     if (formData.roleId) {
-      formDataObj.append('roleId', formData.roleId);
+      console.log('Selected roleId:', formData.roleId);
+      formDataObj.append('roleId', formData.roleId); // Backend expects roleId in the request
+    } else {
+      console.log('No roleId selected, using default educator role');
+      formDataObj.append('role', 'educator');
+    }
+
+    // Log all form data for debugging
+    for (let pair of formDataObj.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
     }
 
     // Add profile image if selected
@@ -167,12 +218,39 @@ const EducatorAccountForm = () => {
           navigate(-1);
         })
         .catch(error => {
-          setFormErrors(error.errors || {});
+          console.error('Error updating educator:', error);
+          // Handle different error formats
+          if (error.errors) {
+            setFormErrors(error.errors);
+          } else if (error.message) {
+            // Handle MongoDB duplicate key errors
+            if (error.message.includes('duplicate key error') && error.message.includes('phoneNumber')) {
+              setFormErrors({
+                ...formErrors,
+                phoneNumber: 'This phone number is already in use. Please use a different phone number.'
+              });
+            } else {
+              setFormErrors({
+                ...formErrors,
+                general: error.message
+              });
+            }
+          } else {
+            setFormErrors({
+              ...formErrors,
+              general: 'An error occurred. Please try again.'
+            });
+          }
           setIsSubmitting(false);
         });
     } else {
-      // Create new educator
-      dispatch(createEducatorThunk(formDataObj))
+      // Create new educator - use the appropriate thunk based on user role
+      const createThunk = isAdmin ? createAdminEducatorThunk : createUniversityEducatorThunk;
+
+      console.log('Using createThunk:', isAdmin ? 'createAdminEducatorThunk' : 'createUniversityEducatorThunk');
+      console.log('Form data roleId:', formData.roleId);
+
+      dispatch(createThunk(formDataObj))
         .unwrap()
         .then(() => {
           // Refresh educators list
@@ -183,7 +261,29 @@ const EducatorAccountForm = () => {
           navigate("/dashboard/admin/educators");
         })
         .catch(error => {
-          setFormErrors(error.errors || {});
+          console.error('Error creating educator:', error);
+          // Handle different error formats
+          if (error.errors) {
+            setFormErrors(error.errors);
+          } else if (error.message) {
+            // Handle MongoDB duplicate key errors
+            if (error.message.includes('duplicate key error') && error.message.includes('phoneNumber')) {
+              setFormErrors({
+                ...formErrors,
+                phoneNumber: 'This phone number is already in use. Please use a different phone number.'
+              });
+            } else {
+              setFormErrors({
+                ...formErrors,
+                general: error.message
+              });
+            }
+          } else {
+            setFormErrors({
+              ...formErrors,
+              general: 'An error occurred. Please try again.'
+            });
+          }
           setIsSubmitting(false);
         });
     }
@@ -343,6 +443,7 @@ const EducatorAccountForm = () => {
                   required
                 />
               </div>
+              {formErrors.phoneNumber && <div className="error-message">{formErrors.phoneNumber}</div>}
             </div>
           </div>
           <div className="form-row">
@@ -389,46 +490,6 @@ const EducatorAccountForm = () => {
                 <option value="Tamil Nadu">Tamil Nadu</option>
                 <option value="Delhi">Delhi</option>
               </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h2>Login Information</h2>
-          <div className="credentials-note">
-            <p>Login information is automatically synced with the general information. Users will log in using their email or phone number with OTP verification.</p>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="loginPhone">Login Phone Number</label>
-              <div className="phone-input-wrapper">
-                <span className="phone-prefix">+91</span>
-                <input
-                  type="tel"
-                  id="loginPhone"
-                  name="loginPhone"
-                  value={formData.loginPhone}
-                  onChange={handleInputChange}
-                  placeholder="Same as Phone Number above"
-                  required
-                  disabled={isEditMode}
-                  className={isEditMode ? "disabled-input" : ""}
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="loginEmail">Login Email Address</label>
-              <input
-                type="email"
-                id="loginEmail"
-                name="loginEmail"
-                value={formData.loginEmail}
-                onChange={handleInputChange}
-                placeholder="Same as Email Address above"
-                required
-                disabled={isEditMode}
-                className={isEditMode ? "disabled-input" : ""}
-              />
             </div>
           </div>
         </div>
