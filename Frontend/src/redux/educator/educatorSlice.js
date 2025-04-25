@@ -119,6 +119,27 @@ export const getCertificateThunk = createAsyncThunk('educator/getCertificate', a
   }
 });
 
+// Module progress thunks
+export const getModuleProgressThunk = createAsyncThunk('educator/getModuleProgress', async (courseId, { rejectWithValue }) => {
+  try {
+    const data = await api.getModuleProgress(courseId);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch module progress:', error);
+    return rejectWithValue(error.response?.data?.msg || 'Failed to fetch module progress');
+  }
+});
+
+export const updateModuleProgressThunk = createAsyncThunk('educator/updateModuleProgress', async ({ courseId, progressData }, { rejectWithValue }) => {
+  try {
+    const data = await api.updateModuleProgress(courseId, progressData);
+    return data;
+  } catch (error) {
+    console.error('Failed to update module progress:', error);
+    return rejectWithValue(error.response?.data?.msg || 'Failed to update module progress');
+  }
+});
+
 const educatorSlice = createSlice({
   name: 'educator',
   initialState: {
@@ -130,6 +151,7 @@ const educatorSlice = createSlice({
     quizResult: null,
     certificates: [],
     currentCertificate: null,
+    moduleProgress: null,
     loading: false,
     error: null,
   },
@@ -230,6 +252,33 @@ const educatorSlice = createSlice({
         state.loading = false;
       })
       .addCase(getCertificateThunk.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+      })
+
+      // Module progress actions
+      .addCase(getModuleProgressThunk.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(getModuleProgressThunk.fulfilled, (state, action) => {
+        state.moduleProgress = action.payload;
+        state.loading = false;
+      })
+      .addCase(getModuleProgressThunk.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+      })
+
+      .addCase(updateModuleProgressThunk.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(updateModuleProgressThunk.fulfilled, (state, action) => {
+        // Store the full progress object, not just the progress field
+        state.moduleProgress = action.payload.progress || action.payload;
+        state.loading = false;
+
+        // Also update the overall course progress if available
+        if (action.payload.overallProgress && state.courseDetail && state.courseDetail.enrolledUsers && state.courseDetail.enrolledUsers.length > 0) {
+          state.courseDetail.enrolledUsers[0].progress = action.payload.overallProgress;
+        }
+      })
+      .addCase(updateModuleProgressThunk.rejected, (state, action) => {
         state.error = action.error.message;
         state.loading = false;
       })

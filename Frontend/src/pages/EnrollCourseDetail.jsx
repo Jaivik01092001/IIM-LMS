@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import "../assets/styles/EnrollCourseDetail.css";
 import {
   FaPlayCircle,
@@ -15,9 +16,13 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { getCourse } from '../redux/admin/adminApi';
+import { getModuleProgressThunk, updateModuleProgressThunk } from '../redux/educator/educatorSlice';
 
 const EnrollCourseDetail = () => {
   const { id } = useParams();
+  const dispatch = useDispatch();
+  const { moduleProgress } = useSelector((state) => state.educator);
+
   const [activeTab, setActiveTab] = useState('content');
   const [expandedSections, setExpandedSections] = useState({});
   const [sessionCompleted, setSessionCompleted] = useState({});
@@ -41,6 +46,7 @@ const EnrollCourseDetail = () => {
         });
         setExpandedSections(defaultExpanded);
 
+        // Initialize session completion status - ALL sessions are NOT completed by default
         const completed = {};
         res.modules?.forEach((mod) => {
           mod.content?.forEach((c) => {
@@ -64,12 +70,109 @@ const EnrollCourseDetail = () => {
         // Set first content as selected if available
         const firstModule = res.modules?.find((mod) => mod.content?.length);
         if (firstModule) setSelectedContent(firstModule.content[0]);
+
+        // Fetch module progress from the backend
+        dispatch(getModuleProgressThunk(id));
       } catch (err) {
         toast.error('Failed to load course');
       }
     };
     fetchCourse();
-  }, [id]);
+  }, [id, dispatch]);
+
+  // Update local state when module progress is loaded from the backend
+  useEffect(() => {
+    if (moduleProgress && course) {
+      console.log('Module progress loaded:', moduleProgress);
+
+      // Start with all sessions NOT completed
+      const newSessionCompleted = {};
+      course.modules.forEach(mod => {
+        mod.content?.forEach(c => {
+          newSessionCompleted[c._id] = false;
+        });
+      });
+
+      // Update module completion status - create a fresh object
+      const newModuleState = {};
+
+      // First, ensure the first module is always unlocked
+      if (course.modules && course.modules.length > 0) {
+        newModuleState[course.modules[0]._id] = true;
+      }
+
+      // Then apply the progress from the backend
+      moduleProgress.moduleProgress.forEach(mp => {
+        // Get the module ID - handle both object and string formats
+        const moduleId = mp.module._id || mp.module;
+
+        // Update module completion status
+        newModuleState[moduleId] = mp.isCompleted;
+
+        // If a module is completed, also unlock the next module
+        if (mp.isCompleted) {
+          const moduleIndex = course.modules.findIndex(m => m._id === moduleId);
+          if (moduleIndex !== -1 && moduleIndex < course.modules.length - 1) {
+            const nextModuleId = course.modules[moduleIndex + 1]._id;
+            newModuleState[nextModuleId] = true;
+          }
+        }
+
+        // Update ONLY explicitly completed content items
+        if (mp.completedContent && mp.completedContent.length > 0) {
+          mp.completedContent.forEach(contentId => {
+            if (contentId) {
+              newSessionCompleted[contentId] = true;
+            }
+          });
+        }
+      });
+
+      // Update the module completion state
+      console.log('Setting module completion state:', newModuleState);
+      setModuleCompleted(newModuleState);
+
+      // Update session completion state
+      console.log('Setting session completion state:', newSessionCompleted);
+      setSessionCompleted(newSessionCompleted);
+
+      // Calculate overall progress
+      const completedCount = Object.values(newSessionCompleted).filter(Boolean).length;
+      const totalSessions = Object.keys(newSessionCompleted).length;
+      if (totalSessions > 0) {
+        const newProgress = Math.round((completedCount / totalSessions) * 100);
+        setUserProgress(newProgress);
+      }
+
+      // If there's a last accessed module, set it as active
+      if (moduleProgress.lastAccessedModule) {
+        // Find the module index
+        const lastModuleId = moduleProgress.lastAccessedModule;
+        const moduleIndex = course.modules.findIndex(
+          m => m._id === lastModuleId
+        );
+
+        if (moduleIndex !== -1) {
+          // Reset all expanded sections
+          const newExpandedSections = {};
+
+          // Only expand the last accessed module
+          course.modules.forEach((mod, idx) => {
+            const moduleTitle = mod.title || mod._id;
+            newExpandedSections[moduleTitle] = idx === moduleIndex;
+          });
+
+          // Update expanded sections state
+          setExpandedSections(newExpandedSections);
+
+          // If this module has content, select the first content item
+          if (course.modules[moduleIndex].content?.length > 0) {
+            setSelectedContent(course.modules[moduleIndex].content[0]);
+          }
+        }
+      }
+    }
+  }, [moduleProgress, course]);
 
   const toggleSection = (section) => {
     setExpandedSections({
@@ -121,6 +224,31 @@ const EnrollCourseDetail = () => {
 
     console.log("New module completion state:", newModuleState);
     setModuleCompleted(newModuleState);
+
+    // Prepare data for backend update
+    const completedModules = Object.keys(newModuleState).filter(key => newModuleState[key]);
+
+    // Create a map of completed content by module
+    const completedContent = {};
+    course.modules.forEach(module => {
+      const moduleId = module._id;
+      completedContent[moduleId] = module.content
+        ?.filter(content => newSessionState[content._id])
+        .map(content => content._id) || [];
+    });
+
+    // Save progress to backend
+    dispatch(updateModuleProgressThunk({
+      courseId: id,
+      progressData: {
+        moduleId,
+        contentId: sessionId,
+        isCompleted: newSessionState[sessionId],
+        completedModules,
+        completedContent
+      }
+    }));
+
     toast.success('Progress updated');
   };
 
@@ -170,6 +298,14 @@ const EnrollCourseDetail = () => {
 
     // If module is not locked, expand it
     toggleSection(module.title);
+
+    // Update last accessed module in the backend
+    dispatch(updateModuleProgressThunk({
+      courseId: id,
+      progressData: {
+        lastAccessedModule: module._id
+      }
+    }));
   };
 
   // Handle content click - only allow selection if module is not locked
@@ -182,6 +318,15 @@ const EnrollCourseDetail = () => {
 
     // If module is not locked, select the content
     setSelectedContent(content);
+
+    // Update last accessed module in the backend
+    const moduleId = course.modules[moduleIndex]._id;
+    dispatch(updateModuleProgressThunk({
+      courseId: id,
+      progressData: {
+        lastAccessedModule: moduleId
+      }
+    }));
   };
 
   return !course ? (

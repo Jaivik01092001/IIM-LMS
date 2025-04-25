@@ -25,7 +25,7 @@ const getCourses = async (req, res) => {
 
 const enrollCourse = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id).populate('modules');
 
     if (!course) {
       return res.status(404).json({ msg: 'Course not found' });
@@ -40,6 +40,43 @@ const enrollCourse = async (req, res) => {
         progress: 0
       });
       await course.save();
+
+      // Initialize module progress for this user
+      try {
+        // Import the UserModuleProgress model
+        const UserModuleProgress = require('../models/UserModuleProgress');
+
+        // Check if progress record already exists
+        const existingProgress = await UserModuleProgress.findOne({
+          user: req.user.id,
+          course: course._id
+        });
+
+        // Only create a new progress record if one doesn't exist
+        if (!existingProgress) {
+          // Initialize with first module unlocked, rest locked
+          const moduleProgress = course.modules.map((module, index) => ({
+            module: module._id,
+            isCompleted: false,
+            completedContent: [], // Start with NO completed content
+            lastAccessedAt: new Date()
+          }));
+
+          // Create new progress record
+          const newProgress = new UserModuleProgress({
+            user: req.user.id,
+            course: course._id,
+            moduleProgress,
+            lastAccessedModule: course.modules.length > 0 ? course.modules[0]._id : null
+          });
+
+          await newProgress.save();
+          console.log('Module progress initialized for new enrollment');
+        }
+      } catch (progressError) {
+        console.error('Error initializing module progress:', progressError);
+        // Continue with enrollment even if progress initialization fails
+      }
     }
 
     // Return updated course with enrollment status
