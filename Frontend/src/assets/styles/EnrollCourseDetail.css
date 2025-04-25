@@ -1,7 +1,7 @@
 .enroll-course-detail {
   padding: 20px;
   width: 100%;
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: 0 auto;
   font-family: var(--font-Poppins);
 }
@@ -848,4 +848,20 @@
     margin-top: 15px;
     align-self: flex-start;
   }
+}
+
+/* Locked module styles */
+.enroll-course-detail .locked-module {
+  opacity: 0.7;
+  cursor: default;
+  border-left: 3px solid #ff9800;
+  background-color: rgba(255, 152, 0, 0.05);
+}
+
+.enroll-course-detail .locked-module .section-toggle {
+  color: #ff9800;
+}
+
+.enroll-course-detail .locked-module:hover {
+  background-color: rgba(255, 152, 0, 0.1);
 }

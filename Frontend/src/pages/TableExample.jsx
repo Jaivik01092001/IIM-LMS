@@ -82,37 +82,36 @@ const TableExample = () => {
     { id: 'BIO303', name: 'Human Anatomy', instructor: 'Dr. Brown', duration: '16 weeks', price: 299.99, enrollmentOpen: true },
     { id: 'HIST105', name: 'World History', instructor: 'Prof. Davis', duration: '14 weeks', price: 179.99, enrollmentOpen: false },
   ];
-  
+
   return (
     <div className="tables-example-container">
       <h1>DataTable Component Examples</h1>
-      
+
       <div className="example-table">
         <h2>Example 1: User Table</h2>
         <p>A simple table with basic text data and built-in search functionality.</p>
-        <DataTableComponent 
-          columns={userColumns} 
+        <DataTableComponent
+          columns={userColumns}
           data={userData}
           title="Users"
           searchPlaceholder="Search users..."
         />
       </div>
-      
+
       <div className="example-table">
         <h2>Example 2: Course Table</h2>
         <p>A table with custom formatted cells (price and enrollment status).</p>
-        <DataTableComponent 
-          columns={courseColumns} 
+        <DataTableComponent
+          columns={courseColumns}
           data={courseData}
           title="Available Courses"
           searchPlaceholder="Search courses..."
         />
       </div>
-      
+
       <style jsx>{`
         .tables-example-container {
           padding: 2rem;
-          max-width: 1200px;
           margin: 0 auto;
         }
         
