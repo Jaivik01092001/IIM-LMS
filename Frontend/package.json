@@ -14,7 +14,9 @@
     "@reduxjs/toolkit": "^2.6.1",
     "@studio-freight/lenis": "^1.0.42",
     "@tailwindcss/vite": "^4.1.4",
+    "@types/summernote": "^0.8.10",
     "axios": "^1.8.4",
+    "jquery": "^3.7.1",
     "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-data-table-component": "^7.7.0",
@@ -24,6 +26,7 @@
     "react-router-dom": "^7.5.0",
     "react-toastify": "^11.0.5",
     "styled-components": "^6.1.17",
+    "summernote": "^0.9.1",
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {

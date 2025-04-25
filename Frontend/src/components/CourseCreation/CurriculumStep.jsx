@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaTrash, FaEdit, FaGripVertical, FaVideo, FaFileAlt, FaFileUpload, FaQuestionCircle, FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { FaPlus, FaTrash, FaEdit, FaGripVertical, FaVideo, FaFileAlt, FaFileUpload, FaQuestionCircle, FaToggleOn, FaToggleOff, FaFileAlt as FaFileText } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import SummernoteEditor from "../Editor/SummernoteEditor";
 
 const CurriculumStep = ({ courseData, updateCourseData }) => {
     // Local state for curriculum management
@@ -15,7 +16,13 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // State for content editing
     const [editingContentId, setEditingContentId] = useState(null);
-    const [contentFormData, setContentFormData] = useState({ title: "", description: "", type: "video", file: null });
+    const [contentFormData, setContentFormData] = useState({
+        title: "",
+        description: "",
+        type: "video",
+        file: null,
+        textContent: ""
+    });
 
     // State for quiz editing
     const [editingQuizId, setEditingQuizId] = useState(null);
@@ -126,6 +133,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             title: "New Content",
             description: "",
             type: "video",
+            textContent: "",
             fileUrl: "",
             module: moduleId
         };
@@ -139,7 +147,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setModules(updatedModules);
         setContent([...content, newContent]);
         setEditingContentId(newContent._id);
-        setContentFormData({ title: newContent.title, description: newContent.description, type: newContent.type, file: null });
+        setContentFormData({ title: newContent.title, description: newContent.description, type: newContent.type, file: null, textContent: "" });
     };
 
     // Add standalone content (when not using modules)
@@ -149,13 +157,14 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             title: "New Content",
             description: "",
             type: "video",
+            textContent: "",
             fileUrl: "",
             module: null
         };
 
         setContent([...content, newContent]);
         setEditingContentId(newContent._id);
-        setContentFormData({ title: newContent.title, description: newContent.description, type: newContent.type, file: null });
+        setContentFormData({ title: newContent.title, description: newContent.description, type: newContent.type, file: null, textContent: "" });
     };
 
     // Edit content
@@ -165,7 +174,8 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             title: contentItem.title,
             description: contentItem.description,
             type: contentItem.type || "video",
-            file: null
+            file: null,
+            textContent: contentItem.textContent || ""
         });
     };
 
@@ -174,9 +184,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         console.log("🧠 Saving content...");
         console.log("🔧 Editing Content ID:", editingContentId);
         console.log("📝 Content Form Data:", contentFormData);
-    
+
         const moduleOfEditingContent = content.find(item => item._id === editingContentId)?.module;
-    
+
         const updatedContent = content.map(item =>
             item._id === editingContentId
                 ? {
@@ -185,22 +195,23 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                     description: contentFormData.description,
                     type: contentFormData.type,
                     file: contentFormData.file,
+                    textContent: contentFormData.textContent,
                     fileUrl: contentFormData.file ? URL.createObjectURL(contentFormData.file) : item.fileUrl,
                     _id: item._id.startsWith('temp_') ? item._id : item._id,
                     module: moduleOfEditingContent || item.module
                 }
                 : item
         );
-    
+
         const savedItem = updatedContent.find(item => item._id === editingContentId);
         console.log("✅ Updated Content Item:", savedItem);
         console.log("✅ Updated Content Item updatedContent:", updatedContent);
-    
+
         setContent(updatedContent);
         setEditingContentId(null);
-        setContentFormData({ title: "", description: "", type: "video", file: null });
+        setContentFormData({ title: "", description: "", type: "video", file: null, textContent: "" });
     };
-    
+
 
     // Delete content
     const deleteContent = (contentId, moduleId = null) => {
@@ -356,28 +367,45 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         }
     };
 
-    // Render content item based on type
+    // Render content item in the list
     const renderContentItem = (contentItem, moduleId = null) => {
-        const contentTypeIcons = {
-            video: <FaVideo />,
-            document: <FaFileAlt />,
-            text: <FaFileAlt />
-        };
+        const contentType = contentItem.type || 'video';
+        let icon;
+
+        switch (contentType) {
+            case 'video':
+                icon = <FaVideo className="content-icon" />;
+                break;
+            case 'document':
+                icon = <FaFileAlt className="content-icon" />;
+                break;
+            case 'text':
+                icon = <FaFileText className="content-icon" />;
+                break;
+            default:
+                icon = <FaFileAlt className="content-icon" />;
+        }
 
         return (
-            <div className="content-item" key={contentItem._id}>
-                <div className="content-item-icon">
-                    {contentTypeIcons[contentItem.type] || <FaFileAlt />}
+            <div key={contentItem._id} className="content-item">
+                <div className="content-info">
+                    {icon}
+                    <span className="content-title">{contentItem.title}</span>
+                    <span className="content-type-badge">{contentType}</span>
                 </div>
-                <div className="content-item-info">
-                    <h4>{contentItem.title}</h4>
-                    {contentItem.description && <p>{contentItem.description}</p>}
-                </div>
-                <div className="content-item-actions">
-                    <button onClick={() => startEditContent(contentItem)}>
+                <div className="content-actions">
+                    <button
+                        type="button"
+                        className="edit-button"
+                        onClick={() => startEditContent(contentItem)}
+                    >
                         <FaEdit />
                     </button>
-                    <button onClick={() => deleteContent(contentItem._id, moduleId)}>
+                    <button
+                        type="button"
+                        className="delete-button"
+                        onClick={() => deleteContent(contentItem._id, moduleId)}
+                    >
                         <FaTrash />
                     </button>
                 </div>
@@ -536,7 +564,16 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                     rows={3}
                                 />
                             </div>
-                            {contentFormData.type !== 'text' && (
+                            {contentFormData.type === 'text' ? (
+                                <div className="form-group">
+                                    <label htmlFor="textEditor">Text Content</label>
+                                    <SummernoteEditor
+                                        value={contentFormData.textContent}
+                                        onChange={(content) => setContentFormData({ ...contentFormData, textContent: content })}
+                                        placeholder="Enter your text content here..."
+                                    />
+                                </div>
+                            ) : (
                                 <div className="form-group">
                                     <label htmlFor="contentFile">
                                         Upload {contentFormData.type === 'video' ? 'Video' : 'Document'}

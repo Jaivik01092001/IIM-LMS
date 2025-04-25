@@ -606,19 +606,6 @@ const EnrollCourseDetail = () => {
       <div className="course-content-container">
         <div className="video-container">
           <div className="video-wrapper">
-            { /*    {selectedContent?.type === 'video' ? (
-              <video
-                className="video-player"
-                controls
-                width="100%"
-                src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
-              />
-            ) : (
-              <div className="video-placeholder">
-                <FaPlayCircle size={60} />
-              </div>
-            )} */}
-
             {selectedContent ? (
               selectedContent.mimeType?.startsWith('video/') ? (
                 <video
@@ -661,6 +648,19 @@ const EnrollCourseDetail = () => {
                   alt="Preview"
                   style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
                 />
+              ) : selectedContent.mimeType === 'text/html' ? (
+                <div
+                  className="html-content-preview"
+                  style={{
+                    padding: '20px',
+                    backgroundColor: 'var(--bg-white)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-gray)',
+                    maxHeight: '500px',
+                    overflowY: 'auto'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: selectedContent.textContent }}
+                />
               ) : (
                 <div className="video-placeholder">
                   <p>No preview available for this file type.</p>
@@ -671,14 +671,16 @@ const EnrollCourseDetail = () => {
                 <FaPlayCircle size={60} />
               </div>
             )}
+          </div>
 
-          </div>
-          <div className="download-section">
-            <p>Download the file</p>
-            <button className="download-button">
-              <FaDownload /> Download
-            </button>
-          </div>
+          {selectedContent && selectedContent.fileUrl && (
+            <div className="download-section">
+              <p>Download the file</p>
+              <button className="download-button">
+                <FaDownload /> Download
+              </button>
+            </div>
+          )}
 
           <div className="personal-note-section">
             <h3>Personal Course Note</h3>
@@ -699,7 +701,6 @@ const EnrollCourseDetail = () => {
               Save Note
             </button>
           </div>
-
         </div>
 
         <div className="course-sidebar">
@@ -735,11 +736,22 @@ const EnrollCourseDetail = () => {
                       {module.content?.length ? module.content.map((content) => (
                         <div className="topic-item" key={content._id} onClick={() => setSelectedContent(content)}>
                           <div className="topic-icon">
-                            <FaPlayCircle />
+                            {content.mimeType?.startsWith('video/') ? (
+                              <FaPlayCircle />
+                            ) : content.mimeType === 'text/html' ? (
+                              <FaFilePdf />
+                            ) : (
+                              <FaFilePdf />
+                            )}
                           </div>
                           <div className="topic-details">
                             <h4>{content.title}</h4>
-                            <p>Video | {(content.size / 1000000).toFixed(2)} MB</p>
+                            <p>
+                              {content.mimeType?.startsWith('video/') ? 'Video' :
+                                content.mimeType === 'text/html' ? 'Text' :
+                                  content.mimeType?.split('/')[1]?.toUpperCase() || 'Document'}
+                              {content.size ? ` | ${(content.size / 1000000).toFixed(2)} MB` : ''}
+                            </p>
                             {content.description && (
                               <p className="topic-description">
                                 {content.description.length > 100 ? `${content.description.substring(0, 100)}...` : content.description}

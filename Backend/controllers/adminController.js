@@ -379,7 +379,40 @@ exports.createCourse = async (req, res) => {
 
     const contentItems = [];
 
-    // ✅ Process uploaded files
+    // Process uploaded files and text content
+    if (parsedContent && parsedContent.length > 0) {
+      // Process text content items first - they don't need file uploads
+      const textContentPromises = parsedContent
+        .filter(item => item.type === 'text')
+        .map(async (item) => {
+          console.log(`Creating text content item: ${item.title}`);
+          const textContentDoc = new Content({
+            title: item.title,
+            description: item.description,
+            textContent: item.textContent || '',
+            creator: req.user.id,
+            status: 'approved',
+            type: 'text',
+            mediaType: 'text',
+            mimeType: 'text/html',
+            module: null
+          });
+
+          await textContentDoc.save();
+          console.log(`Created text content with ID: ${textContentDoc._id}`);
+
+          return {
+            id: item._id,
+            dbId: textContentDoc._id
+          };
+        });
+
+      const textContentItems = await Promise.all(textContentPromises);
+      contentItems.push(...textContentItems);
+      console.log(`Processed ${textContentItems.length} text content items`);
+    }
+
+    // Process uploaded files
     if (req.files && req.files.length > 0) {
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
@@ -832,13 +865,20 @@ exports.updateCourse = async (req, res) => {
     const contentFileIds = req.body.contentFileIds ?
       Array.isArray(req.body.contentFileIds) ? req.body.contentFileIds : [req.body.contentFileIds] : [];
 
+    // Parse content if it's a string
+    let parsedContent;
+    try {
+      parsedContent = typeof content === 'string' ? JSON.parse(content) : content || [];
+    } catch (err) {
+      console.error("Error parsing content JSON:", err);
+      parsedContent = [];
+    }
+
     // Create content items for uploaded files
     const contentItems = [];
 
-    // Check if we have content files in the request
-    if (req.files && req.files.length > 0) {
-      console.log("Processing content files for update:", req.files.length);
-
+    // Process content files if any
+    if (req.files && req.files.length > 0 && contentFileIds && contentFileIds.length > 0) {
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
         // Skip the thumbnail file
@@ -851,22 +891,18 @@ exports.updateCourse = async (req, res) => {
         const index = parseInt(fieldnameParts[1]);
         const contentId = contentFileIds[index];
 
-        if (!contentId) continue;
-
-        // Parse content if it's a string
-        let parsedContent;
-        try {
-          parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
-        } catch (err) {
-          console.error("Error parsing content JSON:", err);
-          parsedContent = [];
+        if (!contentId) {
+          console.warn(`Missing content ID for file index ${index}`);
+          continue;
         }
 
-        // Find the corresponding content item in parsedContent
+        // Find the content details in the content array
         const contentItem = parsedContent.find(item => item._id === contentId);
-        if (!contentItem) continue;
+        if (!contentItem) {
+          console.warn(`Content item not found for ID: ${contentId}`);
+          continue;
+        }
 
-        // Determine media type based on file extension
         let mediaType = 'document';
         let mimeType = file.mimetype;
         const fileExt = file.originalname.split('.').pop().toLowerCase();
@@ -902,12 +938,64 @@ exports.updateCourse = async (req, res) => {
     // Update course content
     if (content) {
       try {
-        let parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+        // Process text content items separately - these don't need file uploads
+        const textContentPromises = parsedContent
+          .filter(item => item.type === 'text')
+          .map(async (item) => {
+            // If it's not a temp item (already exists in DB), skip creation
+            if (!item._id.startsWith('temp_')) {
+              // Update existing text content if it's been edited
+              if (item.textContent) {
+                try {
+                  const existingContent = await Content.findById(item._id);
+                  if (existingContent) {
+                    existingContent.title = item.title;
+                    existingContent.description = item.description;
+                    existingContent.textContent = item.textContent;
+                    await existingContent.save();
+                    console.log(`Updated existing text content: ${item._id}`);
+                  }
+                } catch (err) {
+                  console.error(`Error updating existing text content: ${item._id}`, err);
+                }
+              }
+              return null;
+            }
+
+            // Create new text content
+            console.log(`Creating new text content item: ${item.title}`);
+            const newTextContent = new Content({
+              title: item.title,
+              description: item.description,
+              textContent: item.textContent || '',
+              creator: req.user.id,
+              status: 'approved',
+              type: 'text',
+              mediaType: 'text',
+              mimeType: 'text/html',
+              module: item.module || null
+            });
+
+            await newTextContent.save();
+            console.log(`Created text content with ID: ${newTextContent._id}`);
+
+            return {
+              id: item._id,
+              dbId: newTextContent._id
+            };
+          });
+
+        // Filter out null values from items that don't need creation
+        const textContentItemsResults = await Promise.all(textContentPromises);
+        const textContentItems = textContentItemsResults.filter(item => item !== null);
+
+        contentItems.push(...textContentItems);
+        console.log(`Processed ${textContentItems.length} text content items`);
 
         // Replace temporary IDs with database IDs for newly created content
         if (contentItems.length > 0) {
           // Filter out content items that have been replaced with new uploads
-          parsedContent = parsedContent.filter(item => !contentItems.some(newItem => newItem.id === item._id));
+          parsedContent = parsedContent.filter(item => !contentItems.some(newItem => newItem && newItem.id === item._id));
 
           // Add the newly created content items
           course.content = [...parsedContent, ...contentItems.map(item => item.dbId)];

@@ -214,7 +214,14 @@ const CourseDetail = () => {
                           <p className="content-description">{contentObject.description}</p>
 
                           {/* Display content based on type */}
-                          {contentObject.fileUrl && (
+                          {contentObject.type === 'text' ? (
+                            <div className="text-content-preview">
+                              <div
+                                className="html-content"
+                                dangerouslySetInnerHTML={{ __html: contentObject.textContent }}
+                              />
+                            </div>
+                          ) : contentObject.fileUrl && (
                             <div className="content-preview">
                               {contentObject.type === 'video' || contentObject.mediaType === 'video' ? (
                                 <div className="video-preview">
@@ -532,8 +539,8 @@ const CourseDetail = () => {
               </div>
             </div>
             <div className="course-price-section">
-              <button 
-                className="enroll-button" 
+              <button
+                className="enroll-button"
                 onClick={handleEnrollNow}
                 disabled={enrolling}
               >
