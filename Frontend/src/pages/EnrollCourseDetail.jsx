@@ -40,9 +40,10 @@ const EnrollCourseDetail = () => {
         setCourse(res);
 
         // Only first module should be expanded by default
+        // Use module IDs as keys instead of titles for consistency
         const defaultExpanded = {};
         res.modules?.forEach((mod, index) => {
-          defaultExpanded[mod.title || mod._id] = index === 0;
+          defaultExpanded[mod._id] = index === 0;
         });
         setExpandedSections(defaultExpanded);
 
@@ -158,8 +159,8 @@ const EnrollCourseDetail = () => {
 
           // Only expand the last accessed module
           course.modules.forEach((mod, idx) => {
-            const moduleTitle = mod.title || mod._id;
-            newExpandedSections[moduleTitle] = idx === moduleIndex;
+            // Always use module ID as the key, not the title
+            newExpandedSections[mod._id] = idx === moduleIndex;
           });
 
           // Update expanded sections state
@@ -174,10 +175,10 @@ const EnrollCourseDetail = () => {
     }
   }, [moduleProgress, course]);
 
-  const toggleSection = (section) => {
+  const toggleSection = (moduleId) => {
     setExpandedSections({
       ...expandedSections,
-      [section]: !expandedSections[section],
+      [moduleId]: !expandedSections[moduleId],
     });
   };
 
@@ -297,7 +298,7 @@ const EnrollCourseDetail = () => {
     }
 
     // If module is not locked, expand it
-    toggleSection(module.title);
+    toggleSection(module._id);
 
     // Update last accessed module in the backend
     dispatch(updateModuleProgressThunk({
@@ -475,13 +476,13 @@ const EnrollCourseDetail = () => {
                       {isModuleLocked(moduleIndex) ? (
                         <FaLock />
                       ) : (
-                        expandedSections[module.title] ? <FaChevronUp /> : <FaChevronDown />
+                        expandedSections[module._id] ? <FaChevronUp /> : <FaChevronDown />
                       )}
                     </div>
                   </div>
 
                   {/* Only show content if module is not locked AND it's expanded */}
-                  {!isModuleLocked(moduleIndex) && expandedSections[module.title] && (
+                  {!isModuleLocked(moduleIndex) && expandedSections[module._id] && (
                     <div className="section-content">
                       {module.content?.length ? module.content.map((content) => (
                         <div
