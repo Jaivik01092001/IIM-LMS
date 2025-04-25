@@ -147,13 +147,13 @@
 //       [sessionId]: !sessionCompleted[sessionId]
 //     };
 //     setSessionCompleted(newSessionState);
-    
+
 //     // For static demo, just count the completed sessions
 //     const completedCount = Object.values(newSessionState).filter(Boolean).length;
 //     const totalSessions = 4; // Hard-coded for demo
 //     const newProgress = Math.round((completedCount / totalSessions) * 100);
 //     setUserProgress(newProgress);
-    
+
 //     // Simulate API success
 //     toast.success('Progress updated');
 //   };
@@ -336,7 +336,7 @@
 //                       <span className="quiz-passing-score">Passing Score: {quiz.passingScore}%</span>
 //                     </div>
 //                   </div>
-                  
+
 //                   {quiz.questions && quiz.questions.length > 0 ? (
 //                     <div className="quiz-content">
 //                       {!quizSubmitted ? (
@@ -606,7 +606,7 @@ const EnrollCourseDetail = () => {
       <div className="course-content-container">
         <div className="video-container">
           <div className="video-wrapper">
-            {selectedContent?.type === 'video' ? (
+            { /*    {selectedContent?.type === 'video' ? (
               <video
                 className="video-player"
                 controls
@@ -617,34 +617,88 @@ const EnrollCourseDetail = () => {
               <div className="video-placeholder">
                 <FaPlayCircle size={60} />
               </div>
+            )} */}
+
+            {selectedContent ? (
+              selectedContent.mimeType?.startsWith('video/') ? (
+                <video
+                  className="video-player"
+                  controls
+                  width="100%"
+                  src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
+                />
+              ) : selectedContent.mimeType === 'application/pdf' ? (
+                <iframe
+                  title="PDF Preview"
+                  src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
+                  width="100%"
+                  height="500px"
+                  style={{ border: '1px solid #ccc', borderRadius: '8px' }}
+                />
+              ) : selectedContent.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
+                <iframe
+                  title="DOCX Preview"
+                  src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                    `http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`
+                  )}`}
+                  width="100%"
+                  height="500px"
+                  frameBorder="0"
+                />
+              ) : selectedContent.mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ? (
+                <iframe
+                  title="PPTX Preview"
+                  src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                    `http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`
+                  )}`}
+                  width="100%"
+                  height="500px"
+                  frameBorder="0"
+                />
+              ) : selectedContent.mimeType?.startsWith('image/') ? (
+                <img
+                  src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
+                  alt="Preview"
+                  style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
+                />
+              ) : (
+                <div className="video-placeholder">
+                  <p>No preview available for this file type.</p>
+                </div>
+              )
+            ) : (
+              <div className="video-placeholder">
+                <FaPlayCircle size={60} />
+              </div>
             )}
+
           </div>
           <div className="download-section">
-  <p>Download the file</p>
-  <button className="download-button">
-    <FaDownload /> Download
-  </button>
-</div>
+            <p>Download the file</p>
+            <button className="download-button">
+              <FaDownload /> Download
+            </button>
+          </div>
 
-<div className="personal-note-section">
-  <h3>Personal Course Note</h3>
-  <p className="note-description">This note will be displayed for you privately</p>
-  <textarea 
-    placeholder="Write comment here..."
-    className="note-textarea"
-  ></textarea>
-  <div className="attachment-section">
-    <h4>Attachment</h4>
-    <div className="attachment-input">
-      <button className="attachment-button">
-        <FaPaperclip />
-      </button>
-    </div>
-  </div>
-  <button className="save-note-button" onClick={handleSaveNote}>
-    Save Note
-  </button>
-</div>
+          <div className="personal-note-section">
+            <h3>Personal Course Note</h3>
+            <p className="note-description">This note will be displayed for you privately</p>
+            <textarea
+              placeholder="Write comment here..."
+              className="note-textarea"
+            ></textarea>
+            <div className="attachment-section">
+              <h4>Attachment</h4>
+              <div className="attachment-input">
+                <button className="attachment-button">
+                  <FaPaperclip />
+                </button>
+              </div>
+            </div>
+            <button className="save-note-button" onClick={handleSaveNote}>
+              Save Note
+            </button>
+          </div>
 
         </div>
 
