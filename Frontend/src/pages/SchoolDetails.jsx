@@ -26,18 +26,22 @@ const SchoolDetails = () => {
   useEffect(() => {
     if (currentUniversity) {
       console.log('Current university data:', currentUniversity);
+
+      // Extract profile fields correctly from the nested profile object
+      const profile = currentUniversity.profile || {};
+
       setSchoolData({
         id: currentUniversity._id,
         school: currentUniversity.name || "N/A",
         category: "University",
         owner: currentUniversity.contactPerson || "N/A",
-        ownerAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
-        mobile: currentUniversity.phone || "N/A",
+        ownerAvatar: profile.avatar ? `http://localhost:5000${profile.avatar}` : "https://randomuser.me/api/portraits/men/1.jpg",
+        mobile: currentUniversity.phoneNumber || "N/A",
         email: currentUniversity.email || "N/A",
         status: currentUniversity.status === 1,
-        address: currentUniversity.address || "N/A",
-        zipcode: currentUniversity.zipcode || "N/A",
-        state: currentUniversity.state || "N/A",
+        address: profile.address || "N/A",
+        zipcode: profile.zipcode || "N/A",
+        state: profile.state || "N/A",
         educators: currentUniversity.educators || []
       });
     }

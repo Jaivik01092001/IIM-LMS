@@ -8,7 +8,12 @@ const userSchema = new mongoose.Schema({
   // Reference to the Role model for fine-grained permissions
   roleRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
   name: { type: String, required: true },
-  university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' }, // For educators
+  // For educators - reference to their university (which is also a User with role='university')
+  university: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // For universities - list of educators associated with this university
+  educators: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  // For universities - contact person name (previously in University model)
+  contactPerson: { type: String },
   refreshToken: { type: String }, // Added for JWT refresh token
   otp: { type: String },
   otpExpires: { type: Date },

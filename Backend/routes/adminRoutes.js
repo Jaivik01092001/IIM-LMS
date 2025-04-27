@@ -18,8 +18,8 @@ router.put('/educator/:id', upload.single('profileImage'), adminController.updat
 // University routes
 router.get('/universities', adminController.getUniversities);
 router.get('/university/:id', adminController.getUniversityById);
-router.post('/university', adminController.createUniversity);
-router.put('/university/:id', adminController.updateUniversity);
+router.post('/university', upload.single('profileImage'), adminController.createUniversity);
+router.put('/university/:id', upload.single('profileImage'), adminController.updateUniversity);
 router.delete('/university/:id', adminController.deleteUniversity);
 
 // Content routes

@@ -5,7 +5,6 @@ const UniversityForm = ({ university, onSubmit, onCancel }) => {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    password: '',
     phoneNumber: '',
   });
 
@@ -15,7 +14,6 @@ const UniversityForm = ({ university, onSubmit, onCancel }) => {
       setForm({
         name: university.school || '',
         email: university.email || '',
-        password: '',  // Password is not pre-filled for security
         phoneNumber: university.mobile || '',
       });
     }
@@ -36,7 +34,7 @@ const UniversityForm = ({ university, onSubmit, onCancel }) => {
       <h2 className="text-xl font-semibold mb-4">
         {university ? 'Edit University' : 'Add New University'}
       </h2>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
@@ -52,7 +50,7 @@ const UniversityForm = ({ university, onSubmit, onCancel }) => {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
         </div>
-        
+
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
             Email
@@ -67,24 +65,9 @@ const UniversityForm = ({ university, onSubmit, onCancel }) => {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
         </div>
-        
-        {!university && (
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required={!university}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-        )}
-        
+
+        {/* Password field removed as the system uses OTP-based login */}
+
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
             Phone Number
@@ -99,7 +82,7 @@ const UniversityForm = ({ university, onSubmit, onCancel }) => {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
         </div>
-        
+
         <div className="flex justify-end space-x-4">
           <button
             type="button"
@@ -126,4 +109,4 @@ UniversityForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-export default UniversityForm; 
+export default UniversityForm;

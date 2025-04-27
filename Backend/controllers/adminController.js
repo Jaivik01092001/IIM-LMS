@@ -1,6 +1,5 @@
 const Content = require('../models/Content');
 const Course = require('../models/Course');
-const University = require('../models/University');
 const User = require('../models/User');
 const Module = require('../models/Module');
 const Quiz = require('../models/Quiz');
@@ -9,8 +8,10 @@ const { formatPhoneNumber } = require('../utils/phoneUtils');
 
 exports.getUniversities = async (req, res) => {
   try {
-    // Return all universities regardless of status
-    const universities = await University.find().populate('educators');
+    // Return all users with role='university' regardless of status
+    const universities = await User.find({ role: 'university' })
+      .populate('educators', 'name email phoneNumber status')
+      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
     res.json(universities);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving universities', error: error.message });
@@ -19,51 +20,78 @@ exports.getUniversities = async (req, res) => {
 
 exports.createUniversity = async (req, res, next) => {
   try {
-    const {
+    console.log("Request body:", req.body);
+    console.log("Request headers:", req.headers);
+    console.log("Content-Type:", req.headers['content-type']);
+    console.log("Request files:", req.files);
+
+    // Log all keys in the request body
+    console.log("Request body keys:", Object.keys(req.body));
+
+    // Extract fields from form data
+    // Handle both direct fields and FormData
+    const name = req.body.name || req.body.schoolName;
+    const email = req.body.email;
+    const roleId = req.body.roleId;
+    const phoneNumber = req.body.phoneNumber || (req.body.phone ? req.body.phone.replace(/^\+91\s*/, '') : null);
+    const address = req.body.address;
+    const zipcode = req.body.zipcode;
+    const state = req.body.state;
+    const contactPerson = req.body.contactPerson || req.body.ownerName;
+
+    console.log("Extracted fields:", {
       name,
       email,
-      password,
-      roleId,
       phoneNumber,
-      address,
-      zipcode,
-      state,
-      contactPerson
-    } = req.body;
+      contactPerson,
+      rawName: req.body.name,
+      rawSchoolName: req.body.schoolName,
+      rawEmail: req.body.email,
+      rawPhoneNumber: req.body.phoneNumber,
+      rawPhone: req.body.phone
+    });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!name || !email || !phoneNumber) {
+      return res.status(400).json({
+        message: 'Missing required fields',
+        details: {
+          name: name ? 'provided' : 'missing',
+          email: email ? 'provided' : 'missing',
+          phoneNumber: phoneNumber ? 'provided' : 'missing'
+        }
+      });
+    }
+
+    // Check if university with this email already exists
+    const existingUniversity = await User.findOne({ email, role: 'university' });
+    if (existingUniversity) {
+      return res.status(400).json({ message: 'University with this email already exists' });
+    }
+
+    // Create a new university user without password (using OTP-based login)
     const universityUser = new User({
       email,
-      password: hashedPassword,
       role: 'university',
       name,
       phoneNumber,
       roleRef: roleId || undefined, // Assign role if provided
+      contactPerson,
+      educators: [],
       profile: {
         address,
         zipcode,
-        state
+        state,
+        avatar: req.file ? `/uploads/profiles/${req.file.filename}` : null
       }
     });
 
     await universityUser.save();
 
-    const university = new University({
-      name,
-      email,
-      phone: phoneNumber,
-      address,
-      zipcode,
-      state,
-      contactPerson,
-      educators: []
-    });
+    // Return the university user without sensitive fields
+    const universityData = await User.findById(universityUser._id)
+      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
 
-    universityUser.university = university._id;
-    await university.save();
-    await universityUser.save();
-
-    res.json(university);
+    res.json(universityData);
   } catch (error) {
     next(error);
   }
@@ -71,8 +99,12 @@ exports.createUniversity = async (req, res, next) => {
 
 exports.getUniversityById = async (req, res) => {
   try {
-    const university = await University.findById(req.params.id)
-      .populate('educators', 'name email phoneNumber');
+    const university = await User.findOne({
+      _id: req.params.id,
+      role: 'university'
+    })
+      .populate('educators', 'name email phoneNumber status')
+      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
 
     if (!university) {
       return res.status(404).json({ message: 'University not found' });
@@ -86,7 +118,10 @@ exports.getUniversityById = async (req, res) => {
 
 exports.deleteUniversity = async (req, res) => {
   try {
-    const university = await University.findById(req.params.id);
+    const university = await User.findOne({
+      _id: req.params.id,
+      role: 'university'
+    });
 
     if (!university) {
       return res.status(404).json({ message: 'University not found' });
@@ -96,13 +131,6 @@ exports.deleteUniversity = async (req, res) => {
     university.status = 0;
     await university.save();
 
-    // Also update the associated university user to inactive
-    const universityUser = await User.findOne({ university: university._id, role: 'university' });
-    if (universityUser) {
-      universityUser.status = 0;
-      await universityUser.save();
-    }
-
     res.json({ message: 'University deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting university', error: error.message });
@@ -111,20 +139,48 @@ exports.deleteUniversity = async (req, res) => {
 
 exports.updateUniversity = async (req, res) => {
   try {
-    const { name, email, phone, address, zipcode, state, contactPerson, status } = req.body;
-    const university = await University.findById(req.params.id);
+    console.log("Update university request body:", req.body);
+
+    // Extract fields from form data
+    // Handle both direct fields and FormData
+    const name = req.body.name || req.body.schoolName;
+    const email = req.body.email;
+    const phone = req.body.phone;
+    const phoneNumber = req.body.phoneNumber || (phone ? phone.replace(/^\+91\s*/, '') : null);
+    const address = req.body.address;
+    const zipcode = req.body.zipcode;
+    const state = req.body.state;
+    const contactPerson = req.body.contactPerson || req.body.ownerName;
+    const status = req.body.status;
+
+    console.log("Extracted update fields:", { name, email, phoneNumber, contactPerson, status });
+
+    const university = await User.findOne({
+      _id: req.params.id,
+      role: 'university'
+    });
 
     if (!university) {
       return res.status(404).json({ message: 'University not found' });
     }
 
-    university.name = name || university.name;
-    university.email = email || university.email;
-    university.phone = phone || university.phone;
-    university.address = address || university.address;
-    university.zipcode = zipcode || university.zipcode;
-    university.state = state || university.state;
-    university.contactPerson = contactPerson || university.contactPerson;
+    // Update basic fields
+    if (name) university.name = name;
+    if (email) university.email = email;
+    if (phoneNumber) university.phoneNumber = phoneNumber;
+    if (phone) university.phoneNumber = phone.replace(/^\+91\s*/, '');
+    if (contactPerson) university.contactPerson = contactPerson;
+
+    // Update profile fields
+    university.profile = university.profile || {};
+    if (address) university.profile.address = address;
+    if (zipcode) university.profile.zipcode = zipcode;
+    if (state) university.profile.state = state;
+
+    // Update profile image if provided
+    if (req.file) {
+      university.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
 
     // Handle status update if provided
     if (status !== undefined) {
@@ -132,7 +188,13 @@ exports.updateUniversity = async (req, res) => {
     }
 
     await university.save();
-    res.json(university);
+
+    // Return updated university without sensitive fields
+    const updatedUniversity = await User.findById(university._id)
+      .populate('educators', 'name email phoneNumber status')
+      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
+
+    res.json(updatedUniversity);
   } catch (error) {
     res.status(500).json({ message: 'Error updating university', error: error.message });
   }
@@ -1202,7 +1264,6 @@ exports.createEducator = async (req, res, next) => {
   try {
     const {
       email,
-      password,
       name,
       roleId,
       phoneNumber,
@@ -1214,12 +1275,6 @@ exports.createEducator = async (req, res, next) => {
     } = req.body;
 
     console.log('Admin creating educator with roleId:', roleId);
-
-    // Generate a random default password if none is provided
-    const defaultPassword = Math.random().toString(36).slice(-8);
-    const passwordToHash = password || defaultPassword;
-
-    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
 
     // Prepare profile object
     const profile = {
@@ -1249,7 +1304,6 @@ exports.createEducator = async (req, res, next) => {
 
     const educator = new User({
       email,
-      password: hashedPassword,
       role: roleName, // Use the determined role name
       name,
       phoneNumber,

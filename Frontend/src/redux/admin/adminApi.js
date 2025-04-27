@@ -55,12 +55,46 @@ export const getUniversityById = async (id) => {
 };
 
 export const createUniversity = async (data) => {
-  const response = await axios.post(`${API_URL}/admin/university`, data, getConfig());
-  return response.data;
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  console.log('Sending university data to API:', data instanceof FormData ? 'FormData object' : data);
+
+  // If it's FormData, convert to a plain object for debugging
+  if (data instanceof FormData) {
+    const formDataObj = {};
+    for (let [key, value] of data.entries()) {
+      formDataObj[key] = value;
+    }
+    console.log('FormData contents:', formDataObj);
+  }
+
+  try {
+    const response = await axios.post(`${API_URL}/admin/university`, data, config);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating university:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const updateUniversity = async (id, data) => {
-  const response = await axios.put(`${API_URL}/admin/university/${id}`, data, getConfig());
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  console.log('Updating university data:', data instanceof FormData ? 'FormData object' : data);
+
+  const response = await axios.put(`${API_URL}/admin/university/${id}`, data, config);
   return response.data;
 };
 

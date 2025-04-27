@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { createEducatorThunk as createUniversityEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk } from "../redux/university/universitySlice";
-import { createEducatorThunk as createAdminEducatorThunk, updateEducatorThunk as updateAdminEducatorThunk, getEducatorsThunk as getAdminEducatorsThunk } from "../redux/admin/adminSlice";
+import { createEducatorThunk as createAdminEducatorThunk, updateEducatorThunk as updateAdminEducatorThunk, getEducatorsThunk as getAdminEducatorsThunk, getUniversitiesThunk } from "../redux/admin/adminSlice";
 import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/EducatorAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const EducatorAccountForm = () => {
   const navigate = useNavigate();
@@ -14,29 +15,32 @@ const EducatorAccountForm = () => {
   const educatorData = location.state?.educator || null;
   const isEditMode = !!educatorData;
 
-  // Get user and roles from Redux store
+  // Get user, roles, and universities from Redux store
   const { user } = useSelector((state) => state.auth);
   const { roles } = useSelector((state) => state.role);
+  const { universities, loading: universitiesLoading } = useSelector((state) => state.admin);
 
   // Determine if user is admin
   const isAdmin = user?.role === 'admin';
 
-  // Fetch roles on component mount
+  // Fetch roles and universities on component mount
   useEffect(() => {
     dispatch(getRolesThunk());
+    dispatch(getUniversitiesThunk());
   }, [dispatch]);
 
-  // Log roles when they change
+  // Log roles and universities when they change
   useEffect(() => {
     console.log('Available roles:', roles);
-  }, [roles]);
+    console.log('Available universities:', universities);
+  }, [roles, universities]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
   const [formData, setFormData] = useState({
     professorName: "",
-    schoolName: "",
+    universityId: "", // Changed from schoolName to universityId for dropdown selection
     category: "",
     email: "",
     phoneNumber: "",
@@ -106,9 +110,33 @@ const EducatorAccountForm = () => {
 
       console.log('Avatar URL from educator data:', avatarUrl);
 
+      // Find university ID if we have a school name
+      let universityId = "";
+      if (educatorData.university) {
+        // If university is an object with _id
+        if (typeof educatorData.university === 'object' && educatorData.university._id) {
+          universityId = educatorData.university._id;
+        }
+        // If university is just the ID
+        else if (typeof educatorData.university === 'string') {
+          universityId = educatorData.university;
+        }
+      }
+      // If no direct university reference, try to find by name
+      else if (educatorData.school && universities && universities.length > 0) {
+        const matchingUniversity = universities.find(
+          uni => uni.name.toLowerCase() === educatorData.school.toLowerCase()
+        );
+        if (matchingUniversity) {
+          universityId = matchingUniversity._id;
+        }
+      }
+
+      console.log('Found university ID:', universityId);
+
       setFormData({
         professorName: educatorData.professor || "",
-        schoolName: educatorData.school || "",
+        universityId: universityId,
         category: educatorData.category || "",
         email: educatorData.email || "",
         phoneNumber: phoneNumber,
@@ -125,7 +153,7 @@ const EducatorAccountForm = () => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, educatorData]);
+  }, [isEditMode, educatorData, universities]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -174,7 +202,24 @@ const EducatorAccountForm = () => {
     formDataObj.append('state', formData.state);
     formDataObj.append('status', Number(formData.status));
     formDataObj.append('category', formData.category); // Add category field
-    formDataObj.append('schoolName', formData.schoolName); // Add school/university name field
+
+    // Validate that a university is selected
+    if (!formData.universityId) {
+      setFormErrors({...formErrors, universityId: 'Please select a School/University'});
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Find the selected university to get its name
+    const selectedUniversity = universities.find(uni => uni._id === formData.universityId);
+    if (selectedUniversity) {
+      formDataObj.append('schoolName', selectedUniversity.name); // Add school/university name
+      formDataObj.append('university', formData.universityId); // Add university ID
+    } else {
+      setFormErrors({...formErrors, universityId: 'Selected university not found'});
+      setIsSubmitting(false);
+      return;
+    }
 
     // No password field needed
 
@@ -293,6 +338,11 @@ const EducatorAccountForm = () => {
     navigate(-1);
   };
 
+  // Show loading spinner when universities are being fetched
+  if (universitiesLoading || !universities) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="educator-form-container">
       <div className="form-header">
@@ -326,16 +376,26 @@ const EducatorAccountForm = () => {
               </div>
               <div className="grid-row">
                 <div className="form-group">
-                  <label htmlFor="schoolName">School/University</label>
-                  <input
-                    type="text"
-                    id="schoolName"
-                    name="schoolName"
-                    value={formData.schoolName}
+                  <label htmlFor="universityId">School/University</label>
+                  <select
+                    id="universityId"
+                    name="universityId"
+                    value={formData.universityId}
                     onChange={handleInputChange}
-                    placeholder="Enter School/University Name"
                     required
-                  />
+                  >
+                    <option value="">Select School/University</option>
+                    {universities && universities.length > 0 ? (
+                      universities.map((university) => (
+                        <option key={university._id} value={university._id}>
+                          {university.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>Loading universities...</option>
+                    )}
+                  </select>
+                  {formErrors.universityId && <div className="error-message">{formErrors.universityId}</div>}
                 </div>
               </div>
               <div className="grid-row">

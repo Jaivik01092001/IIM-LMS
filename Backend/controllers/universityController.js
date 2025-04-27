@@ -6,7 +6,6 @@ exports.createEducator = async (req, res, next) => {
   try {
     const {
       email,
-      password,
       name,
       roleId,
       phoneNumber,
@@ -16,13 +15,6 @@ exports.createEducator = async (req, res, next) => {
       category, // Add category field
       schoolName // Add school/university name field
     } = req.body;
-
-    // Generate a random default password if none is provided
-    // This is just a placeholder as the system uses OTP for authentication
-    const defaultPassword = Math.random().toString(36).slice(-8);
-    const passwordToHash = password || defaultPassword;
-
-    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
 
     // Prepare profile object
     const profile = {
@@ -54,7 +46,6 @@ exports.createEducator = async (req, res, next) => {
 
     const educator = new User({
       email,
-      password: hashedPassword,
       role: roleName, // Use the determined role name
       name,
       phoneNumber, // No default phone number, must be provided by user
@@ -67,6 +58,26 @@ exports.createEducator = async (req, res, next) => {
     console.log('University controller - Created educator with role:', educator.role);
 
     await educator.save();
+
+    // Add the educator to the university's educators array
+    const university = await User.findOne({
+      _id: req.user.id,
+      role: 'university'
+    });
+
+    if (university) {
+      // Initialize educators array if it doesn't exist
+      if (!university.educators) {
+        university.educators = [];
+      }
+
+      // Add the educator to the university's educators array if not already there
+      if (!university.educators.includes(educator._id)) {
+        university.educators.push(educator._id);
+        await university.save();
+      }
+    }
+
     res.json(educator);
   } catch (error) {
     next(error);
@@ -231,29 +242,6 @@ exports.updateProfile = async (req, res) => {
 };
 
 exports.updatePassword = async (req, res) => {
-  const { currentPassword, newPassword, confirmPassword } = req.body;
-  console.debug(`Updating password for userId: ${req.user.id}`);
-
-  // Validate passwords match
-  if (newPassword !== confirmPassword) {
-    console.warn(`Password confirmation mismatch for userId: ${req.user.id}`);
-    return res.status(400).json({ msg: "New passwords do not match" });
-  }
-
-  const user = await User.findById(req.user.id);
-  if (!user) {
-    console.error(`User not found for userId: ${req.user.id}`);
-    return res.status(404).json({ msg: "User not found" });
-  }
-
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
-  if (!isMatch) {
-    console.warn(`Invalid current password attempt for userId: ${req.user.id}`);
-    return res.status(400).json({ msg: "Invalid current password" });
-  }
-
-  user.password = await bcrypt.hash(newPassword, 12);
-  await user.save();
-  console.debug(`Password updated successfully for userId: ${req.user.id}`);
-  res.json({ msg: "Password updated" });
+  // Password functionality has been removed as the system uses OTP-based login
+  return res.status(400).json({ msg: "Password functionality is not available. The system uses OTP-based authentication." });
 };

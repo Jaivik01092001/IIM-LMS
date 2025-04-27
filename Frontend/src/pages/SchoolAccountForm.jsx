@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk, getUniversityByIdThunk } from "../redux/admin/adminSlice";
+import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/SchoolAccountForm.css";
 import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
 
@@ -10,9 +11,15 @@ const SchoolAccountForm = () => {
   const dispatch = useDispatch();
   const { id } = useParams();
   const { currentUniversity, loading } = useSelector((state) => state.admin);
+  const { roles } = useSelector((state) => state.role);
 
   // Determine if we're in edit mode based on the presence of an ID parameter
   const isEditMode = !!id;
+
+  // Fetch roles when component mounts
+  useEffect(() => {
+    dispatch(getRolesThunk());
+  }, [dispatch]);
 
   const [formData, setFormData] = useState({
     schoolName: "",
@@ -23,6 +30,7 @@ const SchoolAccountForm = () => {
     zipcode: "",
     state: "",
     status: 1,
+    roleId: "",
     profileImage: null,
     profileImageUrl: "",
     loginEmail: "",
@@ -39,21 +47,41 @@ const SchoolAccountForm = () => {
   // Update form when university data is loaded
   useEffect(() => {
     if (isEditMode && currentUniversity) {
+      console.log("Current university data:", currentUniversity);
+
+      // Extract profile fields correctly from the nested profile object
+      const profile = currentUniversity.profile || {};
+
       // Strip the '+91' prefix from phone number if exists
-      const phoneNumber = currentUniversity.phone ?
-        currentUniversity.phone.replace(/^\+91\s*/, '').trim() :
+      const phoneNumber = currentUniversity.phoneNumber ?
+        currentUniversity.phoneNumber.replace(/^\+91\s*/, '').trim() :
         "";
+
+      // Extract roleId from university data
+      let roleId = '';
+      if (currentUniversity.roleRef) {
+        if (typeof currentUniversity.roleRef === 'object') {
+          roleId = currentUniversity.roleRef._id;
+          console.log('roleRef is an object, extracted _id:', roleId);
+        } else {
+          roleId = currentUniversity.roleRef;
+          console.log('roleRef is a string:', roleId);
+        }
+      } else {
+        console.log('No roleRef found in university data');
+      }
 
       console.log("Setting form data from API:", {
         schoolName: currentUniversity.name || "",
         ownerName: currentUniversity.contactPerson || "",
         email: currentUniversity.email || "",
         phoneNumber: phoneNumber,
-        address: currentUniversity.address || "",
-        zipcode: currentUniversity.zipcode || "",
-        state: currentUniversity.state || "",
+        address: profile.address || "",
+        zipcode: profile.zipcode || "",
+        state: profile.state || "",
         status: currentUniversity.status === 1 ? 1 : 0,
-        avatar: currentUniversity.avatar || null,
+        roleId: roleId,
+        avatar: profile.avatar || null,
       });
 
       // Set form data from API response
@@ -62,12 +90,13 @@ const SchoolAccountForm = () => {
         ownerName: currentUniversity.contactPerson || "",
         email: currentUniversity.email || "",
         phoneNumber: phoneNumber,
-        address: currentUniversity.address || "",
-        zipcode: currentUniversity.zipcode || "",
-        state: currentUniversity.state || "",
+        address: profile.address || "",
+        zipcode: profile.zipcode || "",
+        state: profile.state || "",
         status: currentUniversity.status === 1 ? 1 : 0,
-        profileImageUrl: currentUniversity.avatar 
-          ? `http://localhost:5000${currentUniversity.avatar}` 
+        roleId: roleId,
+        profileImageUrl: profile.avatar
+          ? `http://localhost:5000${profile.avatar}`
           : null,
         loginEmail: currentUniversity.email || "",
         loginPhone: phoneNumber
@@ -78,14 +107,14 @@ const SchoolAccountForm = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
-    
+
     // Keep login credentials in sync with general information
     if (name === 'email') {
       updatedFormData.loginEmail = value;
     } else if (name === 'phoneNumber') {
       updatedFormData.loginPhone = value;
     }
-    
+
     setFormData(updatedFormData);
   };
 
@@ -103,48 +132,95 @@ const SchoolAccountForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Create FormData object for file upload
-    const formDataObj = new FormData();
-    formDataObj.append('name', formData.schoolName);
-    formDataObj.append('email', formData.email);
-    formDataObj.append('phone', "+91 " + formData.phoneNumber.trim());
-    formDataObj.append('address', formData.address);
-    formDataObj.append('zipcode', formData.zipcode);
-    formDataObj.append('state', formData.state);
-    formDataObj.append('contactPerson', formData.ownerName);
-    formDataObj.append('status', Number(formData.status)); // Ensure status is a number
+    // Make sure we're sending all required fields
+    if (!formData.schoolName) {
+      console.error("Missing school name");
+      return;
+    }
+    if (!formData.email) {
+      console.error("Missing email");
+      return;
+    }
+    if (!formData.phoneNumber) {
+      console.error("Missing phone number");
+      return;
+    }
 
-    // Append profile image if selected
+    console.log("Submitting form data:", formData);
+
+    let apiPromise;
+
+    // Try a different approach - use a regular object for most fields
+    // and only use FormData if we have a file to upload
     if (formData.profileImage) {
+      // Create FormData object for file upload
+      const formDataObj = new FormData();
+
+      // Add all fields to FormData
+      formDataObj.append('name', formData.schoolName);
+      formDataObj.append('schoolName', formData.schoolName); // Add both for compatibility
+      formDataObj.append('email', formData.email);
+      formDataObj.append('phoneNumber', formData.phoneNumber.trim()); // Send without +91 prefix
+      formDataObj.append('phone', "+91 " + formData.phoneNumber.trim()); // Also send with +91 prefix
+      formDataObj.append('address', formData.address);
+      formDataObj.append('zipcode', formData.zipcode);
+      formDataObj.append('state', formData.state);
+      formDataObj.append('contactPerson', formData.ownerName);
+      formDataObj.append('ownerName', formData.ownerName); // Add both for compatibility
+      formDataObj.append('status', Number(formData.status)); // Ensure status is a number
+
+      // Add roleId if selected
+      if (formData.roleId) {
+        formDataObj.append('roleId', formData.roleId);
+      }
+
       formDataObj.append('profileImage', formData.profileImage);
+
+      // Debug: Log all entries in the FormData object
+      console.log("FormData entries:");
+      for (let [key, value] of formDataObj.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
+      apiPromise = isEditMode ?
+        dispatch(updateUniversityThunk({ id, formData: formDataObj })) :
+        dispatch(createUniversityThunk(formDataObj));
+    } else {
+      // Use a regular object if no file upload is needed
+      const universityData = {
+        name: formData.schoolName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber.trim(),
+        phone: "+91 " + formData.phoneNumber.trim(),
+        address: formData.address,
+        zipcode: formData.zipcode,
+        state: formData.state,
+        contactPerson: formData.ownerName,
+        status: Number(formData.status)
+      };
+
+      // Add roleId if selected
+      if (formData.roleId) {
+        universityData.roleId = formData.roleId;
+      }
+
+      console.log("Sending regular object:", universityData);
+
+      apiPromise = isEditMode ?
+        dispatch(updateUniversityThunk({ id, ...universityData })) :
+        dispatch(createUniversityThunk(universityData));
     }
 
-    if (isEditMode) {
-      // Call update API
-      dispatch(updateUniversityThunk({
-        id: id, // Use ID from URL params
-        formData: formDataObj
-      }))
-        .unwrap()
-        .then(() => {
-          dispatch(getUniversitiesThunk());
-          navigate("/dashboard/admin/schools");
-        })
-        .catch(error => {
-          console.error("Error updating university:", error);
-        });
-    } else {
-      // Call create API
-      dispatch(createUniversityThunk(formDataObj))
-        .unwrap()
-        .then(() => {
-          dispatch(getUniversitiesThunk());
-          navigate("/dashboard/admin/schools");
-        })
-        .catch(error => {
-          console.error("Error creating university:", error);
-        });
-    }
+    // Handle the promise
+    apiPromise
+      .unwrap()
+      .then(() => {
+        dispatch(getUniversitiesThunk());
+        navigate("/dashboard/admin/schools");
+      })
+      .catch(error => {
+        console.error(`Error ${isEditMode ? 'updating' : 'creating'} university:`, error);
+      });
   };
 
   const handleCancel = () => {
@@ -176,7 +252,7 @@ const SchoolAccountForm = () => {
       <form onSubmit={handleSubmit} className="school-form">
         <div className="form-section">
           <h2>General Information</h2>
-          
+
           <div className="form-row">
             <div className="form-column">
               <div className="form-group">
@@ -278,7 +354,24 @@ const SchoolAccountForm = () => {
                   </select>
                 </div>
               </div>
-              
+
+              <div className="form-group">
+                <label htmlFor="roleId">Role</label>
+                <select
+                  id="roleId"
+                  name="roleId"
+                  value={formData.roleId}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Role</option>
+                  {roles && roles.map(role => (
+                    <option key={role._id} value={role._id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group">
                 <label htmlFor="status">Status</label>
                 <select
@@ -293,16 +386,16 @@ const SchoolAccountForm = () => {
                 </select>
               </div>
             </div>
-            
+
             <div className="form-column">
               <div className="profile-image-container">
                 <label>School Logo</label>
                 <div className="profile-image-upload">
                   {formData.profileImageUrl ? (
-                    <img 
-                      src={formData.profileImageUrl} 
-                      alt="School Logo" 
-                      className="profile-preview-image" 
+                    <img
+                      src={formData.profileImageUrl}
+                      alt="School Logo"
+                      className="profile-preview-image"
                     />
                   ) : (
                     <div className="profile-placeholder">
@@ -328,11 +421,11 @@ const SchoolAccountForm = () => {
 
         <div className="form-section">
           <h2>Login Information</h2>
-          
+
           <div className="login-info-notice">
             Login information is automatically synced with the general information. Users will log in using their email or phone number with OTP verification.
           </div>
-          
+
           <div className="form-row">
             <div className="form-group half-width">
               <label htmlFor="loginPhone">Login Phone Number</label>

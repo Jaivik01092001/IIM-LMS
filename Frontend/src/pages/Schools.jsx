@@ -42,12 +42,12 @@ const Schools = () => {
       category: "University",
       owner: uni.contactPerson || "N/A",
       email: uni.email || "N/A",
-      mobile: uni.phone || "N/A",
-      avatar: uni.avatar ? `http://localhost:5000${uni.avatar}` : null,
+      mobile: uni.phoneNumber || "N/A", // Changed from uni.phone to uni.phoneNumber
+      avatar: uni.profile?.avatar ? `http://localhost:5000${uni.profile.avatar}` : null,
       status: uni.status === 1,
-      address: uni.address || "N/A",
-      zipcode: uni.zipcode || "N/A",
-      state: uni.state || "N/A",
+      address: uni.profile?.address || "N/A", // Updated to access address from profile
+      zipcode: uni.profile?.zipcode || "N/A", // Updated to access zipcode from profile
+      state: uni.profile?.state || "N/A", // Updated to access state from profile
       educators: uni.educators || []
     }));
 

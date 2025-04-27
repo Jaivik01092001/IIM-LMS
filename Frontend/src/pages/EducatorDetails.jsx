@@ -46,12 +46,34 @@ const EducatorDetails = () => {
   // Format API data for UI display
   useEffect(() => {
     if (currentEducator) {
+      console.log("Current educator data:", currentEducator);
+
+      // Get university name if available
+      let universityName = "N/A";
+      let universityId = "N/A";
+
+      if (currentEducator.university) {
+        // If university is an object with name property
+        if (typeof currentEducator.university === 'object' && currentEducator.university.name) {
+          universityName = currentEducator.university.name;
+          universityId = currentEducator.university._id;
+        }
+        // If university is just the ID
+        else if (typeof currentEducator.university === 'string') {
+          universityId = currentEducator.university;
+          // Use the school name from state if available
+          universityName = educatorFromState?.school || universityId;
+        }
+      } else if (educatorFromState?.school) {
+        universityName = educatorFromState.school;
+      }
+
       // Format the data from the API response
       setEducatorData({
         id: currentEducator._id,
         professor: currentEducator.name || "N/A",
-        school: educatorFromState?.school || "N/A", // Use from state as API might not have this
-        category: educatorFromState?.category || "University",
+        school: universityName,
+        category: currentEducator.profile?.category || educatorFromState?.category || "University",
         avatar: currentEducator.profile?.avatar ? `http://localhost:5000${currentEducator.profile.avatar}` : null,
         mobile: currentEducator.phoneNumber || "N/A",
         email: currentEducator.email || "N/A",
@@ -61,7 +83,8 @@ const EducatorDetails = () => {
         state: currentEducator.profile?.state || "N/A",
         role: currentEducator.role || "N/A",
         roleRef: currentEducator.roleRef || "N/A",
-        university: currentEducator.university || "N/A",
+        university: universityId,
+        universityName: universityName,
         createdAt: currentEducator.createdAt ? new Date(currentEducator.createdAt).toLocaleString() : "N/A",
         updatedAt: currentEducator.updatedAt ? new Date(currentEducator.updatedAt).toLocaleString() : "N/A"
       });
@@ -82,6 +105,7 @@ const EducatorDetails = () => {
         role: educatorFromState.role || "N/A",
         roleRef: educatorFromState.roleRef || "N/A",
         university: educatorFromState.university || "N/A",
+        universityName: educatorFromState.school || "N/A",
         createdAt: educatorFromState.createdAt || "N/A",
         updatedAt: educatorFromState.updatedAt || "N/A"
       });
@@ -195,10 +219,10 @@ const EducatorDetails = () => {
               <label>Role:</label>
               <span>{educatorData.role ? educatorData.role.charAt(0).toUpperCase() + educatorData.role.slice(1) : "N/A"}</span>
             </div>
-           
+
             <div className="info-row">
-              <label>University ID:</label>
-              <span title="Reference to associated university/school">{educatorData.university}</span>
+              <label>University:</label>
+              <span title="Associated university/school">{educatorData.universityName}</span>
             </div>
           </div>
         </div>
