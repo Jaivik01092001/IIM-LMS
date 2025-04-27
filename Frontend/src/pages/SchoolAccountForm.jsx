@@ -150,65 +150,54 @@ const SchoolAccountForm = () => {
 
     let apiPromise;
 
-    // Try a different approach - use a regular object for most fields
-    // and only use FormData if we have a file to upload
+    // Always use FormData for consistency, whether we have a new image or not
+    const formDataObj = new FormData();
+
+    // Add all fields to FormData
+    formDataObj.append('name', formData.schoolName);
+    formDataObj.append('schoolName', formData.schoolName); // Add both for compatibility
+    formDataObj.append('email', formData.email);
+    formDataObj.append('phoneNumber', formData.phoneNumber.trim()); // Send without +91 prefix
+    formDataObj.append('phone', "+91 " + formData.phoneNumber.trim()); // Also send with +91 prefix
+    formDataObj.append('address', formData.address);
+    formDataObj.append('zipcode', formData.zipcode);
+    formDataObj.append('state', formData.state);
+    formDataObj.append('contactPerson', formData.ownerName);
+    formDataObj.append('ownerName', formData.ownerName); // Add both for compatibility
+    formDataObj.append('status', Number(formData.status)); // Ensure status is a number
+
+    // Add roleId if selected
+    if (formData.roleId) {
+      formDataObj.append('roleId', formData.roleId);
+    }
+
+    // Add profile image if selected
     if (formData.profileImage) {
-      // Create FormData object for file upload
-      const formDataObj = new FormData();
-
-      // Add all fields to FormData
-      formDataObj.append('name', formData.schoolName);
-      formDataObj.append('schoolName', formData.schoolName); // Add both for compatibility
-      formDataObj.append('email', formData.email);
-      formDataObj.append('phoneNumber', formData.phoneNumber.trim()); // Send without +91 prefix
-      formDataObj.append('phone', "+91 " + formData.phoneNumber.trim()); // Also send with +91 prefix
-      formDataObj.append('address', formData.address);
-      formDataObj.append('zipcode', formData.zipcode);
-      formDataObj.append('state', formData.state);
-      formDataObj.append('contactPerson', formData.ownerName);
-      formDataObj.append('ownerName', formData.ownerName); // Add both for compatibility
-      formDataObj.append('status', Number(formData.status)); // Ensure status is a number
-
-      // Add roleId if selected
-      if (formData.roleId) {
-        formDataObj.append('roleId', formData.roleId);
-      }
-
       formDataObj.append('profileImage', formData.profileImage);
+    }
 
-      // Debug: Log all entries in the FormData object
-      console.log("FormData entries:");
-      for (let [key, value] of formDataObj.entries()) {
-        console.log(`${key}: ${value}`);
+    // If we're in edit mode and have an existing profile image URL but no new image,
+    // add a flag to keep the existing image
+    if (isEditMode && formData.profileImageUrl && !formData.profileImage) {
+      formDataObj.append('keepExistingImage', 'true');
+    }
+
+    // Debug: Log all entries in the FormData object
+    console.log("FormData entries:");
+    for (let [key, value] of formDataObj.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+
+    try {
+      if (isEditMode) {
+        console.log(`Updating university with ID: ${id}`);
+        apiPromise = dispatch(updateUniversityThunk({ id, formData: formDataObj }));
+      } else {
+        console.log('Creating new university');
+        apiPromise = dispatch(createUniversityThunk(formDataObj));
       }
-
-      apiPromise = isEditMode ?
-        dispatch(updateUniversityThunk({ id, formData: formDataObj })) :
-        dispatch(createUniversityThunk(formDataObj));
-    } else {
-      // Use a regular object if no file upload is needed
-      const universityData = {
-        name: formData.schoolName,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber.trim(),
-        phone: "+91 " + formData.phoneNumber.trim(),
-        address: formData.address,
-        zipcode: formData.zipcode,
-        state: formData.state,
-        contactPerson: formData.ownerName,
-        status: Number(formData.status)
-      };
-
-      // Add roleId if selected
-      if (formData.roleId) {
-        universityData.roleId = formData.roleId;
-      }
-
-      console.log("Sending regular object:", universityData);
-
-      apiPromise = isEditMode ?
-        dispatch(updateUniversityThunk({ id, ...universityData })) :
-        dispatch(createUniversityThunk(universityData));
+    } catch (error) {
+      console.error('Error dispatching action:', error);
     }
 
     // Handle the promise
@@ -419,43 +408,7 @@ const SchoolAccountForm = () => {
           </div>
         </div>
 
-        <div className="form-section">
-          <h2>Login Information</h2>
-
-          <div className="login-info-notice">
-            Login information is automatically synced with the general information. Users will log in using their email or phone number with OTP verification.
-          </div>
-
-          <div className="form-row">
-            <div className="form-group half-width">
-              <label htmlFor="loginPhone">Login Phone Number</label>
-              <div className="phone-input-wrapper">
-                <span className="phone-prefix">+91</span>
-                <input
-                  type="tel"
-                  id="loginPhone"
-                  name="loginPhone"
-                  value={formData.loginPhone}
-                  onChange={handleInputChange}
-                  placeholder="Same as Phone Number above"
-                  required
-                  disabled={true}
-                />
-              </div>
-            </div>
-            <div className="form-group half-width">
-              <label htmlFor="loginEmail">Login Email Address</label>
-              <input
-                type="text"
-                id="loginEmail"
-                name="loginEmail"
-                value={formData.loginEmail}
-                placeholder="Same as Email Address above"
-                disabled={true}
-              />
-            </div>
-          </div>
-        </div>
+        
 
         <div className="form-actions">
           <button

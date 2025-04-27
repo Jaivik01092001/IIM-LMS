@@ -103,9 +103,9 @@ const EducatorAccountForm = () => {
       let avatarUrl = educatorData.avatar || (educatorData.profile && educatorData.profile.avatar) || "";
 
       // If the avatar URL is a full URL (starts with http), use it directly for display
-      // Otherwise, it's a relative path, so prepend the API base URL
+      // Otherwise, it's a relative path, so prepend the base URL (without /api)
       if (avatarUrl && !avatarUrl.startsWith('http')) {
-        avatarUrl = `${import.meta.env.VITE_API_URL}${avatarUrl}`;
+        avatarUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${avatarUrl}`;
       }
 
       console.log('Avatar URL from educator data:', avatarUrl);

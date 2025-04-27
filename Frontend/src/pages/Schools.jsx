@@ -36,20 +36,34 @@ const Schools = () => {
   useEffect(() => {
     if (!universities?.length) return;
 
-    const formattedData = universities.map((uni) => ({
-      id: uni._id,
-      school: uni.name || "N/A",
-      category: "University",
-      owner: uni.contactPerson || "N/A",
-      email: uni.email || "N/A",
-      mobile: uni.phoneNumber || "N/A", // Changed from uni.phone to uni.phoneNumber
-      avatar: uni.profile?.avatar ? `http://localhost:5000${uni.profile.avatar}` : null,
-      status: uni.status === 1,
-      address: uni.profile?.address || "N/A", // Updated to access address from profile
-      zipcode: uni.profile?.zipcode || "N/A", // Updated to access zipcode from profile
-      state: uni.profile?.state || "N/A", // Updated to access state from profile
-      educators: uni.educators || []
-    }));
+    const formattedData = universities.map((uni) => {
+      // Get the profile object or empty object if it doesn't exist
+      const profile = uni.profile || {};
+
+      // Format the avatar URL correctly
+      let avatarUrl = null;
+      if (profile.avatar) {
+        // If avatar starts with http, use it directly, otherwise prepend the base URL
+        avatarUrl = profile.avatar.startsWith('http')
+          ? profile.avatar
+          : `${import.meta.env.VITE_API_URL.replace('/api', '')}${profile.avatar}`;
+      }
+
+      return {
+        id: uni._id,
+        school: uni.name || "N/A",
+        category: "University",
+        owner: uni.contactPerson || "N/A",
+        email: uni.email || "N/A",
+        mobile: uni.phoneNumber || "N/A", // Changed from uni.phone to uni.phoneNumber
+        avatar: avatarUrl,
+        status: uni.status === 1,
+        address: profile.address || "N/A", // Updated to access address from profile
+        zipcode: profile.zipcode || "N/A", // Updated to access zipcode from profile
+        state: profile.state || "N/A", // Updated to access state from profile
+        educators: uni.educators || []
+      };
+    });
 
     setTableData(formattedData);
   }, [universities]);
@@ -176,7 +190,11 @@ const Schools = () => {
       name: "Owner",
       cell: (row) => (
         <div className="owner-cell">
-          <img src={row.avatar} alt="Owner" className="owner-avatar" />
+          {row.avatar ? (
+            <img src={row.avatar} alt="Owner" className="owner-avatar" />
+          ) : (
+            <FaUserCircle className="owner-avatar-placeholder" />
+          )}
           <span>{row.owner}</span>
         </div>
       ),

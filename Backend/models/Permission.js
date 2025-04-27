@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
 const permissionSchema = new mongoose.Schema({
-  name: { 
-    type: String, 
-    required: true, 
+  name: {
+    type: String,
+    required: true,
     unique: true,
     trim: true
   },
-  description: { 
+  description: {
     type: String,
     trim: true
   },
@@ -21,7 +21,9 @@ const permissionSchema = new mongoose.Schema({
       'content_management',
       'certificate_management',
       'reports_analytics',
-      'system_settings'
+      'system_settings',
+      'school_management',
+      'educator_management'
     ]
   }
 }, { timestamps: true });

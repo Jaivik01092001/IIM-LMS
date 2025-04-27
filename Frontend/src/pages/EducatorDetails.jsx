@@ -74,7 +74,7 @@ const EducatorDetails = () => {
         professor: currentEducator.name || "N/A",
         school: universityName,
         category: currentEducator.profile?.category || educatorFromState?.category || "University",
-        avatar: currentEducator.profile?.avatar ? `http://localhost:5000${currentEducator.profile.avatar}` : null,
+        avatar: currentEducator.profile?.avatar ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${currentEducator.profile.avatar}` : null,
         mobile: currentEducator.phoneNumber || "N/A",
         email: currentEducator.email || "N/A",
         status: currentEducator.status === 1,

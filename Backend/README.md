@@ -23,7 +23,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 
 ### Authentication
 - `POST /api/auth/login` - User login
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "email": "user@example.com",
@@ -31,7 +31,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     }
     ```
 - `POST /api/auth/refresh-token` - Refresh access token
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "token": "your_refresh_token"
@@ -39,14 +39,14 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     ```
 - `POST /api/auth/logout` - User logout
 - `POST /api/auth/forgot-password` - Request password reset
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "email": "user@example.com"
     }
     ```
 - `POST /api/auth/reset-password` - Reset password with token
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "token": "your_reset_token",
@@ -57,7 +57,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 ### Educator
 - `GET /api/educator/courses` - Get available courses
 - `POST /api/educator/courses/:id/enroll` - Enroll in a course
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "userId": "your_user_id"
@@ -67,7 +67,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 - `GET /api/educator/course/:id` - Get course details
 - `GET /api/educator/content` - Get content list
 - `POST /api/educator/content` - Create new content
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "title": "Content Title",
@@ -76,7 +76,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     }
     ```
 - `PUT /api/educator/content/:id` - Update content
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "title": "Updated Title",
@@ -86,7 +86,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 - `DELETE /api/educator/content/:id` - Delete content
 - `GET /api/educator/profile` - Get profile
 - `PUT /api/educator/profile` - Update profile
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "name": "Your Name",
@@ -97,7 +97,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 ### University Admin
 - `GET /api/university/educators` - Get educators list
 - `POST /api/university/educator` - Create educator account
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "name": "Educator Name",
@@ -106,7 +106,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     }
     ```
 - `PUT /api/university/educator/:id` - Update educator
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "name": "Updated Educator Name",
@@ -115,7 +115,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     ```
 - `GET /api/university/profile` - Get university profile
 - `PUT /api/university/profile` - Update university profile
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "name": "University Name",
@@ -126,7 +126,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 ### Super Admin
 - `GET /api/admin/universities` - Get universities list
 - `POST /api/admin/university` - Create university
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "name": "New University",
@@ -134,7 +134,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     }
     ```
 - `PUT /api/admin/university/:id` - Update university
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "name": "Updated University Name",
@@ -152,7 +152,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 
 ### Quiz
 - `POST /api/quiz/:courseId` - Create quiz
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "title": "Quiz Title",
@@ -167,7 +167,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     ```
 - `GET /api/quiz/:quizId` - Get quiz
 - `PUT /api/quiz/:quizId` - Update quiz
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "title": "Updated Quiz Title"
@@ -175,7 +175,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
     ```
 - `DELETE /api/quiz/:quizId` - Delete quiz
 - `POST /api/quiz/:quizId/submit` - Submit quiz attempt
-  - **Body**: 
+  - **Body**:
     ```json
     {
       "answers": [
@@ -190,8 +190,7 @@ The backend server for the IIM Learning Management System, built with Node.js, E
 
 ## Database Models
 
-- **User**: Educators, University Admins, and Super Admins
-- **University**: Educational institutions
+- **User**: Educators, University Admins, and Super Admins (Universities are also stored as Users with role='university')
 - **Course**: Educational courses
 - **Content**: Educational materials
 - **Quiz**: Assessment tools

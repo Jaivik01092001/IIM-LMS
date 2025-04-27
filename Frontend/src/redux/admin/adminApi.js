@@ -94,8 +94,21 @@ export const updateUniversity = async (id, data) => {
 
   console.log('Updating university data:', data instanceof FormData ? 'FormData object' : data);
 
-  const response = await axios.put(`${API_URL}/admin/university/${id}`, data, config);
-  return response.data;
+  // If it's FormData, log the contents for debugging
+  if (data instanceof FormData) {
+    console.log('FormData contents:');
+    for (let [key, value] of data.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+  }
+
+  try {
+    const response = await axios.put(`${API_URL}/admin/university/${id}`, data, config);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating university:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const deleteUniversity = async (id) => {

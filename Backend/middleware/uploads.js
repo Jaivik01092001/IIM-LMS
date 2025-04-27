@@ -30,6 +30,54 @@ const storage = multer.diskStorage({
     },
 });
 
-const upload = multer({ storage });
+// Add file filter for debugging
+const fileFilter = (req, file, cb) => {
+    console.log('Processing file upload:', file.fieldname, file.originalname);
+    cb(null, true);
+};
 
-module.exports = upload;
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
+
+// Add middleware to log request details before multer processes it
+const loggedUpload = {
+    single: (fieldName) => {
+        return (req, res, next) => {
+            console.log(`Upload middleware called for field: ${fieldName}`);
+            console.log('Request method:', req.method);
+            console.log('Request headers:', req.headers);
+
+            // Call the actual multer middleware
+            upload.single(fieldName)(req, res, (err) => {
+                if (err) {
+                    console.error('Multer error:', err);
+                    return res.status(400).json({ message: 'File upload error', error: err.message });
+                }
+                console.log('File upload processed successfully:', req.file || 'No file uploaded');
+                next();
+            });
+        };
+    },
+    any: () => {
+        return (req, res, next) => {
+            console.log('Upload middleware called for any fields');
+
+            // Call the actual multer middleware
+            upload.any()(req, res, (err) => {
+                if (err) {
+                    console.error('Multer error:', err);
+                    return res.status(400).json({ message: 'File upload error', error: err.message });
+                }
+                console.log('Files upload processed successfully:', req.files ? req.files.length : 'No files uploaded');
+                next();
+            });
+        };
+    }
+};
+
+module.exports = loggedUpload;

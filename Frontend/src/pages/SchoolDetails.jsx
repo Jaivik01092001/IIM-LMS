@@ -5,6 +5,7 @@ import { getUniversityByIdThunk, deleteUniversityThunk, updateUniversityThunk } 
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/SchoolDetails.css";
 import { LuSchool } from "react-icons/lu";
+import { FaUserCircle } from "react-icons/fa";
 
 const SchoolDetails = () => {
   const { id } = useParams();
@@ -30,12 +31,21 @@ const SchoolDetails = () => {
       // Extract profile fields correctly from the nested profile object
       const profile = currentUniversity.profile || {};
 
+      // Format the avatar URL correctly
+      let avatarUrl = null;
+      if (profile.avatar) {
+        // If avatar starts with http, use it directly, otherwise prepend the base URL
+        avatarUrl = profile.avatar.startsWith('http')
+          ? profile.avatar
+          : `${import.meta.env.VITE_API_URL.replace('/api', '')}${profile.avatar}`;
+      }
+
       setSchoolData({
         id: currentUniversity._id,
         school: currentUniversity.name || "N/A",
         category: "University",
         owner: currentUniversity.contactPerson || "N/A",
-        ownerAvatar: profile.avatar ? `http://localhost:5000${profile.avatar}` : "https://randomuser.me/api/portraits/men/1.jpg",
+        ownerAvatar: avatarUrl,
         mobile: currentUniversity.phoneNumber || "N/A",
         email: currentUniversity.email || "N/A",
         status: currentUniversity.status === 1,
@@ -93,11 +103,17 @@ const SchoolDetails = () => {
     <div className="school-details-page">
       <div className="educator-header">
         <div className="educator-info">
-          <img
-            src={schoolData.ownerAvatar}
-            alt={schoolData.owner}
-            className="educator-avatar"
-          />
+          {schoolData.ownerAvatar ? (
+            <img
+              src={schoolData.ownerAvatar}
+              alt={schoolData.owner}
+              className="educator-avatar"
+            />
+          ) : (
+            <div className="educator-avatar-placeholder">
+              <FaUserCircle size={64} />
+            </div>
+          )}
           <div className="educator-text">
             <h1>{schoolData.owner}</h1>
             <span className="category">Category: {schoolData.category}</span>

@@ -22,6 +22,13 @@ router.post('/university', upload.single('profileImage'), adminController.create
 router.put('/university/:id', upload.single('profileImage'), adminController.updateUniversity);
 router.delete('/university/:id', adminController.deleteUniversity);
 
+// Add a route to handle OPTIONS requests for CORS preflight
+router.options('/university/:id', (req, res) => {
+  res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, x-auth-token');
+  res.status(200).send();
+});
+
 // Content routes
 router.get('/content', adminController.getContent);
 router.post('/content', upload.single('file'), adminController.createContent);

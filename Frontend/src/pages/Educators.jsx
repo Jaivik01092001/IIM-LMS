@@ -88,7 +88,7 @@ const Educators = () => {
           professor: educator.name || 'Unknown',
           school: schoolName,
           category: educator.profile?.category || universityCategory,
-          avatar: educator.profile?.avatar ? `http://localhost:5000${educator.profile.avatar}` : null,
+          avatar: educator.profile?.avatar ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${educator.profile.avatar}` : null,
           mobile: educator.phoneNumber || 'N/A',
           status: educator.status === 1,
           email: educator.email || 'N/A',

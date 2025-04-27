@@ -139,7 +139,11 @@ exports.deleteUniversity = async (req, res) => {
 
 exports.updateUniversity = async (req, res) => {
   try {
+    console.log("Update university request received for ID:", req.params.id);
     console.log("Update university request body:", req.body);
+    console.log("Update university request file:", req.file);
+    console.log("Request headers:", req.headers);
+    console.log("Request method:", req.method);
 
     // Extract fields from form data
     // Handle both direct fields and FormData
@@ -152,8 +156,19 @@ exports.updateUniversity = async (req, res) => {
     const state = req.body.state;
     const contactPerson = req.body.contactPerson || req.body.ownerName;
     const status = req.body.status;
+    const keepExistingImage = req.body.keepExistingImage;
 
-    console.log("Extracted update fields:", { name, email, phoneNumber, contactPerson, status });
+    console.log("Extracted update fields:", {
+      name,
+      email,
+      phoneNumber,
+      contactPerson,
+      status,
+      address,
+      zipcode,
+      state,
+      keepExistingImage
+    });
 
     const university = await User.findOne({
       _id: req.params.id,
@@ -180,11 +195,28 @@ exports.updateUniversity = async (req, res) => {
     // Update profile image if provided
     if (req.file) {
       university.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      console.log("Updated profile image to:", university.profile.avatar);
+    } else if (req.body.keepExistingImage === 'true') {
+      // Keep existing image, no need to update
+      console.log("Keeping existing profile image:", university.profile.avatar);
     }
 
     // Handle status update if provided
     if (status !== undefined) {
       university.status = Number(status);
+    }
+
+    // Handle roleId update if provided
+    if (req.body.roleId) {
+      university.roleRef = req.body.roleId;
+
+      // Update role name based on roleId
+      const Role = require('../models/Role');
+      const role = await Role.findById(req.body.roleId);
+      if (role) {
+        university.role = role.name.toLowerCase();
+        console.log("Updated role to:", university.role);
+      }
     }
 
     await university.save();

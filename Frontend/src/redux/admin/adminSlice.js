@@ -119,9 +119,23 @@ export const createUniversityThunk = createAsyncThunk('admin/createUniversity', 
   }
 });
 
-export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async ({ id, ...universityData }, { rejectWithValue, dispatch }) => {
+export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async (payload, { rejectWithValue, dispatch }) => {
   try {
-    const data = await api.updateUniversity(id, universityData);
+    const id = payload.id;
+    let dataToSend;
+
+    // Handle both cases: when formData is provided or when individual fields are provided
+    if (payload.formData) {
+      dataToSend = payload.formData;
+      console.log('Sending FormData for university update');
+    } else {
+      // Extract the data from payload excluding the id
+      const { id: _, ...universityData } = payload;
+      dataToSend = universityData;
+      console.log('Sending regular object for university update:', dataToSend);
+    }
+
+    const data = await api.updateUniversity(id, dataToSend);
     showSuccessToast(data.msg || 'University updated successfully');
 
     // Refresh the universities list to ensure data consistency

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Course = require('../models/Course');
 const User = require('../models/User');
-const University = require('../models/University');
 const Role = require('../models/Role');
 const Permission = require('../models/Permission');
 const { getAllPermissions, PERMISSIONS } = require('./permissions');
@@ -222,7 +221,6 @@ const seedDatabase = async () => {
             await Permission.insertMany(permissionsList);
             console.log(`${permissionsList.length} permissions seeded`);
         }
-
         // Seed Default Roles
         if (roleCount === 0) {
             console.log("Seeding roles...");
@@ -234,7 +232,7 @@ const seedDatabase = async () => {
                 adminPermissions[permission.name] = true;
             });
 
-            // Create default roles
+            // Create default roles based on permissions from permissions.js
             const roles = [
                 {
                     name: 'Super Admin',
@@ -243,23 +241,23 @@ const seedDatabase = async () => {
                     createdBy: users[2]._id // Admin user
                 },
                 {
-                    name: 'University Admin',
+                    name: 'School Admin',
                     description: 'Manages university and educators',
                     permissions: {
-                        // User management permissions
-                        [PERMISSIONS.USER_MANAGEMENT.VIEW_USERS]: true,
-                        [PERMISSIONS.USER_MANAGEMENT.CREATE_USER]: true,
-                        [PERMISSIONS.USER_MANAGEMENT.EDIT_USER]: true,
+                        // School management permissions
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.VIEW_SCHOOLS]: true,
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.CREATE_SCHOOL]: true,
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.EDIT_SCHOOL]: true,
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.DELETE_SCHOOL]: true,
+
+                        // Educator management permissions
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.VIEW_EDUCATORS]: true,
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.CREATE_EDUCATOR]: true,
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.EDIT_EDUCATOR]: true,
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.DELETE_EDUCATOR]: true,
 
                         // Course management permissions
                         [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
-
-                        // Content management permissions
-                        [PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT]: true,
-
-                        // Reports permissions
-                        [PERMISSIONS.REPORTS_ANALYTICS.VIEW_REPORTS]: true,
-                        [PERMISSIONS.REPORTS_ANALYTICS.VIEW_ANALYTICS]: true,
                     },
                     createdBy: users[2]._id
                 },
@@ -271,36 +269,11 @@ const seedDatabase = async () => {
                         [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
                         [PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE]: true,
                         [PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE]: true,
-
-                        // Quiz management permissions
-                        [PERMISSIONS.QUIZ_MANAGEMENT.VIEW_QUIZZES]: true,
-                        [PERMISSIONS.QUIZ_MANAGEMENT.CREATE_QUIZ]: true,
-                        [PERMISSIONS.QUIZ_MANAGEMENT.EDIT_QUIZ]: true,
-                        [PERMISSIONS.QUIZ_MANAGEMENT.VIEW_RESULTS]: true,
-
-                        // Content management permissions
-                        [PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT]: true,
-                        [PERMISSIONS.CONTENT_MANAGEMENT.CREATE_CONTENT]: true,
-                        [PERMISSIONS.CONTENT_MANAGEMENT.EDIT_CONTENT]: true,
-
-                        // Certificate management permissions
-                        [PERMISSIONS.CERTIFICATE_MANAGEMENT.VIEW_CERTIFICATES]: true,
-                        [PERMISSIONS.CERTIFICATE_MANAGEMENT.CREATE_CERTIFICATE]: true,
+                        [PERMISSIONS.COURSE_MANAGEMENT.DELETE_COURSE]: true,
                     },
                     createdBy: users[2]._id
                 },
-                {
-                    name: 'Student',
-                    description: 'Enrolls in courses and takes quizzes',
-                    permissions: {
-                        // Course management permissions
-                        [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
-
-                        // Quiz management permissions
-                        [PERMISSIONS.QUIZ_MANAGEMENT.VIEW_QUIZZES]: true,
-                    },
-                    createdBy: users[2]._id
-                }
+                
             ];
 
             await Role.insertMany(roles);
