@@ -741,7 +741,7 @@ textarea:focus {
   margin-top: 30px;
 }
 
-.back-button, .next-button, .submit-button, .save-draft-button {
+.next-button, .submit-button, .save-draft-button {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -751,17 +751,6 @@ textarea:focus {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.back-button {
-  background-color: var(--bg-gray);
-  border: 1px solid var(--border-gray);
-  color: var(--text-gray);
-}
-
-.back-button:hover {
-  background-color: #e5e7eb;
-  transform: translateX(-2px);
 }
 
 .next-button, .submit-button {
@@ -959,6 +948,113 @@ textarea:focus {
   margin-right: 5px;
 }
 
+/* CurriculumStep Component Styles */
+.curriculum-step {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: var(--border-large-radius);
+  box-shadow: var(--box-shadow-light);
+}
+
+.curriculum-step h2 {
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* Module Content and Quiz */
+.module-content, .module-quiz {
+  padding: 15px;
+  border-top: 1px solid var(--border-gray);
+}
+
+.module-content h5, .module-quiz h5 {
+  margin-bottom: 15px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.content-info {
+  display: flex;
+  align-items: center;
+}
+
+.content-title {
+  font-weight: 500;
+}
+
+.content-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button, .delete-button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.edit-button {
+  color: var(--primary-color);
+}
+
+.delete-button {
+  color: #dc3545;
+}
+
+.edit-button:hover, .delete-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.add-content-button, .add-quiz-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #f0f5ff;
+  color: var(--primary-color);
+  border: 1px dashed var(--primary-color);
+  border-radius: var(--border-small-radius);
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.add-content-button:hover, .add-quiz-button:hover {
+  background-color: var(--primary-light-bg);
+}
+
+/* Quiz Container */
+.quiz-container {
+  margin-top: 10px;
+}
+
+.no-quiz {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background-color: var(--bg-gray);
+  border-radius: var(--border-small-radius);
+  gap: 10px;
+}
+
+.no-quiz p {
+  color: var(--text-gray);
+  margin-bottom: 5px;
+}
+
 @media (max-width: 768px) {
   .form-row {
     flex-direction: column;
@@ -971,5 +1067,43 @@ textarea:focus {
 
   .thumbnail-container {
     flex-direction: column;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .add-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-button, .save-button {
+    width: 100%;
+  }
+  
+  .content-item, .quiz-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .content-actions, .quiz-item-actions {
+    align-self: flex-end;
+  }
+  
+  .option-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .correct-toggle {
+    align-self: flex-start;
   }
 }
