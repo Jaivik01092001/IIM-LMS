@@ -21,6 +21,8 @@ import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/Courses.css";
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 const Courses = ({ userType }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -218,7 +220,7 @@ const Courses = ({ userType }) => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img src={ VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),
@@ -331,7 +333,7 @@ const Courses = ({ userType }) => {
           {filteredData.map((course) => (
             <div key={course.id} className="course-card">
               <div className="course-card-thumbnail">
-                <img src={`http://localhost:5000/${course.thumbnail}`} alt={course.title} />
+                <img src={`${VITE_IMAGE_URL}${course.thumbnail}`} alt={course.title} />
               </div>
               <div className="course-card-content">
                 <div className="course-card-category">Category: {course.category}</div>

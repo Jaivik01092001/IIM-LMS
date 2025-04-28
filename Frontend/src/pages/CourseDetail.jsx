@@ -6,6 +6,8 @@ import { getCourse } from '../redux/admin/adminApi';
 import { enrollCourse } from '../redux/educator/educatorApi';
 import { toast } from 'react-toastify';
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -529,13 +531,13 @@ const CourseDetail = () => {
             <div className="course-preview">
               <div className="course-preview-placeholder">
                 <img
-                  src={course.thumbnail ? `http://localhost:5000/${course.thumbnail.replace(/\\/g, '/')}` : 'https://via.placeholder.com/300x200?text=No+Image'}
+                  src={course.thumbnail ? `${VITE_IMAGE_URL}${course.thumbnail.replace(/\\/g, '/')}` : 'https://via.placeholder.com/300x200?text=No+Image'}
                   alt={course.title}
                 />
-                <button className="play-button">
+                {/* <button className="play-button">
                   <FaPlay />
                 </button>
-                <div className="video-duration">{course.duration}</div>
+                <div className="video-duration">{course.duration}</div> */}
               </div>
             </div>
             <div className="course-price-section">

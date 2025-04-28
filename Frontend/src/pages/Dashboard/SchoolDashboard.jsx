@@ -9,6 +9,7 @@ import DataTableComponent from '../../components/DataTable';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import '../../assets/styles/Courses.css';
 import '../../assets/styles/SchoolDashboard.css';
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 const SchoolDashboard = () => {
   const navigate = useNavigate();
@@ -221,7 +222,7 @@ const SchoolDashboard = () => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img src={VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),

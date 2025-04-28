@@ -5,6 +5,7 @@ import { createUniversityThunk, updateUniversityThunk, getUniversitiesThunk, get
 import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/SchoolAccountForm.css";
 import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 const SchoolAccountForm = () => {
   const navigate = useNavigate();
@@ -151,7 +152,7 @@ const SchoolAccountForm = () => {
         status: currentUniversity.status === 1 ? 1 : 0,
         roleId: roleId,
         profileImageUrl: profile.avatar
-          ? `http://localhost:5000${profile.avatar}`
+          ? `${VITE_IMAGE_URL}${profile.avatar}`
           : null,
         loginEmail: currentUniversity.email || "",
         loginPhone: phoneNumber

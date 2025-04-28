@@ -24,6 +24,8 @@ import {
   updateProgressThunk
 } from '../redux/educator/educatorSlice';
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 const EnrollCourseDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -469,12 +471,12 @@ const EnrollCourseDetail = () => {
                   className="video-player"
                   controls
                   width="100%"
-                  src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
+                  src={`${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`}
                 />
               ) : selectedContent.mimeType === 'application/pdf' ? (
                 <iframe
                   title="PDF Preview"
-                  src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
+                  src={`${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`}
                   width="100%"
                   height="500px"
                   style={{ border: '1px solid #ccc', borderRadius: '8px' }}
@@ -483,7 +485,7 @@ const EnrollCourseDetail = () => {
                 <iframe
                   title="DOCX Preview"
                   src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                    `http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`
+                    `${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`
                   )}`}
                   width="100%"
                   height="500px"
@@ -493,7 +495,7 @@ const EnrollCourseDetail = () => {
                 <iframe
                   title="PPTX Preview"
                   src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                    `http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`
+                    `${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`
                   )}`}
                   width="100%"
                   height="500px"
@@ -501,7 +503,7 @@ const EnrollCourseDetail = () => {
                 />
               ) : selectedContent.mimeType?.startsWith('image/') ? (
                 <img
-                  src={`http://localhost:5000/${selectedContent.fileUrl.replace(/\\/g, '/')}`}
+                  src={`${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`}
                   alt="Preview"
                   style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
                 />

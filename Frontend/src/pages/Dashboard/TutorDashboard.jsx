@@ -5,6 +5,7 @@ import { FaBook, FaGraduationCap, FaClock, FaCalendarAlt, FaEye } from 'react-ic
 import { getCoursesThunk } from '../../redux/admin/adminSlice';
 import DataTableComponent from '../../components/DataTable';
 import "../../assets/styles/TutorDashboard.css";
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 const TutorDashboard = () => {
   const dispatch = useDispatch();
@@ -89,7 +90,7 @@ const TutorDashboard = () => {
       name: "Course",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img src={VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
           <div className="course-details">
             <span className="course-title">{row.title}</span>
             <span className="course-category">{row.category}</span>
