@@ -23,7 +23,8 @@ const permissionSchema = new mongoose.Schema({
       'reports_analytics',
       'system_settings',
       'school_management',
-      'educator_management'
+      'educator_management',
+      'blog_management'
     ]
   }
 }, { timestamps: true });
