@@ -10,79 +10,38 @@ const PERMISSIONS = {
     CREATE_COURSE: 'create_course',
     EDIT_COURSE: 'edit_course',
     DELETE_COURSE: 'delete_course',
-    PUBLISH_COURSE: 'publish_course',
-    ENROLL_USERS: 'enroll_users',
   },
 
-  // Quiz Management Permissions
-  QUIZ_MANAGEMENT: {
-    VIEW_QUIZZES: 'view_quizzes',
-    CREATE_QUIZ: 'create_quiz',
-    EDIT_QUIZ: 'edit_quiz',
-    DELETE_QUIZ: 'delete_quiz',
-    VIEW_RESULTS: 'view_quiz_results',
+  // School Management Permissions
+  SCHOOL_MANAGEMENT: {
+    VIEW_SCHOOLS: 'view_schools',
+    CREATE_SCHOOL: 'create_school',
+    EDIT_SCHOOL: 'edit_school',
+    DELETE_SCHOOL: 'delete_school',
   },
 
-  // User Management Permissions
-  USER_MANAGEMENT: {
-    VIEW_USERS: 'view_users',
-    CREATE_USER: 'create_user',
-    EDIT_USER: 'edit_user',
-    DELETE_USER: 'delete_user',
-    ASSIGN_ROLES: 'assign_roles',
+  // Educator Management Permissions
+  EDUCATOR_MANAGEMENT: {
+    VIEW_EDUCATORS: 'view_educators',
+    CREATE_EDUCATOR: 'create_educator',
+    EDIT_EDUCATOR: 'edit_educator',
+    DELETE_EDUCATOR: 'delete_educator',
   },
 
-  // Content Management Permissions
-  CONTENT_MANAGEMENT: {
-    VIEW_CONTENT: 'view_content',
-    CREATE_CONTENT: 'create_content',
-    EDIT_CONTENT: 'edit_content',
-    DELETE_CONTENT: 'delete_content',
-    APPROVE_CONTENT: 'approve_content',
-  },
-
-  // Certificate Management Permissions
-  CERTIFICATE_MANAGEMENT: {
-    VIEW_CERTIFICATES: 'view_certificates',
-    CREATE_CERTIFICATE: 'create_certificate',
-    EDIT_CERTIFICATE: 'edit_certificate',
-    DELETE_CERTIFICATE: 'delete_certificate',
-    ISSUE_CERTIFICATE: 'issue_certificate',
-  },
-
-  // Reports & Analytics Permissions
-  REPORTS_ANALYTICS: {
-    VIEW_REPORTS: 'view_reports',
-    EXPORT_REPORTS: 'export_reports',
-    VIEW_ANALYTICS: 'view_analytics',
-  },
-
-  // System Settings Permissions
-  SYSTEM_SETTINGS: {
-    VIEW_SETTINGS: 'view_settings',
-    EDIT_SETTINGS: 'edit_settings',
-    MANAGE_ROLES: 'manage_roles',
-  },
+  // Blog Management Permissions
+  BLOG_MANAGEMENT: {
+    VIEW_BLOGS: 'view_blogs',
+    CREATE_BLOG: 'create_blog',
+    EDIT_BLOG: 'edit_blog',
+    DELETE_BLOG: 'delete_blog',
+  }
 };
 
 // Create a flat array of all permissions for seeding the database
 const getAllPermissions = () => {
   const permissionsList = [];
 
-  // Categories to exclude from seeding
-  const excludedCategories = [
-    'USER_MANAGEMENT',
-    'CERTIFICATE_MANAGEMENT',
-    'REPORTS_ANALYTICS',
-    'SYSTEM_SETTINGS'
-  ];
-
   Object.keys(PERMISSIONS).forEach(category => {
-    // Skip excluded categories
-    if (excludedCategories.includes(category)) {
-      return;
-    }
-
     Object.keys(PERMISSIONS[category]).forEach(permission => {
       permissionsList.push({
         name: PERMISSIONS[category][permission],

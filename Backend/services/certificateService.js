@@ -148,7 +148,7 @@ exports.generateCertificatePDF = async (data) => {
   });
 
   // Generate QR code for verification
-  const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-certificate/${data.certificateId}`;
+  const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/verify-certificate/${data.certificateId}`;
   const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl);
   const qrCodeImage = await pdfDoc.embedPng(qrCodeDataUrl);
 

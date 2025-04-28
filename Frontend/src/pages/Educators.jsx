@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  getEducatorsThunk,
+  getEducatorsThunk as getUniversityEducatorsThunk,
   deleteEducatorThunk,
   updateEducatorThunk
 } from "../redux/university/universitySlice";
-import { getUniversitiesThunk } from "../redux/admin/adminSlice";
+import {
+  getUniversitiesThunk,
+  getEducatorsThunk as getAdminEducatorsThunk
+} from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
-import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Educators.css";
 
 const Educators = () => {
@@ -20,8 +24,13 @@ const Educators = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { educators, loading } = useSelector((state) => state.university);
-  const { universities } = useSelector((state) => state.admin);
+  const { educators: universityEducators, loading: universityLoading } = useSelector((state) => state.university);
+  const { educators: adminEducators, universities, loading: adminLoading } = useSelector((state) => state.admin);
+  const { user } = useSelector((state) => state.auth);
+
+  const isAdmin = user?.role === 'admin';
+  const educators = isAdmin ? adminEducators : universityEducators;
+  const loading = isAdmin ? adminLoading : universityLoading;
 
   // Update loading state when Redux loading state changes
   useEffect(() => {
@@ -30,9 +39,14 @@ const Educators = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    dispatch(getEducatorsThunk());
+    // Use the appropriate thunk based on user role
+    if (isAdmin) {
+      dispatch(getAdminEducatorsThunk());
+    } else {
+      dispatch(getUniversityEducatorsThunk());
+    }
     dispatch(getUniversitiesThunk());
-  }, [dispatch]);
+  }, [dispatch, isAdmin]);
 
   // Transform educators data for the table
   const [tableData, setTableData] = useState([]);
@@ -44,25 +58,44 @@ const Educators = () => {
   useEffect(() => {
     if (educators && educators.length > 0) {
       // Find university name for each educator
-      const formattedEducators = educators.map((educator, index) => {
-        // Find the university this educator belongs to
-        const university = universities?.find(uni =>
-          uni._id === educator.university ||
-          uni.educators?.includes(educator._id)
-        );
+      const formattedEducators = educators.map((educator) => {
+        // Get university name from populated university field or find it in universities array
+        let universityName = 'N/A';
+        let universityCategory = 'University';
+
+        // First try to get from populated university field
+        if (educator.university && typeof educator.university === 'object') {
+          universityName = educator.university.name || 'N/A';
+          universityCategory = educator.university.category || 'University';
+        }
+        // Fallback to finding in universities array
+        else if (educator.university && universities) {
+          const university = universities.find(uni =>
+            uni._id === educator.university ||
+            uni.educators?.includes(educator._id)
+          );
+          if (university) {
+            universityName = university.name || 'N/A';
+            universityCategory = university.category || 'University';
+          }
+        }
+
+        // Use schoolName from profile if available, otherwise use university name
+        const schoolName = educator.profile?.schoolName || universityName;
 
         return {
           id: educator._id,
           professor: educator.name || 'Unknown',
-          school: university?.name || 'N/A',
-          category: university?.category || 'University',
-          avatar: educator.avatar || `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
+          school: schoolName,
+          category: educator.profile?.category || universityCategory,
+          avatar: educator.profile?.avatar ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${educator.profile.avatar}` : null,
           mobile: educator.phoneNumber || 'N/A',
           status: educator.status === 1,
           email: educator.email || 'N/A',
           address: educator.profile?.address || 'N/A',
           zipcode: educator.profile?.zipcode || 'N/A',
           state: educator.profile?.state || 'N/A',
+          roleId: educator.roleRef || '',
         };
       });
 
@@ -76,22 +109,24 @@ const Educators = () => {
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.professor}"?`)) {
-      // Only send the id and status to avoid issues with socialLinks
-      dispatch(updateEducatorThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.professor}`);
-          // Refresh educators data
-          dispatch(getEducatorsThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating educator status:`, error);
-        });
-    }
+    // Only send the id and status to avoid issues with socialLinks
+    dispatch(updateEducatorThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.professor}`);
+        // Refresh educators data based on user role
+        if (isAdmin) {
+          dispatch(getAdminEducatorsThunk());
+        } else {
+          dispatch(getUniversityEducatorsThunk());
+        }
+      })
+      .catch(error => {
+        console.error(`Error updating educator status:`, error);
+      });
   };
 
   // View handler
@@ -123,8 +158,12 @@ const Educators = () => {
         .unwrap()
         .then(() => {
           console.log(`Successfully deleted ${row.professor}`);
-          // Refresh educators data
-          dispatch(getEducatorsThunk());
+          // Refresh educators data based on user role
+          if (isAdmin) {
+            dispatch(getAdminEducatorsThunk());
+          } else {
+            dispatch(getUniversityEducatorsThunk());
+          }
         })
         .catch(error => {
           console.error(`Error deleting educator:`, error);
@@ -136,7 +175,7 @@ const Educators = () => {
   const columns = [
     {
       name: "No.",
-      selector: (row) => row.id,
+      selector: (row, index) => index + 1,
       sortable: true,
       width: "70px",
     },
@@ -144,7 +183,11 @@ const Educators = () => {
       name: "Professors",
       cell: (row) => (
         <div className="professor-cell">
-          <img src={row.avatar} alt="Professor" className="professor-avatar" />
+          {row.avatar ? (
+            <img src={row.avatar} alt="Professor" className="professor-avatar" />
+          ) : (
+            <FaUserCircle className="professor-avatar-placeholder" />
+          )}
           <span>{row.professor}</span>
         </div>
       ),
@@ -253,12 +296,7 @@ const Educators = () => {
         </div>
       </div>
 
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading educators data...</p>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner overlay={true} message="Loading educators data..." />}
 
       <DataTableComponent
         columns={columns}

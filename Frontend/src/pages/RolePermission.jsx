@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import "../assets/styles/RolePermission.css";
 import { FaPencilAlt, FaTrashAlt, FaArrowLeft } from "react-icons/fa";
 import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import {
   getRolesThunk,
   createRoleThunk,
@@ -166,13 +167,11 @@ const RolePermission = () => {
 
   return (
     <div className="role-permission-container">
-      
+
 
       {loading ? (
         // Loading spinner
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
+        <LoadingSpinner size="large" message="Loading roles and permissions..." />
       ) : !showForm ? (
         // List view of roles
         <div className="roles-list-container">

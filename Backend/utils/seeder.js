@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Course = require('../models/Course');
 const User = require('../models/User');
-const University = require('../models/University');
 const Role = require('../models/Role');
 const Permission = require('../models/Permission');
 const { getAllPermissions, PERMISSIONS } = require('./permissions');
@@ -74,10 +73,27 @@ const seedDatabase = async () => {
                 description: 'Learn how to create a positive social-emotional climate in schools',
                 duration: '4 weeks',
                 category: 'Education',
+                subcategory: 'School Administration',
                 language: 'en',
                 level: 'intermediate',
                 tags: ['education', 'social-emotional', 'school climate'],
-                thumbnail: 'https://example.com/thumbnail1.jpg'
+                thumbnail: 'https://example.com/thumbnail1.jpg',
+                hasModules: true,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Create a positive classroom environment',
+                    'Implement effective emotional regulation strategies',
+                    'Develop school-wide social-emotional support systems'
+                ],
+                requirements: [
+                    'Basic understanding of educational psychology',
+                    'Experience in a school setting'
+                ],
+                targetAudience: 'School administrators, teachers, and counselors',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Bullying prevention for safer schooling experiences',
@@ -85,10 +101,26 @@ const seedDatabase = async () => {
                 description: 'Strategies to prevent bullying in schools',
                 duration: '3 weeks',
                 category: 'Education',
+                subcategory: 'Student Welfare',
                 language: 'en',
                 level: 'beginner',
                 tags: ['education', 'bullying', 'safety'],
-                thumbnail: 'https://example.com/thumbnail2.jpg'
+                thumbnail: 'https://example.com/thumbnail2.jpg',
+                hasModules: false,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Identify various forms of bullying',
+                    'Implement anti-bullying programs',
+                    'Support victims of bullying effectively'
+                ],
+                requirements: [
+                    'Basic understanding of child psychology'
+                ],
+                targetAudience: 'Teachers, school counselors, and parents',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Effective School Leadership',
@@ -96,10 +128,27 @@ const seedDatabase = async () => {
                 description: 'Develop leadership skills for school administrators',
                 duration: '6 weeks',
                 category: 'Leadership',
+                subcategory: 'Education Administration',
                 language: 'en',
                 level: 'advanced',
                 tags: ['education', 'leadership', 'administration'],
-                thumbnail: 'https://example.com/thumbnail3.jpg'
+                thumbnail: 'https://example.com/thumbnail3.jpg',
+                hasModules: true,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Develop a vision for school improvement',
+                    'Build effective leadership teams',
+                    'Implement data-driven decision making'
+                ],
+                requirements: [
+                    'At least 2 years of teaching experience',
+                    'Basic understanding of educational policy'
+                ],
+                targetAudience: 'Aspiring and current school leaders, principals, and administrators',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Managing Self and Regulating Emotions',
@@ -107,10 +156,26 @@ const seedDatabase = async () => {
                 description: 'Learn techniques for emotional regulation',
                 duration: '4 weeks',
                 category: 'Psychology',
+                subcategory: 'Emotional Intelligence',
                 language: 'en',
                 level: 'beginner',
                 tags: ['psychology', 'emotions', 'self-regulation'],
-                thumbnail: 'https://example.com/thumbnail4.jpg'
+                thumbnail: 'https://example.com/thumbnail4.jpg',
+                hasModules: false,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Identify emotional triggers',
+                    'Apply mindfulness techniques',
+                    'Develop healthy coping mechanisms'
+                ],
+                requirements: [
+                    'No prerequisites required'
+                ],
+                targetAudience: 'Teachers, students, and anyone interested in emotional regulation',
+                isDraft: false,
+                status: 1
             },
             {
                 title: 'Innovative Educational Pedagogies',
@@ -118,10 +183,27 @@ const seedDatabase = async () => {
                 description: 'Explore innovative teaching methods',
                 duration: '5 weeks',
                 category: 'Education',
+                subcategory: 'Teaching Methods',
                 language: 'en',
                 level: 'intermediate',
                 tags: ['education', 'pedagogy', 'innovation'],
-                thumbnail: 'https://example.com/thumbnail5.jpg'
+                thumbnail: 'https://example.com/thumbnail5.jpg',
+                hasModules: true,
+                modules: [],
+                content: [],
+                quizzes: [],
+                learningOutcomes: [
+                    'Implement project-based learning',
+                    'Integrate technology in the classroom',
+                    'Design student-centered learning experiences'
+                ],
+                requirements: [
+                    'Basic teaching experience',
+                    'Familiarity with educational technology'
+                ],
+                targetAudience: 'K-12 teachers, curriculum developers, and instructional designers',
+                isDraft: false,
+                status: 1
             },
         ];
 
@@ -130,28 +212,7 @@ const seedDatabase = async () => {
         console.log('Courses seeded');
 
         // Insert Universities
-        await University.insertMany([
-            {
-                name: 'University of Technology',
-                email: 'info@uot.edu',
-                phone: '+919876543210',
-                address: '123 University Road, Ahmedabad',
-                zipcode: '380001',
-                state: 'Gujarat',
-                contactPerson: 'Dr. Patel',
-                educators: []
-            },
-            {
-                name: 'Global Institute of Sciences',
-                email: 'contact@gis.edu',
-                phone: '+919876543211',
-                address: '456 Institute Avenue, Mumbai',
-                zipcode: '400001',
-                state: 'Maharashtra',
-                contactPerson: 'Dr. Sharma',
-                educators: []
-            },
-        ]);
+
 
         // Seed Permissions
         if (permissionCount === 0) {
@@ -160,7 +221,6 @@ const seedDatabase = async () => {
             await Permission.insertMany(permissionsList);
             console.log(`${permissionsList.length} permissions seeded`);
         }
-
         // Seed Default Roles
         if (roleCount === 0) {
             console.log("Seeding roles...");
@@ -172,7 +232,7 @@ const seedDatabase = async () => {
                 adminPermissions[permission.name] = true;
             });
 
-            // Create default roles
+            // Create default roles based on permissions from permissions.js
             const roles = [
                 {
                     name: 'Super Admin',
@@ -181,23 +241,29 @@ const seedDatabase = async () => {
                     createdBy: users[2]._id // Admin user
                 },
                 {
-                    name: 'University Admin',
+                    name: 'IIM Staff',
+                    description: 'Staff members with full system access',
+                    permissions: adminPermissions, // Same permissions as Super Admin
+                    createdBy: users[2]._id
+                },
+                {
+                    name: 'School Admin',
                     description: 'Manages university and educators',
                     permissions: {
-                        // User management permissions
-                        [PERMISSIONS.USER_MANAGEMENT.VIEW_USERS]: true,
-                        [PERMISSIONS.USER_MANAGEMENT.CREATE_USER]: true,
-                        [PERMISSIONS.USER_MANAGEMENT.EDIT_USER]: true,
+                        // School management permissions
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.VIEW_SCHOOLS]: true,
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.CREATE_SCHOOL]: true,
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.EDIT_SCHOOL]: true,
+                        [PERMISSIONS.SCHOOL_MANAGEMENT.DELETE_SCHOOL]: true,
+
+                        // Educator management permissions
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.VIEW_EDUCATORS]: true,
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.CREATE_EDUCATOR]: true,
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.EDIT_EDUCATOR]: true,
+                        [PERMISSIONS.EDUCATOR_MANAGEMENT.DELETE_EDUCATOR]: true,
 
                         // Course management permissions
                         [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
-
-                        // Content management permissions
-                        [PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT]: true,
-
-                        // Reports permissions
-                        [PERMISSIONS.REPORTS_ANALYTICS.VIEW_REPORTS]: true,
-                        [PERMISSIONS.REPORTS_ANALYTICS.VIEW_ANALYTICS]: true,
                     },
                     createdBy: users[2]._id
                 },
@@ -209,36 +275,11 @@ const seedDatabase = async () => {
                         [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
                         [PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE]: true,
                         [PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE]: true,
-
-                        // Quiz management permissions
-                        [PERMISSIONS.QUIZ_MANAGEMENT.VIEW_QUIZZES]: true,
-                        [PERMISSIONS.QUIZ_MANAGEMENT.CREATE_QUIZ]: true,
-                        [PERMISSIONS.QUIZ_MANAGEMENT.EDIT_QUIZ]: true,
-                        [PERMISSIONS.QUIZ_MANAGEMENT.VIEW_RESULTS]: true,
-
-                        // Content management permissions
-                        [PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT]: true,
-                        [PERMISSIONS.CONTENT_MANAGEMENT.CREATE_CONTENT]: true,
-                        [PERMISSIONS.CONTENT_MANAGEMENT.EDIT_CONTENT]: true,
-
-                        // Certificate management permissions
-                        [PERMISSIONS.CERTIFICATE_MANAGEMENT.VIEW_CERTIFICATES]: true,
-                        [PERMISSIONS.CERTIFICATE_MANAGEMENT.CREATE_CERTIFICATE]: true,
+                        [PERMISSIONS.COURSE_MANAGEMENT.DELETE_COURSE]: true,
                     },
                     createdBy: users[2]._id
                 },
-                {
-                    name: 'Student',
-                    description: 'Enrolls in courses and takes quizzes',
-                    permissions: {
-                        // Course management permissions
-                        [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
 
-                        // Quiz management permissions
-                        [PERMISSIONS.QUIZ_MANAGEMENT.VIEW_QUIZZES]: true,
-                    },
-                    createdBy: users[2]._id
-                }
             ];
 
             await Role.insertMany(roles);
@@ -246,11 +287,11 @@ const seedDatabase = async () => {
 
             // Assign roles to users
             const superAdminRole = await Role.findOne({ name: 'Super Admin' });
-            const universityAdminRole = await Role.findOne({ name: 'University Admin' });
+            const schoolAdminRole = await Role.findOne({ name: 'School Admin' });
             const educatorRole = await Role.findOne({ name: 'Educator' });
 
             // Update users with role references
-            await User.findByIdAndUpdate(users[0]._id, { roleRef: universityAdminRole._id });
+            await User.findByIdAndUpdate(users[0]._id, { roleRef: schoolAdminRole._id });
             await User.findByIdAndUpdate(users[1]._id, { roleRef: educatorRole._id });
             await User.findByIdAndUpdate(users[2]._id, { roleRef: superAdminRole._id });
 

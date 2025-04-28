@@ -13,18 +13,18 @@ router.use(protect);
 // Role routes
 router.route('/')
   .get(roleController.getAllRoles) // Allow all authenticated users to get roles
-  .post(restrictTo('admin'), hasPermission(PERMISSIONS.SYSTEM_SETTINGS.MANAGE_ROLES), roleController.createRole);
+  .post(restrictTo('admin'), hasPermission(PERMISSIONS?.SYSTEM_SETTINGS?.MANAGE_ROLES), roleController.createRole);
 
 router.route('/:id')
   .get(roleController.getRoleById) // Allow all authenticated users to get role details
-  .put(restrictTo('admin'), hasPermission(PERMISSIONS.SYSTEM_SETTINGS.MANAGE_ROLES), roleController.updateRole)
-  .delete(restrictTo('admin'), hasPermission(PERMISSIONS.SYSTEM_SETTINGS.MANAGE_ROLES), roleController.deleteRole);
+  .put(restrictTo('admin'), hasPermission(PERMISSIONS?.SYSTEM_SETTINGS?.MANAGE_ROLES), roleController.updateRole)
+  .delete(restrictTo('admin'), hasPermission(PERMISSIONS?.SYSTEM_SETTINGS?.MANAGE_ROLES), roleController.deleteRole);
 
 // Permission routes
-router.get('/permissions', restrictTo('admin'), hasPermission(PERMISSIONS.SYSTEM_SETTINGS.MANAGE_ROLES), roleController.getAllPermissions);
-router.get('/permissions/categories', restrictTo('admin'), hasPermission(PERMISSIONS.SYSTEM_SETTINGS.MANAGE_ROLES), roleController.getPermissionsByCategory);
+router.get('/permissions', restrictTo('admin'), hasPermission(PERMISSIONS?.SYSTEM_SETTINGS?.MANAGE_ROLES), roleController.getAllPermissions);
+router.get('/permissions/categories', restrictTo('admin'), hasPermission(PERMISSIONS?.SYSTEM_SETTINGS?.MANAGE_ROLES), roleController.getPermissionsByCategory);
 
 // User role assignment route
-router.post('/users/:userId/role', restrictTo('admin', 'university'), hasPermission(PERMISSIONS.USER_MANAGEMENT.ASSIGN_ROLES), roleController.assignRoleToUser);
+router.post('/users/:userId/role', restrictTo('admin', 'university'), hasPermission(PERMISSIONS?.USER_MANAGEMENT?.ASSIGN_ROLES), roleController.assignRoleToUser);
 
 module.exports = router;

@@ -62,7 +62,7 @@ app.use('/api', limiter);
 // ==========================
 // 📦 Dynamic Routes
 // ==========================
-const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms', 'module', 'certificate', 'role', 'staff'].reduce((acc, route) => {
+const routes = ['auth', 'educator', 'university', 'admin', 'quiz', 'cms', 'module', 'moduleProgress', 'certificate', 'role', 'staff','blog'].reduce((acc, route) => {
   try {
     acc[route] = require(`./routes/${route}Routes`);
     if (typeof acc[route] !== 'function') {
@@ -104,7 +104,7 @@ app.all('*', (req, res, next) => {
 // ==========================
 // 🚀 Server Launch
 // ==========================
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const server = http.createServer(app);
 server.setTimeout(10 * 60 * 1000); // 10-minute timeout
 

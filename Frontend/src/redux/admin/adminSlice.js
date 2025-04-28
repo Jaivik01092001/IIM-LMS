@@ -13,6 +13,72 @@ export const getUsersThunk = createAsyncThunk('admin/getUsers', async () => {
   }
 });
 
+export const getEducatorsThunk = createAsyncThunk('admin/getEducators', async () => {
+  try {
+    const data = await api.getEducators();
+    return data;
+  } catch (error) {
+    console.error('Error in getEducatorsThunk:', error);
+    throw error;
+  }
+});
+
+export const getEducatorByIdThunk = createAsyncThunk(
+  'admin/getEducatorById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const data = await api.getEducatorById(id);
+      return data;
+    } catch (error) {
+      console.error('Error in getEducatorByIdThunk:', error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch educator details');
+    }
+  }
+);
+
+export const createEducatorThunk = createAsyncThunk(
+  'admin/createEducator',
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      console.log('Creating educator with formData:', formData);
+      const data = await api.createEducator(formData);
+      showSuccessToast(data.msg || 'Educator created successfully');
+
+      // Refresh the educators list
+      dispatch(getEducatorsThunk());
+
+      return data;
+    } catch (error) {
+      console.error('Error in createEducatorThunk:', error);
+      showErrorToast(error.response?.data?.message || 'Failed to create educator');
+      return rejectWithValue(error.response?.data?.message || 'Failed to create educator');
+    }
+  }
+);
+
+export const updateEducatorThunk = createAsyncThunk(
+  'admin/updateEducator',
+  async (payload, { rejectWithValue, dispatch }) => {
+    try {
+      const id = payload.id;
+      // Handle both cases: when formData is provided or when individual fields like status are provided
+      const data = payload.formData
+        ? await api.updateEducator(id, payload.formData)
+        : await api.updateEducator(id, payload);
+
+      showSuccessToast(data.msg || 'Educator updated successfully');
+
+      // Refresh the educators list to ensure data consistency
+      dispatch(getEducatorsThunk());
+
+      return data.educator || data; // Handle both response formats
+    } catch (error) {
+      showErrorToast(error.response?.data?.msg || 'Failed to update educator');
+      return rejectWithValue(error.response?.data?.msg || 'Failed to update educator');
+    }
+  }
+);
+
 export const getUniversitiesThunk = createAsyncThunk('admin/getUniversities', api.getUniversities);
 
 export const getUniversityByIdThunk = createAsyncThunk(
@@ -53,9 +119,23 @@ export const createUniversityThunk = createAsyncThunk('admin/createUniversity', 
   }
 });
 
-export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async ({ id, ...universityData }, { rejectWithValue, dispatch }) => {
+export const updateUniversityThunk = createAsyncThunk('admin/updateUniversity', async (payload, { rejectWithValue, dispatch }) => {
   try {
-    const data = await api.updateUniversity(id, universityData);
+    const id = payload.id;
+    let dataToSend;
+
+    // Handle both cases: when formData is provided or when individual fields are provided
+    if (payload.formData) {
+      dataToSend = payload.formData;
+      console.log('Sending FormData for university update');
+    } else {
+      // Extract the data from payload excluding the id
+      const { id: _, ...universityData } = payload;
+      dataToSend = universityData;
+      console.log('Sending regular object for university update:', dataToSend);
+    }
+
+    const data = await api.updateUniversity(id, dataToSend);
     showSuccessToast(data.msg || 'University updated successfully');
 
     // Refresh the universities list to ensure data consistency
@@ -150,11 +230,13 @@ export const createCourseThunk = createAsyncThunk('admin/createCourse', async (c
   }
 });
 
-export const updateCourseThunk = createAsyncThunk('admin/updateCourse', async ({ id, ...courseData }, { rejectWithValue }) => {
+export const updateCourseThunk = createAsyncThunk('admin/updateCourse', async ({ id, formData }, { rejectWithValue }) => {
   try {
-    const data = await api.updateCourse(id, courseData);
+    // If formData is provided directly, use it - otherwise create it from courseData
+    const data = formData || {};
+    const response = await api.updateCourse(id, data);
     showSuccessToast('Course updated successfully');
-    return data;
+    return response;
   } catch (error) {
     showErrorToast(error.response?.data?.message || 'Failed to update course');
     return rejectWithValue(error.response?.data?.message || 'Failed to update course');
@@ -306,6 +388,8 @@ const adminSlice = createSlice({
   name: 'admin',
   initialState: {
     users: [],
+    educators: [],
+    currentEducator: null,
     universities: [],
     currentUniversity: null,
     content: [],
@@ -321,6 +405,12 @@ const adminSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(getUsersThunk.fulfilled, (state, action) => { state.users = action.payload; })
+      .addCase(getEducatorsThunk.fulfilled, (state, action) => { state.educators = action.payload; })
+      .addCase(getEducatorByIdThunk.fulfilled, (state, action) => { state.currentEducator = action.payload; })
+      .addCase(createEducatorThunk.fulfilled, (state, action) => {
+        if (action.payload) state.educators.push(action.payload);
+      })
+      .addCase(updateEducatorThunk.fulfilled, (state, action) => { state.currentEducator = action.payload; })
       .addCase(getUniversitiesThunk.fulfilled, (state, action) => { state.universities = action.payload; })
       .addCase(getUniversityByIdThunk.fulfilled, (state, action) => { state.currentUniversity = action.payload; })
       .addCase(createUniversityThunk.fulfilled, (state, action) => { state.universities.push(action.payload); })

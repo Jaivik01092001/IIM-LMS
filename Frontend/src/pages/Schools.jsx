@@ -7,7 +7,8 @@ import {
   updateUniversityThunk
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
-import { FaPencilAlt, FaTrashAlt, FaEye } from "react-icons/fa";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
 const Schools = () => {
@@ -35,20 +36,34 @@ const Schools = () => {
   useEffect(() => {
     if (!universities?.length) return;
 
-    const formattedData = universities.map((uni) => ({
-      id: uni._id,
-      school: uni.name || "N/A",
-      category: "University",
-      owner: uni.contactPerson || "N/A",
-      email: uni.email || "N/A",
-      mobile: uni.phone || "N/A",
-      ownerAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
-      status: uni.status === 1,
-      address: uni.address || "N/A",
-      zipcode: uni.zipcode || "N/A",
-      state: uni.state || "N/A",
-      educators: uni.educators || []
-    }));
+    const formattedData = universities.map((uni) => {
+      // Get the profile object or empty object if it doesn't exist
+      const profile = uni.profile || {};
+
+      // Format the avatar URL correctly
+      let avatarUrl = null;
+      if (profile.avatar) {
+        // If avatar starts with http, use it directly, otherwise prepend the base URL
+        avatarUrl = profile.avatar.startsWith('http')
+          ? profile.avatar
+          : `${import.meta.env.VITE_API_URL.replace('/api', '')}${profile.avatar}`;
+      }
+
+      return {
+        id: uni._id,
+        school: uni.name || "N/A",
+        category: "University",
+        owner: uni.contactPerson || "N/A",
+        email: uni.email || "N/A",
+        mobile: uni.phoneNumber || "N/A", // Changed from uni.phone to uni.phoneNumber
+        avatar: avatarUrl,
+        status: uni.status === 1,
+        address: profile.address || "N/A", // Updated to access address from profile
+        zipcode: profile.zipcode || "N/A", // Updated to access zipcode from profile
+        state: profile.state || "N/A", // Updated to access state from profile
+        educators: uni.educators || []
+      };
+    });
 
     setTableData(formattedData);
   }, [universities]);
@@ -63,23 +78,21 @@ const Schools = () => {
     const newStatus = row.status ? 0 : 1;
     const statusText = newStatus === 1 ? "activate" : "deactivate";
 
-    if (window.confirm(`Are you sure you want to ${statusText} "${row.school}"?`)) {
-      console.log(`Toggling status for ${row.school} to ${newStatus}`);
+    console.log(`Toggling status for ${row.school} to ${newStatus}`);
 
-      dispatch(updateUniversityThunk({
-        id: row.id,
-        status: newStatus
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${statusText}d ${row.school}`);
-          // Get fresh data from the server to ensure state is in sync with backend
-          dispatch(getUniversitiesThunk());
-        })
-        .catch(error => {
-          console.error(`Error ${statusText}ing university:`, error);
-        });
-    }
+    dispatch(updateUniversityThunk({
+      id: row.id,
+      status: newStatus
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${statusText}d ${row.school}`);
+        // Get fresh data from the server to ensure state is in sync with backend
+        dispatch(getUniversitiesThunk());
+      })
+      .catch(error => {
+        console.error(`Error ${statusText}ing university:`, error);
+      });
   };
 
   // Row action handlers
@@ -156,7 +169,16 @@ const Schools = () => {
     },
     {
       name: "School/University",
-      selector: (row) => row.school,
+      cell: (row) => (
+        <div className="school-cell">
+          {row.avatar ? (
+            <img src={row.avatar} alt="School Logo" className="school-avatar" />
+          ) : (
+            <FaUserCircle className="school-avatar-placeholder" />
+          )}
+          <span>{row.school}</span>
+        </div>
+      ),
       sortable: true,
     },
     {
@@ -168,7 +190,11 @@ const Schools = () => {
       name: "Owner",
       cell: (row) => (
         <div className="owner-cell">
-          <img src={row.ownerAvatar} alt="Owner" className="owner-avatar" />
+          {row.avatar ? (
+            <img src={row.avatar} alt="Owner" className="owner-avatar" />
+          ) : (
+            <FaUserCircle className="owner-avatar-placeholder" />
+          )}
           <span>{row.owner}</span>
         </div>
       ),
@@ -218,11 +244,7 @@ const Schools = () => {
 
   // Show loading spinner
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner size="large" message="Loading schools data..." />;
   }
 
 
@@ -245,8 +267,7 @@ const Schools = () => {
             onChange={(e) => handleFilterChange("category", e.target.value)}
           >
             <option value="">Select Category</option>
-            <option value="CBSE school">CBSE school</option>
-            <option value="International school">International school</option>
+            <option value="School">School</option>
             <option value="University">University</option>
           </select>
 

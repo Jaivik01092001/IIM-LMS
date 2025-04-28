@@ -106,3 +106,14 @@ export const verifyCertificate = async (certificateId) => {
   const response = await axios.get(`${API_URL}/certificate/verify/${certificateId}`);
   return response.data.data;
 };
+
+// Module progress API calls
+export const getModuleProgress = async (courseId) => {
+  const response = await axios.get(`${API_URL}/moduleProgress/course/${courseId}`, getConfig());
+  return response.data;
+};
+
+export const updateModuleProgress = async (courseId, progressData) => {
+  const response = await axios.post(`${API_URL}/moduleProgress/course/${courseId}`, progressData, getConfig());
+  return response.data;
+};

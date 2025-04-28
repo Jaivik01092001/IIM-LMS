@@ -53,11 +53,16 @@ export const deleteEducatorThunk = createAsyncThunk('university/deleteEducator',
   }
 });
 
-export const updateEducatorThunk = createAsyncThunk('university/updateEducator', async ({ id, ...educatorData }, { rejectWithValue }) => {
+export const updateEducatorThunk = createAsyncThunk('university/updateEducator', async (payload, { rejectWithValue }) => {
   try {
-    const data = await api.updateEducator(id, educatorData);
+    const id = payload.id;
+    // Handle both cases: when formData is provided or when individual fields like status are provided
+    const data = payload.formData
+      ? await api.updateEducator(id, payload.formData)
+      : await api.updateEducator(id, payload);
+
     showSuccessToast(data.msg || 'Educator updated successfully');
-    return data;
+    return data.educator || data; // Handle both response formats
   } catch (error) {
     showErrorToast(error.response?.data?.msg || 'Failed to update educator');
     return rejectWithValue(error.response?.data?.msg || 'Failed to update educator');
@@ -100,11 +105,30 @@ const universitySlice = createSlice({
       .addCase(getEducatorByIdThunk.fulfilled, (state, action) => { state.currentEducator = action.payload; })
       .addCase(createEducatorThunk.fulfilled, (state, action) => { state.educators.push(action.payload); })
       .addCase(updateEducatorThunk.fulfilled, (state, action) => {
-        const index = state.educators.findIndex(educator => educator._id === action.payload._id);
-        if (index !== -1) state.educators[index] = action.payload;
+        // Handle both response formats (with _id or id)
+        const educatorId = action.payload._id || action.payload.id;
+
+        // Update in educators array
+        const index = state.educators.findIndex(educator =>
+          (educator._id === educatorId) || (educator.id === educatorId)
+        );
+
+        if (index !== -1) {
+          // Preserve the id property if it exists in the current state
+          state.educators[index] = {
+            ...action.payload,
+            id: state.educators[index].id || action.payload.id || action.payload._id
+          };
+        }
+
         // Also update currentEducator if it's the same educator
-        if (state.currentEducator && state.currentEducator._id === action.payload._id) {
-          state.currentEducator = action.payload;
+        if (state.currentEducator &&
+            ((state.currentEducator._id === educatorId) ||
+             (state.currentEducator.id === educatorId))) {
+          state.currentEducator = {
+            ...action.payload,
+            id: state.currentEducator.id || action.payload.id || action.payload._id
+          };
         }
       })
       .addCase(deleteEducatorThunk.fulfilled, (state, action) => {

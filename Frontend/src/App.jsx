@@ -13,6 +13,10 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CourseDetail from "./pages/CourseDetail";
+import EnrollCourseDetail from "./pages/EnrollCourseDetail";
+import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
+import BlogForm from "./pages/BlogForm";
 // Dashboard layout
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -31,6 +35,7 @@ import Educators from "./pages/Educators.jsx";
 import EducatorDetails from "./pages/EducatorDetails.jsx";
 import EducatorAccountForm from "./pages/EducatorAccountForm.jsx";
 import CourseForm from "./pages/CourseForm.jsx";
+import CourseCreationFlow from "./pages/CourseCreationFlow.jsx";
 import Notification from "./pages/Notification.jsx";
 import RolePermission from "./pages/RolePermission.jsx";
 
@@ -57,9 +62,13 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/course/:id" element={<CourseDetail />} />
+          {/* Moved to dashboard layout */}
 
           {/* Dashboard routes with shared layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
+            {/* Shared routes */}
+            <Route path="enroll-course-detail/:id" element={<EnrollCourseDetail />} />
+            
             {/* Admin routes */}
             <Route path="admin" element={<AdminDashboard />} />
             <Route
@@ -67,6 +76,8 @@ const App = () => {
               element={<Courses userType="admin" />}
             />
             <Route path="admin/courses/add" element={<CourseForm />} />
+            <Route path="admin/courses/create" element={<CourseCreationFlow />} />
+            <Route path="admin/courses/edit-flow/:id" element={<CourseCreationFlow />} />
             <Route path="admin/courses/edit/:id" element={<CourseForm />} />
             <Route path="admin/courses/:id" element={<CourseDetail />} />
             <Route path="admin/schools" element={<Schools />} />
@@ -106,6 +117,22 @@ const App = () => {
               path="admin/role-permission"
               element={<RolePermission />}
             />
+            <Route
+              path="admin/blogs"
+              element={<Blog />}
+            />
+            <Route
+              path="admin/blog/create"
+              element={<BlogForm />}
+            />
+            <Route
+              path="admin/blog/edit/:id"
+              element={<BlogForm />}
+            />
+            <Route
+              path="admin/blog/:id"
+              element={<BlogDetail />}
+            />
 
             {/* School routes */}
             <Route path="school" element={<SchoolDashboard />} />
@@ -114,6 +141,8 @@ const App = () => {
               element={<Courses userType="school" />}
             />
             <Route path="school/courses/add" element={<CourseForm />} />
+            <Route path="school/courses/create" element={<CourseCreationFlow />} />
+            <Route path="school/courses/edit-flow/:id" element={<CourseCreationFlow />} />
             <Route path="school/courses/edit/:id" element={<CourseForm />} />
             <Route path="school/courses/:id" element={<CourseDetail />} />
             <Route
@@ -124,7 +153,22 @@ const App = () => {
               path="school/notification"
               element={<Notification userType="school" />}
             />
-
+            <Route
+              path="school/blogs"
+              element={<Blog />}
+            />
+            <Route
+              path="school/blog/create"
+              element={<BlogForm />}
+            />
+            <Route
+              path="school/blog/edit/:id"
+              element={<BlogForm />}
+            />
+            <Route
+              path="school/blog/:id"
+              element={<BlogDetail />}
+            />
 
             {/* Tutor routes */}
             <Route path="tutor" element={<TutorDashboard />} />
@@ -133,13 +177,30 @@ const App = () => {
               element={<Courses userType="tutor" />}
             />
             <Route path="tutor/courses/add" element={<CourseForm />} />
+            <Route path="tutor/courses/create" element={<CourseCreationFlow />} />
+            <Route path="tutor/courses/edit-flow/:id" element={<CourseCreationFlow />} />
             <Route path="tutor/courses/edit/:id" element={<CourseForm />} />
             <Route path="tutor/courses/:id" element={<CourseDetail />} />
             <Route
               path="tutor/notification"
               element={<Notification userType="tutor" />}
             />
-
+            <Route
+              path="tutor/blogs"
+              element={<Blog />}
+            />
+            <Route
+              path="tutor/blog/create"
+              element={<BlogForm />}
+            />
+            <Route
+              path="tutor/blog/edit/:id"
+              element={<BlogForm />}
+            />
+            <Route
+              path="tutor/blog/:id"
+              element={<BlogDetail />}
+            />
 
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />

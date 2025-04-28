@@ -6,6 +6,7 @@ import {
   FaPencilAlt,
   FaTrashAlt,
   FaEye,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,7 +18,10 @@ import {
 } from "../redux/admin/adminSlice";
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/Courses.css";
+
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 const Courses = ({ userType }) => {
   const navigate = useNavigate();
@@ -73,44 +77,54 @@ const Courses = ({ userType }) => {
   // Update tableData and categories when courses change
   useEffect(() => {
     if (courses && courses.length > 0) {
-      const formattedCourses = courses.map(course => ({
-        id: course._id,
-        title: course.title || 'Untitled Course',
-        category: course.category || 'Uncategorized',
-        professor: course.creator?.name || 'Unknown',
-        duration: course.duration || 'N/A',
-        level: course.level || 'N/A',
-        description: course.description || 'No description available',
-        tags: course.tags?.join(', ') || 'No tags',
-        language: course.language || 'English',
-        status: course.status === 1,
-        thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-        hasModules: course.hasModules || false
-      }));
+      const formattedCourses = courses.map(course => {
+        // For testing: mock enrollment data 
+        // In production, this should come from the API
+        const mockEnrollment = userType === 'tutor' && (
+          // For demo purposes: every other course is considered "enrolled"
+          course._id.toString().charCodeAt(course._id.toString().length - 1) % 2 === 0
+        );
+
+        return {
+          id: course._id,
+          title: course.title || 'Untitled Course',
+          category: course.category || 'Uncategorized',
+          professor: course.creator?.name || 'Unknown',
+          duration: course.duration || 'N/A',
+          level: course.level || 'N/A',
+          description: course.description || 'No description available',
+          tags: course.tags?.join(', ') || 'No tags',
+          language: course.language || 'English',
+          status: course.status === 1,
+          thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+          hasModules: course.hasModules || false,
+          // Check if user is enrolled in the course - real implementation would check API data
+          isEnrolled: Boolean(course.progress || course.enrolled || course.isEnrolled || mockEnrollment)
+        };
+      });
+
       setTableData(formattedCourses);
 
       // Extract unique categories
       const uniqueCategories = [...new Set(formattedCourses.map(course => course.category))];
       setCategories(uniqueCategories);
     }
-  }, [courses]);
+  }, [courses, userType]);
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    if (window.confirm(`Are you sure you want to ${row.status ? 'deactivate' : 'activate'} "${row.title}"?`)) {
-      dispatch(updateCourseThunk({
-        id: row.id,
-        status: row.status ? 0 : 1
-      }))
-        .unwrap()
-        .then(() => {
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating course status:`, error);
-        });
-    }
+    dispatch(updateCourseThunk({
+      id: row.id,
+      status: row.status ? 0 : 1
+    }))
+      .unwrap()
+      .then(() => {
+        // Refresh courses data
+        dispatch(getCoursesThunk());
+      })
+      .catch(error => {
+        console.error(`Error updating course status:`, error);
+      });
   };
 
   // View handler
@@ -119,8 +133,70 @@ const Courses = ({ userType }) => {
   };
 
   // Edit handler
-  const handleEdit = (row) => {
-    navigate(`/dashboard/${userType}/courses/edit/${row.id}`);
+  const handleEdit = (row, event) => {
+    // Create dropdown menu for edit options
+    const editMenu = document.createElement('div');
+    editMenu.className = 'edit-dropdown';
+    editMenu.innerHTML = `
+      <div class="edit-option" data-action="standard">Standard Edit</div>
+      <div class="edit-option" data-action="advanced">Advanced Edit</div>
+    `;
+
+    // Position the dropdown near the edit button
+    const editButton = event.currentTarget;
+    const rect = editButton.getBoundingClientRect();
+    editMenu.style.position = 'absolute';
+    editMenu.style.top = `${rect.bottom + window.scrollY}px`;
+    editMenu.style.left = `${rect.left + window.scrollX}px`;
+    editMenu.style.zIndex = '1000';
+    editMenu.style.backgroundColor = 'white';
+    editMenu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+    editMenu.style.borderRadius = '4px';
+    editMenu.style.padding = '8px 0';
+
+    // Style options
+    const options = editMenu.querySelectorAll('.edit-option');
+    options.forEach(option => {
+      option.style.padding = '8px 16px';
+      option.style.cursor = 'pointer';
+      option.style.transition = 'background-color 0.2s';
+
+      option.addEventListener('mouseover', () => {
+        option.style.backgroundColor = '#f3f4f6';
+      });
+
+      option.addEventListener('mouseout', () => {
+        option.style.backgroundColor = 'transparent';
+      });
+
+      option.addEventListener('click', () => {
+        const action = option.getAttribute('data-action');
+        if (action === 'standard') {
+          navigate(`/dashboard/${userType}/courses/edit/${row.id}`);
+        } else if (action === 'advanced') {
+          navigate(`/dashboard/${userType}/courses/edit-flow/${row.id}`);
+        }
+
+        // Remove dropdown after selection
+        document.body.removeChild(editMenu);
+      });
+    });
+
+    // Add to document
+    document.body.appendChild(editMenu);
+
+    // Close dropdown when clicking elsewhere
+    const closeDropdown = (e) => {
+      if (!editMenu.contains(e.target) && e.target !== editButton) {
+        document.body.removeChild(editMenu);
+        document.removeEventListener('click', closeDropdown);
+      }
+    };
+
+    // Add timeout to avoid immediate closing
+    setTimeout(() => {
+      document.addEventListener('click', closeDropdown);
+    }, 100);
   };
 
   // Delete handler
@@ -144,7 +220,7 @@ const Courses = ({ userType }) => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img src={ VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),
@@ -204,7 +280,7 @@ const Courses = ({ userType }) => {
           <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
             <FaEye />
           </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
+          <button className="action-btn edit" onClick={(e) => handleEdit(row, e)} title="Edit Course">
             <FaPencilAlt />
           </button>
           <button
@@ -221,23 +297,111 @@ const Courses = ({ userType }) => {
     },
   ];
 
+  // Filter the data based on search and category filters
+  const filteredData = tableData
+    // Apply search filter
+    .filter(item =>
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    // Apply category filter
+    .filter(item =>
+      !categoryFilter || item.category === categoryFilter
+    )
+    // Apply sorting
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+
+      switch (sortBy) {
+        case "title-asc": return a.title.localeCompare(b.title);
+        case "title-desc": return b.title.localeCompare(a.title);
+        case "level-asc": return a.level.localeCompare(b.level);
+        case "level-desc": return b.level.localeCompare(a.level);
+        case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
+        default: return 0;
+      }
+    });
+
+  // Card view for tutor courses
+  const renderCourseCards = () => {
+    return (
+      <div className="course-cards-container">
+        <div className="course-cards-grid">
+          {filteredData.map((course) => (
+            <div key={course.id} className="course-card">
+              <div className="course-card-thumbnail">
+                <img src={`${VITE_IMAGE_URL}${course.thumbnail}`} alt={course.title} />
+              </div>
+              <div className="course-card-content">
+                <div className="course-card-category">Category: {course.category}</div>
+                <h3 className="course-card-title">{course.title}</h3>
+                <p className="course-card-description">
+                  {course.description && course.description.length > 100
+                    ? `${course.description.substring(0, 100)}...`
+                    : course.description}
+                </p>
+              </div>
+              <div className="course-card-footer">
+                <div className="course-card-professor">
+                  <img
+                    src={`https://i.pravatar.cc/150?img=${course.id + 30}`}
+                    alt={course.professor}
+                    className="professor-avatar-small"
+                  />
+                  <span>{course.professor}</span>
+                </div>
+                <div className="course-card-meta">
+                  <div className="course-card-meta-item">
+                    <FaClock className="meta-icon" />
+                    <span>{course.duration}</span>
+                  </div>
+                  <div className="course-card-meta-item">
+                    <FaCalendarAlt className="meta-icon" />
+                    <span>{course.level}</span>
+                  </div>
+                </div>
+                <div className="course-card-actions">
+                  {course.isEnrolled ? (
+                    <button
+                      className="resume-btn"
+                      onClick={() => handleView(course)}
+                    >
+                      Resume
+                    </button>
+                  ) : (
+                    <button
+                      className="start-learning-btn"
+                      onClick={() => handleView(course)}
+                    >
+                      Start Learning
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="courses-container admin-dashboard">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Loading courses data...</p>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner overlay={true} message="Loading courses data..." />}
 
-      {/* Courses Table Section */}
+      {/* Courses Section */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">All Courses ({tableData.length})</h2>
+          <h2 className="section-title">
+            {userType === 'tutor' ? 'My Courses' : `All Courses (${tableData.length})`}
+          </h2>
           <div className="header-actions">
             <button
               className="add-course-btn"
-              onClick={() => navigate(`/dashboard/${userType}/courses/add`)}
+              onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
             >
               Add Course
             </button>
@@ -284,39 +448,17 @@ const Courses = ({ userType }) => {
           </select>
         </div>
 
-        <div className="table-responsive">
-          <DataTableComponent
-            columns={columns}
-            data={tableData
-              // Apply search filter
-              .filter(item =>
-                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
-              )
-              // Apply category filter
-              .filter(item =>
-                !categoryFilter || item.category === categoryFilter
-              )
-              // Apply sorting
-              .sort((a, b) => {
-                if (!sortBy) return 0;
-
-                switch (sortBy) {
-                  case "title-asc": return a.title.localeCompare(b.title);
-                  case "title-desc": return b.title.localeCompare(a.title);
-                  case "level-asc": return a.level.localeCompare(b.level);
-                  case "level-desc": return b.level.localeCompare(a.level);
-                  case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
-                  default: return 0;
-                }
-              })
-            }
-            showSearch={false}
-          />
-        </div>
+        {userType === 'tutor' ? (
+          renderCourseCards()
+        ) : (
+          <div className="table-responsive">
+            <DataTableComponent
+              columns={columns}
+              data={filteredData}
+              showSearch={false}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -28,6 +28,11 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new AppError('The user belonging to this token no longer exists.', 401));
   }
 
+  // Check if user is inactive
+  if (user.status === 0) {
+    return next(new AppError('Your account is inactive. Please contact the administrator.', 403));
+  }
+
   // 4) Grant access to protected route
   req.user = user;
 
@@ -50,8 +55,8 @@ exports.restrictTo = (...roles) => {
 // Permission-based authorization middleware
 exports.hasPermission = (permission) => {
   return (req, res, next) => {
-    // Always allow admin users to access all routes
-    if (req.user.role === 'admin') {
+    // Always allow admin or staff users to access all routes
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       return next();
     }
 
@@ -72,8 +77,8 @@ exports.hasPermission = (permission) => {
 // Multiple permissions check middleware (requires ALL permissions)
 exports.hasAllPermissions = (permissions) => {
   return (req, res, next) => {
-    // Always allow admin users to access all routes
-    if (req.user.role === 'admin') {
+    // Always allow admin or staff users to access all routes
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       return next();
     }
 
@@ -96,8 +101,8 @@ exports.hasAllPermissions = (permissions) => {
 // Multiple permissions check middleware (requires ANY of the permissions)
 exports.hasAnyPermission = (permissions) => {
   return (req, res, next) => {
-    // Always allow admin users to access all routes
-    if (req.user.role === 'admin') {
+    // Always allow admin or staff users to access all routes
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       return next();
     }
 

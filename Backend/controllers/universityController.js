@@ -6,32 +6,78 @@ exports.createEducator = async (req, res, next) => {
   try {
     const {
       email,
-      password,
       name,
       roleId,
       phoneNumber,
       address,
       zipcode,
-      state
+      state,
+      category, // Add category field
+      schoolName // Add school/university name field
     } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Prepare profile object
+    const profile = {
+      address,
+      zipcode,
+      state,
+      category, // Add category field
+      schoolName, // Add school/university name field
+      socialLinks: {}
+    };
+
+    // Add avatar if profile image was uploaded
+    if (req.file) {
+      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    console.log('University controller - Creating educator with roleId:', roleId);
+
+    // Determine the role based on roleId
+    let roleName = 'educator'; // Default role
+    if (roleId) {
+      const Role = require('../models/Role');
+      const role = await Role.findById(roleId);
+      if (role) {
+        roleName = role.name.toLowerCase(); // Convert to lowercase
+        console.log('University controller - Using role name:', roleName);
+      }
+    }
+
     const educator = new User({
       email,
-      password: hashedPassword,
-      role: 'educator',
+      role: roleName, // Use the determined role name
       name,
-      phoneNumber: phoneNumber || '+919876543210', // Default phone number if not provided
+      phoneNumber, // No default phone number, must be provided by user
       university: req.user.id,
       roleRef: roleId || undefined, // Assign role if provided
-      profile: {
-        address,
-        zipcode,
-        state
-      }
+      profile
     });
 
+    console.log('University controller - Created educator with roleRef:', educator.roleRef);
+    console.log('University controller - Created educator with role:', educator.role);
+
     await educator.save();
+
+    // Add the educator to the university's educators array
+    const university = await User.findOne({
+      _id: req.user.id,
+      role: 'university'
+    });
+
+    if (university) {
+      // Initialize educators array if it doesn't exist
+      if (!university.educators) {
+        university.educators = [];
+      }
+
+      // Add the educator to the university's educators array if not already there
+      if (!university.educators.includes(educator._id)) {
+        university.educators.push(educator._id);
+        await university.save();
+      }
+    }
+
     res.json(educator);
   } catch (error) {
     next(error);
@@ -44,7 +90,11 @@ exports.getEducators = async (req, res) => {
     const educators = await User.find({
       university: req.user.id,
       role: 'educator'
-    });
+    })
+    .populate('university', 'name category')
+    .populate('roleRef', 'name') // Populate the role reference
+    .select('-password');
+
     res.json(educators);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving educators', error: error.message });
@@ -57,12 +107,15 @@ exports.getEducatorById = async (req, res) => {
       _id: req.params.id,
       university: req.user.id,
       role: 'educator'
-    });
+    })
+    .populate('roleRef', 'name') // Populate the role reference
+    .select('-password');
 
     if (!educator) {
       return res.status(404).json({ message: 'Educator not found' });
     }
 
+    console.log('University controller - Educator with populated roleRef:', educator);
     res.json(educator);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving educator', error: error.message });
@@ -93,7 +146,7 @@ exports.deleteEducator = async (req, res) => {
 
 exports.updateEducator = async (req, res) => {
   try {
-    const { name, email, roleId, phoneNumber, address, zipcode, state, status } = req.body;
+    const { name, email, roleId, phoneNumber, address, zipcode, state, status, category, schoolName } = req.body;
     const educator = await User.findById(req.params.id);
 
     if (!educator) {
@@ -124,9 +177,31 @@ exports.updateEducator = async (req, res) => {
     if (address) educator.profile.address = address;
     if (zipcode) educator.profile.zipcode = zipcode;
     if (state) educator.profile.state = state;
+    if (category) educator.profile.category = category; // Add category field
+    if (schoolName) educator.profile.schoolName = schoolName; // Add school/university name field
+
+    // Update avatar if profile image was uploaded
+    if (req.file) {
+      console.log('University controller - Profile image uploaded:', req.file);
+      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      console.log('University controller - Updated avatar path:', educator.profile.avatar);
+    } else {
+      console.log('University controller - No profile image uploaded in the request');
+    }
 
     if (roleId) {
+      console.log('University controller - Updating educator roleId:', roleId);
       educator.roleRef = roleId;
+      console.log('University controller - Updated educator roleRef:', educator.roleRef);
+
+      // Fetch the role to get its name
+      const Role = require('../models/Role');
+      const role = await Role.findById(roleId);
+      if (role) {
+        // Update the role field based on the role name (convert to lowercase)
+        educator.role = role.name.toLowerCase();
+        console.log('University controller - Updated role to:', educator.role);
+      }
     }
 
     await educator.save();
@@ -167,29 +242,6 @@ exports.updateProfile = async (req, res) => {
 };
 
 exports.updatePassword = async (req, res) => {
-  const { currentPassword, newPassword, confirmPassword } = req.body;
-  console.debug(`Updating password for userId: ${req.user.id}`);
-
-  // Validate passwords match
-  if (newPassword !== confirmPassword) {
-    console.warn(`Password confirmation mismatch for userId: ${req.user.id}`);
-    return res.status(400).json({ msg: "New passwords do not match" });
-  }
-
-  const user = await User.findById(req.user.id);
-  if (!user) {
-    console.error(`User not found for userId: ${req.user.id}`);
-    return res.status(404).json({ msg: "User not found" });
-  }
-
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
-  if (!isMatch) {
-    console.warn(`Invalid current password attempt for userId: ${req.user.id}`);
-    return res.status(400).json({ msg: "Invalid current password" });
-  }
-
-  user.password = await bcrypt.hash(newPassword, 12);
-  await user.save();
-  console.debug(`Password updated successfully for userId: ${req.user.id}`);
-  res.json({ msg: "Password updated" });
+  // Password functionality has been removed as the system uses OTP-based login
+  return res.status(400).json({ msg: "Password functionality is not available. The system uses OTP-based authentication." });
 };

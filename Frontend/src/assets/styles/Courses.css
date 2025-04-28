@@ -544,3 +544,163 @@
     grid-column: span 1;
   }
 }
+
+/* Course Cards Layout - For Tutor Dashboard */
+.course-cards-container {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.course-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.course-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.course-card-thumbnail {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.course-card-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.course-card:hover .course-card-thumbnail img {
+  transform: scale(1.05);
+}
+
+.course-card-content {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.course-card-category {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.course-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+  line-height: 1.3;
+}
+
+.course-card-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.course-card-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #eee;
+  background-color: #f9f9f9;
+}
+
+.course-card-professor {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.professor-avatar-small {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+}
+
+.course-card-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.course-card-meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.meta-icon {
+  margin-right: 6px;
+  font-size: 14px;
+  color: var(--bg-primary);
+}
+
+.course-card-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.resume-btn, .start-learning-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resume-btn {
+  background-color: white;
+  color: var(--bg-primary);
+  border: 1px solid var(--bg-primary);
+}
+
+.start-learning-btn {
+  background-color: var(--bg-primary);
+  color: white;
+  border: none;
+}
+
+.resume-btn:hover {
+  background-color: #f0f4ff;
+}
+
+.start-learning-btn:hover {
+  background-color: #4338ca;
+}
+
+@media (max-width: 768px) {
+  .course-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .course-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

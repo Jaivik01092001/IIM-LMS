@@ -14,7 +14,7 @@ router.get('/content', protect, educatorController.getContent);
 router.post('/content/:id/comment', protect, educatorController.addComment);
 router.get('/my-content', protect, educatorController.getMyContent);
 router.post('/content', protect, upload.single('file'), educatorController.createContent);
-router.post('/quiz/:id', protect, educatorController.submitQuiz);
+router.post('/courses/:id/quizzes/:quizId/submit', protect, educatorController.submitQuiz);
 router.put('/profile', protect, educatorController.updateProfile);
 router.put('/password', protect, educatorController.updatePassword);
 

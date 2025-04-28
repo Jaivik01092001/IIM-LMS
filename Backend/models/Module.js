@@ -5,6 +5,7 @@ const moduleSchema = new mongoose.Schema({
   description: { type: String },
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
   content: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Content' }],
+  quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz' }, // Reference to associated quiz
   order: { type: Number, default: 0 }, // For ordering modules within a course
 }, { timestamps: true });
 

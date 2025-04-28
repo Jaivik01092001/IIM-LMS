@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteEducatorThunk, updateEducatorThunk, getEducatorsThunk, getEducatorByIdThunk } from "../redux/university/universitySlice";
+import { deleteEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk, getEducatorByIdThunk as getUniversityEducatorByIdThunk } from "../redux/university/universitySlice";
+import { getEducatorsThunk as getAdminEducatorsThunk, getEducatorByIdThunk as getAdminEducatorByIdThunk, updateEducatorThunk as updateAdminEducatorThunk } from "../redux/admin/adminSlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import "../assets/styles/EducatorDetails.css";
-import { LiaChalkboardTeacherSolid } from "react-icons/lia";
+
 import { LuSchool } from "react-icons/lu";
+import { FaUserCircle } from "react-icons/fa";
 
 const EducatorDetails = () => {
   const location = useLocation();
@@ -12,7 +15,18 @@ const EducatorDetails = () => {
   const dispatch = useDispatch();
   const [isDeleting, setIsDeleting] = useState(false);
   const [educatorData, setEducatorData] = useState(null);
-  const { loading, currentEducator } = useSelector((state) => state.university);
+
+  // Get user and educator data from Redux store
+  const { user } = useSelector((state) => state.auth);
+  const { loading: universityLoading, currentEducator: universityEducator } = useSelector((state) => state.university);
+  const { loading: adminLoading, currentEducator: adminEducator } = useSelector((state) => state.admin);
+
+  // Determine if user is admin
+  const isAdmin = user?.role === 'admin';
+
+  // Use the appropriate loading and currentEducator based on user role
+  const loading = isAdmin ? adminLoading : universityLoading;
+  const currentEducator = isAdmin ? adminEducator : universityEducator;
 
   // Get educator from router state for initial ID
   const educatorFromState = location.state?.educator;
@@ -20,20 +34,47 @@ const EducatorDetails = () => {
   // Fetch educator data from API when component mounts
   useEffect(() => {
     if (educatorFromState && educatorFromState.id) {
-      dispatch(getEducatorByIdThunk(educatorFromState.id));
+      // Use the appropriate thunk based on user role
+      if (isAdmin) {
+        dispatch(getAdminEducatorByIdThunk(educatorFromState.id));
+      } else {
+        dispatch(getUniversityEducatorByIdThunk(educatorFromState.id));
+      }
     }
-  }, [dispatch, educatorFromState]);
+  }, [dispatch, educatorFromState, isAdmin]);
 
   // Format API data for UI display
   useEffect(() => {
     if (currentEducator) {
+      console.log("Current educator data:", currentEducator);
+
+      // Get university name if available
+      let universityName = "N/A";
+      let universityId = "N/A";
+
+      if (currentEducator.university) {
+        // If university is an object with name property
+        if (typeof currentEducator.university === 'object' && currentEducator.university.name) {
+          universityName = currentEducator.university.name;
+          universityId = currentEducator.university._id;
+        }
+        // If university is just the ID
+        else if (typeof currentEducator.university === 'string') {
+          universityId = currentEducator.university;
+          // Use the school name from state if available
+          universityName = educatorFromState?.school || universityId;
+        }
+      } else if (educatorFromState?.school) {
+        universityName = educatorFromState.school;
+      }
+
       // Format the data from the API response
       setEducatorData({
         id: currentEducator._id,
         professor: currentEducator.name || "N/A",
-        school: educatorFromState?.school || "N/A", // Use from state as API might not have this
-        category: educatorFromState?.category || "University",
-        avatar: currentEducator.profile?.avatar || "https://randomuser.me/api/portraits/men/1.jpg",
+        school: universityName,
+        category: currentEducator.profile?.category || educatorFromState?.category || "University",
+        avatar: currentEducator.profile?.avatar ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${currentEducator.profile.avatar}` : null,
         mobile: currentEducator.phoneNumber || "N/A",
         email: currentEducator.email || "N/A",
         status: currentEducator.status === 1,
@@ -42,7 +83,8 @@ const EducatorDetails = () => {
         state: currentEducator.profile?.state || "N/A",
         role: currentEducator.role || "N/A",
         roleRef: currentEducator.roleRef || "N/A",
-        university: currentEducator.university || "N/A",
+        university: universityId,
+        universityName: universityName,
         createdAt: currentEducator.createdAt ? new Date(currentEducator.createdAt).toLocaleString() : "N/A",
         updatedAt: currentEducator.updatedAt ? new Date(currentEducator.updatedAt).toLocaleString() : "N/A"
       });
@@ -53,7 +95,7 @@ const EducatorDetails = () => {
         professor: educatorFromState.professor || "N/A",
         school: educatorFromState.school || "N/A",
         category: educatorFromState.category || "N/A",
-        avatar: educatorFromState.avatar || "https://randomuser.me/api/portraits/men/1.jpg",
+        avatar: educatorFromState.avatar || null,
         mobile: educatorFromState.mobile || "N/A",
         email: educatorFromState.email || "N/A",
         status: educatorFromState.status,
@@ -63,6 +105,7 @@ const EducatorDetails = () => {
         role: educatorFromState.role || "N/A",
         roleRef: educatorFromState.roleRef || "N/A",
         university: educatorFromState.university || "N/A",
+        universityName: educatorFromState.school || "N/A",
         createdAt: educatorFromState.createdAt || "N/A",
         updatedAt: educatorFromState.updatedAt || "N/A"
       });
@@ -89,31 +132,32 @@ const EducatorDetails = () => {
     const newStatus = educatorData.status ? 0 : 1;
     const statusText = newStatus === 1 ? "activate" : "deactivate";
 
-    if (window.confirm(`Are you sure you want to ${statusText} "${educatorData.professor}"?`)) {
-      dispatch(updateEducatorThunk({
-        id: educatorData.id,
-        status: newStatus
-      }))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully ${statusText}d ${educatorData.professor}`);
-          // Refresh educator data to ensure UI is in sync with backend
-          dispatch(getEducatorByIdThunk(educatorData.id));
-          // Also refresh the educators list
-          dispatch(getEducatorsThunk());
-        })
-        .catch(error => {
-          console.error(`Error updating educator status:`, error);
-        });
-    }
+    // Use the appropriate thunk based on user role
+    const updateThunk = isAdmin ? updateAdminEducatorThunk : updateUniversityEducatorThunk;
+
+    dispatch(updateThunk({
+      id: educatorData.id,
+      status: newStatus
+    }))
+      .unwrap()
+      .then(() => {
+        console.log(`Successfully ${statusText}d ${educatorData.professor}`);
+        // Refresh educator data to ensure UI is in sync with backend
+        if (isAdmin) {
+          dispatch(getAdminEducatorByIdThunk(educatorData.id));
+          dispatch(getAdminEducatorsThunk());
+        } else {
+          dispatch(getUniversityEducatorByIdThunk(educatorData.id));
+          dispatch(getUniversityEducatorsThunk());
+        }
+      })
+      .catch(error => {
+        console.error(`Error updating educator status:`, error);
+      });
   };
 
   if (loading && !educatorData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner size="large" message="Loading educator details..." />;
   }
 
   if (!educatorData) {
@@ -124,11 +168,15 @@ const EducatorDetails = () => {
     <div className="educator-details-page">
       <div className="educator-header">
         <div className="educator-info">
-          <img
-            src={educatorData.avatar}
-            alt={educatorData.professor}
-            className="educator-avatar"
-          />
+          {educatorData.avatar ? (
+            <img
+              src={educatorData.avatar}
+              alt={educatorData.professor}
+              className="educator-avatar"
+            />
+          ) : (
+            <FaUserCircle className="educator-avatar-placeholder" size={80} />
+          )}
           <div className="educator-text">
             <h1>{educatorData.professor}</h1>
             <span className="category">Category: {educatorData.category}</span>
@@ -171,13 +219,10 @@ const EducatorDetails = () => {
               <label>Role:</label>
               <span>{educatorData.role ? educatorData.role.charAt(0).toUpperCase() + educatorData.role.slice(1) : "N/A"}</span>
             </div>
+
             <div className="info-row">
-              <label>Role ID:</label>
-              <span title="Reference to role permissions">{educatorData.roleRef}</span>
-            </div>
-            <div className="info-row">
-              <label>University ID:</label>
-              <span title="Reference to associated university/school">{educatorData.university}</span>
+              <label>University:</label>
+              <span title="Associated university/school">{educatorData.universityName}</span>
             </div>
           </div>
         </div>

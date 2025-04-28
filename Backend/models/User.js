@@ -4,11 +4,16 @@ const { formatPhoneNumber, isValidIndianPhoneNumber } = require('../utils/phoneU
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phoneNumber: { type: String, required: true, unique: true },
-  role: { type: String, enum: ['educator', 'university', 'admin'], required: true },
+  role: { type: String, required: true }, // Role name (no enum restriction to allow dynamic roles)
   // Reference to the Role model for fine-grained permissions
   roleRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
   name: { type: String, required: true },
-  university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' }, // For educators
+  // For educators - reference to their university (which is also a User with role='university')
+  university: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // For universities - list of educators associated with this university
+  educators: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  // For universities - contact person name (previously in University model)
+  contactPerson: { type: String },
   refreshToken: { type: String }, // Added for JWT refresh token
   otp: { type: String },
   otpExpires: { type: Date },
@@ -19,6 +24,8 @@ const userSchema = new mongoose.Schema({
     zipcode: { type: String },
     state: { type: String },
     bio: { type: String },
+    category: { type: String }, // Added category field
+    schoolName: { type: String }, // Added school/university name field
     avatar: { type: String }, // URL to profile image
     socialLinks: {
       website: { type: String },

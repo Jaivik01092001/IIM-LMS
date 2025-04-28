@@ -104,6 +104,11 @@ const verifyOTP = async (userId, providedOTP) => {
         return { valid: false, message: 'No OTP found for this user' };
     }
 
+    // Check if user is inactive (status = 0)
+    if (user.status === 0) {
+        return { valid: false, message: 'Your account is inactive. Please contact the administrator.' };
+    }
+
     if (user.otpExpires < Date.now()) {
         return { valid: false, message: 'OTP has expired' };
     }

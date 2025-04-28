@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createEducatorThunk, updateEducatorThunk, getEducatorsThunk } from "../redux/university/universitySlice";
+import { createEducatorThunk as createUniversityEducatorThunk, updateEducatorThunk as updateUniversityEducatorThunk, getEducatorsThunk as getUniversityEducatorsThunk } from "../redux/university/universitySlice";
+import { createEducatorThunk as createAdminEducatorThunk, updateEducatorThunk as updateAdminEducatorThunk, getEducatorsThunk as getAdminEducatorsThunk, getUniversitiesThunk } from "../redux/admin/adminSlice";
 import { getRolesThunk } from "../redux/role/roleSlice";
 import "../assets/styles/EducatorAccountForm.css";
 import { FaArrowLeft } from "react-icons/fa";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const EducatorAccountForm = () => {
   const navigate = useNavigate();
@@ -13,32 +15,107 @@ const EducatorAccountForm = () => {
   const educatorData = location.state?.educator || null;
   const isEditMode = !!educatorData;
 
-  // Get roles from Redux store
+  // Get user, roles, and universities from Redux store
+  const { user } = useSelector((state) => state.auth);
   const { roles } = useSelector((state) => state.role);
+  const { universities, loading: universitiesLoading } = useSelector((state) => state.admin);
 
-  // Fetch roles on component mount
+  // Determine if user is admin
+  const isAdmin = user?.role === 'admin';
+
+  // Filter out predefined roles from the dropdown
+
+  // Predefined roles to exclude from the dropdown
+  const predefinedRoles = [
+    'admin', 'staff', 'university', 'educator',
+    'super admin', 'iim staff', 'school admin', 'school',
+    'super_admin', 'iim_staff', 'school_admin'
+  ];
+
+  // Filter out predefined roles from the roles list
+  const filteredRoles = roles ? roles.filter(role => {
+    // Check if the role has a name property
+    if (!role.name) {
+      console.log('Role without name property:', role);
+      return false;
+    }
+
+    // Only include roles that are not in the predefined list
+    const roleLowerCase = role.name.toLowerCase().trim();
+
+    // Check if this role name (or a variation) is in our exclude list
+    const isExcluded = predefinedRoles.some(predefinedRole =>
+      roleLowerCase === predefinedRole ||
+      roleLowerCase.replace(/[_\s-]/g, '') === predefinedRole.replace(/[_\s-]/g, '')
+    );
+
+    console.log(`Role: "${role.name}", lowercase: "${roleLowerCase}", excluded: ${isExcluded}`);
+
+    // Only include custom roles (not in the predefined list)
+    return !isExcluded;
+  }) : [];
+
+  // Debug check for "New Role"
+  const hasNewRole = filteredRoles.some(role =>
+    role.name.toLowerCase().includes('new') && role.name.toLowerCase().includes('role')
+  );
+  console.log('Has New Role:', hasNewRole);
+
+  // Debug
+  console.log('All roles:', roles);
+  console.log('Predefined roles to exclude:', predefinedRoles);
+  console.log('Filtered roles:', filteredRoles);
+
+  // Fetch roles and universities on component mount
   useEffect(() => {
     dispatch(getRolesThunk());
+    dispatch(getUniversitiesThunk());
   }, [dispatch]);
+
+  // Log detailed role information when roles change
+  useEffect(() => {
+    if (roles && roles.length > 0) {
+      console.log('Detailed role information:');
+      roles.forEach(role => {
+        console.log(JSON.stringify(role, null, 2));
+      });
+    }
+  }, [roles]);
+
+  // Log roles and universities when they change
+  useEffect(() => {
+    console.log('Available roles:', roles);
+    console.log('Available universities:', universities);
+  }, [roles, universities]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
   const [formData, setFormData] = useState({
     professorName: "",
-    schoolName: "",
+    universityId: "", // Changed from schoolName to universityId for dropdown selection
     category: "",
     email: "",
     phoneNumber: "",
     address: "",
     zipcode: "",
     state: "",
-    password: "",
     roleId: "",
     profileImage: null,
     profileImageUrl: "",
     status: 1,
   });
+
+  // Check if roleId matches any role when formData is initialized
+  // This useEffect must be placed after formData state initialization
+  useEffect(() => {
+    // If in edit mode and we have both educatorData and roles, check if roleId matches any role
+    if (isEditMode && educatorData && roles && roles.length > 0 && formData.roleId) {
+      console.log('Checking if roleId matches any role:', formData.roleId);
+      const matchingRole = roles.find(role => role._id === formData.roleId);
+      console.log('Matching role:', matchingRole);
+    }
+  }, [roles, isEditMode, educatorData, formData.roleId]);
 
   useEffect(() => {
     if (isEditMode && educatorData) {
@@ -47,29 +124,93 @@ const EducatorAccountForm = () => {
                         educatorData.mobile.replace(/^\+91\s*/, '').trim() :
                         "";
 
+      console.log('Educator data for edit mode:', educatorData);
+      console.log('Educator roleRef:', educatorData.roleRef);
+      console.log('Educator _id:', educatorData._id);
+      console.log('Educator id:', educatorData.id);
+
+      // Log all properties of educatorData
+      console.log('All educatorData properties:');
+      for (const key in educatorData) {
+        console.log(`${key}: ${JSON.stringify(educatorData[key])}`);
+      }
+
+      // If roleRef is an object (populated), extract the _id
+      let roleId = '';
+
+      if (educatorData.roleRef) {
+        if (typeof educatorData.roleRef === 'object') {
+          roleId = educatorData.roleRef._id;
+          console.log('roleRef is an object, extracted _id:', roleId);
+        } else {
+          roleId = educatorData.roleRef;
+          console.log('roleRef is a string:', roleId);
+        }
+      } else {
+        console.log('No roleRef found in educatorData');
+      }
+
+      console.log('Final extracted roleId:', roleId);
+
+      // Check if avatar is directly on the educator object or in the profile object
+      let avatarUrl = educatorData.avatar || (educatorData.profile && educatorData.profile.avatar) || "";
+
+      // If the avatar URL is a full URL (starts with http), use it directly for display
+      // Otherwise, it's a relative path, so prepend the base URL (without /api)
+      if (avatarUrl && !avatarUrl.startsWith('http')) {
+        avatarUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${avatarUrl}`;
+      }
+
+      console.log('Avatar URL from educator data:', avatarUrl);
+
+      // Find university ID if we have a school name
+      let universityId = "";
+      if (educatorData.university) {
+        // If university is an object with _id
+        if (typeof educatorData.university === 'object' && educatorData.university._id) {
+          universityId = educatorData.university._id;
+        }
+        // If university is just the ID
+        else if (typeof educatorData.university === 'string') {
+          universityId = educatorData.university;
+        }
+      }
+      // If no direct university reference, try to find by name
+      else if (educatorData.school && universities && universities.length > 0) {
+        const matchingUniversity = universities.find(
+          uni => uni.name.toLowerCase() === educatorData.school.toLowerCase()
+        );
+        if (matchingUniversity) {
+          universityId = matchingUniversity._id;
+        }
+      }
+
+      console.log('Found university ID:', universityId);
+
       setFormData({
         professorName: educatorData.professor || "",
-        schoolName: educatorData.school || "",
+        universityId: universityId,
         category: educatorData.category || "",
         email: educatorData.email || "",
         phoneNumber: phoneNumber,
         address: educatorData.address || "",
         zipcode: educatorData.zipcode || "",
         state: educatorData.state || "",
-        password: "", // Don't populate password in edit mode
-        roleId: educatorData.roleId || "",
-        profileImageUrl: educatorData.avatar || "",
+        roleId: roleId, // Use the extracted roleId
+        profileImageUrl: avatarUrl,
         status: educatorData.status ? 1 : 0,
       });
+
+      console.log('Form data after initialization:', {
+        profileImageUrl: educatorData.avatar || ""
+      });
     }
-  }, [isEditMode, educatorData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, educatorData, universities]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleImageUpload = (e) => {
@@ -88,32 +229,84 @@ const EducatorAccountForm = () => {
     setFormErrors({});
     setIsSubmitting(true);
 
-    // Prepare form data for API
-    const apiData = {
-      name: formData.professorName,
-      email: formData.email,
-      phoneNumber: "+91 " + formData.phoneNumber.trim(),
-      address: formData.address,
-      zipcode: formData.zipcode,
-      state: formData.state,
-      status: Number(formData.status)
-    };
+    // Create FormData object for file upload
+    const formDataObj = new FormData();
 
-    // Add password only for new educators or if changed
-    if (!isEditMode || formData.password) {
-      apiData.password = formData.password;
+    // Append text data
+    formDataObj.append('name', formData.professorName);
+    formDataObj.append('email', formData.email);
+
+    // Format phone number properly - ensure it's not empty
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
+      setFormErrors({...formErrors, phoneNumber: 'Phone number is required'});
+      setIsSubmitting(false);
+      return;
     }
 
-    // Add roleId if selected
+    // Add +91 prefix only if it doesn't already have it
+    const phoneNumber = formData.phoneNumber.trim();
+    const formattedPhoneNumber = phoneNumber.startsWith('+91')
+      ? phoneNumber
+      : "+91 " + phoneNumber;
+
+    formDataObj.append('phoneNumber', formattedPhoneNumber);
+    formDataObj.append('address', formData.address);
+    formDataObj.append('zipcode', formData.zipcode);
+    formDataObj.append('state', formData.state);
+    formDataObj.append('status', Number(formData.status));
+    formDataObj.append('category', formData.category); // Add category field
+
+    // Validate that a university is selected
+    if (!formData.universityId) {
+      setFormErrors({...formErrors, universityId: 'Please select a School/University'});
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Find the selected university to get its name
+    const selectedUniversity = universities.find(uni => uni._id === formData.universityId);
+    if (selectedUniversity) {
+      formDataObj.append('schoolName', selectedUniversity.name); // Add school/university name
+      formDataObj.append('university', formData.universityId); // Add university ID
+    } else {
+      setFormErrors({...formErrors, universityId: 'Selected university not found'});
+      setIsSubmitting(false);
+      return;
+    }
+
+    // No password field needed
+
+    // Add roleId if selected, otherwise set default role to 'educator'
     if (formData.roleId) {
-      apiData.roleId = formData.roleId;
+      console.log('Selected roleId:', formData.roleId);
+      formDataObj.append('roleId', formData.roleId); // Backend expects roleId in the request
+    } else {
+      console.log('No roleId selected, using default educator role');
+      formDataObj.append('role', 'educator');
+    }
+
+    // Log all form data for debugging
+    for (let pair of formDataObj.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+
+    // Add profile image if selected
+    if (formData.profileImage) {
+      console.log('Adding profile image to form data:', formData.profileImage.name);
+      formDataObj.append('profileImage', formData.profileImage);
+    } else {
+      console.log('No profile image selected for upload');
     }
 
     if (isEditMode) {
       // Update existing educator
-      dispatch(updateEducatorThunk({
+      // Use the appropriate thunk based on user role
+      const updateThunk = isAdmin ? updateAdminEducatorThunk : updateUniversityEducatorThunk;
+      const getEducatorsThunk = isAdmin ? getAdminEducatorsThunk : getUniversityEducatorsThunk;
+
+      dispatch(updateThunk({
         id: educatorData.id,
-        ...apiData
+        formData: formDataObj
       }))
         .unwrap()
         .then(() => {
@@ -123,21 +316,72 @@ const EducatorAccountForm = () => {
           navigate(-1);
         })
         .catch(error => {
-          setFormErrors(error.errors || {});
+          console.error('Error updating educator:', error);
+          // Handle different error formats
+          if (error.errors) {
+            setFormErrors(error.errors);
+          } else if (error.message) {
+            // Handle MongoDB duplicate key errors
+            if (error.message.includes('duplicate key error') && error.message.includes('phoneNumber')) {
+              setFormErrors({
+                ...formErrors,
+                phoneNumber: 'This phone number is already in use. Please use a different phone number.'
+              });
+            } else {
+              setFormErrors({
+                ...formErrors,
+                general: error.message
+              });
+            }
+          } else {
+            setFormErrors({
+              ...formErrors,
+              general: 'An error occurred. Please try again.'
+            });
+          }
           setIsSubmitting(false);
         });
     } else {
-      // Create new educator
-      dispatch(createEducatorThunk(apiData))
+      // Create new educator - use the appropriate thunk based on user role
+      const createThunk = isAdmin ? createAdminEducatorThunk : createUniversityEducatorThunk;
+
+      console.log('Using createThunk:', isAdmin ? 'createAdminEducatorThunk' : 'createUniversityEducatorThunk');
+      console.log('Form data roleId:', formData.roleId);
+
+      dispatch(createThunk(formDataObj))
         .unwrap()
         .then(() => {
           // Refresh educators list
+          // Use the appropriate thunk based on user role
+          const getEducatorsThunk = isAdmin ? getAdminEducatorsThunk : getUniversityEducatorsThunk;
           dispatch(getEducatorsThunk());
           // Navigate back to educators list
           navigate("/dashboard/admin/educators");
         })
         .catch(error => {
-          setFormErrors(error.errors || {});
+          console.error('Error creating educator:', error);
+          // Handle different error formats
+          if (error.errors) {
+            setFormErrors(error.errors);
+          } else if (error.message) {
+            // Handle MongoDB duplicate key errors
+            if (error.message.includes('duplicate key error') && error.message.includes('phoneNumber')) {
+              setFormErrors({
+                ...formErrors,
+                phoneNumber: 'This phone number is already in use. Please use a different phone number.'
+              });
+            } else {
+              setFormErrors({
+                ...formErrors,
+                general: error.message
+              });
+            }
+          } else {
+            setFormErrors({
+              ...formErrors,
+              general: 'An error occurred. Please try again.'
+            });
+          }
           setIsSubmitting(false);
         });
     }
@@ -146,6 +390,11 @@ const EducatorAccountForm = () => {
   const handleCancel = () => {
     navigate(-1);
   };
+
+  // Show loading spinner when universities are being fetched
+  if (universitiesLoading || !universities) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="educator-form-container">
@@ -180,16 +429,26 @@ const EducatorAccountForm = () => {
               </div>
               <div className="grid-row">
                 <div className="form-group">
-                  <label htmlFor="schoolName">School/University</label>
-                  <input
-                    type="text"
-                    id="schoolName"
-                    name="schoolName"
-                    value={formData.schoolName}
+                  <label htmlFor="universityId">School/University</label>
+                  <select
+                    id="universityId"
+                    name="universityId"
+                    value={formData.universityId}
                     onChange={handleInputChange}
-                    placeholder="Enter School/University Name"
                     required
-                  />
+                  >
+                    <option value="">Select School/University</option>
+                    {universities && universities.length > 0 ? (
+                      universities.map((university) => (
+                        <option key={university._id} value={university._id}>
+                          {university.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>Loading universities...</option>
+                    )}
+                  </select>
+                  {formErrors.universityId && <div className="error-message">{formErrors.universityId}</div>}
                 </div>
               </div>
               <div className="grid-row">
@@ -203,10 +462,7 @@ const EducatorAccountForm = () => {
                     required
                   >
                     <option value="">Select Category</option>
-                    <option value="CBSE school">CBSE school</option>
-                    <option value="International school">
-                      International school
-                    </option>
+                    <option value="School">School</option>
                     <option value="University">University</option>
                   </select>
                 </div>
@@ -221,7 +477,7 @@ const EducatorAccountForm = () => {
                     onChange={handleInputChange}
                   >
                     <option value="">Select Role</option>
-                    {roles && roles.map(role => (
+                    {filteredRoles.map(role => (
                       <option key={role._id} value={role._id}>
                         {role.name}
                       </option>
@@ -237,7 +493,15 @@ const EducatorAccountForm = () => {
                 <div className="profile-image-upload">
                   <div className="profile-image">
                     {formData.profileImageUrl ? (
-                      <img src={formData.profileImageUrl} alt="Profile" />
+                      <img
+                        src={formData.profileImageUrl}
+                        alt="Profile"
+                        onError={(e) => {
+                          console.error("Error loading image:", e);
+                          e.target.onerror = null;
+                          e.target.src = "https://randomuser.me/api/portraits/men/1.jpg";
+                        }}
+                      />
                     ) : (
                       <div className="placeholder-image"></div>
                     )}
@@ -292,6 +556,7 @@ const EducatorAccountForm = () => {
                   required
                 />
               </div>
+              {formErrors.phoneNumber && <div className="error-message">{formErrors.phoneNumber}</div>}
             </div>
           </div>
           <div className="form-row">
@@ -338,55 +603,6 @@ const EducatorAccountForm = () => {
                 <option value="Tamil Nadu">Tamil Nadu</option>
                 <option value="Delhi">Delhi</option>
               </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h2>Credentials</h2>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="loginPhone">Phone Number</label>
-              <div className="phone-input-wrapper">
-                <span className="phone-prefix">+91</span>
-                <input
-                  type="tel"
-                  id="loginPhone"
-                  name="loginPhone"
-                  value={formData.loginPhone}
-                  onChange={handleInputChange}
-                  placeholder="Enter Phone Number"
-                  required
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="loginEmail">Email Address</label>
-              <input
-                type="email"
-                id="loginEmail"
-                name="loginEmail"
-                value={formData.loginEmail}
-                onChange={handleInputChange}
-                placeholder="Enter Email Address"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter Password"
-                required={!isEditMode} // Only required for new educators
-              />
-              {formErrors.password && <div className="error-message">{formErrors.password}</div>}
             </div>
           </div>
         </div>

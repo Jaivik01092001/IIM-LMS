@@ -8,6 +8,42 @@ export const getUsers = async () => {
   return response.data;
 };
 
+export const getEducators = async () => {
+  const response = await axios.get(`${API_URL}/admin/educators`, getConfig());
+  return response.data;
+};
+
+export const getEducatorById = async (id) => {
+  const response = await axios.get(`${API_URL}/admin/educator/${id}`, getConfig());
+  return response.data;
+};
+
+export const createEducator = async (data) => {
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  const response = await axios.post(`${API_URL}/admin/educators`, data, config);
+  return response.data;
+};
+
+export const updateEducator = async (id, data) => {
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  const response = await axios.put(`${API_URL}/admin/educator/${id}`, data, config);
+  return response.data;
+};
+
 export const getUniversities = async () => {
   const response = await axios.get(`${API_URL}/admin/universities`, getConfig());
   return response.data;
@@ -19,13 +55,60 @@ export const getUniversityById = async (id) => {
 };
 
 export const createUniversity = async (data) => {
-  const response = await axios.post(`${API_URL}/admin/university`, data, getConfig());
-  return response.data;
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  console.log('Sending university data to API:', data instanceof FormData ? 'FormData object' : data);
+
+  // If it's FormData, convert to a plain object for debugging
+  if (data instanceof FormData) {
+    const formDataObj = {};
+    for (let [key, value] of data.entries()) {
+      formDataObj[key] = value;
+    }
+    console.log('FormData contents:', formDataObj);
+  }
+
+  try {
+    const response = await axios.post(`${API_URL}/admin/university`, data, config);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating university:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const updateUniversity = async (id, data) => {
-  const response = await axios.put(`${API_URL}/admin/university/${id}`, data, getConfig());
-  return response.data;
+  // Use different config for FormData to ensure correct content-type
+  const config = {
+    headers: {
+      'x-auth-token': localStorage.getItem('accessToken'),
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' })
+    }
+  };
+
+  console.log('Updating university data:', data instanceof FormData ? 'FormData object' : data);
+
+  // If it's FormData, log the contents for debugging
+  if (data instanceof FormData) {
+    console.log('FormData contents:');
+    for (let [key, value] of data.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+  }
+
+  try {
+    const response = await axios.put(`${API_URL}/admin/university/${id}`, data, config);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating university:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const deleteUniversity = async (id) => {
@@ -77,12 +160,19 @@ export const getCourse = async (id) => {
 };
 
 export const createCourse = async (data) => {
-  const response = await axios.post(`${API_URL}/admin/course`, data, getConfig());
+  console.log("data....", data);
+  const response = await axios.post(`${API_URL}/admin/course`, data, {
+    ...getConfig(),
+    headers: { ...getConfig().headers, 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
 
 export const updateCourse = async (id, data) => {
-  const response = await axios.put(`${API_URL}/admin/course/${id}`, data, getConfig());
+  const response = await axios.put(`${API_URL}/admin/course/${id}`, data, {
+    ...getConfig(),
+    headers: { ...getConfig().headers, 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
 
