@@ -63,8 +63,6 @@ const EnrollCourseDetail = () => {
           res.modules.forEach((mod, index) => {
             moduleStatus[mod._id] = index === 0;
           });
-
-          console.log("Module lock status initialized:", moduleStatus);
         }
         setModuleCompleted(moduleStatus);
 
@@ -84,8 +82,6 @@ const EnrollCourseDetail = () => {
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
     if (moduleProgress && course) {
-      console.log('Module progress loaded:', moduleProgress);
-
       // Start with all sessions NOT completed
       const newSessionCompleted = {};
       course.modules.forEach(mod => {
@@ -130,11 +126,9 @@ const EnrollCourseDetail = () => {
       });
 
       // Update the module completion state
-      console.log('Setting module completion state:', newModuleState);
       setModuleCompleted(newModuleState);
 
       // Update session completion state
-      console.log('Setting session completion state:', newSessionCompleted);
       setSessionCompleted(newSessionCompleted);
 
       // Calculate overall progress
@@ -201,15 +195,6 @@ const EnrollCourseDetail = () => {
         newSessionState[content._id] === true
       ) || false;
 
-    console.log(`Module ${moduleId} completion check:`, {
-      moduleIndex,
-      allSessionsCompleted: moduleSessionsCompleted,
-      sessions: course.modules[moduleIndex].content?.map(c => ({
-        id: c._id,
-        completed: newSessionState[c._id]
-      }))
-    });
-
     // Update module completion status
     const newModuleState = {
       ...moduleCompleted,
@@ -220,10 +205,8 @@ const EnrollCourseDetail = () => {
     if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
       const nextModuleId = course.modules[moduleIndex + 1]._id;
       newModuleState[nextModuleId] = true;
-      console.log(`Unlocking next module ${nextModuleId}`);
     }
 
-    console.log("New module completion state:", newModuleState);
     setModuleCompleted(newModuleState);
 
     // Prepare data for backend update
@@ -322,12 +305,12 @@ const EnrollCourseDetail = () => {
 
     // Update last accessed module in the backend
     const moduleId = course.modules[moduleIndex]._id;
-    dispatch(updateModuleProgressThunk({
-      courseId: id,
-      progressData: {
-        lastAccessedModule: moduleId
-      }
-    }));
+    // dispatch(updateModuleProgressThunk({
+    //   courseId: id,
+    //   progressData: {
+    //     lastAccessedModule: moduleId
+    //   }
+    // }));
   };
 
   return !course ? (
