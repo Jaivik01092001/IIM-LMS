@@ -14,6 +14,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CourseDetail from "./pages/CourseDetail";
 import EnrollCourseDetail from "./pages/EnrollCourseDetail";
+import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
+import BlogForm from "./pages/BlogForm";
 // Dashboard layout
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -114,6 +117,22 @@ const App = () => {
               path="admin/role-permission"
               element={<RolePermission />}
             />
+            <Route
+              path="admin/blogs"
+              element={<Blog />}
+            />
+            <Route
+              path="admin/blog/create"
+              element={<BlogForm />}
+            />
+            <Route
+              path="admin/blog/edit/:id"
+              element={<BlogForm />}
+            />
+            <Route
+              path="admin/blog/:id"
+              element={<BlogDetail />}
+            />
 
             {/* School routes */}
             <Route path="school" element={<SchoolDashboard />} />
@@ -134,7 +153,22 @@ const App = () => {
               path="school/notification"
               element={<Notification userType="school" />}
             />
-
+            <Route
+              path="school/blogs"
+              element={<Blog />}
+            />
+            <Route
+              path="school/blog/create"
+              element={<BlogForm />}
+            />
+            <Route
+              path="school/blog/edit/:id"
+              element={<BlogForm />}
+            />
+            <Route
+              path="school/blog/:id"
+              element={<BlogDetail />}
+            />
 
             {/* Tutor routes */}
             <Route path="tutor" element={<TutorDashboard />} />
@@ -151,7 +185,22 @@ const App = () => {
               path="tutor/notification"
               element={<Notification userType="tutor" />}
             />
-
+            <Route
+              path="tutor/blogs"
+              element={<Blog />}
+            />
+            <Route
+              path="tutor/blog/create"
+              element={<BlogForm />}
+            />
+            <Route
+              path="tutor/blog/edit/:id"
+              element={<BlogForm />}
+            />
+            <Route
+              path="tutor/blog/:id"
+              element={<BlogDetail />}
+            />
 
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />

@@ -7,13 +7,11 @@ const SummernoteEditor = ({ value, onChange, placeholder = 'Enter your content h
     const editorRef = useRef(null);
     const valueRef = useRef(value);
 
-    // Update valueRef when value prop changes
     useEffect(() => {
         valueRef.current = value;
     }, [value]);
 
     useEffect(() => {
-        // Initialize Summernote
         if (editorRef.current) {
             const $editor = $(editorRef.current);
 
@@ -23,13 +21,19 @@ const SummernoteEditor = ({ value, onChange, placeholder = 'Enter your content h
                 height: 300,
                 toolbar: [
                     ['style', ['style']],
-                    ['font', ['bold', 'underline', 'clear']],
+                    ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['fontsize', ['fontsize']],
                     ['color', ['color']],
-                    ['para', ['ul', 'ol', 'paragraph']],
-                    ['table', ['table']],
-                    ['insert', ['link', 'picture']],
-                    ['view', ['fullscreen', 'codeview', 'help']]
+                    ['para', ['ul', 'ol', 'paragraph', 'height']],
+                    ['insert', ['link', 'picture', 'video', 'table', 'hr']],
+                    ['view', ['fullscreen', 'codeview', 'help']],
+                    ['misc', ['undo', 'redo']]
                 ],
+                fontNames: [
+                    'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Merriweather', 'Open Sans', 'Roboto', 'Times New Roman'
+                ],
+                fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '22', '24', '28', '36', '48', '64', '72'],
                 callbacks: {
                     onChange: function (contents) {
                         if (onChange && contents !== valueRef.current) {
@@ -39,25 +43,20 @@ const SummernoteEditor = ({ value, onChange, placeholder = 'Enter your content h
                 }
             });
 
-            // Set the initial value
             if (value) {
                 $editor.summernote('code', value);
             }
 
-            // Clean up on component unmount
             return () => {
                 $editor.summernote('destroy');
             };
         }
     }, []);
 
-    // Update editor content if value prop changes
     useEffect(() => {
         if (editorRef.current && value !== undefined) {
             const $editor = $(editorRef.current);
             const currentContent = $editor.summernote('code');
-
-            // Only update if the content is different to avoid cursor jumps
             if (currentContent !== value) {
                 $editor.summernote('code', value);
             }
@@ -71,4 +70,4 @@ const SummernoteEditor = ({ value, onChange, placeholder = 'Enter your content h
     );
 };
 
-export default SummernoteEditor; 
+export default SummernoteEditor;
