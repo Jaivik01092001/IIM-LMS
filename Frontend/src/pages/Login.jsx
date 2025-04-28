@@ -24,21 +24,21 @@ const TEST_CREDENTIALS = [
   },
   {
     role: "Super Admin",
-    email: "fabaf2021@gmail.com",
-    phone: "+919924294542",
-  },
-  {
-    role: "Super Admin",
     email: "nishant@fabaf.in",
     phone: "+918980905254",
   },
   {
-    role: "University Admin",
+    role: "IIM Staff",
+    email: "fabaf2021@gmail.com",
+    phone: "+919924294542",
+  },
+  {
+    role: "School Admin",
     email: "zeel.fabaf@gmail.com",
     phone: "+919904424789",
   },
   {
-    role: "Educator Account",
+    role: "Educator",
     email: "anandkumarbarot@gmail.com",
     phone: "+918140977185",
   },

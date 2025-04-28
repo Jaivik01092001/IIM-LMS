@@ -241,6 +241,12 @@ const seedDatabase = async () => {
                     createdBy: users[2]._id // Admin user
                 },
                 {
+                    name: 'IIM Staff',
+                    description: 'Staff members with full system access',
+                    permissions: adminPermissions, // Same permissions as Super Admin
+                    createdBy: users[2]._id
+                },
+                {
                     name: 'School Admin',
                     description: 'Manages university and educators',
                     permissions: {

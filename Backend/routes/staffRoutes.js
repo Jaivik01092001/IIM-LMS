@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Apply authentication and authorization middleware to all routes
 router.use(protect);
-router.use(restrictTo('admin'));
+router.use(restrictTo('admin', 'staff'));
 
 // Staff routes
 router.route('/')

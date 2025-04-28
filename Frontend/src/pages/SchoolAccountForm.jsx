@@ -12,14 +12,69 @@ const SchoolAccountForm = () => {
   const { id } = useParams();
   const { currentUniversity, loading } = useSelector((state) => state.admin);
   const { roles } = useSelector((state) => state.role);
+  // We don't need the user object anymore since we're always showing the dropdown
+  // const { user } = useSelector((state) => state.auth);
 
   // Determine if we're in edit mode based on the presence of an ID parameter
   const isEditMode = !!id;
+
+  // Filter out predefined roles from the dropdown
+
+  // Predefined roles to exclude from the dropdown
+  const predefinedRoles = [
+    'admin', 'staff', 'university', 'educator',
+    'super admin', 'iim staff', 'school admin', 'school',
+    'super_admin', 'iim_staff', 'school_admin'
+  ];
+
+  // Filter out predefined roles from the roles list
+  const filteredRoles = roles ? roles.filter(role => {
+    // Check if the role has a name property
+    if (!role.name) {
+      console.log('Role without name property:', role);
+      return false;
+    }
+
+    // Only include roles that are not in the predefined list
+    const roleLowerCase = role.name.toLowerCase().trim();
+
+    // Check if this role name (or a variation) is in our exclude list
+    const isExcluded = predefinedRoles.some(predefinedRole =>
+      roleLowerCase === predefinedRole ||
+      roleLowerCase.replace(/[_\s-]/g, '') === predefinedRole.replace(/[_\s-]/g, '')
+    );
+
+    console.log(`Role: "${role.name}", lowercase: "${roleLowerCase}", excluded: ${isExcluded}`);
+
+    // Only include custom roles (not in the predefined list)
+    return !isExcluded;
+  }) : [];
+
+  // Debug check for "New Role"
+  const hasNewRole = filteredRoles.some(role =>
+    role.name.toLowerCase().includes('new') && role.name.toLowerCase().includes('role')
+  );
+  console.log('Has New Role:', hasNewRole);
+
+  // Debug
+  console.log('All roles:', roles);
+  console.log('Predefined roles to exclude:', predefinedRoles);
+  console.log('Filtered roles:', filteredRoles);
 
   // Fetch roles when component mounts
   useEffect(() => {
     dispatch(getRolesThunk());
   }, [dispatch]);
+
+  // Log detailed role information when roles change
+  useEffect(() => {
+    if (roles && roles.length > 0) {
+      console.log('Detailed role information:');
+      roles.forEach(role => {
+        console.log(JSON.stringify(role, null, 2));
+      });
+    }
+  }, [roles]);
 
   const [formData, setFormData] = useState({
     schoolName: "",
@@ -344,6 +399,7 @@ const SchoolAccountForm = () => {
                 </div>
               </div>
 
+              {/* Role dropdown - only shows custom roles */}
               <div className="form-group">
                 <label htmlFor="roleId">Role</label>
                 <select
@@ -353,7 +409,7 @@ const SchoolAccountForm = () => {
                   onChange={handleInputChange}
                 >
                   <option value="">Select Role</option>
-                  {roles && roles.map(role => (
+                  {filteredRoles.map(role => (
                     <option key={role._id} value={role._id}>
                       {role.name}
                     </option>
@@ -408,7 +464,7 @@ const SchoolAccountForm = () => {
           </div>
         </div>
 
-        
+
 
         <div className="form-actions">
           <button

@@ -55,8 +55,8 @@ exports.restrictTo = (...roles) => {
 // Permission-based authorization middleware
 exports.hasPermission = (permission) => {
   return (req, res, next) => {
-    // Always allow admin users to access all routes
-    if (req.user.role === 'admin') {
+    // Always allow admin or staff users to access all routes
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       return next();
     }
 
@@ -77,8 +77,8 @@ exports.hasPermission = (permission) => {
 // Multiple permissions check middleware (requires ALL permissions)
 exports.hasAllPermissions = (permissions) => {
   return (req, res, next) => {
-    // Always allow admin users to access all routes
-    if (req.user.role === 'admin') {
+    // Always allow admin or staff users to access all routes
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       return next();
     }
 
@@ -101,8 +101,8 @@ exports.hasAllPermissions = (permissions) => {
 // Multiple permissions check middleware (requires ANY of the permissions)
 exports.hasAnyPermission = (permissions) => {
   return (req, res, next) => {
-    // Always allow admin users to access all routes
-    if (req.user.role === 'admin') {
+    // Always allow admin or staff users to access all routes
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       return next();
     }
 
