@@ -5,6 +5,7 @@ const fs = require('fs');
 // Ensure uploads directories exist
 const uploadsDir = 'uploads';
 const profilesDir = 'uploads/profiles';
+const blogsDir = 'uploads/blogs';
 
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
@@ -14,19 +15,26 @@ if (!fs.existsSync(profilesDir)) {
     fs.mkdirSync(profilesDir);
 }
 
+if (!fs.existsSync(blogsDir)) {
+    fs.mkdirSync(blogsDir);
+}
+
 // Configure storage (save to local uploads/ folder)
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Check if it's a profile image
+        // Check file field name to determine destination
         if (file.fieldname === 'profileImage') {
             cb(null, profilesDir); // Store profile images in profiles subdirectory
+        } else if (file.fieldname === 'coverImage') {
+            cb(null, blogsDir); // Store blog cover images in blogs subdirectory
         } else {
             cb(null, uploadsDir); // Store other files in main uploads directory
         }
     },
     filename: function (req, file, cb) {
         const ext = path.extname(file.originalname);
-        cb(null, Date.now() + '-' + file.fieldname + ext);
+        // Create a unique filename with original extension
+        cb(null, `${Date.now()}-${file.fieldname}${ext}`);
     },
 });
 

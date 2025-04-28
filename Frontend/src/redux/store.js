@@ -5,6 +5,7 @@ import universitySlice from './university/universitySlice';
 import adminSlice from './admin/adminSlice';
 import roleSlice from './role/roleSlice';
 import staffSlice from './admin/staffSlice';
+import blogSlice from './blog/blogSlice';
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     admin: adminSlice,
     role: roleSlice,
     staff: staffSlice,
+    blog: blogSlice,
   },
 });
 
