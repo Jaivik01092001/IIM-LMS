@@ -8,6 +8,8 @@ import { FaFilePen } from "react-icons/fa6";
 import SummernoteEditor from '../components/Editor/SummernoteEditor';
 import '../assets/styles/Blog.css';
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 const BlogForm = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -23,11 +25,11 @@ const BlogForm = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    excerpt: '',
+    shortDescription: '',
     content: '',
     tags: ['Uncategorized'],
     status: false,
-    image: null,
+    coverImage: null,
     slug: ''
   });
 
@@ -43,11 +45,11 @@ const BlogForm = () => {
     if (isEditMode && currentBlog) {
       setFormData({
         title: currentBlog.title || '',
-        excerpt: currentBlog.shortDescription || '',
+        shortDescription: currentBlog.shortDescription || '',
         content: currentBlog.content || '',
         tags: currentBlog.tags?.length > 0 ? currentBlog.tags : ['Uncategorized'],
         status: currentBlog.status === 'published',
-        image: null,
+        coverImage: null,
         slug: currentBlog.slug || ''
       });
 
@@ -66,6 +68,7 @@ const BlogForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
+    console.log('handleChange called with:', { name, value, type, checked, files });
 
     if (type === 'file') {
       if (files[0]) {
@@ -79,45 +82,58 @@ const BlogForm = () => {
           return;
         }
 
-        setFormData({
-          ...formData,
-          [name]: files[0]
-        });
+        console.log('Setting coverImage:', files[0]);
+        setFormData(prev => ({
+          ...prev,
+          coverImage: files[0]
+        }));
 
         const reader = new FileReader();
         reader.onloadend = () => {
           setImagePreview(reader.result);
         };
         reader.readAsDataURL(files[0]);
-
       } else {
         setImagePreview(null);
-        setFormData({
-          ...formData,
-          [name]: null
-        });
+        setFormData(prev => ({
+          ...prev,
+          coverImage: null
+        }));
       }
     } else if (type === 'checkbox') {
-      setFormData({
-        ...formData,
+      console.log('Setting checkbox:', name, checked);
+      setFormData(prev => ({
+        ...prev,
         [name]: checked
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      console.log('Setting field:', name, value);
+      setFormData(prev => ({
+        ...prev,
         [name]: value
-      });
+      }));
     }
+  };
+
+  const handleContentChange = (content) => {
+    console.log('Content changed:', content);
+    setFormData(prev => ({
+      ...prev,
+      content: content
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Debug current form data
+    console.log('Current form data:', formData);
+
     if (!formData.title.trim()) {
       alert('Title is required');
       return;
     }
-    if (!formData.excerpt.trim()) {
+    if (!formData.shortDescription.trim()) {
       alert('Short description is required');
       return;
     }
@@ -127,35 +143,51 @@ const BlogForm = () => {
     }
 
     const blogFormData = new FormData();
+
+    // Debug each field before appending
+    console.log('Appending title:', formData.title);
     blogFormData.append('title', formData.title);
-    blogFormData.append('shortDescription', formData.excerpt);
+
+    console.log('Appending shortDescription:', formData.shortDescription);
+    blogFormData.append('shortDescription', formData.shortDescription);
+
+    console.log('Appending content:', formData.content);
     blogFormData.append('content', formData.content);
 
     formData.tags.forEach((tag, index) => {
+      console.log('Appending tag:', tag);
       blogFormData.append(`tags[${index}]`, tag);
     });
 
     blogFormData.append('status', formData.status ? 'published' : 'draft');
 
-    if (formData.image) {
-      blogFormData.append('coverImage', formData.image);
+    if (formData.coverImage instanceof File) {
+      console.log('Appending coverImage:', formData.coverImage);
+      blogFormData.append('coverImage', formData.coverImage);
     }
 
-    // Debugging FormData content
+    // Debug FormData content
+    console.log('Final FormData contents:');
     for (let pair of blogFormData.entries()) {
-      console.log(pair[0] + ':', pair[1]);
+      console.log(pair[0], ':', pair[1]);
     }
 
     if (isEditMode) {
+      console.log('Updating blog with ID:', id);
       dispatch(updateBlogThunk({
         id,
         formData: blogFormData
       })).then(() => {
         navigate(`/dashboard/${getDashboardPath()}/blogs`);
+      }).catch(error => {
+        console.error('Error updating blog:', error);
       });
     } else {
+      console.log('Creating new blog');
       dispatch(createBlogThunk(blogFormData)).then(() => {
         navigate(`/dashboard/${getDashboardPath()}/blogs`);
+      }).catch(error => {
+        console.error('Error creating blog:', error);
       });
     }
   };
@@ -205,13 +237,13 @@ const BlogForm = () => {
         </div>
 
         <div className="blog-form-group">
-          <label className="blog-form-label" htmlFor="excerpt">
+          <label className="blog-form-label" htmlFor="shortDescription">
             Short Description <span className="required">*</span>
           </label>
           <textarea
-            id="excerpt"
-            name="excerpt"
-            value={formData.excerpt}
+            id="shortDescription"
+            name="shortDescription"
+            value={formData.shortDescription}
             onChange={handleChange}
             className="blog-form-textarea"
             rows="3"
@@ -227,7 +259,7 @@ const BlogForm = () => {
           </label>
           <SummernoteEditor
             value={formData.content}
-            onChange={(content) => setFormData({ ...formData, content })}
+            onChange={handleContentChange}
             placeholder="Enter your blog content here..."
           />
         </div>
@@ -291,14 +323,14 @@ const BlogForm = () => {
         )}
 
         <div className="blog-form-group">
-          <label className="blog-form-label" htmlFor="image">
+          <label className="blog-form-label" htmlFor="coverImage">
             Featured Image
           </label>
           <div className="blog-form-file-input">
             <input
               type="file"
-              id="image"
-              name="image"
+              id="coverImage"
+              name="coverImage"
               onChange={handleChange}
               className="blog-form-input"
               accept="image/jpeg,image/png,image/gif,image/webp"

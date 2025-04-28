@@ -16,6 +16,8 @@ import {
 import { FaFilePen } from "react-icons/fa6";
 import "../assets/styles/Blog.css";
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 const BlogDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -116,7 +118,7 @@ const BlogDetail = () => {
         {currentBlog.coverImage && (
           <div className="blog-detail-image-container">
             <img
-              src={currentBlog.coverImage}
+              src={VITE_IMAGE_URL + currentBlog.coverImage}
               alt={currentBlog.title}
               className="blog-detail-image"
             />
