@@ -16,12 +16,18 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { getCourse } from '../redux/admin/adminApi';
-import { getModuleProgressThunk, updateModuleProgressThunk } from '../redux/educator/educatorSlice';
+import {
+  getModuleProgressThunk,
+  updateModuleProgressThunk,
+  generateCertificateThunk,
+  getMyCertificatesThunk,
+  updateProgressThunk
+} from '../redux/educator/educatorSlice';
 
 const EnrollCourseDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { moduleProgress } = useSelector((state) => state.educator);
+  const { moduleProgress, certificates, loading: certificateLoading } = useSelector((state) => state.educator);
 
   const [activeTab, setActiveTab] = useState('content');
   const [expandedSections, setExpandedSections] = useState({});
@@ -32,6 +38,18 @@ const EnrollCourseDetail = () => {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [course, setCourse] = useState(null);
   const [selectedContent, setSelectedContent] = useState(null);
+  // Get the current user ID from the Redux store
+  const { user } = useSelector((state) => state.auth);
+  const currentUserId = user?.id;
+
+  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
+
+  // Check if certificate exists for this course AND belongs to the current user
+  // This is used to determine whether to show the Generate Certificate button
+  const certificateExists = certificates?.some(cert =>
+    (cert.course === id || (cert.course && cert.course._id === id)) &&
+    (cert.user === currentUserId || (cert.user && cert.user._id === currentUserId))
+  );
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -72,6 +90,9 @@ const EnrollCourseDetail = () => {
 
         // Fetch module progress from the backend
         dispatch(getModuleProgressThunk(id));
+
+        // Fetch certificates to have them ready if needed
+        //  dispatch(getMyCertificatesThunk());
       } catch (err) {
         toast.error('Failed to load course');
       }
@@ -134,7 +155,25 @@ const EnrollCourseDetail = () => {
       // Calculate overall progress
       const completedCount = Object.values(newSessionCompleted).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionCompleted).length;
-      if (totalSessions > 0) {
+
+      // Check if the course has enrolled users and if the current user is one of them
+      if (course.enrolledUsers && course.enrolledUsers.length > 0 && currentUserId) {
+        // Find the current user's enrollment
+        const userEnrollment = course.enrolledUsers.find(enrollment =>
+          enrollment.user === currentUserId ||
+          (enrollment.user && enrollment.user._id === currentUserId)
+        );
+
+        // If user enrollment exists, use the progress from the backend
+        if (userEnrollment) {
+          setUserProgress(userEnrollment.progress || 0);
+        } else if (totalSessions > 0) {
+          // Fallback to calculated progress if no enrollment found
+          const newProgress = Math.round((completedCount / totalSessions) * 100);
+          setUserProgress(newProgress);
+        }
+      } else if (totalSessions > 0) {
+        // Fallback to calculated progress if no enrollment data
         const newProgress = Math.round((completedCount / totalSessions) * 100);
         setUserProgress(newProgress);
       }
@@ -167,7 +206,48 @@ const EnrollCourseDetail = () => {
         }
       }
     }
-  }, [moduleProgress, course]);
+  }, [moduleProgress, course, currentUserId]);
+
+  // Monitor user progress and automatically generate certificate when course is completed
+  useEffect(() => {
+    // Check if course is 100% completed
+    if (userProgress === 100 && course) {
+      // Check if certificate already exists for this user and course
+      if (certificateExists) {
+        //setActiveTab('certificates');
+        return;
+      }
+
+      // First, ensure the course status is set to 'completed' in the backend
+      dispatch(updateProgressThunk({ courseId: id, progress: 100 }))
+        .unwrap()
+        .then(() => {
+          // After the course status is updated to 'completed', generate the certificate
+          dispatch(generateCertificateThunk(id)).unwrap().then(() => {
+            // Switch to certificates tab
+            setActiveTab('certificates');
+            // Fetch certificates to display
+            dispatch(getMyCertificatesThunk());
+            //toast.success('Course completed! Your certificate has been generated.');
+          })
+            .catch((error) => {
+              console.error('Failed to generate certificate:', error);
+              if (error.message === "Certificate already exists") {
+                // If certificate already exists, just switch to the certificates tab
+                setActiveTab('certificates');
+                dispatch(getMyCertificatesThunk());
+                toast.info('Certificate already exists.');
+              } else {
+                toast.error('Failed to generate certificate. Please try again.');
+              }
+            });
+        })
+        .catch((error) => {
+          console.error('Failed to update course status:', error);
+          toast.error('Failed to update course status. Please try again.');
+        });
+    }
+  }, [userProgress, course, id, dispatch, currentUserId, certificateExists]);
 
   const toggleSection = (moduleId) => {
     setExpandedSections({
@@ -176,64 +256,75 @@ const EnrollCourseDetail = () => {
     });
   };
 
-  const handleToggleSession = (sessionId, moduleId, moduleIndex) => {
-    const newSessionState = {
-      ...sessionCompleted,
-      [sessionId]: !sessionCompleted[sessionId],
-    };
-    setSessionCompleted(newSessionState);
+  const handleToggleSession = async (sessionId, moduleId, moduleIndex) => {
+    try {
+      setIsUpdatingProgress(true);
 
-    // Calculate progress for all sessions
-    const completedCount = Object.values(newSessionState).filter(Boolean).length;
-    const totalSessions = Object.keys(newSessionState).length;
-    const newProgress = Math.round((completedCount / totalSessions) * 100);
-    setUserProgress(newProgress);
+      // Calculate new session state
+      const newSessionState = {
+        ...sessionCompleted,
+        [sessionId]: !sessionCompleted[sessionId],
+      };
 
-    // Check if all sessions in this module are completed
-    const moduleSessionsCompleted =
-      course.modules[moduleIndex].content?.every(content =>
-        newSessionState[content._id] === true
-      ) || false;
+      // Calculate progress for all sessions
+      const completedCount = Object.values(newSessionState).filter(Boolean).length;
+      const totalSessions = Object.keys(newSessionState).length;
+      const newProgress = Math.round((completedCount / totalSessions) * 100);
 
-    // Update module completion status
-    const newModuleState = {
-      ...moduleCompleted,
-      [moduleId]: moduleSessionsCompleted
-    };
+      // Check if all sessions in this module are completed
+      const moduleSessionsCompleted =
+        course.modules[moduleIndex].content?.every(content =>
+          newSessionState[content._id] === true
+        ) || false;
 
-    // If this module is completed, unlock the next module if it exists
-    if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
-      const nextModuleId = course.modules[moduleIndex + 1]._id;
-      newModuleState[nextModuleId] = true;
-    }
+      // Update module completion status
+      const newModuleState = {
+        ...moduleCompleted,
+        [moduleId]: moduleSessionsCompleted
+      };
 
-    setModuleCompleted(newModuleState);
-
-    // Prepare data for backend update
-    const completedModules = Object.keys(newModuleState).filter(key => newModuleState[key]);
-
-    // Create a map of completed content by module
-    const completedContent = {};
-    course.modules.forEach(module => {
-      const moduleId = module._id;
-      completedContent[moduleId] = module.content
-        ?.filter(content => newSessionState[content._id])
-        .map(content => content._id) || [];
-    });
-
-    // Save progress to backend
-    dispatch(updateModuleProgressThunk({
-      courseId: id,
-      progressData: {
-        moduleId,
-        contentId: sessionId,
-        isCompleted: newSessionState[sessionId],
-        completedModules,
-        completedContent
+      // If this module is completed, unlock the next module if it exists
+      if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
+        const nextModuleId = course.modules[moduleIndex + 1]._id;
+        newModuleState[nextModuleId] = true;
       }
-    }));
 
-    toast.success('Progress updated');
+      // Prepare data for backend update
+      const completedModules = Object.keys(newModuleState).filter(key => newModuleState[key]);
+
+      // Create a map of completed content by module
+      const completedContent = {};
+      course.modules.forEach(module => {
+        const moduleId = module._id;
+        completedContent[moduleId] = module.content
+          ?.filter(content => newSessionState[content._id])
+          .map(content => content._id) || [];
+      });
+
+      // Update backend first
+      const result = await dispatch(updateModuleProgressThunk({
+        courseId: id,
+        progressData: {
+          moduleId,
+          contentId: sessionId,
+          isCompleted: newSessionState[sessionId],
+          completedModules,
+          completedContent
+        }
+      })).unwrap();
+
+      // Only update local state after successful backend update
+      setSessionCompleted(newSessionState);
+      setModuleCompleted(newModuleState);
+      setUserProgress(newProgress);
+
+      toast.success('Progress updated successfully');
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+      toast.error('Failed to update progress. Please try again.');
+    } finally {
+      setIsUpdatingProgress(false);
+    }
   };
 
   const handleSaveNote = () => {
@@ -255,10 +346,6 @@ const EnrollCourseDetail = () => {
   const resetQuiz = () => {
     setQuizAnswers({});
     setQuizSubmitted(false);
-  };
-
-  const handleCertificateDownload = (certificateId) => {
-    toast.success(`Certificate ${certificateId} download started`);
   };
 
   // Check if a module is locked (all previous modules must be completed)
@@ -304,13 +391,57 @@ const EnrollCourseDetail = () => {
     setSelectedContent(content);
 
     // Update last accessed module in the backend
-    const moduleId = course.modules[moduleIndex]._id;
     // dispatch(updateModuleProgressThunk({
     //   courseId: id,
     //   progressData: {
-    //     lastAccessedModule: moduleId
+    //     lastAccessedModule: course.modules[moduleIndex]._id
     //   }
     // }));
+  };
+
+
+
+  // Use certificateExists in the handleGenerateCertificate function to prevent duplicate certificates
+
+  // Handle generate certificate
+  const handleGenerateCertificate = () => {
+    // Check if certificate already exists for this user and course
+    if (certificateExists) {
+      toast.info('You already have a certificate for this course.');
+      setActiveTab('certificates');
+      return;
+    }
+
+    // First update course status to completed
+    dispatch(updateProgressThunk({ courseId: id, progress: 100 }))
+      .unwrap()
+      .then(() => {
+        // Then generate certificate
+        dispatch(generateCertificateThunk(id))
+          .unwrap()
+          .then(() => {
+            // Switch to certificates tab
+            setActiveTab('certificates');
+            // Refresh certificates list
+            dispatch(getMyCertificatesThunk());
+            toast.success('Certificate generated successfully!');
+          })
+          .catch(err => {
+            console.error('Certificate generation error:', err);
+            if (err.message === "Certificate already exists") {
+              // If certificate already exists, just refresh the list
+              dispatch(getMyCertificatesThunk());
+              setActiveTab('certificates');
+              toast.info('Certificate already exists. Refreshing your certificates.');
+            } else {
+              toast.error('Failed to generate certificate. Please try again.');
+            }
+          });
+      })
+      .catch(err => {
+        console.error('Course status update error:', err);
+        toast.error('Failed to update course status. Please try again.');
+      });
   };
 
   return !course ? (
@@ -356,7 +487,7 @@ const EnrollCourseDetail = () => {
                   )}`}
                   width="100%"
                   height="500px"
-                  frameBorder="0"
+                  style={{ border: 'none' }}
                 />
               ) : selectedContent.mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ? (
                 <iframe
@@ -366,7 +497,7 @@ const EnrollCourseDetail = () => {
                   )}`}
                   width="100%"
                   height="500px"
-                  frameBorder="0"
+                  style={{ border: 'none' }}
                 />
               ) : selectedContent.mimeType?.startsWith('image/') ? (
                 <img
@@ -571,7 +702,71 @@ const EnrollCourseDetail = () => {
 
           {activeTab === 'certificates' && (
             <div className="certificates-tab">
-              <p>Certificates feature coming soon.</p>
+              {certificateLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : certificates?.length > 0 ? (
+                <div className="certificates-list">
+                  {certificates
+                    .filter(cert => {
+                      // Check both formats: when course is an ID string or when it's an object
+                      const isCourseMatch = cert.course === id ||
+                        (cert.course && cert.course._id === id) ||
+                        (cert.course && typeof cert.course === 'object' && cert.course._id === id);
+
+                      // Check if certificate belongs to current user
+                      const isUserMatch = cert.user === currentUserId ||
+                        (cert.user && cert.user._id === currentUserId);
+
+                      return isCourseMatch && isUserMatch;
+                    })
+                    .map((certificate) => (
+                      <div key={certificate._id} className="certificate-card">
+                        <div className="certificate-header">
+                          <h3>{certificate.metadata?.courseName || (certificate.course && typeof certificate.course === 'object' ? certificate.course.title : 'Certificate')}</h3>
+                          <p>Issued on: {new Date(certificate.issueDate).toLocaleDateString()}</p>
+                        </div>
+                        <div className="certificate-actions">
+                          <a
+                            href={certificate.certificateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="view-certificate-btn"
+                          >
+                            View Certificate
+                          </a>
+                          <a
+                            href={certificate.verificationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="verify-certificate-btn"
+                          >
+                            Verify Certificate
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="no-certificates">
+                  <div className="certificate-icon">
+                    <FaTrophy size={60} />
+                  </div>
+                  <h3>No Certificates Yet</h3>
+                  <p>
+                    Complete this course to earn your certificate.
+                    {userProgress === 100 && (
+                      <button
+                        onClick={handleGenerateCertificate}
+                        className="generate-certificate-btn"
+                      >
+                        Generate Certificate
+                      </button>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
