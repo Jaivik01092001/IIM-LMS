@@ -8,6 +8,8 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { getBlogsThunk, deleteBlogThunk, updateBlogThunk } from '../redux/blog/blogSlice';
 import "../assets/styles/Blog.css";
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 const Blog = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -114,7 +116,7 @@ const Blog = () => {
       cell: (row) => (
         <div className="blog-image-cell">
           {row.coverImage ? (
-            <img src={row.coverImage} alt={row.title} className="blog-table-image" />
+            <img src={VITE_IMAGE_URL + row.coverImage} alt={row.title} className="blog-table-image" />
           ) : (
             <div className="blog-table-image" style={{ backgroundColor: 'var(--bg-gray)' }} />
           )}
@@ -212,8 +214,7 @@ const Blog = () => {
     isDeleted: blog.isDeleted || false,
     activeStatus: blog.activeStatus || 1
   })) : [];
-  console.log(blogs);
-  console.log("transform log",transformedBlogs);
+
 
 
   // Render loading state

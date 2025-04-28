@@ -3,7 +3,12 @@ const Blog = require("../models/Blog");
 // Create
 exports.createBlog = async (req, res) => {
   try {
-    const { title, shortDescription, content, tags, status } = req.body;
+    // Get fields from FormData
+    const title = req.body.title;
+    const shortDescription = req.body.shortDescription;
+    const content = req.body.content;
+    const tags = req.body.tags;
+    const status = req.body.status;
     const slug = title.toLowerCase().replace(/ /g, "-") + "-" + Date.now(); // simple slug
 
     // Parse tags if it's a string (from FormData)
@@ -26,13 +31,10 @@ exports.createBlog = async (req, res) => {
     // Handle file upload
     let coverImagePath = null;
     if (req.file) {
-      // Use the correct path for blog cover images
-      coverImagePath = `/uploads/blogs/${req.file.filename}`;
+      // The file has been uploaded to uploads/blogs directory
+      // The path should be relative to the public directory
+      coverImagePath = `uploads/blogs/${req.file.filename}`;
       console.log('Blog cover image saved at:', coverImagePath);
-    } else if (req.body.coverImage) {
-      // If coverImage is provided as a URL in the request body
-      coverImagePath = req.body.coverImage;
-      console.log('Using existing cover image URL:', coverImagePath);
     }
 
     const blog = new Blog({
@@ -43,12 +45,13 @@ exports.createBlog = async (req, res) => {
       tags: parsedTags,
       status,
       createdBy: req.user._id,
-      coverImage: coverImagePath,
+      coverImage: coverImagePath, // This will be null if no image was uploaded
     });
 
     await blog.save();
     res.status(201).json({ success: true, blog });
   } catch (error) {
+    console.error('Error creating blog:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -105,7 +108,12 @@ exports.getBlogById = async (req, res) => {
 // Update
 exports.updateBlog = async (req, res) => {
   try {
-    const { title, shortDescription, content, tags, status } = req.body;
+    // Get fields from FormData
+    const title = req.body.title;
+    const shortDescription = req.body.shortDescription;
+    const content = req.body.content;
+    const tags = req.body.tags;
+    const status = req.body.status;
 
     const blog = await Blog.findById(req.params.id);
 
@@ -142,19 +150,16 @@ exports.updateBlog = async (req, res) => {
 
     // Handle file upload
     if (req.file) {
-      // Use the correct path for blog cover images
+      // The file has been uploaded to uploads/blogs directory
+      // The path should be relative to the public directory
       blog.coverImage = `/uploads/blogs/${req.file.filename}`;
       console.log('Blog cover image updated to:', blog.coverImage);
-    } else if (req.body.coverImage) {
-      // Only update coverImage if explicitly provided in the request body
-      blog.coverImage = req.body.coverImage;
-      console.log('Using provided cover image URL:', blog.coverImage);
     }
 
     await blog.save();
-
     res.json({ success: true, blog });
   } catch (error) {
+    console.error('Error updating blog:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
