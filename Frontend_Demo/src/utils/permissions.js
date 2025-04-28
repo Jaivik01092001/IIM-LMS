@@ -57,6 +57,14 @@ export const PERMISSIONS = {
     VIEW_ANALYTICS: 'view_analytics',
   },
 
+  // Blog Management Permissions
+  BLOG_MANAGEMENT: {
+    VIEW_BLOGS: 'view_blogs',
+    CREATE_BLOG: 'create_blog',
+    EDIT_BLOG: 'edit_blog',
+    DELETE_BLOG: 'delete_blog',
+  },
+
   // System Settings Permissions
   SYSTEM_SETTINGS: {
     VIEW_SETTINGS: 'view_settings',

@@ -26,6 +26,14 @@ const PERMISSIONS = {
     CREATE_EDUCATOR: 'create_educator',
     EDIT_EDUCATOR: 'edit_educator',
     DELETE_EDUCATOR: 'delete_educator',
+  },
+
+  // Blog Management Permissions
+  BLOG_MANAGEMENT: {
+    VIEW_BLOGS: 'view_blogs',
+    CREATE_BLOG: 'create_blog',
+    EDIT_BLOG: 'edit_blog',
+    DELETE_BLOG: 'delete_blog',
   }
 };
 
