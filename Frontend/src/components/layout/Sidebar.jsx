@@ -12,6 +12,7 @@ import {
   FaUserTie,
   FaUserShield,
 } from "react-icons/fa";
+import { FaFilePen } from "react-icons/fa6";
 import "../../assets/styles/Sidebar.css";
 
 /**
@@ -52,11 +53,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         icon: <FaGraduationCap className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/courses`,
       },
+      {
+        id: "blogs",
+        name: "Blogs",
+        icon: <FaFilePen className="menu-icon" />,
+        path: `/dashboard/${getDashboardPath()}/blogs`,
+      },
     ];
 
     // Add role-specific items
     if (userRole === "admin") {
-      // Insert after courses
+      // Insert after courses but before blogs
       items.splice(2, 0, {
         id: "users",
         name: "Users",
@@ -86,7 +93,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         path: `/dashboard/admin/role-permission`,
       });
     } else if (userRole === "university") {
-      // Insert after courses
+      // Insert after courses but before blogs
       items.splice(2, 0, {
         id: "educators",
         name: "Educators",
