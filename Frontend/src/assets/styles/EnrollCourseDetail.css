@@ -943,3 +943,124 @@
 .enroll-course-detail .locked-module:hover {
   background-color: rgba(255, 152, 0, 0.1);
 }
+
+/* Enhanced Certificate tab styles */
+.enroll-course-detail .certificates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.enroll-course-detail .certificate-card {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-gray);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.enroll-course-detail .certificate-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.enroll-course-detail .certificate-header {
+  margin-bottom: 15px;
+}
+
+.enroll-course-detail .certificate-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.enroll-course-detail .certificate-header p {
+  font-size: 14px;
+  color: var(--text-gray);
+}
+
+.enroll-course-detail .certificate-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.enroll-course-detail .view-certificate-btn,
+.enroll-course-detail .verify-certificate-btn,
+.enroll-course-detail .generate-certificate-btn {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enroll-course-detail .view-certificate-btn {
+  background-color: var(--primary-color);
+  color: white;
+  flex: 1;
+}
+
+.enroll-course-detail .view-certificate-btn:hover {
+  background-color: var(--primary-hover-color);
+}
+
+.enroll-course-detail .verify-certificate-btn {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  border: 1px solid var(--border-gray);
+  flex: 1;
+}
+
+.enroll-course-detail .verify-certificate-btn:hover {
+  background-color: var(--bg-gray);
+}
+
+.enroll-course-detail .generate-certificate-btn {
+  background-color: var(--primary-color);
+  color: white;
+  margin-top: 15px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.enroll-course-detail .generate-certificate-btn:hover {
+  background-color: var(--primary-hover-color);
+}
+
+.enroll-course-detail .no-certificates {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.enroll-course-detail .certificate-icon {
+  color: var(--text-gray);
+  margin-bottom: 15px;
+}
+
+.enroll-course-detail .no-certificates h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.enroll-course-detail .no-certificates p {
+  font-size: 14px;
+  color: var(--text-gray);
+  max-width: 300px;
+  margin: 0 auto;
+}

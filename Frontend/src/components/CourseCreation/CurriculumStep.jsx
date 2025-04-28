@@ -28,34 +28,41 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const [quizFormData, setQuizFormData] = useState({ title: "", description: "", questions: [] });
     const [currentQuestion, setCurrentQuestion] = useState({ question: "", options: ["", "", "", ""], correctAnswer: 0 });
 
+    // Track if we've updated course data to prevent infinite loop
+    const [hasUpdatedCourseData, setHasUpdatedCourseData] = useState(false);
+
     // Update parent component state when local states change
     useEffect(() => {
-        updateCourseData({
-            hasModules: true, // Always use modules
-            modules: modules.map(module => {
-                // Ensure module has the correct structure for backend
-                const moduleData = {
-                    _id: module._id,
-                    title: module.title,
-                    description: module.description,
-                    content: module.content || [],
-                    order: module.order || 0
-                };
+        // Skip the initial render update to prevent maximum update depth issues
+        if (hasUpdatedCourseData) {
+            updateCourseData({
+                modules: modules.map(module => {
+                    // Ensure module has the correct structure for backend
+                    const moduleData = {
+                        _id: module._id,
+                        title: module.title,
+                        description: module.description,
+                        content: module.content || [],
+                        order: module.order || 0
+                    };
 
-                // Add quiz if it exists
-                if (module.quiz) {
-                    const quizItem = quizzes.find(q => q._id === module.quiz);
-                    if (quizItem) {
-                        moduleData.quiz = quizItem;
+                    // Add quiz if it exists
+                    if (module.quiz) {
+                        const quizItem = quizzes.find(q => q._id === module.quiz);
+                        if (quizItem) {
+                            moduleData.quiz = quizItem;
+                        }
                     }
-                }
 
-                return moduleData;
-            }),
-            content, // Keep for legacy support
-            quizzes // Keep for legacy support
-        });
-    }, [modules, content, quizzes, updateCourseData]);
+                    return moduleData;
+                }),
+                content,
+                quizzes
+            });
+        } else {
+            setHasUpdatedCourseData(true);
+        }
+    }, [modules, content, quizzes, hasUpdatedCourseData]);
 
     // ===== MODULE MANAGEMENT =====
 
@@ -144,23 +151,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setContentFormData({ title: newContent.title, description: newContent.description, type: newContent.type, file: null, textContent: "" });
     };
 
-    // Add standalone content (when not using modules)
-    const addStandaloneContent = () => {
-        const newContent = {
-            _id: `temp_content_${Date.now()}`,
-            title: "New Content",
-            description: "",
-            type: "video",
-            textContent: "",
-            fileUrl: "",
-            module: null
-        };
-
-        setContent([...content, newContent]);
-        setEditingContentId(newContent._id);
-        setContentFormData({ title: newContent.title, description: newContent.description, type: newContent.type, file: null, textContent: "" });
-    };
-
     // Edit content
     const startEditContent = (contentItem) => {
         setEditingContentId(contentItem._id);
@@ -175,10 +165,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // Save content
     const saveContent = () => {
-        console.log("🧠 Saving content...");
-        console.log("🔧 Editing Content ID:", editingContentId);
-        console.log("📝 Content Form Data:", contentFormData);
-
         const moduleOfEditingContent = content.find(item => item._id === editingContentId)?.module;
 
         const updatedContent = content.map(item =>
@@ -191,21 +177,15 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                     file: contentFormData.file,
                     textContent: contentFormData.textContent,
                     fileUrl: contentFormData.file ? URL.createObjectURL(contentFormData.file) : item.fileUrl,
-                    _id: item._id.startsWith('temp_') ? item._id : item._id,
                     module: moduleOfEditingContent || item.module
                 }
                 : item
         );
 
-        const savedItem = updatedContent.find(item => item._id === editingContentId);
-        console.log("✅ Updated Content Item:", savedItem);
-        console.log("✅ Updated Content Item updatedContent:", updatedContent);
-
         setContent(updatedContent);
         setEditingContentId(null);
         setContentFormData({ title: "", description: "", type: "video", file: null, textContent: "" });
     };
-
 
     // Delete content
     const deleteContent = (contentId, moduleId = null) => {
@@ -245,21 +225,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         );
 
         setModules(updatedModules);
-        setQuizzes([...quizzes, newQuiz]);
-        setEditingQuizId(newQuiz._id);
-        setQuizFormData({ title: newQuiz.title, description: newQuiz.description, questions: [] });
-    };
-
-    // Add standalone quiz (when not using modules)
-    const addStandaloneQuiz = () => {
-        const newQuiz = {
-            _id: `temp_quiz_${Date.now()}`,
-            title: "Course Quiz",
-            description: "Test your knowledge of this course",
-            questions: [],
-            module: null
-        };
-
         setQuizzes([...quizzes, newQuiz]);
         setEditingQuizId(newQuiz._id);
         setQuizFormData({ title: newQuiz.title, description: newQuiz.description, questions: [] });
@@ -409,6 +374,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // Render quiz item
     const renderQuizItem = (quiz, moduleId = null) => {
+        // Only add a simple null check to prevent errors
+        if (!quiz) return null;
+
         return (
             <div className="quiz-item" key={quiz._id}>
                 <div className="quiz-item-icon">
@@ -445,9 +413,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             <h2>Course Curriculum</h2>
             <p className="step-description">
                 Structure your course content in a way that's easy for students to follow.
+                Create modules first, then add content and quizzes to each module.
             </p>
 
-            {/* Always use modules */}
             <div className="modules-container">
                 <div className="section-header">
                     <h3>Modules</h3>
@@ -770,7 +738,22 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                         <h5>Quiz</h5>
                                                         {module.quiz ? (
                                                             <div className="quiz-container">
-                                                                {renderQuizItem(quizzes.find(q => q._id === module.quiz), module._id)}
+                                                                {/* Simple null check before rendering */}
+                                                                {(() => {
+                                                                    const quiz = quizzes.find(q => q._id === module.quiz);
+                                                                    return quiz ? renderQuizItem(quiz, module._id) : (
+                                                                        <div className="no-quiz">
+                                                                            <p>Quiz not found. Please add a new quiz.</p>
+                                                                            <button
+                                                                                className="add-quiz-button"
+                                                                                onClick={() => addQuizToModule(module._id)}
+                                                                            >
+                                                                                <FaPlus />
+                                                                                <span>Add Quiz</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    );
+                                                                })()}
                                                             </div>
                                                         ) : (
                                                             <div className="no-quiz">
@@ -795,59 +778,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                         )}
                     </Droppable>
                 </DragDropContext>
-            </div>
-            ) : (
-            // Standalone Content and Quizzes
-            <div className="standalone-curriculum">
-                {/* Standalone Content */}
-                <div className="content-section">
-                    <div className="section-header">
-                        <h3>Course Content</h3>
-                        <button
-                            type="button"
-                            className="add-button"
-                            onClick={addStandaloneContent}
-                        >
-                            <FaPlus />
-                            <span>Add Content</span>
-                        </button>
-                    </div>
-
-                    <div className="content-list">
-                        {content.length === 0 ? (
-                            <div className="no-content">
-                                <p>No content yet. Click "Add Content" to create your first content item.</p>
-                            </div>
-                        ) : (
-                            content.map(item => renderContentItem(item))
-                        )}
-                    </div>
-                </div>
-
-                {/* Standalone Quizzes */}
-                <div className="quizzes-section">
-                    <div className="section-header">
-                        <h3>Course Quizzes</h3>
-                        <button
-                            type="button"
-                            className="add-button"
-                            onClick={addStandaloneQuiz}
-                        >
-                            <FaPlus />
-                            <span>Add Quiz</span>
-                        </button>
-                    </div>
-
-                    <div className="quizzes-list">
-                        {quizzes.length === 0 ? (
-                            <div className="no-quizzes">
-                                <p>No quizzes yet. Click "Add Quiz" to create your first quiz.</p>
-                            </div>
-                        ) : (
-                            quizzes.map(quiz => renderQuizItem(quiz))
-                        )}
-                    </div>
-                </div>
             </div>
         </div>
     );
