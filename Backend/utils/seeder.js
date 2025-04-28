@@ -212,7 +212,7 @@ const seedDatabase = async () => {
         console.log('Courses seeded');
 
         // Insert Universities
-       
+
 
         // Seed Permissions
         if (permissionCount === 0) {
@@ -273,7 +273,7 @@ const seedDatabase = async () => {
                     },
                     createdBy: users[2]._id
                 },
-                
+
             ];
 
             await Role.insertMany(roles);
@@ -281,11 +281,11 @@ const seedDatabase = async () => {
 
             // Assign roles to users
             const superAdminRole = await Role.findOne({ name: 'Super Admin' });
-            const universityAdminRole = await Role.findOne({ name: 'University Admin' });
+            const schoolAdminRole = await Role.findOne({ name: 'School Admin' });
             const educatorRole = await Role.findOne({ name: 'Educator' });
 
             // Update users with role references
-            await User.findByIdAndUpdate(users[0]._id, { roleRef: universityAdminRole._id });
+            await User.findByIdAndUpdate(users[0]._id, { roleRef: schoolAdminRole._id });
             await User.findByIdAndUpdate(users[1]._id, { roleRef: educatorRole._id });
             await User.findByIdAndUpdate(users[2]._id, { roleRef: superAdminRole._id });
 
