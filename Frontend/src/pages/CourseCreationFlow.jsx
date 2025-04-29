@@ -28,6 +28,7 @@ const CourseCreationFlow = () => {
     const [formErrors, setFormErrors] = useState({});
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
 
     // Combined form data
     const [courseData, setCourseData] = useState({
@@ -38,42 +39,94 @@ const CourseCreationFlow = () => {
         thumbnail: "",
 
         // Step 2: Curriculum
-        hasModules: true, // Always use modules
-        modules: [], // Array of { title, description, content: [], quiz: null }
-        content: [], // For legacy support
-        quizzes: [], // For legacy support
+        hasModules: true,
+        modules: [],
+        content: [],
+        quizzes: [],
 
         // Step 3: Course Settings & Status
         duration: "",
-        status: 1, // 1=active, 0=inactive
-        isDraft: true, // true=draft, false=published
+        status: 1,
+        isDraft: true,
         enrolledUsers: []
     });
 
     // Fetch course data if in edit mode
     useEffect(() => {
         if (isEditMode) {
-            dispatch(getCourseThunk(id));
+            setIsLoading(true);
+            dispatch(getCourseThunk(id))
+                .unwrap()
+                .then((response) => {
+                    console.log('Fetched course data:', response);
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    console.error('Error fetching course:', error);
+                    setIsLoading(false);
+                });
+        } else {
+            setIsLoading(false);
         }
     }, [dispatch, isEditMode, id]);
 
     // Populate form with existing course data in edit mode
     useEffect(() => {
-        if (isEditMode && currentCourse) {
+        if (isEditMode && currentCourse && !isLoading) {
+            console.log('Populating form with course data:', currentCourse);
+            
+            // Process modules to ensure they have the correct structure
+            const processedModules = currentCourse.modules.map(module => {
+                // Ensure module has the correct structure
+                return {
+                    _id: module._id,
+                    title: module.title || "",
+                    description: module.description || "",
+                    order: module.order || 0,
+                    content: module.content || [],
+                    // If module has a quiz, include it directly
+                    quiz: module.quiz || null
+                };
+            });
+
+            // Process content items
+            const processedContent = currentCourse.content.map(item => {
+                return {
+                    _id: item._id,
+                    title: item.title || "",
+                    description: item.description || "",
+                    type: item.type || "text",
+                    textContent: item.textContent || "",
+                    fileUrl: item.fileUrl || "",
+                    // Don't include file object as it's not needed for display
+                };
+            });
+
+            // Process quizzes
+            const processedQuizzes = currentCourse.quizzes.map(quiz => {
+                return {
+                    _id: quiz._id,
+                    title: quiz.title || "",
+                    description: quiz.description || "",
+                    timeLimit: quiz.timeLimit || 30,
+                    passingScore: quiz.passingScore || 60,
+                    questions: quiz.questions || []
+                };
+            });
+            
             // Set initial form data from existing course
             setCourseData({
                 title: currentCourse.title || "",
-                shortDescription: currentCourse.description?.substring(0, 200) || "",
+                shortDescription: currentCourse.description || "",
                 language: currentCourse.language || "en",
-                thumbnail: currentCourse.thumbnail || "",
+                thumbnail: currentCourse.thumbnail ? `${import.meta.env.VITE_IMAGE_URL}${currentCourse.thumbnail}` : "",
 
-                hasModules: true, // Always use modules
-                modules: currentCourse.modules || [],
-                content: currentCourse.content || [],
-                quizzes: currentCourse.quizzes || [],
+                hasModules: currentCourse.hasModules ?? true,
+                modules: processedModules,
+                content: processedContent,
+                quizzes: processedQuizzes,
 
                 duration: currentCourse.duration || "",
-
                 status: currentCourse.status ?? 1,
                 isDraft: currentCourse.isDraft ?? true,
                 enrolledUsers: currentCourse.enrolledUsers || []
@@ -81,10 +134,20 @@ const CourseCreationFlow = () => {
 
             // Set thumbnail preview if exists
             if (currentCourse.thumbnail) {
-                setThumbnailPreview(currentCourse.thumbnail);
+                setThumbnailPreview(`${import.meta.env.VITE_IMAGE_URL}${currentCourse.thumbnail}`);
             }
         }
-    }, [isEditMode, currentCourse]);
+    }, [isEditMode, currentCourse, isLoading]);
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Loading course data...</p>
+            </div>
+        );
+    }
 
     // Navigate between steps
     const handleNext = () => {

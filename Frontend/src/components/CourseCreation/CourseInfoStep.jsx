@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUpload, FaImage, FaTimes } from "react-icons/fa";
 
 const CourseInfoStep = ({
@@ -16,10 +16,26 @@ const CourseInfoStep = ({
         language: courseData.language || "en"
     });
 
+    // Update local state when courseData changes
+    useEffect(() => {
+        setLocalData({
+            title: courseData.title || "",
+            shortDescription: courseData.shortDescription || "",
+            language: courseData.language || "en"
+        });
+    }, [courseData]);
+
+    // Update thumbnail preview when courseData changes
+    useEffect(() => {
+        if (courseData.thumbnail && !thumbnailPreview) {
+            setThumbnailPreview(courseData.thumbnail);
+        }
+    }, [courseData.thumbnail]);
+
     // Handle form field changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setLocalData({ ...localData, [name]: value });
+        setLocalData(prev => ({ ...prev, [name]: value }));
         updateCourseData({ [name]: value });
     };
 
@@ -32,6 +48,7 @@ const CourseInfoStep = ({
             setThumbnailFile(file);
             const previewUrl = URL.createObjectURL(file);
             setThumbnailPreview(previewUrl);
+            updateCourseData({ thumbnail: previewUrl });
         } else {
             alert("Please select an image file for the thumbnail");
         }
