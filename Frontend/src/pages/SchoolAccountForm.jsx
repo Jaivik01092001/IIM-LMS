@@ -401,6 +401,7 @@ const SchoolAccountForm = () => {
               </div>
 
               {/* Role dropdown - only shows custom roles */}
+              {filteredRoles.length >= 1 && (
               <div className="form-group">
                 <label htmlFor="roleId">Role</label>
                 <select
@@ -417,6 +418,7 @@ const SchoolAccountForm = () => {
                   ))}
                 </select>
               </div>
+              )}
 
               <div className="form-group">
                 <label htmlFor="status">Status</label>
@@ -464,8 +466,6 @@ const SchoolAccountForm = () => {
             </div>
           </div>
         </div>
-
-
 
         <div className="form-actions">
           <button

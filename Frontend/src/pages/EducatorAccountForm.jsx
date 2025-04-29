@@ -467,6 +467,7 @@ const EducatorAccountForm = () => {
                   </select>
                 </div>
               </div>
+              {filteredRoles.length >= 1 && (
               <div className="grid-row">
                 <div className="form-group">
                   <label htmlFor="roleId">Role</label>
@@ -486,6 +487,7 @@ const EducatorAccountForm = () => {
                   {formErrors.roleId && <div className="error-message">{formErrors.roleId}</div>}
                 </div>
               </div>
+              )}
             </div>
             <div>
               <div className="form-group profile-image-container">
