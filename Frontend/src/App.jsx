@@ -38,6 +38,10 @@ import CourseForm from "./pages/CourseForm.jsx";
 import CourseCreationFlow from "./pages/CourseCreationFlow.jsx";
 import Notification from "./pages/Notification.jsx";
 import RolePermission from "./pages/RolePermission.jsx";
+// Import Staff Management components
+import Staffs from "./pages/Staffs.jsx";
+import StaffDetails from "./pages/StaffDetails.jsx";
+import StaffAccountForm from "./pages/StaffAccountForm.jsx";
 
 const App = () => {
   return (
@@ -68,7 +72,7 @@ const App = () => {
           <Route path="/dashboard" element={<DashboardLayout />}>
             {/* Shared routes */}
             <Route path="enroll-course-detail/:id" element={<EnrollCourseDetail />} />
-            
+
             {/* Admin routes */}
             <Route path="admin" element={<AdminDashboard />} />
             <Route
@@ -109,6 +113,11 @@ const App = () => {
               path="admin/educator-account-form"
               element={<EducatorAccountForm />}
             />
+            {/* Staff management routes */}
+            <Route path="admin/staffs" element={<Staffs />} />
+            <Route path="admin/staff-details/:id" element={<StaffDetails />} />
+            <Route path="admin/staff-account-form/:id" element={<StaffAccountForm />} />
+            <Route path="admin/staff-account-form" element={<StaffAccountForm />} />
             <Route
               path="admin/notification"
               element={<Notification userType="admin" />}

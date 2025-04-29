@@ -1,34 +1,43 @@
-import axios from 'axios';
+import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const getConfig = () => ({ headers: { 'x-auth-token': localStorage.getItem('accessToken') } });
+const getConfig = () => ({
+  headers: { "x-auth-token": localStorage.getItem("accessToken") },
+});
 
 export const getStaffMembers = async () => {
-  const response = await axios.get(`${API_URL}/api/staff`, getConfig());
+  const response = await axios.get(`${API_URL}/staff`, getConfig());
   return response.data.data;
 };
 
 export const getStaffMemberById = async (id) => {
-  const response = await axios.get(`${API_URL}/api/staff/${id}`, getConfig());
+  const response = await axios.get(`${API_URL}/staff/${id}`, getConfig());
   return response.data.data;
 };
 
 export const createStaffMember = async (data) => {
-  const response = await axios.post(`${API_URL}/api/staff`, data, getConfig());
+  const config = {
+    headers: {
+      "x-auth-token": localStorage.getItem("accessToken"),
+      // Don't set Content-Type here as it will be set automatically with FormData
+    },
+  };
+  const response = await axios.post(`${API_URL}/staff`, data, config);
   return response.data.data;
 };
 
 export const updateStaffMember = async (id, data) => {
-  const response = await axios.put(`${API_URL}/api/staff/${id}`, data, getConfig());
+  const config = {
+    headers: {
+      "x-auth-token": localStorage.getItem("accessToken"),
+      // Don't set Content-Type here as it will be set automatically with FormData
+    },
+  };
+  const response = await axios.put(`${API_URL}/staff/${id}`, data, config);
   return response.data.data;
 };
 
 export const deleteStaffMember = async (id) => {
-  await axios.delete(`${API_URL}/api/staff/${id}`, getConfig());
+  await axios.delete(`${API_URL}/staff/${id}`, getConfig());
   return id; // Return the ID for state updates
-};
-
-export const updateStaffMemberPassword = async (id, data) => {
-  const response = await axios.put(`${API_URL}/api/staff/${id}/password`, data, getConfig());
-  return response.data.data;
 };

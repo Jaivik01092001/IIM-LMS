@@ -121,8 +121,8 @@ const EducatorAccountForm = () => {
     if (isEditMode && educatorData) {
       // Strip the '+91' prefix from phone number if exists
       const phoneNumber = educatorData.mobile ?
-                        educatorData.mobile.replace(/^\+91\s*/, '').trim() :
-                        "";
+        educatorData.mobile.replace(/^\+91\s*/, '').trim() :
+        "";
 
       console.log('Educator data for edit mode:', educatorData);
       console.log('Educator roleRef:', educatorData.roleRef);
@@ -238,7 +238,7 @@ const EducatorAccountForm = () => {
 
     // Format phone number properly - ensure it's not empty
     if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
-      setFormErrors({...formErrors, phoneNumber: 'Phone number is required'});
+      setFormErrors({ ...formErrors, phoneNumber: 'Phone number is required' });
       setIsSubmitting(false);
       return;
     }
@@ -258,7 +258,7 @@ const EducatorAccountForm = () => {
 
     // Validate that a university is selected
     if (!formData.universityId) {
-      setFormErrors({...formErrors, universityId: 'Please select a School/University'});
+      setFormErrors({ ...formErrors, universityId: 'Please select a School/University' });
       setIsSubmitting(false);
       return;
     }
@@ -269,7 +269,7 @@ const EducatorAccountForm = () => {
       formDataObj.append('schoolName', selectedUniversity.name); // Add school/university name
       formDataObj.append('university', formData.universityId); // Add university ID
     } else {
-      setFormErrors({...formErrors, universityId: 'Selected university not found'});
+      setFormErrors({ ...formErrors, universityId: 'Selected university not found' });
       setIsSubmitting(false);
       return;
     }
@@ -411,64 +411,91 @@ const EducatorAccountForm = () => {
         <div className="form-section">
           <h2>General Information</h2>
           <div className="form-grid">
-            <div>
-              <div className="grid-row">
-                <div className="form-group">
-                  <label htmlFor="professorName">Educator Name</label>
+            <div className="form-column">
+              <div className="form-group">
+                <label htmlFor="professorName">Educator Name</label>
+                <input
+                  type="text"
+                  id="professorName"
+                  name="professorName"
+                  value={formData.professorName}
+                  onChange={handleInputChange}
+                  placeholder="Enter Educator Name"
+                  required
+                />
+                {formErrors.name && <div className="error-message">{formErrors.name}</div>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter Email Address"
+                  required
+                />
+                {formErrors.email && <div className="error-message">{formErrors.email}</div>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="phoneNumber">Phone Number</label>
+                <div className="phone-input-wrapper">
+                  <span className="phone-prefix">+91</span>
                   <input
-                    type="text"
-                    id="professorName"
-                    name="professorName"
-                    value={formData.professorName}
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    placeholder="Enter Educator Name"
+                    placeholder="Enter Phone Number"
                     required
                   />
-                  {formErrors.name && <div className="error-message">{formErrors.name}</div>}
                 </div>
+                {formErrors.phoneNumber && <div className="error-message">{formErrors.phoneNumber}</div>}
               </div>
-              <div className="grid-row">
-                <div className="form-group">
-                  <label htmlFor="universityId">School/University</label>
-                  <select
-                    id="universityId"
-                    name="universityId"
-                    value={formData.universityId}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select School/University</option>
-                    {universities && universities.length > 0 ? (
-                      universities.map((university) => (
-                        <option key={university._id} value={university._id}>
-                          {university.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>Loading universities...</option>
-                    )}
-                  </select>
-                  {formErrors.universityId && <div className="error-message">{formErrors.universityId}</div>}
-                </div>
+
+              <div className="form-group">
+                <label htmlFor="universityId">School/University</label>
+                <select
+                  id="universityId"
+                  name="universityId"
+                  value={formData.universityId}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Select School/University</option>
+                  {universities && universities.length > 0 ? (
+                    universities.map((university) => (
+                      <option key={university._id} value={university._id}>
+                        {university.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>Loading universities...</option>
+                  )}
+                </select>
+                {formErrors.universityId && <div className="error-message">{formErrors.universityId}</div>}
               </div>
-              <div className="grid-row">
-                <div className="form-group">
-                  <label htmlFor="category">Category</label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    <option value="School">School</option>
-                    <option value="University">University</option>
-                  </select>
-                </div>
+
+              <div className="form-group">
+                <label htmlFor="category">Category</label>
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Select Category</option>
+                  <option value="School">School</option>
+                  <option value="University">University</option>
+                </select>
               </div>
+
               {filteredRoles.length >= 1 && (
-              <div className="grid-row">
                 <div className="form-group">
                   <label htmlFor="roleId">Role</label>
                   <select
@@ -486,10 +513,55 @@ const EducatorAccountForm = () => {
                   </select>
                   {formErrors.roleId && <div className="error-message">{formErrors.roleId}</div>}
                 </div>
-              </div>
               )}
             </div>
-            <div>
+
+            <div className="form-column">
+              <div className="form-group">
+                <label htmlFor="address">Address</label>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  placeholder="Enter Address"
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group half-width">
+                  <label htmlFor="zipcode">Zipcode</label>
+                  <input
+                    type="text"
+                    id="zipcode"
+                    name="zipcode"
+                    value={formData.zipcode}
+                    onChange={handleInputChange}
+                    placeholder="Enter Zipcode"
+                    required
+                  />
+                </div>
+                <div className="form-group half-width">
+                  <label htmlFor="state">State</label>
+                  <select
+                    id="state"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Select State</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Delhi">Delhi</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="form-group profile-image-container">
                 <label>Profile Image</label>
                 <div className="profile-image-upload">
@@ -527,84 +599,6 @@ const EducatorAccountForm = () => {
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter Email Address"
-                required
-              />
-              {formErrors.email && <div className="error-message">{formErrors.email}</div>}
-            </div>
-            <div className="form-group">
-              <label htmlFor="phoneNumber">Phone Number</label>
-              <div className="phone-input-wrapper">
-                <span className="phone-prefix">+91</span>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  placeholder="Enter Phone Number"
-                  required
-                />
-              </div>
-              {formErrors.phoneNumber && <div className="error-message">{formErrors.phoneNumber}</div>}
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label htmlFor="address">Address</label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                placeholder="Enter Address"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="zipcode">Zipcode</label>
-              <input
-                type="text"
-                id="zipcode"
-                name="zipcode"
-                value={formData.zipcode}
-                onChange={handleInputChange}
-                placeholder="Enter Zipcode"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="state">State</label>
-              <select
-                id="state"
-                name="state"
-                value={formData.state}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select State</option>
-                <option value="Gujarat">Gujarat</option>
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Karnataka">Karnataka</option>
-                <option value="Tamil Nadu">Tamil Nadu</option>
-                <option value="Delhi">Delhi</option>
-              </select>
             </div>
           </div>
         </div>

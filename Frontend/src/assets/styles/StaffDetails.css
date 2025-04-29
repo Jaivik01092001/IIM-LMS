@@ -1,0 +1,357 @@
+.staff-details-page {
+  background-color: var(--bg-gray);
+  min-height: 100vh;
+}
+
+.staff-details-page .staff-details-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: var(--heading5);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.staff-details-page .staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-gray);
+  background-color: var(--primary-color);
+  padding: 2rem;
+  border-radius: var(--border-large-radius);
+}
+
+.staff-details-page .staff-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.staff-details-page .staff-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.staff-details-page .staff-avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: #aaa;
+  background-color: #f0f0f0;
+  padding: 5px;
+}
+
+.staff-details-page .staff-text h1 {
+  font-size: var(--heading4);
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.staff-details-page .category {
+  font-size: var(--basefont);
+  color: white;
+}
+
+.staff-details-page .department-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--bg-gray);
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-medium-radius);
+}
+
+.staff-details-page .department-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-details-page .department-name {
+  font-size: var(--basefont);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.staff-details-page .department-type {
+  font-size: var(--smallfont);
+  color: var(--text-gray);
+}
+
+.staff-details-page .details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.staff-details-page .details-section {
+  background-color: var(--bg-white);
+  border-radius: var(--border-medium-small-radius);
+  border: 1px solid var(--border-gray);
+  padding: 1rem;
+}
+
+.staff-details-page .details-section h2 {
+  font-size: var(--heading6);
+  color: var(--text-color);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--dark-gray);
+  padding-bottom: 1rem;
+}
+
+.staff-details-page .info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.staff-details-page .info-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.staff-details-page .info-row label {
+  min-width: 80px;
+  font-size: var(--basefont);
+  color: var(--text-gray);
+  font-weight: 500;
+}
+
+.staff-details-page .info-row span {
+  font-size: var(--basefont);
+  color: var(--text-color);
+}
+
+.staff-details-page .status-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Status Indicator - Toggle Switch Style */
+.staff-details-page .status-indicator {
+  width: 36px;
+  height: 20px;
+  border-radius: 20px;
+  background-color: #e5e7eb;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  flex-shrink: 0;
+}
+
+.staff-details-page .status-indicator::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+}
+
+.staff-details-page .status-indicator.active {
+  background-color: var(--primary-color);
+}
+
+.staff-details-page .status-indicator.active::before {
+  transform: translateX(16px);
+}
+
+.staff-details-page .text-green-600 {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.staff-details-page .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Keep the existing button styles for backward compatibility */
+.staff-details-page .status-toggle-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  color: white;
+}
+
+.staff-details-page .status-toggle-btn.activate {
+  background-color: #4caf50;
+}
+
+.staff-details-page .status-toggle-btn.activate:hover {
+  background-color: #43a047;
+}
+
+.staff-details-page .status-toggle-btn.deactivate {
+  background-color: #f44336;
+}
+
+.staff-details-page .status-toggle-btn.deactivate:hover {
+  background-color: #e53935;
+}
+
+.staff-details-page .action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.staff-details-page .delete-btn,
+.staff-details-page .edit-btn {
+  padding: 0.75rem 2rem;
+  border-radius: var(--border-medium-small-radius);
+  font-size: var(--basefont);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.staff-details-page .delete-btn {
+  background-color: transparent;
+  border: 1px solid #d93025;
+  color: #d93025;
+}
+
+.staff-details-page .edit-btn {
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.staff-details-page .delete-btn:hover {
+  background-color: #fce8e8;
+}
+
+.staff-details-page .edit-btn:hover {
+  background-color: var(--primary-hover-color);
+  color: white;
+}
+
+.staff-details-page .action-buttons button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive styles */
+@media (max-width: 1130px) {
+  .staff-details-page .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .staff-details-page {
+    padding: 1rem;
+  }
+
+  .staff-details-page .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-details-page .staff-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .staff-details-page .department-badge {
+    width: 100%;
+  }
+
+  .staff-details-page .action-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .staff-details-page .delete-btn,
+  .staff-details-page .edit-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .staff-details-page {
+    padding: 0.75rem;
+  }
+
+  .staff-details-page .staff-header {
+    padding: 1.25rem;
+  }
+
+  .staff-details-page .staff-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .staff-details-page .department-badge {
+    padding: 0.75rem 1rem;
+  }
+
+  .staff-details-page .details-section h2 {
+    font-size: var(--basefont);
+  }
+
+  .staff-details-page .info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .staff-details-page .info-row label {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .staff-details-page {
+    padding: 0.5rem;
+  }
+
+  .staff-details-page .staff-header {
+    padding: 1rem;
+  }
+
+  .staff-details-page .staff-avatar,
+  .staff-details-page .staff-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+  }
+
+  .staff-details-page .staff-text h1 {
+    font-size: var(--heading5);
+  }
+
+  .staff-details-page .category {
+    font-size: var(--smallfont);
+  }
+
+  .staff-details-page .department-badge {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .staff-details-page .department-name {
+    font-size: var(--smallfont);
+  }
+
+  .staff-details-page .department-type {
+    font-size: var(--extrasmallfont);
+  }
+}

@@ -11,6 +11,7 @@ import {
   FaUniversity,
   FaUserTie,
   FaUserShield,
+  FaIdBadge,
 } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
 import "../../assets/styles/Sidebar.css";
@@ -81,6 +82,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             name: "Educators",
             path: `/dashboard/admin/educators`,
             icon: <FaUserTie />,
+          },
+          {
+            id: "staffs",
+            name: "IIM Staff",
+            path: `/dashboard/admin/staffs`,
+            icon: <FaIdBadge />,
           },
         ],
       });
@@ -169,16 +176,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               {getMenuItems().map((item) => (
                 <li
                   key={item.id}
-                  className={`menu-item ${
-                    item.isDropdown ? "dropdown-menu" : ""
-                  }`}
+                  className={`menu-item ${item.isDropdown ? "dropdown-menu" : ""
+                    }`}
                 >
                   {item.isDropdown ? (
                     <>
                       <button
-                        className={`dropdown-toggle ${
-                          openDropdown === item.id ? "open" : ""
-                        } ${isSubmenuActive(item.submenu) ? "active" : ""}`}
+                        className={`dropdown-toggle ${openDropdown === item.id ? "open" : ""
+                          } ${isSubmenuActive(item.submenu) ? "active" : ""}`}
                         onClick={() => toggleDropdown(item.id)}
                       >
                         <div className="menu-icon-wrapper">
@@ -188,9 +193,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         <FaChevronDown className="dropdown-arrow" size={12} />
                       </button>
                       <div
-                        className={`dropdown-content ${
-                          openDropdown === item.id ? "open" : ""
-                        }`}
+                        className={`dropdown-content ${openDropdown === item.id ? "open" : ""
+                          }`}
                       >
                         {item.submenu.map((subItem) => (
                           <div key={subItem.id} className="submenu-item">
@@ -201,6 +205,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                               }
                               onClick={toggleSidebar}
                             >
+                              {subItem.icon && (
+                                <span className="submenu-icon">{subItem.icon}</span>
+                              )}
                               <span className="submenu-text">
                                 {subItem.name}
                               </span>

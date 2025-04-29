@@ -76,10 +76,10 @@
 .school-form-container .form-row {
   display: flex;
   gap: 1.5rem;
+  width: 100%;
 }
 
 .school-form-container .form-column {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -89,6 +89,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .school-form-container .form-group.full-width {
@@ -160,6 +161,7 @@
 .school-form-container .profile-image-container {
   display: flex;
   flex-direction: column;
+  margin-top: 1rem;
 }
 
 .school-form-container .profile-image-upload {
@@ -172,6 +174,7 @@
   background-color: #f9fafb;
   border-radius: 8px;
   min-height: 250px;
+  height: 100%;
 }
 
 .school-form-container .profile-image {
@@ -511,7 +514,6 @@
   height: 120px;
   object-fit: cover;
   border-radius: 50%;
-  border: 2px solid #e0e0e0;
 }
 
 .profile-placeholder {

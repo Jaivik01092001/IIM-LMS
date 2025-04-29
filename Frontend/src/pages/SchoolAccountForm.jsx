@@ -7,6 +7,46 @@ import "../assets/styles/SchoolAccountForm.css";
 import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
+// Indian states list
+const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
+];
+
 const SchoolAccountForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -298,7 +338,7 @@ const SchoolAccountForm = () => {
         <div className="form-section">
           <h2>General Information</h2>
 
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-column">
               <div className="form-group">
                 <label htmlFor="schoolName">School/University Name</label>
@@ -355,6 +395,42 @@ const SchoolAccountForm = () => {
                 </div>
               </div>
 
+              {/* Role dropdown - only shows custom roles */}
+              {filteredRoles.length >= 1 && (
+                <div className="form-group">
+                  <label htmlFor="roleId">Role</label>
+                  <select
+                    id="roleId"
+                    name="roleId"
+                    value={formData.roleId}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select Role</option>
+                    {filteredRoles.map(role => (
+                      <option key={role._id} value={role._id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label htmlFor="status">Status</label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value={1}>Active</option>
+                  <option value={0}>Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-column">
               <div className="form-group">
                 <label htmlFor="address">Address</label>
                 <input
@@ -391,52 +467,16 @@ const SchoolAccountForm = () => {
                     required
                   >
                     <option value="">Select State</option>
-                    <option value="Gujarat">Gujarat</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Karnataka">Karnataka</option>
-                    <option value="Tamil Nadu">Tamil Nadu</option>
-                    <option value="Delhi">Delhi</option>
+                    {INDIAN_STATES.map((state, index) => (
+                      <option key={index} value={state}>
+                        {state}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              {/* Role dropdown - only shows custom roles */}
-              {filteredRoles.length >= 1 && (
-              <div className="form-group">
-                <label htmlFor="roleId">Role</label>
-                <select
-                  id="roleId"
-                  name="roleId"
-                  value={formData.roleId}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Select Role</option>
-                  {filteredRoles.map(role => (
-                    <option key={role._id} value={role._id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              )}
-
-              <div className="form-group">
-                <label htmlFor="status">Status</label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value={1}>Active</option>
-                  <option value={0}>Inactive</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-column">
-              <div className="profile-image-container">
+              <div className="form-group profile-image-container">
                 <label>School Logo</label>
                 <div className="profile-image-upload">
                   {formData.profileImageUrl ? (

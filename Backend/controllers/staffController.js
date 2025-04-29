@@ -1,7 +1,7 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const AppError = require("../utils/appError");
+const catchAsync = require("../utils/catchAsync");
 
 /**
  * Get all staff members
@@ -10,22 +10,22 @@ const catchAsync = require('../utils/catchAsync');
  */
 exports.getStaffMembers = catchAsync(async (req, res, next) => {
   // Find the IIM Staff role
-  const Role = require('../models/Role');
-  const staffRole = await Role.findOne({ name: 'IIM Staff' });
-  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+  const Role = require("../models/Role");
+  const staffRole = await Role.findOne({ name: "IIM Staff" });
+  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
   // Find all users with the IIM Staff role or Super Admin role
   const staffMembers = await User.find({
     $or: [
       { roleRef: staffRole ? staffRole._id : null },
-      { roleRef: superAdminRole ? superAdminRole._id : null }
-    ]
-  }).populate('roleRef');
+      { roleRef: superAdminRole ? superAdminRole._id : null },
+    ],
+  }).populate("roleRef");
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: staffMembers.length,
-    data: staffMembers
+    data: staffMembers,
   });
 });
 
@@ -36,22 +36,34 @@ exports.getStaffMembers = catchAsync(async (req, res, next) => {
  */
 exports.getStaffMemberById = catchAsync(async (req, res, next) => {
   // Find the IIM Staff and Super Admin roles
-  const Role = require('../models/Role');
-  const staffRole = await Role.findOne({ name: 'IIM Staff' });
-  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+  const Role = require("../models/Role");
+  const staffRole = await Role.findOne({ name: "IIM Staff" });
+  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
-  const staffMember = await User.findById(req.params.id).populate('roleRef');
+  // Find staff member
+  const staffMember = await User.findById(req.params.id).populate("roleRef");
 
-  // Check if the user exists and has either the IIM Staff or Super Admin role
-  if (!staffMember || (staffMember.roleRef &&
-      staffMember.roleRef.toString() !== (staffRole?._id?.toString() || '') &&
-      staffMember.roleRef.toString() !== (superAdminRole?._id?.toString() || ''))) {
-    return next(new AppError('No staff member found with that ID', 404));
+  // Check if the user exists
+  if (!staffMember) {
+    return next(new AppError("No staff member found with that ID", 404));
+  }
+
+  // Check if the user has a staff-related role
+  // Modified to also accept 'staff' as a role name
+  const isStaffRole =
+    staffMember.role === "staff" ||
+    (staffMember.roleRef &&
+      (staffMember.roleRef.toString() === (staffRole?._id?.toString() || "") ||
+        staffMember.roleRef.toString() ===
+          (superAdminRole?._id?.toString() || "")));
+
+  if (!isStaffRole) {
+    return next(new AppError("No staff member found with that ID", 404));
   }
 
   res.status(200).json({
-    status: 'success',
-    data: staffMember
+    status: "success",
+    data: staffMember,
   });
 });
 
@@ -61,47 +73,108 @@ exports.getStaffMemberById = catchAsync(async (req, res, next) => {
  * @access Private (Admin only)
  */
 exports.createStaffMember = catchAsync(async (req, res, next) => {
-  const { name, email, password, phoneNumber } = req.body;
+  // Log the request body for debugging
+  console.log("Request body received:", req.body);
+  console.log("Request file:", req.file);
+
+  // Extract form data
+  const { name, email, phoneNumber } = req.body;
+
+  // Verify required fields
+  if (!name || !email || !phoneNumber) {
+    console.log(
+      "Missing required fields. Name:",
+      name,
+      "Email:",
+      email,
+      "Phone:",
+      phoneNumber
+    );
+    return next(
+      new AppError("Name, email, and phone number are required fields", 400)
+    );
+  }
 
   // Check if user with the same email already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return next(new AppError('A user with this email already exists', 400));
+    return next(new AppError("A user with this email already exists", 400));
   }
 
   // Check if user with the same phone number already exists
   const existingPhoneUser = await User.findOne({ phoneNumber });
   if (existingPhoneUser) {
-    return next(new AppError('A user with this phone number already exists', 400));
+    return next(
+      new AppError("A user with this phone number already exists", 400)
+    );
   }
 
   // Find the IIM Staff role
-  const Role = require('../models/Role');
-  const staffRole = await Role.findOne({ name: 'IIM Staff' });
+  const Role = require("../models/Role");
+  const staffRole = await Role.findOne({ name: "IIM Staff" });
 
   if (!staffRole) {
-    return next(new AppError('IIM Staff role not found. Please run the seeder first.', 500));
+    return next(
+      new AppError(
+        "IIM Staff role not found. Please run the seeder first.",
+        500
+      )
+    );
   }
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create new staff member
-  const staffMember = await User.create({
+  // Prepare staff member data
+  const staffData = {
     name,
     email,
-    password: hashedPassword,
-    role: 'staff', // Use 'staff' as the role name
-    phoneNumber, // No default phone number, must be provided by user
+    phoneNumber,
+    role: "staff", // Use 'staff' as the role name
     roleRef: staffRole._id, // Assign IIM Staff role
-  });
+    status: req.body.status || 1, // Default to active
+  };
 
-  // Remove password from response
-  staffMember.password = undefined;
+  // Prepare profile data
+  const profileData = {};
+
+  // Get profile fields from form data - check both formats (with dot notation and without)
+  if (req.body["profile.designation"] || req.body.designation)
+    profileData.designation =
+      req.body["profile.designation"] || req.body.designation;
+
+  if (req.body["profile.department"] || req.body.department)
+    profileData.department =
+      req.body["profile.department"] || req.body.department;
+
+  if (req.body["profile.address"] || req.body.address)
+    profileData.address = req.body["profile.address"] || req.body.address;
+
+  if (req.body["profile.state"] || req.body.state)
+    profileData.state = req.body["profile.state"] || req.body.state;
+
+  if (req.body["profile.zipcode"] || req.body.zipcode)
+    profileData.zipcode = req.body["profile.zipcode"] || req.body.zipcode;
+
+  // Add profile data if we have any fields
+  if (Object.keys(profileData).length > 0) {
+    staffData.profile = profileData;
+  }
+
+  // Handle avatar if uploaded
+  if (req.file) {
+    staffData.profile = staffData.profile || {};
+    staffData.profile.avatar = `/uploads/${req.file.filename}`;
+  }
+
+  console.log(
+    "Creating staff member with data:",
+    JSON.stringify(staffData, null, 2)
+  );
+
+  // Create new staff member
+  const staffMember = await User.create(staffData);
 
   res.status(201).json({
-    status: 'success',
-    data: staffMember
+    status: "success",
+    data: staffMember,
   });
 });
 
@@ -111,28 +184,43 @@ exports.createStaffMember = catchAsync(async (req, res, next) => {
  * @access Private (Admin only)
  */
 exports.updateStaffMember = catchAsync(async (req, res, next) => {
+  // Log the request body for debugging
+  console.log("Update request body received:", req.body);
+  console.log("Update request file:", req.file);
+
   const { name, email, phoneNumber } = req.body;
 
   // Find the IIM Staff and Super Admin roles
-  const Role = require('../models/Role');
-  const staffRole = await Role.findOne({ name: 'IIM Staff' });
-  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+  const Role = require("../models/Role");
+  const staffRole = await Role.findOne({ name: "IIM Staff" });
+  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
   // Check if staff member exists
-  const staffMember = await User.findById(req.params.id).populate('roleRef');
+  const staffMember = await User.findById(req.params.id).populate("roleRef");
 
-  // Check if the user exists and has either the IIM Staff or Super Admin role
-  if (!staffMember || (staffMember.roleRef &&
-      staffMember.roleRef.toString() !== (staffRole?._id?.toString() || '') &&
-      staffMember.roleRef.toString() !== (superAdminRole?._id?.toString() || ''))) {
-    return next(new AppError('No staff member found with that ID', 404));
+  // Check if the user exists
+  if (!staffMember) {
+    return next(new AppError("No staff member found with that ID", 404));
+  }
+
+  // Check if the user has a staff-related role
+  // Modified to also accept 'staff' as a role name
+  const isStaffRole =
+    staffMember.role === "staff" ||
+    (staffMember.roleRef &&
+      (staffMember.roleRef.toString() === (staffRole?._id?.toString() || "") ||
+        staffMember.roleRef.toString() ===
+          (superAdminRole?._id?.toString() || "")));
+
+  if (!isStaffRole) {
+    return next(new AppError("No staff member found with that ID", 404));
   }
 
   // Check if email is being changed and if it's already in use
   if (email && email !== staffMember.email) {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return next(new AppError('A user with this email already exists', 400));
+      return next(new AppError("A user with this email already exists", 400));
     }
   }
 
@@ -140,30 +228,84 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
   if (phoneNumber && phoneNumber !== staffMember.phoneNumber) {
     const existingPhoneUser = await User.findOne({ phoneNumber });
     if (existingPhoneUser) {
-      return next(new AppError('A user with this phone number already exists', 400));
+      return next(
+        new AppError("A user with this phone number already exists", 400)
+      );
     }
   }
 
   if (!staffRole) {
-    return next(new AppError('IIM Staff role not found. Please run the seeder first.', 500));
+    return next(
+      new AppError(
+        "IIM Staff role not found. Please run the seeder first.",
+        500
+      )
+    );
   }
+
+  // Prepare update data
+  const updateData = {
+    name: name || staffMember.name,
+    email: email || staffMember.email,
+    phoneNumber: phoneNumber || staffMember.phoneNumber,
+    role: "staff", // Use 'staff' as the role name
+    roleRef: staffRole._id, // Use IIM Staff role
+    status: req.body.status || staffMember.status,
+  };
+
+  // Prepare profile data
+  const profileData = staffMember.profile || {};
+
+  // Update profile fields if they exist in the request (check both formats)
+  if (req.body["profile.designation"] || req.body.designation) {
+    profileData.designation =
+      req.body["profile.designation"] || req.body.designation;
+    console.log("Setting designation to:", profileData.designation);
+  }
+
+  if (req.body["profile.department"] || req.body.department) {
+    profileData.department =
+      req.body["profile.department"] || req.body.department;
+    console.log("Setting department to:", profileData.department);
+  }
+
+  if (req.body["profile.address"] || req.body.address)
+    profileData.address = req.body["profile.address"] || req.body.address;
+
+  if (req.body["profile.state"] || req.body.state)
+    profileData.state = req.body["profile.state"] || req.body.state;
+
+  if (req.body["profile.zipcode"] || req.body.zipcode)
+    profileData.zipcode = req.body["profile.zipcode"] || req.body.zipcode;
+
+  // Add profile data to update (make sure it's properly set as a full object)
+  updateData.profile = profileData;
+
+  // Handle avatar if uploaded
+  if (req.file) {
+    updateData.profile.avatar = `/uploads/${req.file.filename}`;
+  }
+
+  console.log(
+    "Updating staff member with data:",
+    JSON.stringify(updateData, null, 2)
+  );
 
   // Update staff member
   const updatedStaffMember = await User.findByIdAndUpdate(
     req.params.id,
-    {
-      name: name || staffMember.name,
-      email: email || staffMember.email,
-      phoneNumber: phoneNumber || staffMember.phoneNumber,
-      role: 'staff', // Use 'staff' as the role name
-      roleRef: staffRole._id // Use IIM Staff role
-    },
+    updateData,
     { new: true, runValidators: true }
-  ).populate('roleRef');
+  ).populate("roleRef");
+
+  console.log(
+    "Updated staff member:",
+    JSON.stringify(updatedStaffMember, null, 2)
+  );
 
   res.status(200).json({
-    status: 'success',
-    data: updatedStaffMember
+    status: "success",
+    data: updatedStaffMember,
   });
 });
 
@@ -174,64 +316,37 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
  */
 exports.deleteStaffMember = catchAsync(async (req, res, next) => {
   // Find the IIM Staff and Super Admin roles
-  const Role = require('../models/Role');
-  const staffRole = await Role.findOne({ name: 'IIM Staff' });
-  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
+  const Role = require("../models/Role");
+  const staffRole = await Role.findOne({ name: "IIM Staff" });
+  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
   // Check if staff member exists
-  const staffMember = await User.findById(req.params.id).populate('roleRef');
+  const staffMember = await User.findById(req.params.id).populate("roleRef");
 
-  // Check if the user exists and has either the IIM Staff or Super Admin role
-  if (!staffMember || (staffMember.roleRef &&
-      staffMember.roleRef.toString() !== (staffRole?._id?.toString() || '') &&
-      staffMember.roleRef.toString() !== (superAdminRole?._id?.toString() || ''))) {
-    return next(new AppError('No staff member found with that ID', 404));
+  // Check if the user exists
+  if (!staffMember) {
+    return next(new AppError("No staff member found with that ID", 404));
   }
 
-  // Delete staff member
-  await User.findByIdAndDelete(req.params.id);
+  // Check if the user has a staff-related role
+  // Modified to also accept 'staff' as a role name
+  const isStaffRole =
+    staffMember.role === "staff" ||
+    (staffMember.roleRef &&
+      (staffMember.roleRef.toString() === (staffRole?._id?.toString() || "") ||
+        staffMember.roleRef.toString() ===
+          (superAdminRole?._id?.toString() || "")));
 
-  res.status(204).json({
-    status: 'success',
-    data: null
-  });
-});
-
-/**
- * Update staff member password
- * @route PUT /api/admin/staff/:id/password
- * @access Private (Admin only)
- */
-exports.updateStaffMemberPassword = catchAsync(async (req, res, next) => {
-  const { password } = req.body;
-
-  // Find the IIM Staff and Super Admin roles
-  const Role = require('../models/Role');
-  const staffRole = await Role.findOne({ name: 'IIM Staff' });
-  const superAdminRole = await Role.findOne({ name: 'Super Admin' });
-
-  // Check if staff member exists
-  const staffMember = await User.findById(req.params.id).populate('roleRef');
-
-  // Check if the user exists and has either the IIM Staff or Super Admin role
-  if (!staffMember || (staffMember.roleRef &&
-      staffMember.roleRef.toString() !== (staffRole?._id?.toString() || '') &&
-      staffMember.roleRef.toString() !== (superAdminRole?._id?.toString() || ''))) {
-    return next(new AppError('No staff member found with that ID', 404));
+  if (!isStaffRole) {
+    return next(new AppError("No staff member found with that ID", 404));
   }
 
-  // Hash new password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Update password
-  staffMember.password = hashedPassword;
+  // Soft delete - set status to 0 (inactive) instead of hard deleting
+  staffMember.status = 0;
   await staffMember.save();
 
-  // Remove password from response
-  staffMember.password = undefined;
-
   res.status(200).json({
-    status: 'success',
-    data: staffMember
+    status: "success",
+    message: "Staff member deleted successfully",
   });
 });

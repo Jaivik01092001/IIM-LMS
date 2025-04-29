@@ -1,73 +1,83 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as api from './staffApi';
-import { showSuccessToast, showErrorToast } from '../../utils/toast';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import * as api from "./staffApi";
+import { showSuccessToast, showErrorToast } from "../../utils/toast";
 
-export const getStaffMembersThunk = createAsyncThunk('admin/getStaffMembers', async (_, { rejectWithValue }) => {
-  try {
-    return await api.getStaffMembers();
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to fetch staff members');
+export const getStaffMembersThunk = createAsyncThunk(
+  "admin/getStaffMembers",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await api.getStaffMembers();
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch staff members"
+      );
+    }
   }
-});
+);
 
-export const getStaffMemberByIdThunk = createAsyncThunk('admin/getStaffMemberById', async (id, { rejectWithValue }) => {
-  try {
-    return await api.getStaffMemberById(id);
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to fetch staff member');
+export const getStaffMemberByIdThunk = createAsyncThunk(
+  "admin/getStaffMemberById",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await api.getStaffMemberById(id);
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch staff member"
+      );
+    }
   }
-});
+);
 
-export const createStaffMemberThunk = createAsyncThunk('admin/createStaffMember', async (staffData, { rejectWithValue }) => {
-  try {
-    const data = await api.createStaffMember(staffData);
-    showSuccessToast('Staff member created successfully');
-    return data;
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Failed to create staff member';
-    showErrorToast(errorMessage);
-    return rejectWithValue(errorMessage);
+export const createStaffMemberThunk = createAsyncThunk(
+  "admin/createStaffMember",
+  async (staffData, { rejectWithValue }) => {
+    try {
+      const data = await api.createStaffMember(staffData);
+      showSuccessToast("Staff member created successfully");
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to create staff member";
+      showErrorToast(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
   }
-});
+);
 
-export const updateStaffMemberThunk = createAsyncThunk('admin/updateStaffMember', async ({ id, data }, { rejectWithValue }) => {
-  try {
-    const response = await api.updateStaffMember(id, data);
-    showSuccessToast('Staff member updated successfully');
-    return response;
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Failed to update staff member';
-    showErrorToast(errorMessage);
-    return rejectWithValue(errorMessage);
+export const updateStaffMemberThunk = createAsyncThunk(
+  "admin/updateStaffMember",
+  async ({ id, formData }, { rejectWithValue }) => {
+    try {
+      const response = await api.updateStaffMember(id, formData);
+      showSuccessToast("Staff member updated successfully");
+      return response;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to update staff member";
+      showErrorToast(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
   }
-});
+);
 
-export const deleteStaffMemberThunk = createAsyncThunk('admin/deleteStaffMember', async (id, { rejectWithValue }) => {
-  try {
-    await api.deleteStaffMember(id);
-    showSuccessToast('Staff member deleted successfully');
-    return id;
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Failed to delete staff member';
-    showErrorToast(errorMessage);
-    return rejectWithValue(errorMessage);
+export const deleteStaffMemberThunk = createAsyncThunk(
+  "admin/deleteStaffMember",
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.deleteStaffMember(id);
+      showSuccessToast("Staff member deleted successfully");
+      return id;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to delete staff member";
+      showErrorToast(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
   }
-});
-
-export const updateStaffMemberPasswordThunk = createAsyncThunk('admin/updateStaffMemberPassword', async ({ id, password }, { rejectWithValue }) => {
-  try {
-    const response = await api.updateStaffMemberPassword(id, { password });
-    showSuccessToast('Password updated successfully');
-    return response;
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Failed to update password';
-    showErrorToast(errorMessage);
-    return rejectWithValue(errorMessage);
-  }
-});
+);
 
 const staffSlice = createSlice({
-  name: 'staff',
+  name: "staff",
   initialState: {
     staffMembers: [],
     selectedStaffMember: null,
@@ -97,7 +107,7 @@ const staffSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Get staff member by ID
       .addCase(getStaffMemberByIdThunk.pending, (state) => {
         state.loading = true;
@@ -111,7 +121,7 @@ const staffSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Create staff member
       .addCase(createStaffMemberThunk.pending, (state) => {
         state.loading = true;
@@ -125,7 +135,7 @@ const staffSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Update staff member
       .addCase(updateStaffMemberThunk.pending, (state) => {
         state.loading = true;
@@ -133,7 +143,9 @@ const staffSlice = createSlice({
       })
       .addCase(updateStaffMemberThunk.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.staffMembers.findIndex(staff => staff._id === action.payload._id);
+        const index = state.staffMembers.findIndex(
+          (staff) => staff._id === action.payload._id
+        );
         if (index !== -1) {
           state.staffMembers[index] = action.payload;
         }
@@ -143,7 +155,7 @@ const staffSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Delete staff member
       .addCase(deleteStaffMemberThunk.pending, (state) => {
         state.loading = true;
@@ -151,25 +163,17 @@ const staffSlice = createSlice({
       })
       .addCase(deleteStaffMemberThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.staffMembers = state.staffMembers.filter(staff => staff._id !== action.payload);
-        if (state.selectedStaffMember && state.selectedStaffMember._id === action.payload) {
+        state.staffMembers = state.staffMembers.filter(
+          (staff) => staff._id !== action.payload
+        );
+        if (
+          state.selectedStaffMember &&
+          state.selectedStaffMember._id === action.payload
+        ) {
           state.selectedStaffMember = null;
         }
       })
       .addCase(deleteStaffMemberThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      
-      // Update staff member password
-      .addCase(updateStaffMemberPasswordThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateStaffMemberPasswordThunk.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(updateStaffMemberPasswordThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
