@@ -1,6 +1,6 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const { formatPhoneNumber } = require('../utils/phoneUtils');
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const { formatPhoneNumber } = require("../utils/phoneUtils");
 
 exports.createEducator = async (req, res, next) => {
   try {
@@ -13,7 +13,7 @@ exports.createEducator = async (req, res, next) => {
       zipcode,
       state,
       category, // Add category field
-      schoolName // Add school/university name field
+      schoolName, // Add school/university name field
     } = req.body;
 
     // Prepare profile object
@@ -23,7 +23,7 @@ exports.createEducator = async (req, res, next) => {
       state,
       category, // Add category field
       schoolName, // Add school/university name field
-      socialLinks: {}
+      socialLinks: {},
     };
 
     // Add avatar if profile image was uploaded
@@ -31,38 +31,57 @@ exports.createEducator = async (req, res, next) => {
       profile.avatar = `/uploads/profiles/${req.file.filename}`;
     }
 
-    console.log('University controller - Creating educator with roleId:', roleId);
+    console.log(
+      "University controller - Creating educator with roleId:",
+      roleId
+    );
 
     // Determine the role based on roleId
-    let roleName = 'educator'; // Default role
+    // Using standardized role mapping: UI role names -> DB role values
+    let roleName = "educator"; // Default DB role value for Educator
     if (roleId) {
-      const Role = require('../models/Role');
+      const Role = require("../models/Role");
       const role = await Role.findById(roleId);
       if (role) {
-        roleName = role.name.toLowerCase(); // Convert to lowercase
-        console.log('University controller - Using role name:', roleName);
+        // Map UI role names to DB role values
+        const roleMappings = {
+          "Super Admin": "admin",
+          "IIM Staff": "staff",
+          "School Admin": "university",
+          Educator: "educator",
+        };
+
+        // Get the DB role value from the mapping, or use lowercase role name as fallback
+        roleName = roleMappings[role.name] || role.name.toLowerCase();
+        console.log("University controller - Using role name:", roleName);
       }
     }
 
     const educator = new User({
       email,
-      role: roleName, // Use the determined role name
+      role: roleName, // Use the determined DB role value
       name,
       phoneNumber, // No default phone number, must be provided by user
       university: req.user.id,
       roleRef: roleId || undefined, // Assign role if provided
-      profile
+      profile,
     });
 
-    console.log('University controller - Created educator with roleRef:', educator.roleRef);
-    console.log('University controller - Created educator with role:', educator.role);
+    console.log(
+      "University controller - Created educator with roleRef:",
+      educator.roleRef
+    );
+    console.log(
+      "University controller - Created educator with role:",
+      educator.role
+    );
 
     await educator.save();
 
     // Add the educator to the university's educators array
     const university = await User.findOne({
       _id: req.user.id,
-      role: 'university'
+      role: "university",
     });
 
     if (university) {
@@ -89,15 +108,17 @@ exports.getEducators = async (req, res) => {
     // Return all educators (both active and inactive)
     const educators = await User.find({
       university: req.user.id,
-      role: 'educator'
+      role: "educator",
     })
-    .populate('university', 'name category')
-    .populate('roleRef', 'name') // Populate the role reference
-    .select('-password');
+      .populate("university", "name category")
+      .populate("roleRef", "name") // Populate the role reference
+      .select("-password");
 
     res.json(educators);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educators', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving educators", error: error.message });
   }
 };
 
@@ -106,19 +127,24 @@ exports.getEducatorById = async (req, res) => {
     const educator = await User.findOne({
       _id: req.params.id,
       university: req.user.id,
-      role: 'educator'
+      role: "educator",
     })
-    .populate('roleRef', 'name') // Populate the role reference
-    .select('-password');
+      .populate("roleRef", "name") // Populate the role reference
+      .select("-password");
 
     if (!educator) {
-      return res.status(404).json({ message: 'Educator not found' });
+      return res.status(404).json({ message: "Educator not found" });
     }
 
-    console.log('University controller - Educator with populated roleRef:', educator);
+    console.log(
+      "University controller - Educator with populated roleRef:",
+      educator
+    );
     res.json(educator);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educator', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving educator", error: error.message });
   }
 };
 
@@ -127,34 +153,47 @@ exports.deleteEducator = async (req, res) => {
     const educator = await User.findOne({
       _id: req.params.id,
       university: req.user.id,
-      role: 'educator'
+      role: "educator",
     });
 
     if (!educator) {
-      return res.status(404).json({ message: 'Educator not found' });
+      return res.status(404).json({ message: "Educator not found" });
     }
 
     // Soft delete - update status to 0 (inactive)
     educator.status = 0;
     await educator.save();
 
-    res.json({ message: 'Educator deleted successfully' });
+    res.json({ message: "Educator deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting educator', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting educator", error: error.message });
   }
 };
 
 exports.updateEducator = async (req, res) => {
   try {
-    const { name, email, roleId, phoneNumber, address, zipcode, state, status, category, schoolName } = req.body;
+    const {
+      name,
+      email,
+      roleId,
+      phoneNumber,
+      address,
+      zipcode,
+      state,
+      status,
+      category,
+      schoolName,
+    } = req.body;
     const educator = await User.findById(req.params.id);
 
     if (!educator) {
-      return res.status(404).json({ msg: 'Educator not found' });
+      return res.status(404).json({ msg: "Educator not found" });
     }
 
     if (educator.university.toString() !== req.user.id) {
-      return res.status(403).json({ msg: 'Unauthorized' });
+      return res.status(403).json({ msg: "Unauthorized" });
     }
 
     // Only update fields that are provided
@@ -182,35 +221,53 @@ exports.updateEducator = async (req, res) => {
 
     // Update avatar if profile image was uploaded
     if (req.file) {
-      console.log('University controller - Profile image uploaded:', req.file);
+      console.log("University controller - Profile image uploaded:", req.file);
       educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
-      console.log('University controller - Updated avatar path:', educator.profile.avatar);
+      console.log(
+        "University controller - Updated avatar path:",
+        educator.profile.avatar
+      );
     } else {
-      console.log('University controller - No profile image uploaded in the request');
+      console.log(
+        "University controller - No profile image uploaded in the request"
+      );
     }
 
     if (roleId) {
-      console.log('University controller - Updating educator roleId:', roleId);
+      console.log("University controller - Updating educator roleId:", roleId);
       educator.roleRef = roleId;
-      console.log('University controller - Updated educator roleRef:', educator.roleRef);
+      console.log(
+        "University controller - Updated educator roleRef:",
+        educator.roleRef
+      );
 
       // Fetch the role to get its name
-      const Role = require('../models/Role');
+      const Role = require("../models/Role");
       const role = await Role.findById(roleId);
       if (role) {
-        // Update the role field based on the role name (convert to lowercase)
-        educator.role = role.name.toLowerCase();
-        console.log('University controller - Updated role to:', educator.role);
+        // Map UI role names to DB role values
+        const roleMappings = {
+          "Super Admin": "admin",
+          "IIM Staff": "staff",
+          "School Admin": "university",
+          Educator: "educator",
+        };
+
+        // Get the DB role value from the mapping, or use lowercase role name as fallback
+        educator.role = roleMappings[role.name] || role.name.toLowerCase();
+        console.log("University controller - Updated role to:", educator.role);
       }
     }
 
     await educator.save();
     res.json({
       educator,
-      msg: 'Educator updated successfully'
+      msg: "Educator updated successfully",
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating educator', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating educator", error: error.message });
   }
 };
 
@@ -220,7 +277,7 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     user.name = name || user.name;
@@ -231,17 +288,21 @@ exports.updateProfile = async (req, res) => {
       ...user.profile,
       address: address || user.profile?.address,
       zipcode: zipcode || user.profile?.zipcode,
-      state: state || user.profile?.state
+      state: state || user.profile?.state,
     };
 
     await user.save();
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating profile', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating profile", error: error.message });
   }
 };
 
 exports.updatePassword = async (req, res) => {
   // Password functionality has been removed as the system uses OTP-based login
-  return res.status(400).json({ msg: "Password functionality is not available. The system uses OTP-based authentication." });
+  return res.status(400).json({
+    msg: "Password functionality is not available. The system uses OTP-based authentication.",
+  });
 };

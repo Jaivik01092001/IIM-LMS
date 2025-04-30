@@ -14,7 +14,7 @@ const DataTableComponent = ({
 
   // Process columns to convert boolean attributes to strings
   const processedColumns = useMemo(() => {
-    return columns.map(column => {
+    return columns.map((column) => {
       const newColumn = { ...column };
 
       // Convert boolean 'center' attribute to string

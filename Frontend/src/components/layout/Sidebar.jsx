@@ -11,6 +11,7 @@ import {
   FaUniversity,
   FaUserTie,
   FaUserShield,
+  FaIdBadge,
 } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
 import "../../assets/styles/Sidebar.css";
@@ -62,7 +63,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     ];
 
     // Add role-specific items
-    if (userRole === "admin") {
+    if (userRole === "admin" || userRole === "staff") {
       // Insert after courses but before blogs
       items.splice(2, 0, {
         id: "users",
@@ -82,16 +83,24 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             path: `/dashboard/admin/educators`,
             icon: <FaUserTie />,
           },
+          {
+            id: "staffs",
+            name: "IIM Staff",
+            path: `/dashboard/admin/staffs`,
+            icon: <FaIdBadge />,
+          },
         ],
       });
 
-      // Add Role/Permission tab for superadmin only
-      items.push({
-        id: "role-permission",
-        name: "Role & Permission",
-        icon: <FaUserShield className="menu-icon" />,
-        path: `/dashboard/admin/role-permission`,
-      });
+      // Add Role/Permission tab for admin only (not for staff)
+      if (userRole === "admin") {
+        items.push({
+          id: "role-permission",
+          name: "Role & Permission",
+          icon: <FaUserShield className="menu-icon" />,
+          path: `/dashboard/admin/role-permission`,
+        });
+      }
     } else if (userRole === "university") {
       // Insert after courses but before blogs
       items.splice(2, 0, {
@@ -108,11 +117,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   // Get the correct dashboard path based on role
   const getDashboardPath = () => {
     if (userRole === "admin") {
-      return "admin";
+      return "admin"; // Super Admin -> admin
+    } else if (userRole === "staff") {
+      return "admin"; // IIM Staff -> admin (same dashboard as Super Admin)
     } else if (userRole === "university") {
-      return "school";
+      return "school"; // School Admin -> university
     } else if (userRole === "educator") {
-      return "tutor";
+      return "tutor"; // Educator -> educator
     } else {
       return "tutor"; // Default fallback
     }
@@ -201,6 +212,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                               }
                               onClick={toggleSidebar}
                             >
+                              {subItem.icon && (
+                                <span className="submenu-icon">
+                                  {subItem.icon}
+                                </span>
+                              )}
                               <span className="submenu-text">
                                 {subItem.name}
                               </span>

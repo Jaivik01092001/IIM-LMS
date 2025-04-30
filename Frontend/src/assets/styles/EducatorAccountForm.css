@@ -67,6 +67,12 @@
   gap: 1.5rem;
 }
 
+.educator-form-container .form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .educator-form-container .grid-row {
   display: grid;
   gap: 1.5rem;
@@ -292,7 +298,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Disabled buttons */

@@ -6,70 +6,70 @@
 export const PERMISSIONS = {
   // Course Management Permissions
   COURSE_MANAGEMENT: {
-    VIEW_COURSES: 'view_courses',
-    CREATE_COURSE: 'create_course',
-    EDIT_COURSE: 'edit_course',
-    DELETE_COURSE: 'delete_course',
-    PUBLISH_COURSE: 'publish_course',
-    ENROLL_USERS: 'enroll_users',
+    VIEW_COURSES: "view_courses",
+    CREATE_COURSE: "create_course",
+    EDIT_COURSE: "edit_course",
+    DELETE_COURSE: "delete_course",
+    PUBLISH_COURSE: "publish_course",
+    ENROLL_USERS: "enroll_users",
   },
 
   // Quiz Management Permissions
   QUIZ_MANAGEMENT: {
-    VIEW_QUIZZES: 'view_quizzes',
-    CREATE_QUIZ: 'create_quiz',
-    EDIT_QUIZ: 'edit_quiz',
-    DELETE_QUIZ: 'delete_quiz',
-    VIEW_RESULTS: 'view_quiz_results',
+    VIEW_QUIZZES: "view_quizzes",
+    CREATE_QUIZ: "create_quiz",
+    EDIT_QUIZ: "edit_quiz",
+    DELETE_QUIZ: "delete_quiz",
+    VIEW_RESULTS: "view_quiz_results",
   },
 
   // User Management Permissions
   USER_MANAGEMENT: {
-    VIEW_USERS: 'view_users',
-    CREATE_USER: 'create_user',
-    EDIT_USER: 'edit_user',
-    DELETE_USER: 'delete_user',
-    ASSIGN_ROLES: 'assign_roles',
+    VIEW_USERS: "view_users",
+    CREATE_USER: "create_user",
+    EDIT_USER: "edit_user",
+    DELETE_USER: "delete_user",
+    ASSIGN_ROLES: "assign_roles",
   },
 
   // Content Management Permissions
   CONTENT_MANAGEMENT: {
-    VIEW_CONTENT: 'view_content',
-    CREATE_CONTENT: 'create_content',
-    EDIT_CONTENT: 'edit_content',
-    DELETE_CONTENT: 'delete_content',
-    APPROVE_CONTENT: 'approve_content',
+    VIEW_CONTENT: "view_content",
+    CREATE_CONTENT: "create_content",
+    EDIT_CONTENT: "edit_content",
+    DELETE_CONTENT: "delete_content",
+    APPROVE_CONTENT: "approve_content",
   },
 
   // Certificate Management Permissions
   CERTIFICATE_MANAGEMENT: {
-    VIEW_CERTIFICATES: 'view_certificates',
-    CREATE_CERTIFICATE: 'create_certificate',
-    EDIT_CERTIFICATE: 'edit_certificate',
-    DELETE_CERTIFICATE: 'delete_certificate',
-    ISSUE_CERTIFICATE: 'issue_certificate',
+    VIEW_CERTIFICATES: "view_certificates",
+    CREATE_CERTIFICATE: "create_certificate",
+    EDIT_CERTIFICATE: "edit_certificate",
+    DELETE_CERTIFICATE: "delete_certificate",
+    ISSUE_CERTIFICATE: "issue_certificate",
   },
 
   // Reports & Analytics Permissions
   REPORTS_ANALYTICS: {
-    VIEW_REPORTS: 'view_reports',
-    EXPORT_REPORTS: 'export_reports',
-    VIEW_ANALYTICS: 'view_analytics',
+    VIEW_REPORTS: "view_reports",
+    EXPORT_REPORTS: "export_reports",
+    VIEW_ANALYTICS: "view_analytics",
   },
 
   // Blog Management Permissions
   BLOG_MANAGEMENT: {
-    VIEW_BLOGS: 'view_blogs',
-    CREATE_BLOG: 'create_blog',
-    EDIT_BLOG: 'edit_blog',
-    DELETE_BLOG: 'delete_blog',
+    VIEW_BLOGS: "view_blogs",
+    CREATE_BLOG: "create_blog",
+    EDIT_BLOG: "edit_blog",
+    DELETE_BLOG: "delete_blog",
   },
 
   // System Settings Permissions
   SYSTEM_SETTINGS: {
-    VIEW_SETTINGS: 'view_settings',
-    EDIT_SETTINGS: 'edit_settings',
-    MANAGE_ROLES: 'manage_roles',
+    VIEW_SETTINGS: "view_settings",
+    EDIT_SETTINGS: "edit_settings",
+    MANAGE_ROLES: "manage_roles",
   },
 };
 
@@ -83,8 +83,8 @@ export const hasPermission = (user, permission) => {
   // If no user or no permission, return false
   if (!user) return false;
 
-  // For backward compatibility, admin role has all permissions
-  if (user.role === 'admin') return true;
+  // Super Admin and IIM Staff roles have all permissions
+  if (user.role === "admin" || user.role === "staff") return true;
 
   // IMPORTANT: If permissions is explicitly null, the user has no permissions
   if (user.permissions === null) {
@@ -95,9 +95,11 @@ export const hasPermission = (user, permission) => {
   if (!user.roleRef || user.permissions === undefined) {
     // Default permissions based on role for backward compatibility
     switch (user.role) {
-      case 'admin':
+      case "admin": // Super Admin
         return true;
-      case 'university':
+      case "staff": // IIM Staff
+        return true;
+      case "university": // School Admin
         return [
           PERMISSIONS.USER_MANAGEMENT.VIEW_USERS,
           PERMISSIONS.USER_MANAGEMENT.CREATE_USER,
@@ -105,7 +107,7 @@ export const hasPermission = (user, permission) => {
           PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES,
           PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT,
         ].includes(permission);
-      case 'educator':
+      case "educator": // Educator
         return [
           PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES,
           PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE,
@@ -123,7 +125,8 @@ export const hasPermission = (user, permission) => {
   }
 
   // Check if the permission is granted in the user's permissions object
-  const hasPermissionResult = user.permissions && user.permissions[permission] === true;
+  const hasPermissionResult =
+    user.permissions && user.permissions[permission] === true;
   return hasPermissionResult;
 };
 
@@ -135,7 +138,7 @@ export const hasPermission = (user, permission) => {
  */
 export const hasAllPermissions = (user, permissions) => {
   if (!user || !permissions || !Array.isArray(permissions)) return false;
-  return permissions.every(permission => hasPermission(user, permission));
+  return permissions.every((permission) => hasPermission(user, permission));
 };
 
 /**
@@ -146,7 +149,7 @@ export const hasAllPermissions = (user, permissions) => {
  */
 export const hasAnyPermission = (user, permissions) => {
   if (!user || !permissions || !Array.isArray(permissions)) return false;
-  return permissions.some(permission => hasPermission(user, permission));
+  return permissions.some((permission) => hasPermission(user, permission));
 };
 
 /**
@@ -156,7 +159,7 @@ export const hasAnyPermission = (user, permissions) => {
  */
 export const formatPermissionName = (permissionName) => {
   return permissionName
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };

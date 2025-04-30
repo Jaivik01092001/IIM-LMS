@@ -20,7 +20,6 @@ const Blog = () => {
   const { blogs, loading } = useSelector((state) => state.blog);
 
   const userRole = user?.role || 'educator'; // Default to educator view if role not found
-
   // Fetch blogs on component mount
   useEffect(() => {
     dispatch(getBlogsThunk());

@@ -1,9 +1,9 @@
-.educator-details-page {
+.staff-details-page {
   background-color: var(--bg-gray);
   min-height: 100vh;
 }
 
-.educator-details-page .educator-details-error {
+.staff-details-page .staff-details-error {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,7 +13,7 @@
   font-weight: 500;
 }
 
-.educator-details-page .educator-header {
+.staff-details-page .staff-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -24,20 +24,20 @@
   border-radius: var(--border-large-radius);
 }
 
-.educator-details-page .educator-info {
+.staff-details-page .staff-info {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
 
-.educator-details-page .educator-avatar {
+.staff-details-page .staff-avatar {
   width: 64px;
   height: 64px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.educator-details-page .educator-avatar-placeholder {
+.staff-details-page .staff-avatar-placeholder {
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -46,19 +46,19 @@
   padding: 5px;
 }
 
-.educator-details-page .educator-text h1 {
+.staff-details-page .staff-text h1 {
   font-size: var(--heading4);
   color: white;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
 
-.educator-details-page .category {
+.staff-details-page .category {
   font-size: var(--basefont);
   color: white;
 }
 
-.educator-details-page .school-badge {
+.staff-details-page .department-badge {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -67,37 +67,37 @@
   border-radius: var(--border-medium-radius);
 }
 
-.educator-details-page .school-text {
+.staff-details-page .department-text {
   display: flex;
   flex-direction: column;
 }
 
-.educator-details-page .school-name {
+.staff-details-page .department-name {
   font-size: var(--basefont);
   color: var(--text-color);
   font-weight: 500;
 }
 
-.educator-details-page .school-type {
+.staff-details-page .department-type {
   font-size: var(--smallfont);
   color: var(--text-gray);
 }
 
-.educator-details-page .details-grid {
+.staff-details-page .details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.educator-details-page .details-section {
+.staff-details-page .details-section {
   background-color: var(--bg-white);
   border-radius: var(--border-medium-small-radius);
   border: 1px solid var(--border-gray);
   padding: 1rem;
 }
 
-.educator-details-page .details-section h2 {
+.staff-details-page .details-section h2 {
   font-size: var(--heading6);
   color: var(--text-color);
   font-weight: 600;
@@ -106,36 +106,45 @@
   padding-bottom: 1rem;
 }
 
-.educator-details-page .info-content {
+.staff-details-page .info-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.educator-details-page .info-row {
+.staff-details-page .info-row {
   display: flex;
   gap: 0.5rem;
 }
 
-.educator-details-page .info-row label {
+.staff-details-page .info-row label {
   min-width: 80px;
   font-size: var(--basefont);
   color: var(--text-gray);
   font-weight: 500;
 }
 
-.educator-details-page .info-row span {
+.staff-details-page .info-row span {
   font-size: var(--basefont);
   color: var(--text-color);
 }
 
-.educator-details-page .status-toggle-container {
+.staff-details-page .permission-row {
+  margin-bottom: 0.25rem;
+}
+
+.staff-details-page .permission-row span {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.staff-details-page .status-toggle-container {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.educator-details-page .status-toggle-btn {
+.staff-details-page .status-toggle-btn {
   padding: 5px 12px;
   border-radius: 4px;
   font-size: 14px;
@@ -144,32 +153,45 @@
   transition: all 0.3s ease;
   border: none;
   color: white;
+  margin-left: 8px;
 }
 
-.educator-details-page .status-toggle-btn.activate {
+.staff-details-page .status-toggle-btn.activate {
   background-color: #4caf50;
 }
 
-.educator-details-page .status-toggle-btn.activate:hover {
+.staff-details-page .status-toggle-btn.activate:hover {
   background-color: #43a047;
 }
 
-.educator-details-page .status-toggle-btn.deactivate {
+.staff-details-page .status-toggle-btn.deactivate {
   background-color: #f44336;
 }
 
-.educator-details-page .status-toggle-btn.deactivate:hover {
+.staff-details-page .status-toggle-btn.deactivate:hover {
   background-color: #e53935;
 }
 
-.educator-details-page .action-buttons {
+.staff-details-page .text-green-600 {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.staff-details-page .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.staff-details-page .action-buttons {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
 }
 
-.educator-details-page .delete-btn,
-.educator-details-page .edit-btn {
+.staff-details-page .delete-btn,
+.staff-details-page .edit-btn {
   padding: 0.75rem 2rem;
   border-radius: var(--border-medium-small-radius);
   font-size: var(--basefont);
@@ -178,143 +200,140 @@
   transition: all 0.3s ease;
 }
 
-.educator-details-page .delete-btn {
+.staff-details-page .delete-btn {
   background-color: transparent;
   border: 1px solid #d93025;
   color: #d93025;
 }
 
-.educator-details-page .edit-btn {
+.staff-details-page .edit-btn {
   border: 1px solid var(--primary-color);
   color: var(--primary-color);
 }
 
-.educator-details-page .delete-btn:hover {
+.staff-details-page .delete-btn:hover {
   background-color: #fce8e8;
 }
 
-.educator-details-page .edit-btn:hover {
+.staff-details-page .edit-btn:hover {
   background-color: var(--primary-hover-color);
   color: white;
 }
 
-.educator-details-page .action-buttons button:disabled {
+.staff-details-page .action-buttons button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
 /* Responsive styles */
 @media (max-width: 1130px) {
-  .educator-details-page .details-grid {
+  .staff-details-page .details-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .educator-details-page {
+  .staff-details-page {
     padding: 1rem;
   }
 
-  .educator-details-page .details-grid {
+  .staff-details-page .details-grid {
     grid-template-columns: 1fr;
   }
 
-  .educator-details-page .educator-header {
+  .staff-details-page .staff-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
     padding: 1.5rem;
   }
 
-  .educator-details-page .school-badge {
+  .staff-details-page .department-badge {
     width: 100%;
   }
 
-  .educator-details-page .action-buttons {
+  .staff-details-page .action-buttons {
     flex-direction: column;
     gap: 0.75rem;
   }
 
-  .educator-details-page .delete-btn,
-  .educator-details-page .edit-btn {
+  .staff-details-page .delete-btn,
+  .staff-details-page .edit-btn {
     width: 100%;
     text-align: center;
-  }
-
-  .educator-details-page .info-row {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .educator-details-page .info-row label {
-    min-width: 100%;
-    font-weight: 600;
   }
 }
 
 @media (max-width: 576px) {
-  .educator-details-page {
+  .staff-details-page {
     padding: 0.75rem;
   }
 
-  .educator-details-page .educator-header {
+  .staff-details-page .staff-header {
     padding: 1.25rem;
   }
 
-  .educator-details-page .educator-avatar {
-    width: 48px;
-    height: 48px;
+  .staff-details-page .staff-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 
-  .educator-details-page .educator-text h1 {
-    font-size: var(--heading5);
+  .staff-details-page .department-badge {
+    padding: 0.75rem 1rem;
   }
 
-  .educator-details-page .category {
-    font-size: var(--smallfont);
-  }
-
-  .educator-details-page .details-section {
-    padding: 0.75rem;
-  }
-
-  .educator-details-page .details-section h2 {
+  .staff-details-page .details-section h2 {
     font-size: var(--basefont);
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
   }
 
-  .educator-details-page .info-row label {
-    min-width: 70px;
-    font-size: var(--smallfont);
+  .staff-details-page .info-row {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
-  .educator-details-page .info-row span {
-    font-size: var(--smallfont);
+  .staff-details-page .info-row label {
+    min-width: auto;
+    font-weight: 600;
+  }
+
+  .staff-details-page .details-section {
+    padding: 0.75rem;
   }
 }
 
 @media (max-width: 480px) {
-  .educator-details-page {
+  .staff-details-page {
     padding: 0.5rem;
   }
 
-  .educator-details-page .educator-header {
+  .staff-details-page .staff-header {
     padding: 1rem;
-    margin-bottom: 1.5rem;
   }
 
-  .educator-details-page .educator-info {
-    gap: 1rem;
+  .staff-details-page .staff-avatar,
+  .staff-details-page .staff-avatar-placeholder {
+    width: 56px;
+    height: 56px;
   }
 
-  .educator-details-page .school-badge {
-    padding: 0.75rem 1rem;
+  .staff-details-page .staff-text h1 {
+    font-size: var(--heading5);
   }
 
-  .educator-details-page .delete-btn,
-  .educator-details-page .edit-btn {
-    padding: 0.6rem 1.5rem;
+  .staff-details-page .category {
     font-size: var(--smallfont);
+  }
+
+  .staff-details-page .department-badge {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .staff-details-page .department-name {
+    font-size: var(--smallfont);
+  }
+
+  .staff-details-page .department-type {
+    font-size: var(--extrasmallfont);
   }
 }
