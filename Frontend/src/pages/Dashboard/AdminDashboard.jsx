@@ -193,8 +193,7 @@ const AdminDashboard = () => {
       .unwrap()
       .then(() => {
         console.log(
-          `Successfully ${row.status ? "deactivated" : "activated"} ${
-            row.title
+          `Successfully ${row.status ? "deactivated" : "activated"} ${row.title
           }`
         );
         // Refresh courses data
@@ -261,11 +260,11 @@ const AdminDashboard = () => {
       name: "Creator",
       cell: (row) => (
         <div className="professor-info">
-          <img
+          {/* <img
             src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
             alt={row.professor}
             className="professor-avatar"
-          />
+          /> */}
           <span>{row.professor}</span>
         </div>
       ),
