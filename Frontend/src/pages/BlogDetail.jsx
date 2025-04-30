@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { getBlogByIdThunk, updateBlogThunk } from '../redux/blog/blogSlice';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getBlogByIdThunk, updateBlogThunk } from "../redux/blog/blogSlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import {
   FaArrowLeft,
   FaUserCircle,
@@ -11,8 +11,8 @@ import {
   FaClock,
   FaCheckCircle,
   FaTimesCircle,
-  FaPencilAlt
-} from 'react-icons/fa';
+  FaPencilAlt,
+} from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
 import "../assets/styles/Blog.css";
 
@@ -28,7 +28,7 @@ const BlogDetail = () => {
   const { user } = useSelector((state) => state.auth);
   const { currentBlog, loading } = useSelector((state) => state.blog);
 
-  const userRole = user?.role || 'educator'; // Default to educator view if role not found
+  const userRole = user?.role || "educator"; // Default to educator view if role not found
 
   // Fetch blog on component mount
   useEffect(() => {
@@ -45,10 +45,10 @@ const BlogDetail = () => {
   // Format date for display
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -56,20 +56,23 @@ const BlogDetail = () => {
   const handleStatusToggle = () => {
     if (!currentBlog) return;
 
-    const newStatus = currentBlog.status === 'published' ? 'draft' : 'published';
+    const newStatus =
+      currentBlog.status === "published" ? "draft" : "published";
 
-    dispatch(updateBlogThunk({
-      id: currentBlog._id,
-      status: newStatus
-    }))
+    dispatch(
+      updateBlogThunk({
+        id: currentBlog._id,
+        status: newStatus,
+      })
+    )
       .unwrap()
       .then(() => {
         console.log(`Successfully changed status to ${newStatus}`);
         // Refresh blog data
         dispatch(getBlogByIdThunk(id));
       })
-      .catch(error => {
-        console.error('Error updating blog status:', error);
+      .catch((error) => {
+        console.error("Error updating blog status:", error);
       });
   };
 
@@ -86,12 +89,12 @@ const BlogDetail = () => {
 
   // Get the dashboard path based on user role
   const getDashboardPath = () => {
-    if (userRole === 'admin') {
-      return 'admin';
-    } else if (userRole === 'university') {
-      return 'school';
+    if (userRole === "admin") {
+      return "admin";
+    } else if (userRole === "university") {
+      return "school";
     } else {
-      return 'tutor'; // Default for educator
+      return "tutor"; // Default for educator
     }
   };
 
@@ -102,7 +105,8 @@ const BlogDetail = () => {
 
   return (
     <div className="blog-detail-container">
-      <div className="blog-detail-header">
+      {/* Sticky Header with Actions */}
+      <div className="blog-detail-sticky-header">
         <button className="blog-back-button" onClick={handleBack}>
           <FaArrowLeft /> Back to Blogs
         </button>
@@ -111,77 +115,145 @@ const BlogDetail = () => {
           <button className="blog-edit-button" onClick={handleEditBlog}>
             <FaPencilAlt /> Edit Blog
           </button>
+          <button
+            className={`blog-status-button ${
+              currentBlog.status === "published" ? "published" : "draft"
+            }`}
+            onClick={handleStatusToggle}
+          >
+            {currentBlog.status === "published" ? (
+              <>
+                <FaCheckCircle /> Published
+              </>
+            ) : (
+              <>
+                <FaTimesCircle /> Draft
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      <div className="blog-detail-content">
-        {currentBlog.coverImage && (
-          <div className="blog-detail-image-container">
-            <img
-              src={VITE_IMAGE_URL + currentBlog.coverImage}
-              alt={currentBlog.title}
-              className="blog-detail-image"
-            />
-          </div>
-        )}
-
-        <h1 className="blog-detail-title"><FaFilePen className="blog-title-icon" /> {currentBlog.title}</h1>
-
-        <div className="blog-detail-meta">
-          {/* Created Date */}
-          <div className="blog-detail-date">
-            <FaCalendarAlt className="blog-meta-icon" />
-            <span>Created: {formatDate(currentBlog.createdAt)}</span>
-          </div>
-
-          {/* Updated Date */}
-          {currentBlog.updatedAt && currentBlog.updatedAt !== currentBlog.createdAt && (
-            <div className="blog-detail-date">
-              <FaClock className="blog-meta-icon" />
-              <span>Updated: {formatDate(currentBlog.updatedAt)}</span>
+      <div className="blog-detail-layout">
+        {/* Main Content */}
+        <div className="blog-detail-content">
+          {/* Cover Image */}
+          {currentBlog.coverImage && (
+            <div className="blog-detail-image-container">
+              <img
+                src={VITE_IMAGE_URL + currentBlog.coverImage}
+                alt={currentBlog.title}
+                className="blog-detail-image"
+              />
             </div>
           )}
 
-          {/* Tags */}
-          <div className="blog-detail-tags">
-            <FaTags className="blog-meta-icon" />
-            <span>{currentBlog.tags?.join(', ') || 'No tags'}</span>
+          {/* Title and Tags */}
+          <div className="blog-detail-header-content">
+            <h1 className="blog-detail-title">
+              <FaFilePen className="blog-title-icon" /> {currentBlog.title}
+            </h1>
+
+            {/* Tags as Pills */}
+            {currentBlog.tags && currentBlog.tags.length > 0 && (
+              <div className="blog-detail-tags-container">
+                {currentBlog.tags.map((tag, index) => (
+                  <span key={index} className="blog-detail-tag-pill">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Status with Toggle */}
-          <div className="blog-detail-status">
-            <div className="status-toggle-container">
-              <span className={currentBlog.status === 'published' ? "text-green-600" : "text-red-600"}>
-                {currentBlog.status === 'published' ? "Published" : "Draft"}
+          {/* Author and Date Info */}
+          <div className="blog-detail-author-date">
+            {currentBlog.createdBy && (
+              <div className="blog-detail-author">
+                <FaUserCircle className="blog-meta-icon" />
+                <span>{currentBlog.createdBy.name || "Unknown"}</span>
+              </div>
+            )}
+            <div className="blog-detail-date">
+              <FaCalendarAlt className="blog-meta-icon" />
+              <span>{formatDate(currentBlog.createdAt)}</span>
+            </div>
+          </div>
+
+          {/* Short Description */}
+          {currentBlog.shortDescription && (
+            <div className="blog-detail-excerpt">
+              {currentBlog.shortDescription}
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div
+            className="blog-detail-body html-content"
+            dangerouslySetInnerHTML={{ __html: currentBlog.content }}
+          />
+        </div>
+
+        {/* Sidebar with Metadata */}
+        <div className="blog-detail-sidebar">
+          <div className="blog-detail-meta-card">
+            <h3 className="blog-detail-meta-title">Blog Information</h3>
+
+            <div className="blog-detail-meta-item">
+              <span className="blog-detail-meta-label">Status</span>
+              <span
+                className={`blog-detail-meta-status ${
+                  currentBlog.status === "published" ? "published" : "draft"
+                }`}
+              >
+                {currentBlog.status === "published" ? "Published" : "Draft"}
               </span>
+            </div>
+
+            <div className="blog-detail-meta-item">
+              <span className="blog-detail-meta-label">Created</span>
+              <span className="blog-detail-meta-value">
+                {formatDate(currentBlog.createdAt)}
+              </span>
+            </div>
+
+            {currentBlog.updatedAt &&
+              currentBlog.updatedAt !== currentBlog.createdAt && (
+                <div className="blog-detail-meta-item">
+                  <span className="blog-detail-meta-label">Last Updated</span>
+                  <span className="blog-detail-meta-value">
+                    {formatDate(currentBlog.updatedAt)}
+                  </span>
+                </div>
+              )}
+
+            {currentBlog.createdBy && (
+              <div className="blog-detail-meta-item">
+                <span className="blog-detail-meta-label">Author</span>
+                <span className="blog-detail-meta-value">
+                  {currentBlog.createdBy.name || "Unknown"}
+                </span>
+              </div>
+            )}
+
+            <div className="blog-detail-meta-actions">
               <button
-                className={`status-toggle-btn ${currentBlog.status === 'published' ? 'deactivate' : 'activate'}`}
+                className={`blog-detail-meta-action-btn ${
+                  currentBlog.status === "published" ? "unpublish" : "publish"
+                }`}
                 onClick={handleStatusToggle}
               >
-                {currentBlog.status === 'published' ? "Unpublish" : "Publish"}
+                {currentBlog.status === "published" ? "Unpublish" : "Publish"}
+              </button>
+              <button
+                className="blog-detail-meta-action-btn edit"
+                onClick={handleEditBlog}
+              >
+                Edit Blog
               </button>
             </div>
           </div>
-
-          {/* Author */}
-          {currentBlog.createdBy && (
-            <div className="blog-detail-author">
-              <FaUserCircle className="blog-meta-icon" />
-              <span>Author: {currentBlog.createdBy.name || 'Unknown'}</span>
-            </div>
-          )}
         </div>
-
-        {currentBlog.shortDescription && (
-          <div className="blog-detail-excerpt">
-            {currentBlog.shortDescription}
-          </div>
-        )}
-
-        <div
-          className="blog-detail-body html-content"
-          dangerouslySetInnerHTML={{ __html: currentBlog.content }}
-        />
       </div>
     </div>
   );

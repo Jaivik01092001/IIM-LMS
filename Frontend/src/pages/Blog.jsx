@@ -1,14 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  FaPlus,
+  FaPencilAlt,
+  FaTrashAlt,
+  FaEye,
+  FaUserCircle,
+} from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
-import DataTableComponent from '../components/DataTable';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import { getBlogsThunk, deleteBlogThunk, updateBlogThunk } from '../redux/blog/blogSlice';
+import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import {
+  getBlogsThunk,
+  deleteBlogThunk,
+  updateBlogThunk,
+} from "../redux/blog/blogSlice";
 import "../assets/styles/Blog.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
+// Function to fix double slashes in URLs
+const fixImageUrl = (url) => {
+  if (!url) return url;
+  return url.replace(/([^:]\/)\/+/g, "$1");
+};
 
 const Blog = () => {
   const dispatch = useDispatch();
@@ -19,7 +35,7 @@ const Blog = () => {
   const { user } = useSelector((state) => state.auth);
   const { blogs, loading } = useSelector((state) => state.blog);
 
-  const userRole = user?.role || 'educator'; // Default to educator view if role not found
+  const userRole = user?.role || "educator"; // Default to educator view if role not found
   // Fetch blogs on component mount
   useEffect(() => {
     dispatch(getBlogsThunk());
@@ -33,10 +49,10 @@ const Blog = () => {
   // Format date for display
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -47,20 +63,26 @@ const Blog = () => {
 
   // Handle edit blog
   const handleEditBlog = (blog) => {
-    navigate(`/dashboard/${getDashboardPath()}/blog/edit/${blog._id || blog.id}`);
+    navigate(
+      `/dashboard/${getDashboardPath()}/blog/edit/${blog._id || blog.id}`
+    );
   };
 
   // Handle delete blog
   const handleDeleteBlog = (blog) => {
-    if (window.confirm(`Are you sure you want to delete "${blog.title}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${blog.title}"? This action cannot be undone.`
+      )
+    ) {
       dispatch(deleteBlogThunk(blog._id || blog.id))
         .unwrap()
         .then(() => {
           // Refresh blogs data
           dispatch(getBlogsThunk());
         })
-        .catch(error => {
-          console.error('Error deleting blog:', error);
+        .catch((error) => {
+          console.error("Error deleting blog:", error);
         });
     }
   };
@@ -68,21 +90,25 @@ const Blog = () => {
   // Status toggle handler
   const handleStatusToggle = (blog) => {
     // Convert between 'published'/'draft' and boolean/number as needed
-    const currentStatus = blog.status === 'published';
-    const newStatus = currentStatus ? 'draft' : 'published';
+    const currentStatus = blog.status === "published";
+    const newStatus = currentStatus ? "draft" : "published";
 
-    dispatch(updateBlogThunk({
-      id: blog._id || blog.id,
-      status: newStatus
-    }))
+    dispatch(
+      updateBlogThunk({
+        id: blog._id || blog.id,
+        status: newStatus,
+      })
+    )
       .unwrap()
       .then(() => {
-        console.log(`Successfully changed status to ${newStatus} for "${blog.title}"`);
+        console.log(
+          `Successfully changed status to ${newStatus} for "${blog.title}"`
+        );
         // Refresh blogs data
         dispatch(getBlogsThunk());
       })
-      .catch(error => {
-        console.error('Error updating blog status:', error);
+      .catch((error) => {
+        console.error("Error updating blog status:", error);
       });
   };
 
@@ -93,12 +119,12 @@ const Blog = () => {
 
   // Get the dashboard path based on user role
   const getDashboardPath = () => {
-    if (userRole === 'admin') {
-      return 'admin';
-    } else if (userRole === 'university') {
-      return 'school';
+    if (userRole === "admin") {
+      return "admin";
+    } else if (userRole === "university") {
+      return "school";
     } else {
-      return 'tutor'; // Default for educator
+      return "tutor"; // Default for educator
     }
   };
 
@@ -115,9 +141,16 @@ const Blog = () => {
       cell: (row) => (
         <div className="blog-image-cell">
           {row.coverImage ? (
-            <img src={VITE_IMAGE_URL + row.coverImage} alt={row.title} className="blog-table-image" />
+            <img
+              src={fixImageUrl(VITE_IMAGE_URL + row.coverImage)}
+              alt={row.title}
+              className="blog-table-image"
+            />
           ) : (
-            <div className="blog-table-image" style={{ backgroundColor: 'var(--bg-gray)' }} />
+            <div
+              className="blog-table-image"
+              style={{ backgroundColor: "var(--bg-gray)" }}
+            />
           )}
           <div className="blog-table-title">
             <span className="blog-table-title-text">{row.title}</span>
@@ -130,7 +163,7 @@ const Blog = () => {
     },
     {
       name: "Tags",
-      selector: (row) => row.tags?.join(', ') || 'No tags',
+      selector: (row) => row.tags?.join(", ") || "No tags",
       sortable: true,
     },
     {
@@ -138,7 +171,7 @@ const Blog = () => {
       cell: (row) => (
         <div className="blog-author-cell">
           <FaUserCircle className="blog-author-icon" />
-          <span>{row.createdBy?.name || 'Unknown'}</span>
+          <span>{row.createdBy?.name || "Unknown"}</span>
         </div>
       ),
       sortable: true,
@@ -153,12 +186,22 @@ const Blog = () => {
       cell: (row) => (
         <div className="status-cell">
           <div
-            className={`status-indicator ${row.status === 'published' ? "active" : ""}`}
+            className={`status-indicator ${
+              row.status === "published" ? "active" : ""
+            }`}
             onClick={() => handleStatusToggle(row)}
-            title={row.status === 'published' ? "Click to unpublish" : "Click to publish"}
+            title={
+              row.status === "published"
+                ? "Click to unpublish"
+                : "Click to publish"
+            }
           />
-          <span className={row.status === 'published' ? "text-green-600" : "text-red-600"}>
-            {row.status === 'published' ? "Published" : "Draft"}
+          <span
+            className={
+              row.status === "published" ? "text-green-600" : "text-red-600"
+            }
+          >
+            {row.status === "published" ? "Published" : "Draft"}
           </span>
         </div>
       ),
@@ -198,23 +241,23 @@ const Blog = () => {
   ];
 
   // Transform blogs data for display
-  const transformedBlogs = Array.isArray(blogs) ? blogs.map(blog => ({
-    id: blog._id,
-    title: blog.title || 'Untitled Blog',
-    content: blog.content || '',
-    shortDescription: blog.shortDescription || '',
-    tags: blog.tags || [],
-    coverImage: blog.coverImage || null,
-    status: blog.status || 'draft',
-    createdAt: blog.createdAt || new Date().toISOString(),
-    updatedAt: blog.updatedAt || new Date().toISOString(),
-    createdBy: blog.createdBy || null,
-    slug: blog.slug || '',
-    isDeleted: blog.isDeleted || false,
-    activeStatus: blog.activeStatus || 1
-  })) : [];
-
-
+  const transformedBlogs = Array.isArray(blogs)
+    ? blogs.map((blog) => ({
+        id: blog._id,
+        title: blog.title || "Untitled Blog",
+        content: blog.content || "",
+        shortDescription: blog.shortDescription || "",
+        tags: blog.tags || [],
+        coverImage: fixImageUrl(blog.coverImage) || null,
+        status: blog.status || "draft",
+        createdAt: blog.createdAt || new Date().toISOString(),
+        updatedAt: blog.updatedAt || new Date().toISOString(),
+        createdBy: blog.createdBy || null,
+        slug: blog.slug || "",
+        isDeleted: blog.isDeleted || false,
+        activeStatus: blog.activeStatus || 1,
+      }))
+    : [];
 
   // Render loading state
   if (isLoading) {
@@ -222,11 +265,13 @@ const Blog = () => {
   }
 
   // Render Educator View (Card Layout)
-  if (userRole === 'educator') {
+  if (userRole === "educator") {
     return (
       <div className="blog-container">
         <div className="blog-header">
-          <h1 className="blog-title"><FaFilePen className="blog-title-icon" /> Blogs</h1>
+          <h1 className="blog-title">
+            <FaFilePen className="blog-title-icon" /> Blogs
+          </h1>
           <div className="blog-actions">
             <button className="btn btn-primary" onClick={handleCreateBlog}>
               <FaPlus /> New Blog
@@ -247,25 +292,36 @@ const Blog = () => {
                 onClick={() => handleViewBlog(blog)}
               >
                 {blog.coverImage ? (
-                  <img src={blog.coverImage} alt={blog.title} className="blog-card-image" />
+                  <img
+                    src={fixImageUrl(blog.coverImage)}
+                    alt={blog.title}
+                    className="blog-card-image"
+                  />
                 ) : (
-                  <div className="blog-card-image" style={{ backgroundColor: 'var(--bg-gray)' }} />
+                  <div
+                    className="blog-card-image"
+                    style={{ backgroundColor: "var(--bg-gray)" }}
+                  />
                 )}
                 <div className="blog-card-content">
                   <h3 className="blog-card-title">{blog.title}</h3>
                   <p className="blog-card-excerpt">{blog.shortDescription}</p>
                   <div className="blog-card-footer">
                     <div className="blog-card-tags">
-                      {blog.tags?.map(tag => (
-                        <span key={tag} className="blog-tag">{tag}</span>
+                      {blog.tags?.map((tag) => (
+                        <span key={tag} className="blog-tag">
+                          {tag}
+                        </span>
                       ))}
                     </div>
                     <div className="blog-card-meta">
                       <div className="blog-card-author">
                         <FaUserCircle className="blog-author-icon" />
-                        <span>{blog.createdBy?.name || 'Unknown'}</span>
+                        <span>{blog.createdBy?.name || "Unknown"}</span>
                       </div>
-                      <div className="blog-card-date">{formatDate(blog.createdAt)}</div>
+                      <div className="blog-card-date">
+                        {formatDate(blog.createdAt)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -281,7 +337,9 @@ const Blog = () => {
   return (
     <div className="blog-container">
       <div className="blog-header">
-        <h1 className="blog-title"><FaFilePen className="blog-title-icon" /> Blogs</h1>
+        <h1 className="blog-title">
+          <FaFilePen className="blog-title-icon" /> Blogs
+        </h1>
         <div className="blog-actions">
           <button className="btn btn-primary" onClick={handleCreateBlog}>
             <FaPlus /> New Blog
