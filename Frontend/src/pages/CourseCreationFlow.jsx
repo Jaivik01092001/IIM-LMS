@@ -74,17 +74,15 @@ const CourseCreationFlow = () => {
     useEffect(() => {
         if (isEditMode && currentCourse && !isLoading) {
             console.log('Populating form with course data:', currentCourse);
-            
+
             // Process modules to ensure they have the correct structure
             const processedModules = currentCourse.modules.map(module => {
-                // Ensure module has the correct structure
                 return {
                     _id: module._id,
                     title: module.title || "",
                     description: module.description || "",
                     order: module.order || 0,
                     content: module.content || [],
-                    // If module has a quiz, include it directly
                     quiz: module.quiz || null
                 };
             });
@@ -98,7 +96,6 @@ const CourseCreationFlow = () => {
                     type: item.type || "text",
                     textContent: item.textContent || "",
                     fileUrl: item.fileUrl || "",
-                    // Don't include file object as it's not needed for display
                 };
             });
 
@@ -113,13 +110,13 @@ const CourseCreationFlow = () => {
                     questions: quiz.questions || []
                 };
             });
-            
+
             // Set initial form data from existing course
             setCourseData({
                 title: currentCourse.title || "",
                 shortDescription: currentCourse.description || "",
                 language: currentCourse.language || "en",
-                thumbnail: currentCourse.thumbnail ? `${import.meta.env.VITE_IMAGE_URL}${currentCourse.thumbnail}` : "",
+                thumbnail: currentCourse.thumbnail || "",
 
                 hasModules: currentCourse.hasModules ?? true,
                 modules: processedModules,
@@ -202,20 +199,24 @@ const CourseCreationFlow = () => {
             // Prepare form data for API
             const formData = new FormData();
 
-            // Log courseData to identify any issues
-            console.log("Course data being submitted:", courseData);
-
-            // Add basic text fields - ensure proper naming for API
+            // Add basic text fields
             formData.append("title", courseData.title || "");
             formData.append("description", courseData.shortDescription || "");
             formData.append("language", courseData.language || "en");
             formData.append("duration", courseData.duration || "");
             formData.append("status", courseData.status !== undefined ? courseData.status : 1);
             formData.append("isDraft", courseData.isDraft !== undefined ? courseData.isDraft : true);
-            formData.append("hasModules", true); // Always use modules
+            formData.append("hasModules", true);
+
+            // Add thumbnail file if it exists
+            if (thumbnailFile) {
+                formData.append("thumbnail", thumbnailFile);
+            } else if (courseData.thumbnail) {
+                // If no new file but existing thumbnail URL, keep the existing thumbnail
+                formData.append("thumbnail", courseData.thumbnail);
+            }
 
             // Add arrays as JSON strings
-            // Use a helper function to safely stringify arrays
             const safeStringify = (obj) => {
                 try {
                     return JSON.stringify(obj || []);
@@ -225,14 +226,10 @@ const CourseCreationFlow = () => {
                 }
             };
 
-            // Handle modules - we need to process quizzes and remove file objects before stringifying
+            // Handle modules
             const modulesForSubmission = courseData.modules.map(module => {
-                // Create a clean copy without file objects
                 const { quiz, ...cleanModule } = module;
-
-                // If module has a quiz, add it with proper structure
                 if (quiz) {
-                    // Extract only the necessary quiz data
                     cleanModule.quiz = {
                         _id: quiz._id,
                         title: quiz.title,
@@ -242,66 +239,42 @@ const CourseCreationFlow = () => {
                         passingScore: quiz.passingScore || 60
                     };
                 }
-
                 return cleanModule;
             });
             formData.append("modules", safeStringify(modulesForSubmission));
 
-            // Handle content - we need to remove file objects before stringifying
+            // Handle content
             const contentForSubmission = courseData.content.map(item => {
-                // Create a clean copy without file objects
                 const { file, ...cleanItem } = item;
                 return cleanItem;
             });
             formData.append("content", safeStringify(contentForSubmission));
 
-            // Add content files separately
-            courseData.content.forEach((item, index) => {
-                if (item.file) {
-                    formData.append(`contentFiles[${index}]`, item.file);
-                    // Make sure we're sending the temporary ID as is
-                    formData.append(`contentFileIds[${index}]`, item._id);
-                    console.log(`Adding content file for ID: ${item._id}`);
-                }
+            // Handle quizzes
+            const quizzesForSubmission = courseData.quizzes.map(quiz => {
+                return {
+                    _id: quiz._id,
+                    title: quiz.title,
+                    description: quiz.description,
+                    questions: quiz.questions || [],
+                    timeLimit: quiz.timeLimit || 30,
+                    passingScore: quiz.passingScore || 60
+                };
             });
+            formData.append("quizzes", safeStringify(quizzesForSubmission));
 
-            // Log content IDs for debugging
-            console.log('Content items:', courseData.content.map(item => ({ id: item._id, title: item.title })));
-
-            formData.append("quizzes", safeStringify(courseData.quizzes));
-
-            // Add creator reference
-            formData.append("creator", user.id);
-
-            // Add thumbnail file if exists
-            if (thumbnailFile) {
-                formData.append("thumbnail", thumbnailFile);
-            } else if (courseData.thumbnail) {
-                // If using existing thumbnail from edit mode
-                formData.append("thumbnailUrl", courseData.thumbnail);
-            }
-
-            // Log all formData entries for debugging
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + (typeof pair[1] === 'object' ? 'File object' : pair[1]));
-            }
-
+            // Submit the form
             if (isEditMode) {
-                // Update existing course
-                await dispatch(updateCourseThunk({
-                    id,
-                    formData
-                })).unwrap();
+                await dispatch(updateCourseThunk({ id, formData })).unwrap();
             } else {
-                // Create new course
                 await dispatch(createCourseThunk(formData)).unwrap();
             }
 
-            // Navigate to courses list
-            navigate("/dashboard/admin/courses");
+            // Navigate to course list after successful submission
+            navigate("/courses");
         } catch (error) {
             console.error("Error submitting course:", error);
-            setFormErrors(error.response?.data?.errors || { general: error.message || "Failed to save course" });
+            setFormErrors({ submit: "Failed to submit course. Please try again." });
         } finally {
             setIsSubmitting(false);
         }

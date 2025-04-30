@@ -28,6 +28,7 @@ const CourseInfoStep = ({
     // Update thumbnail preview when courseData changes
     useEffect(() => {
         if (courseData.thumbnail && !thumbnailPreview) {
+            // If we have a thumbnail URL but no preview, set the preview
             setThumbnailPreview(courseData.thumbnail);
         }
     }, [courseData.thumbnail]);
@@ -48,7 +49,7 @@ const CourseInfoStep = ({
             setThumbnailFile(file);
             const previewUrl = URL.createObjectURL(file);
             setThumbnailPreview(previewUrl);
-            updateCourseData({ thumbnail: previewUrl });
+            // Don't update courseData.thumbnail here as we'll handle it in the parent
         } else {
             alert("Please select an image file for the thumbnail");
         }
