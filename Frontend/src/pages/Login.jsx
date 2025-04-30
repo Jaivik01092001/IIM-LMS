@@ -18,22 +18,22 @@ import { showSuccessToast, showErrorToast } from "../utils/toast";
 // Test credentials data
 const TEST_CREDENTIALS = [
   {
-    role: "Super Admin",
+    role: "Admin",
     email: "jaivik.patel@fabaf.in",
     phone: "+919664774890",
   },
   {
-    role: "Super Admin",
+    role: "Admin",
     email: "nishant@fabaf.in",
     phone: "+918980905254",
   },
   {
-    role: "IIM Staff",
+    role: "Staff",
     email: "fabaf2021@gmail.com",
     phone: "+919924294542",
   },
   {
-    role: "School Admin",
+    role: "University",
     email: "zeel.fabaf@gmail.com",
     phone: "+919904424789",
   },
@@ -221,24 +221,22 @@ const Login = () => {
       showErrorToast("Phone number must be exactly 10 digits.");
       return;
     }
-  
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showErrorToast("Please enter a valid email address.");
       return;
     }
-  
+
     const formattedPhone = phone.startsWith("+91")
       ? phone
       : "+91" + phone.replace(/^0+/, "");
-  
+
     // Instantly flip to OTP screen
     dispatch({ type: "auth/otpRequestedManually" });
-  
+
     // Dispatch OTP request
     dispatch(requestOTPThunk({ phoneNumber: formattedPhone, email }));
   };
-  
-  
 
   /**
    * Handles OTP input changes

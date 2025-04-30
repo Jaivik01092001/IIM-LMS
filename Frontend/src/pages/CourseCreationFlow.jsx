@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createCourseThunk, updateCourseThunk, getCourseThunk } from "../redux/admin/adminSlice";
-import { FaArrowLeft, FaArrowRight, FaCheck, FaUpload, FaImage, FaFileAlt, FaVideo, FaTimes } from "react-icons/fa";
+import {
+    createCourseThunk,
+    updateCourseThunk,
+    getCourseThunk,
+} from "../redux/admin/adminSlice";
+import {
+    FaArrowLeft,
+    FaArrowRight,
+    FaCheck,
+    FaUpload,
+    FaImage,
+    FaFileAlt,
+    FaVideo,
+    FaTimes,
+} from "react-icons/fa";
 import "../assets/styles/CourseCreationFlow.css";
 
 // Stepper components
@@ -28,6 +41,7 @@ const CourseCreationFlow = () => {
     const [formErrors, setFormErrors] = useState({});
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
 
     // Combined form data
     const [courseData, setCourseData] = useState({
@@ -38,53 +52,117 @@ const CourseCreationFlow = () => {
         thumbnail: "",
 
         // Step 2: Curriculum
-        hasModules: true, // Always use modules
-        modules: [], // Array of { title, description, content: [], quiz: null }
-        content: [], // For legacy support
-        quizzes: [], // For legacy support
+        hasModules: true,
+        modules: [],
+        content: [],
+        quizzes: [],
 
         // Step 3: Course Settings & Status
         duration: "",
-        status: 1, // 1=active, 0=inactive
-        isDraft: true, // true=draft, false=published
-        enrolledUsers: []
+        status: 1,
+        isDraft: true,
+        enrolledUsers: [],
     });
 
     // Fetch course data if in edit mode
     useEffect(() => {
         if (isEditMode) {
-            dispatch(getCourseThunk(id));
+            setIsLoading(true);
+            dispatch(getCourseThunk(id))
+                .unwrap()
+                .then((response) => {
+                    console.log("Fetched course data:", response);
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    console.error("Error fetching course:", error);
+                    setIsLoading(false);
+                });
+        } else {
+            setIsLoading(false);
         }
     }, [dispatch, isEditMode, id]);
 
     // Populate form with existing course data in edit mode
     useEffect(() => {
-        if (isEditMode && currentCourse) {
+        if (isEditMode && currentCourse && !isLoading) {
+            console.log("Populating form with course data:", currentCourse);
+
+            // Process modules to ensure they have the correct structure
+            const processedModules = currentCourse.modules.map((module) => {
+                // Ensure module has the correct structure
+                return {
+                    _id: module._id,
+                    title: module.title || "",
+                    description: module.description || "",
+                    order: module.order || 0,
+                    content: module.content || [],
+                    // If module has a quiz, include it directly
+                    quiz: module.quiz || null,
+                };
+            });
+
+            // Process content items
+            const processedContent = currentCourse.content.map((item) => {
+                return {
+                    _id: item._id,
+                    title: item.title || "",
+                    description: item.description || "",
+                    type: item.type || "text",
+                    textContent: item.textContent || "",
+                    fileUrl: item.fileUrl || "",
+                    // Don't include file object as it's not needed for display
+                };
+            });
+
+            // Process quizzes
+            const processedQuizzes = currentCourse.quizzes.map((quiz) => {
+                return {
+                    _id: quiz._id,
+                    title: quiz.title || "",
+                    description: quiz.description || "",
+                    timeLimit: quiz.timeLimit || 30,
+                    passingScore: quiz.passingScore || 60,
+                    questions: quiz.questions || [],
+                };
+            });
+
             // Set initial form data from existing course
             setCourseData({
                 title: currentCourse.title || "",
-                shortDescription: currentCourse.description?.substring(0, 200) || "",
+                shortDescription: currentCourse.description || "",
                 language: currentCourse.language || "en",
                 thumbnail: currentCourse.thumbnail || "",
 
-                hasModules: true, // Always use modules
-                modules: currentCourse.modules || [],
-                content: currentCourse.content || [],
-                quizzes: currentCourse.quizzes || [],
+                hasModules: currentCourse.hasModules ?? true,
+                modules: processedModules,
+                content: processedContent,
+                quizzes: processedQuizzes,
 
                 duration: currentCourse.duration || "",
-
                 status: currentCourse.status ?? 1,
                 isDraft: currentCourse.isDraft ?? true,
-                enrolledUsers: currentCourse.enrolledUsers || []
+                enrolledUsers: currentCourse.enrolledUsers || [],
             });
 
             // Set thumbnail preview if exists
             if (currentCourse.thumbnail) {
-                setThumbnailPreview(currentCourse.thumbnail);
+                setThumbnailPreview(
+                    `${import.meta.env.VITE_IMAGE_URL}${currentCourse.thumbnail}`
+                );
             }
         }
-    }, [isEditMode, currentCourse]);
+    }, [isEditMode, currentCourse, isLoading]);
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Loading course data...</p>
+            </div>
+        );
+    }
 
     // Navigate between steps
     const handleNext = () => {
@@ -104,9 +182,9 @@ const CourseCreationFlow = () => {
 
     // Handle form data updates from child components
     const updateCourseData = (stepData) => {
-        setCourseData(prev => ({
+        setCourseData((prev) => ({
             ...prev,
-            ...stepData
+            ...stepData,
         }));
     };
 
@@ -117,8 +195,10 @@ const CourseCreationFlow = () => {
 
         // Basic validation for required fields
         if (!courseData.title) errors.title = "Course title is required";
-        if (!courseData.shortDescription) errors.shortDescription = "Short description is required";
-        if (!thumbnailFile && !courseData.thumbnail) errors.thumbnail = "Thumbnail is required";
+        if (!courseData.shortDescription)
+            errors.shortDescription = "Short description is required";
+        if (!thumbnailFile && !courseData.thumbnail)
+            errors.thumbnail = "Thumbnail is required";
 
         // Curriculum validation
         if (!courseData.modules || courseData.modules.length === 0) {
@@ -147,8 +227,14 @@ const CourseCreationFlow = () => {
             formData.append("description", courseData.shortDescription || "");
             formData.append("language", courseData.language || "en");
             formData.append("duration", courseData.duration || "");
-            formData.append("status", courseData.status !== undefined ? courseData.status : 1);
-            formData.append("isDraft", courseData.isDraft !== undefined ? courseData.isDraft : true);
+            formData.append(
+                "status",
+                courseData.status !== undefined ? courseData.status : 1
+            );
+            formData.append(
+                "isDraft",
+                courseData.isDraft !== undefined ? courseData.isDraft : true
+            );
             formData.append("hasModules", true); // Always use modules
 
             // Add arrays as JSON strings
@@ -163,7 +249,7 @@ const CourseCreationFlow = () => {
             };
 
             // Handle modules - we need to process quizzes and remove file objects before stringifying
-            const modulesForSubmission = courseData.modules.map(module => {
+            const modulesForSubmission = courseData.modules.map((module) => {
                 // Create a clean copy without file objects
                 const { quiz, ...cleanModule } = module;
 
@@ -176,7 +262,7 @@ const CourseCreationFlow = () => {
                         description: quiz.description,
                         questions: quiz.questions || [],
                         timeLimit: quiz.timeLimit || 30,
-                        passingScore: quiz.passingScore || 60
+                        passingScore: quiz.passingScore || 60,
                     };
                 }
 
@@ -185,7 +271,7 @@ const CourseCreationFlow = () => {
             formData.append("modules", safeStringify(modulesForSubmission));
 
             // Handle content - we need to remove file objects before stringifying
-            const contentForSubmission = courseData.content.map(item => {
+            const contentForSubmission = courseData.content.map((item) => {
                 // Create a clean copy without file objects
                 const { file, ...cleanItem } = item;
                 return cleanItem;
@@ -203,7 +289,10 @@ const CourseCreationFlow = () => {
             });
 
             // Log content IDs for debugging
-            console.log('Content items:', courseData.content.map(item => ({ id: item._id, title: item.title })));
+            console.log(
+                "Content items:",
+                courseData.content.map((item) => ({ id: item._id, title: item.title }))
+            );
 
             formData.append("quizzes", safeStringify(courseData.quizzes));
 
@@ -220,15 +309,21 @@ const CourseCreationFlow = () => {
 
             // Log all formData entries for debugging
             for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + (typeof pair[1] === 'object' ? 'File object' : pair[1]));
+                console.log(
+                    pair[0] +
+                    ": " +
+                    (typeof pair[1] === "object" ? "File object" : pair[1])
+                );
             }
 
             if (isEditMode) {
                 // Update existing course
-                await dispatch(updateCourseThunk({
-                    id,
-                    formData
-                })).unwrap();
+                await dispatch(
+                    updateCourseThunk({
+                        id,
+                        formData,
+                    })
+                ).unwrap();
             } else {
                 // Create new course
                 await dispatch(createCourseThunk(formData)).unwrap();
@@ -238,7 +333,11 @@ const CourseCreationFlow = () => {
             navigate("/dashboard/admin/courses");
         } catch (error) {
             console.error("Error submitting course:", error);
-            setFormErrors(error.response?.data?.errors || { general: error.message || "Failed to save course" });
+            setFormErrors(
+                error.response?.data?.errors || {
+                    general: error.message || "Failed to save course",
+                }
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -290,7 +389,7 @@ const CourseCreationFlow = () => {
         "Course Info + Media",
         "Curriculum",
         "Course Settings",
-        "Review & Submit"
+        "Review & Submit",
     ];
 
     return (
@@ -308,7 +407,8 @@ const CourseCreationFlow = () => {
                 {steps.map((label, index) => (
                     <div
                         key={index}
-                        className={`step ${index === activeStep ? "active" : ""} ${index < activeStep ? "completed" : ""}`}
+                        className={`step ${index === activeStep ? "active" : ""} ${index < activeStep ? "completed" : ""
+                            }`}
                         onClick={() => handleStepClick(index)}
                     >
                         <div className="step-number">
@@ -320,9 +420,7 @@ const CourseCreationFlow = () => {
             </div>
 
             {/* Step content */}
-            <div className="step-content">
-                {renderStepContent()}
-            </div>
+            <div className="step-content">{renderStepContent()}</div>
 
             {/* Navigation buttons */}
             <div className="navigation-buttons">

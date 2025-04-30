@@ -97,7 +97,7 @@
 
 .details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -196,17 +196,35 @@
   .school-badge {
     width: 100%;
   }
+
+  .info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .info-row label {
+    min-width: 100%;
+    font-weight: 600;
+  }
 }
 
 @media (max-width: 500px) {
   .educator-header {
     display: grid;
-
     gap: 1rem;
   }
 
   .school-badge {
     width: 100%;
+  }
+
+  .details-section {
+    padding: 0.75rem;
+  }
+
+  .details-section h2 {
+    font-size: var(--basefont);
+    margin-bottom: 1rem;
   }
 }
 
@@ -228,17 +246,17 @@
 }
 
 .status-toggle-btn.activate {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .status-toggle-btn.activate:hover {
-  background-color: #43A047;
+  background-color: #43a047;
 }
 
 .status-toggle-btn.deactivate {
-  background-color: #F44336;
+  background-color: #f44336;
 }
 
 .status-toggle-btn.deactivate:hover {
-  background-color: #E53935;
+  background-color: #e53935;
 }

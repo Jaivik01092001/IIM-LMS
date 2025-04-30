@@ -340,7 +340,10 @@ const BlogForm = () => {
             </small>
             {imagePreview && (
               <div className="blog-image-preview">
-                <img src={imagePreview} alt="Preview" />
+                <img 
+                  src={isEditMode && !imagePreview.startsWith('data:') ? `${VITE_IMAGE_URL}${imagePreview}` : imagePreview} 
+                  alt="Preview" 
+                />
               </div>
             )}
           </div>

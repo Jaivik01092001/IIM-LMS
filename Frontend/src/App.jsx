@@ -34,7 +34,6 @@ import SchoolAccountForm from "./pages/SchoolAccountForm.jsx";
 import Educators from "./pages/Educators.jsx";
 import EducatorDetails from "./pages/EducatorDetails.jsx";
 import EducatorAccountForm from "./pages/EducatorAccountForm.jsx";
-import CourseForm from "./pages/CourseForm.jsx";
 import CourseCreationFlow from "./pages/CourseCreationFlow.jsx";
 import Notification from "./pages/Notification.jsx";
 import RolePermission from "./pages/RolePermission.jsx";
@@ -66,7 +65,6 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/course/:id" element={<CourseDetail />} />
-          {/* Moved to dashboard layout */}
 
           {/* Dashboard routes with shared layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
@@ -75,14 +73,9 @@ const App = () => {
 
             {/* Admin routes */}
             <Route path="admin" element={<AdminDashboard />} />
-            <Route
-              path="admin/courses"
-              element={<Courses userType="admin" />}
-            />
-            <Route path="admin/courses/add" element={<CourseForm />} />
+            <Route path="admin/courses" element={<Courses userType="admin" />} />
             <Route path="admin/courses/create" element={<CourseCreationFlow />} />
             <Route path="admin/courses/edit-flow/:id" element={<CourseCreationFlow />} />
-            <Route path="admin/courses/edit/:id" element={<CourseForm />} />
             <Route path="admin/courses/:id" element={<CourseDetail />} />
             <Route path="admin/schools" element={<Schools />} />
             <Route
@@ -93,123 +86,47 @@ const App = () => {
                 </Suspense>
               }
             />
-            <Route
-              path="admin/school-account-form/:id"
-              element={<SchoolAccountForm />}
-            />
-            <Route
-              path="admin/school-account-form"
-              element={<SchoolAccountForm />}
-            />
-            <Route
-              path="admin/educators"
-              element={<Educators userType="admin" />}
-            />
-            <Route
-              path="admin/educator-details"
-              element={<EducatorDetails />}
-            />
-            <Route
-              path="admin/educator-account-form"
-              element={<EducatorAccountForm />}
-            />
+            <Route path="admin/school-account-form/:id" element={<SchoolAccountForm />} />
+            <Route path="admin/school-account-form" element={<SchoolAccountForm />} />
+            <Route path="admin/educators" element={<Educators userType="admin" />} />
+            <Route path="admin/educator-details" element={<EducatorDetails />} />
+            <Route path="admin/educator-account-form" element={<EducatorAccountForm />} />
             {/* Staff management routes */}
             <Route path="admin/staffs" element={<Staffs />} />
             <Route path="admin/staff-details/:id" element={<StaffDetails />} />
             <Route path="admin/staff-account-form/:id" element={<StaffAccountForm />} />
             <Route path="admin/staff-account-form" element={<StaffAccountForm />} />
-            <Route
-              path="admin/notification"
-              element={<Notification userType="admin" />}
-            />
-            <Route
-              path="admin/role-permission"
-              element={<RolePermission />}
-            />
-            <Route
-              path="admin/blogs"
-              element={<Blog />}
-            />
-            <Route
-              path="admin/blog/create"
-              element={<BlogForm />}
-            />
-            <Route
-              path="admin/blog/edit/:id"
-              element={<BlogForm />}
-            />
-            <Route
-              path="admin/blog/:id"
-              element={<BlogDetail />}
-            />
+            <Route path="admin/notification" element={<Notification userType="admin" />} />
+            <Route path="admin/role-permission" element={<RolePermission />} />
+            <Route path="admin/blogs" element={<Blog />} />
+            <Route path="admin/blog/create" element={<BlogForm />} />
+            <Route path="admin/blog/edit/:id" element={<BlogForm />} />
+            <Route path="admin/blog/:id" element={<BlogDetail />} />
 
             {/* School routes */}
             <Route path="school" element={<SchoolDashboard />} />
-            <Route
-              path="school/courses"
-              element={<Courses userType="school" />}
-            />
-            <Route path="school/courses/add" element={<CourseForm />} />
+            <Route path="school/courses" element={<Courses userType="school" />} />
             <Route path="school/courses/create" element={<CourseCreationFlow />} />
             <Route path="school/courses/edit-flow/:id" element={<CourseCreationFlow />} />
-            <Route path="school/courses/edit/:id" element={<CourseForm />} />
             <Route path="school/courses/:id" element={<CourseDetail />} />
-            <Route
-              path="school/educators"
-              element={<Educators userType="school" />}
-            />
-            <Route
-              path="school/notification"
-              element={<Notification userType="school" />}
-            />
-            <Route
-              path="school/blogs"
-              element={<Blog />}
-            />
-            <Route
-              path="school/blog/create"
-              element={<BlogForm />}
-            />
-            <Route
-              path="school/blog/edit/:id"
-              element={<BlogForm />}
-            />
-            <Route
-              path="school/blog/:id"
-              element={<BlogDetail />}
-            />
+            <Route path="school/educators" element={<Educators userType="school" />} />
+            <Route path="school/notification" element={<Notification userType="school" />} />
+            <Route path="school/blogs" element={<Blog />} />
+            <Route path="school/blog/create" element={<BlogForm />} />
+            <Route path="school/blog/edit/:id" element={<BlogForm />} />
+            <Route path="school/blog/:id" element={<BlogDetail />} />
 
             {/* Tutor routes */}
             <Route path="tutor" element={<TutorDashboard />} />
-            <Route
-              path="tutor/courses"
-              element={<Courses userType="tutor" />}
-            />
-            <Route path="tutor/courses/add" element={<CourseForm />} />
+            <Route path="tutor/courses" element={<Courses userType="tutor" />} />
             <Route path="tutor/courses/create" element={<CourseCreationFlow />} />
             <Route path="tutor/courses/edit-flow/:id" element={<CourseCreationFlow />} />
-            <Route path="tutor/courses/edit/:id" element={<CourseForm />} />
             <Route path="tutor/courses/:id" element={<CourseDetail />} />
-            <Route
-              path="tutor/notification"
-              element={<Notification userType="tutor" />}
-            />
-            <Route
-              path="tutor/blogs"
-              element={<Blog />}
-            />
-            <Route
-              path="tutor/blog/create"
-              element={<BlogForm />}
-            />
-            <Route
-              path="tutor/blog/edit/:id"
-              element={<BlogForm />}
-            />
-            <Route
-              path="tutor/blog/:id"
-              element={<BlogDetail />}
-            />
+            <Route path="tutor/notification" element={<Notification userType="tutor" />} />
+            <Route path="tutor/blogs" element={<Blog />} />
+            <Route path="tutor/blog/create" element={<BlogForm />} />
+            <Route path="tutor/blog/edit/:id" element={<BlogForm />} />
+            <Route path="tutor/blog/:id" element={<BlogDetail />} />
 
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />

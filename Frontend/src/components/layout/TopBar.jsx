@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FaBars, FaBell, FaCog, FaSignOutAlt } from 'react-icons/fa';
-import { useNavigate, useLocation } from 'react-router-dom';
-import '../../assets/styles/TopBar.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
+import { useNavigate, useLocation } from "react-router-dom";
+import "../../assets/styles/TopBar.css";
 
 /**
  * TopBar component for the dashboard
@@ -9,75 +9,157 @@ import '../../assets/styles/TopBar.css';
 const TopBar = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userName, setUserName] = useState('User');
-  const [userRole, setUserRole] = useState('');
-  const [dashboardType, setDashboardType] = useState('');
-  const [pageTitle, setPageTitle] = useState('');
+  const [userName, setUserName] = useState("User");
+  const [userRole, setUserRole] = useState("");
+  const [dashboardType, setDashboardType] = useState("");
+  const [pageTitle, setPageTitle] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Get user info from localStorage
   useEffect(() => {
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
-        setUserName(userData.name || 'User');
+        setUserName(userData.name || "User");
 
         // Set user role and dashboard type
-        const role = userData.role || '';
+        const role = userData.role || "";
         setUserRole(role);
 
-        // Set formatted role title
-        if (role === 'admin') {
-          setDashboardType('Admin');
-        } else if (role === 'university') {
-          setDashboardType('School');
-        } else if (role === 'educator') {
-          setDashboardType('Tutor');
+        // Set formatted dashboard type based on standardized role mapping
+        if (role === "admin") {
+          setDashboardType("Admin"); // Super Admin -> Admin Dashboard
+        } else if (role === "staff") {
+          setDashboardType("Admin"); // IIM Staff -> Admin Dashboard (same as Super Admin)
+        } else if (role === "university") {
+          setDashboardType("School"); // School Admin -> School Dashboard
+        } else if (role === "educator") {
+          setDashboardType("Educator"); // Educator -> Educator Dashboard (was "Tutor")
         } else {
-          setDashboardType('Tutor'); // Default fallback
+          setDashboardType("User"); // Default fallback
         }
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error("Error parsing user data:", error);
       }
     }
   }, []);
 
   // Function to get page title based on route
-  const getPageTitle = useCallback((path) => {
-    // Extract the path segments
-    const pathSegments = path.split('/');
+  const getPageTitle = useCallback(
+    (path) => {
+      // Extract the path segments
+      const pathSegments = path.split("/");
 
-    // Filter out empty segments
-    const filteredSegments = pathSegments.filter(segment => segment);
+      // Filter out empty segments
+      const filteredSegments = pathSegments.filter((segment) => segment);
 
-    // If we have at least 2 segments (dashboard/something)
-    if (filteredSegments.length >= 2) {
-      const lastSegment = filteredSegments[filteredSegments.length - 1];
+      // If we have at least 2 segments (dashboard/something)
+      if (filteredSegments.length >= 2) {
+        // Create a more comprehensive title map
+        const titleMap = {
+          // Dashboard paths - always show "Dashboard" for main dashboard pages
+          "dashboard/admin": "Dashboard",
+          "dashboard/school": "Dashboard",
+          "dashboard/tutor": "Dashboard",
+          admin: "Dashboard",
+          school: "Dashboard",
+          tutor: "Dashboard",
 
-      // Map of route segments to page titles
-      const titleMap = {
-        'admin': 'Dashboard',
-        'school': 'School Dashboard',
-        'tutor': 'Tutor Dashboard',
-        'courses': 'All Courses',
-        'schools': 'Universities/Schools',
-        'educators': 'Educators',
-        'notification': 'Notifications',
-        'settings': 'Settings'
-      };
+          // Course paths
+          courses: "All Courses",
+          "courses/add": "Add Course",
+          "courses/create": "Create Course",
+          "courses/edit": "Edit Course",
 
-      return titleMap[lastSegment] || `${dashboardType} Dashboard`;
-    }
+          // User management paths - match exactly with Sidebar names
+          schools: "Universities/Schools",
+          "school-details": "School Details",
+          "school-account-form": "School Account Form",
+          educators: "Educators",
+          "educator-details": "Educator Details",
+          "educator-account-form": "Educator Account Form",
+          staffs: "IIM Staff",
+          "staff-details": "Staff Details",
+          "staff-account-form": "Staff Account Form",
 
-    // Default to dashboard type if no specific page is found
-    return `${dashboardType} Dashboard`;
-  }, [dashboardType]);
+          // Other paths
+          "role-permission": "Role & Permission",
+          notification: "Notifications",
+          settings: "Settings",
+          blogs: "Blogs",
+
+          // User management parent menu
+          users: "Users",
+        };
+
+        // Try different matching strategies in order of specificity
+
+        // 1. Check for exact path match first (excluding the first segment 'dashboard')
+        const routePath = filteredSegments.slice(1).join("/");
+        if (titleMap[routePath]) {
+          return titleMap[routePath];
+        }
+
+        // 2. Check for partial path matches (for nested routes)
+        // Try with 3 segments (e.g., admin/courses/add)
+        if (filteredSegments.length >= 4) {
+          const threeSegmentPath = filteredSegments.slice(1, 4).join("/");
+          if (titleMap[threeSegmentPath]) {
+            return titleMap[threeSegmentPath];
+          }
+        }
+
+        // Try with 2 segments (e.g., admin/courses)
+        if (filteredSegments.length >= 3) {
+          const twoSegmentPath = filteredSegments.slice(1, 3).join("/");
+          if (titleMap[twoSegmentPath]) {
+            return titleMap[twoSegmentPath];
+          }
+        }
+
+        // 3. If no exact match, check for the last segment
+        const lastSegment = filteredSegments[filteredSegments.length - 1];
+        if (titleMap[lastSegment]) {
+          return titleMap[lastSegment];
+        }
+
+        // 4. If still no match, check if it's a detail page (has an ID at the end)
+        if (filteredSegments.length >= 3) {
+          const secondLastSegment =
+            filteredSegments[filteredSegments.length - 2];
+          if (titleMap[secondLastSegment]) {
+            return titleMap[secondLastSegment];
+          }
+        }
+
+        // 5. For edit pages with IDs
+        if (
+          lastSegment.match(/^[a-f0-9]{24}$/i) &&
+          filteredSegments.length >= 4
+        ) {
+          const editSegment = filteredSegments[filteredSegments.length - 3];
+          const itemType = filteredSegments[filteredSegments.length - 2];
+          if (editSegment === "edit" && titleMap[itemType]) {
+            return `Edit ${titleMap[itemType].replace(/s$/, "")}`;
+          }
+        }
+      }
+
+      // Default to dashboard type if no specific page is found
+      return `${dashboardType} Dashboard`;
+    },
+    [dashboardType]
+  );
 
   // Update page title based on current route
   useEffect(() => {
     const path = location.pathname;
-    setPageTitle(getPageTitle(path));
+    const newTitle = getPageTitle(path);
+    setPageTitle(newTitle);
+
+    // Update document title as well for better UX
+    document.title = `IIM LMS - ${newTitle}`;
   }, [location, getPageTitle]);
 
   // Handle profile dropdown toggle
@@ -87,16 +169,16 @@ const TopBar = ({ toggleSidebar }) => {
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/');
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   // Get profile picture or initials
   const getInitials = (name) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
@@ -128,15 +210,19 @@ const TopBar = ({ toggleSidebar }) => {
 
         {/* User profile */}
         <div className="user-profile" onClick={toggleDropdown}>
-          <div className="avatar">
-            {getInitials(userName)}
-          </div>
+          <div className="avatar">{getInitials(userName)}</div>
           <div className="user-info">
             <span className="user-name">{userName}</span>
             <span className="user-role">
-              {userRole === 'admin' ? 'Administrator' :
-               userRole === 'university' ? 'School Admin' :
-               userRole === 'educator' ? 'Tutor' : 'User'}
+              {userRole === "admin"
+                ? "Super Admin"
+                : userRole === "staff"
+                ? "IIM Staff"
+                : userRole === "university"
+                ? "School Admin"
+                : userRole === "educator"
+                ? "Educator"
+                : "User"}
             </span>
           </div>
 

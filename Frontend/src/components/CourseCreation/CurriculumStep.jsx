@@ -48,9 +48,15 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
                     // Add quiz if it exists
                     if (module.quiz) {
-                        const quizItem = quizzes.find(q => q._id === module.quiz);
-                        if (quizItem) {
-                            moduleData.quiz = quizItem;
+                        // If quiz is already an object (from edit mode), use it directly
+                        if (typeof module.quiz === 'object') {
+                            moduleData.quiz = module.quiz;
+                        } else {
+                            // Otherwise, find the quiz in the quizzes array
+                            const quizItem = quizzes.find(q => q._id === module.quiz);
+                            if (quizItem) {
+                                moduleData.quiz = quizItem;
+                            }
                         }
                     }
 
@@ -377,24 +383,29 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         // Only add a simple null check to prevent errors
         if (!quiz) return null;
 
+        // Ensure quiz has the required properties
+        const quizTitle = quiz.title || "Untitled Quiz";
+        const quizDescription = quiz.description || "";
+        const questionsCount = quiz.questions?.length || 0;
+
         return (
             <div className="quiz-item" key={quiz._id}>
                 <div className="quiz-item-icon">
                     <FaQuestionCircle />
                 </div>
                 <div className="quiz-item-info">
-                    <h4>{quiz.title}</h4>
-                    {quiz.description && <p>{quiz.description}</p>}
+                    <h4>{quizTitle}</h4>
+                    {quizDescription && <p>{quizDescription}</p>}
                     <span className="quiz-questions-count">
-                        {quiz.questions?.length || 0} questions
+                        {questionsCount} questions
                     </span>
                 </div>
                 <div className="quiz-item-actions">
                     <button onClick={() => {
                         setEditingQuizId(quiz._id);
                         setQuizFormData({
-                            title: quiz.title,
-                            description: quiz.description,
+                            title: quizTitle,
+                            description: quizDescription,
                             questions: quiz.questions || []
                         });
                     }}>
@@ -717,9 +728,17 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                         <h5>Content</h5>
                                                         <div className="content-list">
                                                             {module.content && module.content.length > 0 ? (
-                                                                content
-                                                                    .filter(item => module.content.includes(item._id))
-                                                                    .map(item => renderContentItem(item, module._id))
+                                                                // First try to find content in the module's content array
+                                                                module.content.map(contentId => {
+                                                                    // If contentId is an object, use it directly
+                                                                    if (typeof contentId === 'object') {
+                                                                        return renderContentItem(contentId, module._id);
+                                                                    } else {
+                                                                        // Otherwise, find the content in the content array
+                                                                        const contentItem = content.find(item => item._id === contentId);
+                                                                        return contentItem ? renderContentItem(contentItem, module._id) : null;
+                                                                    }
+                                                                }).filter(Boolean) // Remove any null items
                                                             ) : (
                                                                 <p className="no-items">No content in this module yet.</p>
                                                             )}
@@ -738,21 +757,27 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                         <h5>Quiz</h5>
                                                         {module.quiz ? (
                                                             <div className="quiz-container">
-                                                                {/* Simple null check before rendering */}
+                                                                {/* Handle both object and ID references */}
                                                                 {(() => {
-                                                                    const quiz = quizzes.find(q => q._id === module.quiz);
-                                                                    return quiz ? renderQuizItem(quiz, module._id) : (
-                                                                        <div className="no-quiz">
-                                                                            <p>Quiz not found. Please add a new quiz.</p>
-                                                                            <button
-                                                                                className="add-quiz-button"
-                                                                                onClick={() => addQuizToModule(module._id)}
-                                                                            >
-                                                                                <FaPlus />
-                                                                                <span>Add Quiz</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    );
+                                                                    // If quiz is already an object, use it directly
+                                                                    if (typeof module.quiz === 'object') {
+                                                                        return renderQuizItem(module.quiz, module._id);
+                                                                    } else {
+                                                                        // Otherwise, find the quiz in the quizzes array
+                                                                        const quiz = quizzes.find(q => q._id === module.quiz);
+                                                                        return quiz ? renderQuizItem(quiz, module._id) : (
+                                                                            <div className="no-quiz">
+                                                                                <p>Quiz not found. Please add a new quiz.</p>
+                                                                                <button
+                                                                                    className="add-quiz-button"
+                                                                                    onClick={() => addQuizToModule(module._id)}
+                                                                                >
+                                                                                    <FaPlus />
+                                                                                    <span>Add Quiz</span>
+                                                                                </button>
+                                                                            </div>
+                                                                        );
+                                                                    }
                                                                 })()}
                                                             </div>
                                                         ) : (
