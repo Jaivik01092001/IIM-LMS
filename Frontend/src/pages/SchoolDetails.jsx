@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   getUniversityByIdThunk,
   deleteUniversityThunk,
@@ -15,6 +16,7 @@ const SchoolDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { currentUniversity, loading } = useSelector((state) => state.admin);
 
   // State to hold formatted school data
@@ -82,7 +84,7 @@ const SchoolDetails = () => {
 
   const handleDelete = () => {
     if (
-      window.confirm(`Are you sure you want to delete "${schoolData.school}"?`)
+      window.confirm(t("schools.confirmDelete", { name: schoolData.school }))
     ) {
       dispatch(deleteUniversityThunk(schoolData.id))
         .unwrap()
@@ -119,11 +121,20 @@ const SchoolDetails = () => {
   };
 
   if (loading && !schoolData) {
-    return <LoadingSpinner size="large" message="Loading school details..." />;
+    return (
+      <LoadingSpinner
+        size="large"
+        message={t("schools.loadingSchoolDetails")}
+      />
+    );
   }
 
   if (!schoolData) {
-    return <div className="school-details-error">School details not found</div>;
+    return (
+      <div className="school-details-error">
+        {t("schools.schoolDetailsNotFound")}
+      </div>
+    );
   }
 
   return (
@@ -143,7 +154,9 @@ const SchoolDetails = () => {
           )}
           <div className="educator-text">
             <h1>{schoolData.owner}</h1>
-            <span className="category">Category: {schoolData.category}</span>
+            <span className="category">
+              {t("common.category")}: {schoolData.category}
+            </span>
           </div>
         </div>
         <div className="school-badge">
@@ -157,57 +170,59 @@ const SchoolDetails = () => {
 
       <div className="details-grid">
         <div className="details-section">
-          <h2>Basic Information</h2>
+          <h2>{t("schools.basicInformation")}</h2>
           <div className="info-content">
             <div className="info-row">
-              <label>Email:</label>
+              <label>{t("common.email")}:</label>
               <span>{schoolData.email}</span>
             </div>
             <div className="info-row">
-              <label>Phone:</label>
+              <label>{t("common.phone")}:</label>
               <span>{schoolData.mobile}</span>
             </div>
             <div className="info-row">
-              <label>Role:</label>
+              <label>{t("common.role")}:</label>
               <span>{schoolData.role}</span>
             </div>
             <div className="info-row">
-              <label>Contact Person:</label>
+              <label>{t("schools.contactPerson")}:</label>
               <span>{schoolData.owner}</span>
             </div>
           </div>
         </div>
 
         <div className="details-section">
-          <h2>Address Information</h2>
+          <h2>{t("schools.addressInformation")}</h2>
           <div className="info-content">
             <div className="info-row">
-              <label>Address:</label>
+              <label>{t("common.address")}:</label>
               <span>{schoolData.address}</span>
             </div>
             <div className="info-row">
-              <label>Zipcode:</label>
+              <label>{t("common.zipCode")}:</label>
               <span>{schoolData.zipcode}</span>
             </div>
             <div className="info-row">
-              <label>State:</label>
+              <label>{t("common.state")}:</label>
               <span>{schoolData.state}</span>
             </div>
           </div>
         </div>
 
         <div className="details-section">
-          <h2>Status Information</h2>
+          <h2>{t("schools.statusInformation")}</h2>
           <div className="info-content">
             <div className="info-row">
-              <label>Current Status:</label>
+              <label>{t("schools.currentStatus")}:</label>
               <div className="status-toggle-container">
                 <span
                   className={
                     schoolData.status ? "text-green-600" : "text-red-600"
                   }
                 >
-                  {schoolData.status ? "Active" : "Inactive"}
+                  {schoolData.status
+                    ? t("common.active")
+                    : t("common.inactive")}
                 </span>
                 <button
                   className={`status-toggle-btn ${
@@ -215,27 +230,29 @@ const SchoolDetails = () => {
                   }`}
                   onClick={handleStatusToggle}
                 >
-                  {schoolData.status ? "Deactivate" : "Activate"}
+                  {schoolData.status
+                    ? t("common.deactivate")
+                    : t("common.activate")}
                 </button>
               </div>
             </div>
             <div className="info-row">
-              <label>Created At:</label>
+              <label>{t("schools.createdAt")}:</label>
               <span>{schoolData.createdAt}</span>
             </div>
             <div className="info-row">
-              <label>Updated At:</label>
+              <label>{t("schools.updatedAt")}:</label>
               <span>{schoolData.updatedAt}</span>
             </div>
             <div className="info-row">
-              <label>Version:</label>
+              <label>{t("common.version")}:</label>
               <span>{schoolData.__v}</span>
             </div>
           </div>
         </div>
 
         <div className="details-section">
-          <h2>Educators</h2>
+          <h2>{t("educators.educators")}</h2>
           <div className="info-content">
             {schoolData.educators && schoolData.educators.length > 0 ? (
               schoolData.educators.map((educator, index) => (
@@ -245,7 +262,7 @@ const SchoolDetails = () => {
               ))
             ) : (
               <div className="info-row">
-                <span>No educators assigned yet</span>
+                <span>{t("educators.noEducatorsAssigned")}</span>
               </div>
             )}
           </div>
@@ -254,7 +271,7 @@ const SchoolDetails = () => {
 
       <div className="action-buttons">
         <button className="delete-btn" onClick={handleDelete}>
-          Delete
+          {t("common.delete")}
         </button>
         <button
           className="edit-btn"
@@ -263,7 +280,7 @@ const SchoolDetails = () => {
             navigate(`/dashboard/admin/school-account-form/${schoolData.id}`);
           }}
         >
-          Edit
+          {t("common.edit")}
         </button>
       </div>
     </div>

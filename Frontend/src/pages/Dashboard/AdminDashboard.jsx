@@ -4,6 +4,7 @@ import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   getUniversitiesThunk,
   getCoursesThunk,
@@ -19,6 +20,7 @@ const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
@@ -193,7 +195,8 @@ const AdminDashboard = () => {
       .unwrap()
       .then(() => {
         console.log(
-          `Successfully ${row.status ? "deactivated" : "activated"} ${row.title
+          `Successfully ${row.status ? "deactivated" : "activated"} ${
+            row.title
           }`
         );
         // Refresh courses data
@@ -328,7 +331,7 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       {isLoading && (
-        <LoadingSpinner overlay={true} message="Loading dashboard data..." />
+        <LoadingSpinner overlay={true} message={t("common.loading")} />
       )}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
@@ -338,7 +341,7 @@ const AdminDashboard = () => {
             <FaBook className="icondesign3" />
           </div>
           <div className="stat-count">{courses?.length || 0}</div>
-          <div className="stat-title">Total Courses</div>
+          <div className="stat-title">{t("dashboard.totalCourses")}</div>
         </div>
 
         <div className="stat-card schools">
@@ -349,7 +352,7 @@ const AdminDashboard = () => {
           <div className="stat-count">
             {universityCount || universities?.length || 0}
           </div>
-          <div className="stat-title">Total Schools</div>
+          <div className="stat-title">{t("dashboard.totalSchools")}</div>
         </div>
 
         <div className="stat-card educators">
@@ -360,7 +363,7 @@ const AdminDashboard = () => {
           <div className="stat-count">
             {educatorCount || educatorsCountFromUniversities}
           </div>
-          <div className="stat-title">Total Educators</div>
+          <div className="stat-title">{t("dashboard.totalEducators")}</div>
         </div>
       </div>
 
@@ -368,20 +371,20 @@ const AdminDashboard = () => {
       <div className="dashboard-section">
         <div className="section-header">
           <h2 className="section-title">
-            All Courses ({courses?.length || 0})
+            {t("courses.courses")} ({courses?.length || 0})
           </h2>
           <div className="header-actions">
             <button
               className="add-course-btn"
               onClick={() => navigate("/dashboard/admin/courses/create")}
             >
-              Add Course
+              {t("common.add")} {t("courses.course")}
             </button>
             <button
               className="view-all-btn"
               onClick={() => navigate("/dashboard/admin/courses")}
             >
-              View All Courses
+              {t("common.view")} {t("courses.allCourses")}
             </button>
           </div>
         </div>
@@ -390,7 +393,7 @@ const AdminDashboard = () => {
         <div className="search-filter-container">
           <input
             type="text"
-            placeholder="Search Courses"
+            placeholder={t("common.search") + " " + t("courses.courses")}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -400,7 +403,7 @@ const AdminDashboard = () => {
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
-            <option value="">All Categories</option>
+            <option value="">{t("courses.allCategories")}</option>
             {categories.map((category, index) => (
               <option key={index} value={category}>
                 {category}
@@ -412,12 +415,16 @@ const AdminDashboard = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="">Sort by</option>
-            <option value="title-asc">Title (A-Z)</option>
-            <option value="title-desc">Title (Z-A)</option>
-            <option value="level-asc">Level (Beginner-Advanced)</option>
-            <option value="level-desc">Level (Advanced-Beginner)</option>
-            <option value="status">Status</option>
+            <option value="">{t("courses.sortBy")}</option>
+            <option value="title-asc">{t("courses.title")} (A-Z)</option>
+            <option value="title-desc">{t("courses.title")} (Z-A)</option>
+            <option value="level-asc">
+              {t("courses.level")} ({t("courses.beginnerToAdvanced")})
+            </option>
+            <option value="level-desc">
+              {t("courses.level")} ({t("courses.advancedToBeginner")})
+            </option>
+            <option value="status">{t("courses.status")}</option>
           </select>
         </div>
 

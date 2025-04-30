@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import DataTable from "react-data-table-component";
 import "../assets/styles/DataTable.css";
 
@@ -10,6 +11,7 @@ const DataTableComponent = ({
   showSearch = true,
   pagination = true,
 }) => {
+  const { t } = useTranslation();
   const [filterText, setFilterText] = useState("");
 
   // Process columns to convert boolean attributes to strings
@@ -45,11 +47,17 @@ const DataTableComponent = ({
     });
   }, [data, filterText]);
 
+  // Use the custom search placeholder or default to translated 'Search...'
+  const translatedSearchPlaceholder =
+    searchPlaceholder === "Search..."
+      ? t("common.search") + "..."
+      : searchPlaceholder;
+
   const subHeaderComponent = showSearch ? (
     <div className="search-container">
       <input
         type="text"
-        placeholder={searchPlaceholder}
+        placeholder={translatedSearchPlaceholder}
         value={filterText}
         onChange={(e) => setFilterText(e.target.value)}
         className="search-input"
@@ -70,6 +78,7 @@ const DataTableComponent = ({
         highlightOnHover
         pointerOnHover
         responsive
+        noDataComponent={t("common.noResults")}
       />
     </div>
   );

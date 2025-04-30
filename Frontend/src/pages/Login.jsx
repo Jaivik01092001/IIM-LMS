@@ -13,6 +13,7 @@ import {
   resetOTPState,
 } from "../redux/auth/authSlice";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { showSuccessToast, showErrorToast } from "../utils/toast";
 
 // Test credentials data
@@ -48,13 +49,15 @@ const TEST_CREDENTIALS = [
  * Modal component for displaying test credentials
  */
 const CredentialsModal = ({ isOpen, onClose, onUseCredential }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3>Test Credentials</h3>
+          <h3>{t("auth.testCredentials")}</h3>
           <button className="close-btn" onClick={onClose}>
             <IoClose />
           </button>
@@ -63,13 +66,17 @@ const CredentialsModal = ({ isOpen, onClose, onUseCredential }) => {
           {TEST_CREDENTIALS.map((cred, index) => (
             <div key={index} className="credential-card">
               <h4>{cred.role}</h4>
-              <p>Email: {cred.email}</p>
-              <p>Phone: {cred.phone}</p>
+              <p>
+                {t("common.email")}: {cred.email}
+              </p>
+              <p>
+                {t("common.phone")}: {cred.phone}
+              </p>
               <button
                 className="w-full bg-blue-600 text-white font-medium p-4 rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition duration-200"
                 onClick={() => onUseCredential(cred)}
               >
-                Use Credential
+                {t("auth.useCredential")}
               </button>
             </div>
           ))}
@@ -85,6 +92,7 @@ const CredentialsModal = ({ isOpen, onClose, onUseCredential }) => {
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { loading, otpRequested, userId, debugOtp } = useSelector(
     (state) => state.auth
   );
@@ -157,7 +165,7 @@ const Login = () => {
 
     // Validate OTP
     if (otp.length !== 6) {
-      showErrorToast("Enter a valid 6-digit OTP.");
+      showErrorToast(t("auth.enterValidOTP"));
       return;
     }
 
@@ -187,7 +195,7 @@ const Login = () => {
       if (result.payload && result.payload.message) {
         showErrorToast(result.payload.message);
       } else {
-        showErrorToast("Invalid OTP. Try again.");
+        showErrorToast(t("auth.invalidOTP"));
       }
       setOtpValues(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
@@ -218,12 +226,12 @@ const Login = () => {
    */
   const handleLogin = async () => {
     if (!/^[0-9]{10}$/.test(phone)) {
-      showErrorToast("Phone number must be exactly 10 digits.");
+      showErrorToast(t("auth.enterValidPhone"));
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showErrorToast("Please enter a valid email address.");
+      showErrorToast(t("auth.enterValidEmail"));
       return;
     }
 
@@ -311,11 +319,11 @@ const Login = () => {
             {!otpRequested ? (
               /* Login form */
               <>
-                <h3>Login to your account</h3>
+                <h3>{t("auth.loginToAccount")}</h3>
 
                 {/* Phone input */}
                 <div className="form-group">
-                  <label>Phone</label>
+                  <label>{t("common.phone")}</label>
                   <div className="phone-input-wrapper">
                     <span className="phone-prefix">
                       <IoPhonePortraitOutline className="phoneIcon" /> +91
@@ -334,7 +342,7 @@ const Login = () => {
 
                 {/* Email input */}
                 <div className="form-group">
-                  <label>Email</label>
+                  <label>{t("common.email")}</label>
                   <input
                     type="email"
                     placeholder="abc@example.com"
@@ -349,7 +357,7 @@ const Login = () => {
                   onClick={handleLogin}
                   disabled={loading}
                 >
-                  {loading ? "Requesting OTP..." : "Login Now"}
+                  {loading ? t("auth.requestingOTP") : t("auth.loginNow")}
                 </button>
 
                 {/* Test credentials button */}
@@ -357,14 +365,16 @@ const Login = () => {
                   className="test-credentials-btn"
                   onClick={() => setShowCredentialsModal(true)}
                 >
-                  <FaInfoCircle /> Show Test Credentials
+                  <FaInfoCircle /> {t("auth.showTestCredentials")}
                 </button>
               </>
             ) : (
               /* OTP verification form */
               <>
-                <h3>OTP Verification</h3>
-                <p>Enter the OTP sent to +91 {phone}</p>
+                <h3>{t("auth.otpVerification")}</h3>
+                <p>
+                  {t("auth.enterOTPSentTo")} +91 {phone}
+                </p>
 
                 {/* OTP input fields with paste functionality */}
                 <div
@@ -389,9 +399,7 @@ const Login = () => {
                   ))}
                 </div>
 
-                <p className="otp-note">
-                  Enter all 6 digits or paste your OTP to verify automatically
-                </p>
+                <p className="otp-note">{t("auth.otpNote")}</p>
 
                 {/* Show debug OTP in development mode */}
                 {debugOtp && (
@@ -413,7 +421,7 @@ const Login = () => {
                         textAlign: "center",
                       }}
                     >
-                      Development OTP: <strong>{debugOtp}</strong>
+                      {t("auth.developmentOTP")}: <strong>{debugOtp}</strong>
                     </p>
                   </div>
                 )}
@@ -421,9 +429,9 @@ const Login = () => {
                 {/* Resend OTP timer/button */}
                 <p className="resend">
                   {showResendButton ? (
-                    <a onClick={handleResendOTP}>Resend OTP</a>
+                    <a onClick={handleResendOTP}>{t("auth.resendOTP")}</a>
                   ) : (
-                    `Resend in ${timer}s`
+                    `${t("auth.resendIn")} ${timer}s`
                   )}
                 </p>
 
@@ -432,7 +440,7 @@ const Login = () => {
                   className="back-login"
                   onClick={() => dispatch(resetOTPState())}
                 >
-                  ← Back To Login
+                  {t("auth.backToLogin")}
                 </p>
               </>
             )}
