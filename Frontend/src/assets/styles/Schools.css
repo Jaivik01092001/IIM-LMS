@@ -331,9 +331,8 @@
   flex-shrink: 0;
 }
 
-
 .status-indicator:before {
-  content: '';
+  content: "";
   position: absolute;
   top: -10px;
   right: -10px;
@@ -344,7 +343,7 @@
 }
 
 .status-indicator.active {
-  background-color: #4CAF50;
+  background-color: var(--primary-color);
   border-color: transparent;
 }
 
@@ -403,4 +402,3 @@
   padding: 8px;
   box-sizing: border-box;
 }
-

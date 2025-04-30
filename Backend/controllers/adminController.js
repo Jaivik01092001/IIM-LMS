@@ -1,20 +1,24 @@
-const Content = require('../models/Content');
-const Course = require('../models/Course');
-const User = require('../models/User');
-const Module = require('../models/Module');
-const Quiz = require('../models/Quiz');
-const bcrypt = require('bcryptjs');
-const { formatPhoneNumber } = require('../utils/phoneUtils');
+const Content = require("../models/Content");
+const Course = require("../models/Course");
+const User = require("../models/User");
+const Module = require("../models/Module");
+const Quiz = require("../models/Quiz");
+const bcrypt = require("bcryptjs");
+const { formatPhoneNumber } = require("../utils/phoneUtils");
 
 exports.getUniversities = async (req, res) => {
   try {
     // Return all users with role='university' regardless of status
-    const universities = await User.find({ role: 'university' })
-      .populate('educators', 'name email phoneNumber status')
-      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
+    const universities = await User.find({ role: "university" })
+      .populate("educators", "name email phoneNumber status")
+      .select(
+        "-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires"
+      );
     res.json(universities);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving universities', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving universities", error: error.message });
   }
 };
 
@@ -22,7 +26,7 @@ exports.createUniversity = async (req, res, next) => {
   try {
     console.log("Request body:", req.body);
     console.log("Request headers:", req.headers);
-    console.log("Content-Type:", req.headers['content-type']);
+    console.log("Content-Type:", req.headers["content-type"]);
     console.log("Request files:", req.files);
 
     // Log all keys in the request body
@@ -33,7 +37,9 @@ exports.createUniversity = async (req, res, next) => {
     const name = req.body.name || req.body.schoolName;
     const email = req.body.email;
     const roleId = req.body.roleId;
-    const phoneNumber = req.body.phoneNumber || (req.body.phone ? req.body.phone.replace(/^\+91\s*/, '') : null);
+    const phoneNumber =
+      req.body.phoneNumber ||
+      (req.body.phone ? req.body.phone.replace(/^\+91\s*/, "") : null);
     const address = req.body.address;
     const zipcode = req.body.zipcode;
     const state = req.body.state;
@@ -48,30 +54,36 @@ exports.createUniversity = async (req, res, next) => {
       rawSchoolName: req.body.schoolName,
       rawEmail: req.body.email,
       rawPhoneNumber: req.body.phoneNumber,
-      rawPhone: req.body.phone
+      rawPhone: req.body.phone,
     });
 
     if (!name || !email || !phoneNumber) {
       return res.status(400).json({
-        message: 'Missing required fields',
+        message: "Missing required fields",
         details: {
-          name: name ? 'provided' : 'missing',
-          email: email ? 'provided' : 'missing',
-          phoneNumber: phoneNumber ? 'provided' : 'missing'
-        }
+          name: name ? "provided" : "missing",
+          email: email ? "provided" : "missing",
+          phoneNumber: phoneNumber ? "provided" : "missing",
+        },
       });
     }
 
     // Check if university with this email already exists
-    const existingUniversity = await User.findOne({ email, role: 'university' });
+    const existingUniversity = await User.findOne({
+      email,
+      role: "university",
+    });
     if (existingUniversity) {
-      return res.status(400).json({ message: 'University with this email already exists' });
+      return res
+        .status(400)
+        .json({ message: "University with this email already exists" });
     }
 
     // Create a new university user without password (using OTP-based login)
+    // Using standardized role mapping: UI: School Admin -> DB: university
     const universityUser = new User({
       email,
-      role: 'university',
+      role: "university", // DB role value for School Admin
       name,
       phoneNumber,
       roleRef: roleId || undefined, // Assign role if provided
@@ -81,15 +93,16 @@ exports.createUniversity = async (req, res, next) => {
         address,
         zipcode,
         state,
-        avatar: req.file ? `/uploads/profiles/${req.file.filename}` : null
-      }
+        avatar: req.file ? `/uploads/profiles/${req.file.filename}` : null,
+      },
     });
 
     await universityUser.save();
 
     // Return the university user without sensitive fields
-    const universityData = await User.findById(universityUser._id)
-      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
+    const universityData = await User.findById(universityUser._id).select(
+      "-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires"
+    );
 
     res.json(universityData);
   } catch (error) {
@@ -101,18 +114,22 @@ exports.getUniversityById = async (req, res) => {
   try {
     const university = await User.findOne({
       _id: req.params.id,
-      role: 'university'
+      role: "university",
     })
-      .populate('educators', 'name email phoneNumber status')
-      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
+      .populate("educators", "name email phoneNumber status")
+      .select(
+        "-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires"
+      );
 
     if (!university) {
-      return res.status(404).json({ message: 'University not found' });
+      return res.status(404).json({ message: "University not found" });
     }
 
     res.json(university);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving university', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving university", error: error.message });
   }
 };
 
@@ -120,20 +137,22 @@ exports.deleteUniversity = async (req, res) => {
   try {
     const university = await User.findOne({
       _id: req.params.id,
-      role: 'university'
+      role: "university",
     });
 
     if (!university) {
-      return res.status(404).json({ message: 'University not found' });
+      return res.status(404).json({ message: "University not found" });
     }
 
     // Soft delete - update status to 0 (inactive)
     university.status = 0;
     await university.save();
 
-    res.json({ message: 'University deleted successfully' });
+    res.json({ message: "University deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting university', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting university", error: error.message });
   }
 };
 
@@ -150,7 +169,8 @@ exports.updateUniversity = async (req, res) => {
     const name = req.body.name || req.body.schoolName;
     const email = req.body.email;
     const phone = req.body.phone;
-    const phoneNumber = req.body.phoneNumber || (phone ? phone.replace(/^\+91\s*/, '') : null);
+    const phoneNumber =
+      req.body.phoneNumber || (phone ? phone.replace(/^\+91\s*/, "") : null);
     const address = req.body.address;
     const zipcode = req.body.zipcode;
     const state = req.body.state;
@@ -167,23 +187,23 @@ exports.updateUniversity = async (req, res) => {
       address,
       zipcode,
       state,
-      keepExistingImage
+      keepExistingImage,
     });
 
     const university = await User.findOne({
       _id: req.params.id,
-      role: 'university'
+      role: "university",
     });
 
     if (!university) {
-      return res.status(404).json({ message: 'University not found' });
+      return res.status(404).json({ message: "University not found" });
     }
 
     // Update basic fields
     if (name) university.name = name;
     if (email) university.email = email;
     if (phoneNumber) university.phoneNumber = phoneNumber;
-    if (phone) university.phoneNumber = phone.replace(/^\+91\s*/, '');
+    if (phone) university.phoneNumber = phone.replace(/^\+91\s*/, "");
     if (contactPerson) university.contactPerson = contactPerson;
 
     // Update profile fields
@@ -196,7 +216,7 @@ exports.updateUniversity = async (req, res) => {
     if (req.file) {
       university.profile.avatar = `/uploads/profiles/${req.file.filename}`;
       console.log("Updated profile image to:", university.profile.avatar);
-    } else if (req.body.keepExistingImage === 'true') {
+    } else if (req.body.keepExistingImage === "true") {
       // Keep existing image, no need to update
       console.log("Keeping existing profile image:", university.profile.avatar);
     }
@@ -211,7 +231,7 @@ exports.updateUniversity = async (req, res) => {
       university.roleRef = req.body.roleId;
 
       // Update role name based on roleId
-      const Role = require('../models/Role');
+      const Role = require("../models/Role");
       const role = await Role.findById(req.body.roleId);
       if (role) {
         university.role = role.name.toLowerCase();
@@ -223,12 +243,16 @@ exports.updateUniversity = async (req, res) => {
 
     // Return updated university without sensitive fields
     const updatedUniversity = await User.findById(university._id)
-      .populate('educators', 'name email phoneNumber status')
-      .select('-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires');
+      .populate("educators", "name email phoneNumber status")
+      .select(
+        "-password -refreshToken -otp -otpExpires -passwordResetToken -passwordResetExpires"
+      );
 
     res.json(updatedUniversity);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating university', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating university", error: error.message });
   }
 };
 
@@ -237,13 +261,15 @@ exports.getContent = async (req, res) => {
     const { search, filter } = req.query;
     let query = { activeStatus: 1 }; // Only return active content
 
-    if (search) query.title = { $regex: search, $options: 'i' };
+    if (search) query.title = { $regex: search, $options: "i" };
     if (filter) query.status = filter;
 
-    const content = await Content.find(query).populate('creator', 'name');
+    const content = await Content.find(query).populate("creator", "name");
     res.json(content);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving content', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving content", error: error.message });
   }
 };
 
@@ -270,18 +296,18 @@ exports.createContent = async (req, res) => {
     const fileUrl = req.file ? req.file.path : null;
 
     if (!fileUrl) {
-      return res.status(400).json({ msg: 'File upload failed' });
+      return res.status(400).json({ msg: "File upload failed" });
     }
 
     // Determine media type based on file extension
-    let mediaType = 'document';
+    let mediaType = "document";
     let mimeType = req.file.mimetype;
-    const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+    const fileExt = req.file.originalname.split(".").pop().toLowerCase();
 
-    if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) {
-      mediaType = 'video';
-    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-      mediaType = 'image';
+    if (["mp4", "mov", "avi", "mkv"].includes(fileExt)) {
+      mediaType = "video";
+    } else if (["jpg", "jpeg", "png", "gif", "webp"].includes(fileExt)) {
+      mediaType = "image";
     }
 
     const content = new Content({
@@ -289,12 +315,18 @@ exports.createContent = async (req, res) => {
       description,
       fileUrl,
       creator: req.user.id,
-      status: 'approved',
-      type: type || (mediaType === 'video' ? 'video' : mediaType === 'image' ? 'image' : 'document'),
+      status: "approved",
+      type:
+        type ||
+        (mediaType === "video"
+          ? "video"
+          : mediaType === "image"
+          ? "image"
+          : "document"),
       mediaType,
       mimeType,
       size: req.file.size,
-      module: moduleId || null
+      module: moduleId || null,
     });
 
     await content.save();
@@ -312,15 +344,14 @@ exports.createContent = async (req, res) => {
 
     res.json(content);
   } catch (error) {
-    res.status(500).json({ msg: error.message || 'Server Error' });
+    res.status(500).json({ msg: error.message || "Server Error" });
   }
 };
-
 
 exports.updateContent = async (req, res) => {
   const { title, description } = req.body;
   const content = await Content.findById(req.params.id);
-  if (!content) return res.status(404).json({ msg: 'Content not found' });
+  if (!content) return res.status(404).json({ msg: "Content not found" });
   content.title = title || content.title;
   content.description = description || content.description;
   await content.save();
@@ -328,14 +359,14 @@ exports.updateContent = async (req, res) => {
 };
 exports.approveContent = async (req, res) => {
   const content = await Content.findById(req.params.id);
-  content.status = 'approved';
+  content.status = "approved";
   await content.save();
   res.json(content);
 };
 
 exports.rejectContent = async (req, res) => {
   const content = await Content.findById(req.params.id);
-  content.status = 'rejected';
+  content.status = "rejected";
   await content.save();
   res.json(content);
 };
@@ -345,16 +376,18 @@ exports.deleteContent = async (req, res) => {
     const content = await Content.findById(req.params.id);
 
     if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
+      return res.status(404).json({ message: "Content not found" });
     }
 
     // Soft delete - update activeStatus to 0 (inactive)
     content.activeStatus = 0;
     await content.save();
 
-    res.json({ message: 'Content deleted successfully' });
+    res.json({ message: "Content deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting content', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting content", error: error.message });
   }
 };
 
@@ -362,10 +395,12 @@ exports.deleteContent = async (req, res) => {
 exports.getCourses = async (req, res) => {
   try {
     // Return all courses regardless of status
-    const courses = await Course.find().populate('creator', 'name');
+    const courses = await Course.find().populate("creator", "name");
     res.json(courses);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving courses', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving courses", error: error.message });
   }
 };
 
@@ -373,35 +408,37 @@ exports.getCourses = async (req, res) => {
 exports.getCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate('creator', 'name')
-      .populate('content')
+      .populate("creator", "name")
+      .populate("content")
       .populate({
-        path: 'modules',
+        path: "modules",
         populate: [
           {
-            path: 'content',
-            model: 'Content'
+            path: "content",
+            model: "Content",
           },
           {
-            path: 'quiz',
-            model: 'Quiz'
-          }
-        ]
+            path: "quiz",
+            model: "Quiz",
+          },
+        ],
       })
       .populate({
-        path: 'quizzes',
+        path: "quizzes",
         // Include all quiz fields including questions
-        select: 'title description questions timeLimit passingScore attempts'
+        select: "title description questions timeLimit passingScore attempts",
       });
 
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     res.json(course);
   } catch (error) {
-    console.error('Error retrieving course:', error);
-    res.status(500).json({ message: 'Error retrieving course', error: error.message });
+    console.error("Error retrieving course:", error);
+    res
+      .status(500)
+      .json({ message: "Error retrieving course", error: error.message });
   }
 };
 
@@ -432,12 +469,12 @@ exports.createCourse = async (req, res) => {
       content,
       quizzes,
       status,
-      isDraft
+      isDraft,
     } = req.body;
 
     // ✅ Use thumbnail from req.files (upload.any())
     let thumbnail = thumbnailUrl;
-    const thumbnailFile = req.files?.find(f => f.fieldname === 'thumbnail');
+    const thumbnailFile = req.files?.find((f) => f.fieldname === "thumbnail");
     if (thumbnailFile) {
       thumbnail = thumbnailFile.path;
     }
@@ -445,9 +482,9 @@ exports.createCourse = async (req, res) => {
     // 🧠 Helper function to parse JSON safely
     const tryParse = (data) => {
       try {
-        return typeof data === 'string' ? JSON.parse(data) : data;
+        return typeof data === "string" ? JSON.parse(data) : data;
       } catch (err) {
-        console.error('Parse error:', err.message);
+        console.error("Parse error:", err.message);
         return [];
       }
     };
@@ -468,19 +505,19 @@ exports.createCourse = async (req, res) => {
     if (parsedContent && parsedContent.length > 0) {
       // Process text content items first - they don't need file uploads
       const textContentPromises = parsedContent
-        .filter(item => item.type === 'text')
+        .filter((item) => item.type === "text")
         .map(async (item) => {
           console.log(`Creating text content item: ${item.title}`);
           const textContentDoc = new Content({
             title: item.title,
             description: item.description,
-            textContent: item.textContent || '',
+            textContent: item.textContent || "",
             creator: req.user.id,
-            status: 'approved',
-            type: 'text',
-            mediaType: 'text',
-            mimeType: 'text/html',
-            module: null
+            status: "approved",
+            type: "text",
+            mediaType: "text",
+            mimeType: "text/html",
+            module: null,
           });
 
           await textContentDoc.save();
@@ -488,7 +525,7 @@ exports.createCourse = async (req, res) => {
 
           return {
             id: item._id,
-            dbId: textContentDoc._id
+            dbId: textContentDoc._id,
           };
         });
 
@@ -501,7 +538,7 @@ exports.createCourse = async (req, res) => {
     if (req.files && req.files.length > 0) {
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
-        if (file.fieldname === 'thumbnail') continue;
+        if (file.fieldname === "thumbnail") continue;
 
         const fieldnameParts = file.fieldname.match(/\[(\d+)\]/);
         if (!fieldnameParts) continue;
@@ -510,27 +547,30 @@ exports.createCourse = async (req, res) => {
         const contentId = contentFileIds[index];
         if (!contentId) continue;
 
-        const contentItem = parsedContent.find(item => item._id === contentId);
+        const contentItem = parsedContent.find(
+          (item) => item._id === contentId
+        );
         if (!contentItem) continue;
 
-        const fileExt = file.originalname.split('.').pop().toLowerCase();
+        const fileExt = file.originalname.split(".").pop().toLowerCase();
         const mimeType = file.mimetype;
 
-        let mediaType = 'document';
-        if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) mediaType = 'video';
-        else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) mediaType = 'image';
+        let mediaType = "document";
+        if (["mp4", "mov", "avi", "mkv"].includes(fileExt)) mediaType = "video";
+        else if (["jpg", "jpeg", "png", "gif", "webp"].includes(fileExt))
+          mediaType = "image";
 
         const contentDoc = new Content({
           title: contentItem.title,
           description: contentItem.description,
           fileUrl: file.path,
           creator: req.user.id,
-          status: 'approved',
+          status: "approved",
           type: contentItem.type || mediaType,
           mediaType,
           mimeType,
           size: file.size,
-          module: null
+          module: null,
         });
 
         await contentDoc.save();
@@ -543,16 +583,16 @@ exports.createCourse = async (req, res) => {
       title,
       description,
       duration,
-      language: language || 'en',
-      level: level || 'beginner',
+      language: language || "en",
+      level: level || "beginner",
       thumbnail,
       hasModules: true, // Always use modules
       modules: [],
-      content: contentItems.map(item => item.dbId),
+      content: contentItems.map((item) => item.dbId),
       quizzes: [],
       status: status !== undefined ? Number(status) : 1,
-      isDraft: isDraft === 'true' || isDraft === true,
-      creator: req.user.id
+      isDraft: isDraft === "true" || isDraft === true,
+      creator: req.user.id,
     });
 
     await course.save();
@@ -561,11 +601,11 @@ exports.createCourse = async (req, res) => {
     if (parsedModules && parsedModules.length > 0) {
       for (const moduleData of parsedModules) {
         const newModule = new Module({
-          title: moduleData.title || 'Untitled Module',
-          description: moduleData.description || '',
+          title: moduleData.title || "Untitled Module",
+          description: moduleData.description || "",
           course: course._id,
           order: moduleData.order || 0,
-          content: []
+          content: [],
         });
 
         await newModule.save();
@@ -574,7 +614,9 @@ exports.createCourse = async (req, res) => {
         // Module content
         if (Array.isArray(moduleData.content)) {
           for (const contentId of moduleData.content) {
-            const newContentItem = contentItems.find(item => item.id === contentId);
+            const newContentItem = contentItems.find(
+              (item) => item.id === contentId
+            );
             if (newContentItem) {
               const dbContentId = newContentItem.dbId;
               newModule.content.push(dbContentId);
@@ -584,7 +626,7 @@ exports.createCourse = async (req, res) => {
                 contentExists.module = newModule._id;
                 await contentExists.save();
               }
-            } else if (!contentId.startsWith('temp_')) {
+            } else if (!contentId.startsWith("temp_")) {
               try {
                 const contentExists = await Content.findById(contentId);
                 if (contentExists) {
@@ -610,7 +652,7 @@ exports.createCourse = async (req, res) => {
             course: course._id,
             questions: quizData.questions || [],
             timeLimit: quizData.timeLimit || 30,
-            passingScore: quizData.passingScore || 60
+            passingScore: quizData.passingScore || 60,
           });
 
           await quiz.save();
@@ -625,17 +667,18 @@ exports.createCourse = async (req, res) => {
 
     // ✅ Final Response
     res.status(201).json({
-      message: 'Course created successfully',
+      message: "Course created successfully",
       course,
-      contentItemsCreated: contentItems.map(c => c.dbId),
-      uploadedFiles: req.files.map(f => f.fieldname)
+      contentItemsCreated: contentItems.map((c) => c.dbId),
+      uploadedFiles: req.files.map((f) => f.fieldname),
     });
   } catch (error) {
-    console.error('Course creation error:', error);
-    res.status(500).json({ message: 'Error creating course', error: error.message });
+    console.error("Course creation error:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating course", error: error.message });
   }
 };
-
 
 // Update a course
 exports.updateCourse = async (req, res) => {
@@ -651,7 +694,7 @@ exports.updateCourse = async (req, res) => {
       content,
       quizzes,
       status,
-      isDraft
+      isDraft,
     } = req.body;
 
     console.log("Update course data:", req.body);
@@ -659,7 +702,7 @@ exports.updateCourse = async (req, res) => {
 
     const course = await Course.findById(req.params.id);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     // Update fields if provided
@@ -683,23 +726,31 @@ exports.updateCourse = async (req, res) => {
 
     if (modules) {
       try {
-        const parsedModules = typeof modules === 'string' ? JSON.parse(modules) : modules;
+        const parsedModules =
+          typeof modules === "string" ? JSON.parse(modules) : modules;
         console.log("Parsed modules in update:", parsedModules);
 
         // Handle module updates
         if (Array.isArray(parsedModules)) {
           // Get existing module IDs
-          const existingModuleIds = course.modules.map(id => id.toString());
+          const existingModuleIds = course.modules.map((id) => id.toString());
 
           // Process each module in the update
           for (const moduleData of parsedModules) {
-            if (moduleData._id && existingModuleIds.includes(moduleData._id.toString())) {
+            if (
+              moduleData._id &&
+              existingModuleIds.includes(moduleData._id.toString())
+            ) {
               // Update existing module
               const existingModule = await Module.findById(moduleData._id);
               if (existingModule) {
                 existingModule.title = moduleData.title || existingModule.title;
-                existingModule.description = moduleData.description || existingModule.description;
-                existingModule.order = moduleData.order !== undefined ? moduleData.order : existingModule.order;
+                existingModule.description =
+                  moduleData.description || existingModule.description;
+                existingModule.order =
+                  moduleData.order !== undefined
+                    ? moduleData.order
+                    : existingModule.order;
 
                 // Update content associations if provided
                 if (moduleData.content && Array.isArray(moduleData.content)) {
@@ -708,12 +759,14 @@ exports.updateCourse = async (req, res) => {
 
                   for (const contentId of moduleData.content) {
                     // Check if this is a newly created content item
-                    const newContentItem = contentItems.find(item => item.id === contentId);
+                    const newContentItem = contentItems.find(
+                      (item) => item.id === contentId
+                    );
 
                     if (newContentItem) {
                       // Use the database ID for newly created content
                       updatedContent.push(newContentItem.dbId);
-                    } else if (!contentId.startsWith('temp_')) {
+                    } else if (!contentId.startsWith("temp_")) {
                       // Only include non-temporary IDs that are valid ObjectIds
                       try {
                         // Verify this is a valid content ID
@@ -722,7 +775,10 @@ exports.updateCourse = async (req, res) => {
                           updatedContent.push(contentId);
                         }
                       } catch (err) {
-                        console.error(`Error finding content with ID ${contentId}:`, err.message);
+                        console.error(
+                          `Error finding content with ID ${contentId}:`,
+                          err.message
+                        );
                         // Skip this content ID if it's invalid
                       }
                     }
@@ -740,7 +796,10 @@ exports.updateCourse = async (req, res) => {
                         await contentExists.save();
                       }
                     } catch (err) {
-                      console.error(`Error updating content reference for ID ${contentId}:`, err.message);
+                      console.error(
+                        `Error updating content reference for ID ${contentId}:`,
+                        err.message
+                      );
                     }
                   }
                 }
@@ -755,10 +814,14 @@ exports.updateCourse = async (req, res) => {
                     const existingQuiz = await Quiz.findById(quizData._id);
                     if (existingQuiz) {
                       existingQuiz.title = quizData.title || existingQuiz.title;
-                      existingQuiz.description = quizData.description || existingQuiz.description;
-                      existingQuiz.questions = quizData.questions || existingQuiz.questions;
-                      existingQuiz.timeLimit = quizData.timeLimit || existingQuiz.timeLimit;
-                      existingQuiz.passingScore = quizData.passingScore || existingQuiz.passingScore;
+                      existingQuiz.description =
+                        quizData.description || existingQuiz.description;
+                      existingQuiz.questions =
+                        quizData.questions || existingQuiz.questions;
+                      existingQuiz.timeLimit =
+                        quizData.timeLimit || existingQuiz.timeLimit;
+                      existingQuiz.passingScore =
+                        quizData.passingScore || existingQuiz.passingScore;
 
                       await existingQuiz.save();
                     }
@@ -766,11 +829,13 @@ exports.updateCourse = async (req, res) => {
                     // Create new quiz
                     const quiz = new Quiz({
                       title: quizData.title || `${existingModule.title} Quiz`,
-                      description: quizData.description || `Quiz for ${existingModule.title}`,
+                      description:
+                        quizData.description ||
+                        `Quiz for ${existingModule.title}`,
                       course: course._id,
                       questions: quizData.questions || [],
                       timeLimit: quizData.timeLimit || 30,
-                      passingScore: quizData.passingScore || 60
+                      passingScore: quizData.passingScore || 60,
                     });
 
                     await quiz.save();
@@ -790,11 +855,11 @@ exports.updateCourse = async (req, res) => {
             } else {
               // Create new module
               const newModule = new Module({
-                title: moduleData.title || 'Untitled Module',
-                description: moduleData.description || '',
+                title: moduleData.title || "Untitled Module",
+                description: moduleData.description || "",
                 course: course._id,
                 order: moduleData.order || 0,
-                content: [] // Initialize with empty content array
+                content: [], // Initialize with empty content array
               });
 
               await newModule.save();
@@ -809,12 +874,14 @@ exports.updateCourse = async (req, res) => {
 
                 for (const contentId of moduleData.content) {
                   // Check if this is a newly created content item
-                  const newContentItem = contentItems.find(item => item.id === contentId);
+                  const newContentItem = contentItems.find(
+                    (item) => item.id === contentId
+                  );
 
                   if (newContentItem) {
                     // Use the database ID for newly created content
                     updatedContent.push(newContentItem.dbId);
-                  } else if (!contentId.startsWith('temp_')) {
+                  } else if (!contentId.startsWith("temp_")) {
                     // Only include non-temporary IDs that are valid ObjectIds
                     try {
                       // Verify this is a valid content ID
@@ -823,7 +890,10 @@ exports.updateCourse = async (req, res) => {
                         updatedContent.push(contentId);
                       }
                     } catch (err) {
-                      console.error(`Error finding content with ID ${contentId}:`, err.message);
+                      console.error(
+                        `Error finding content with ID ${contentId}:`,
+                        err.message
+                      );
                       // Skip this content ID if it's invalid
                     }
                   }
@@ -841,7 +911,10 @@ exports.updateCourse = async (req, res) => {
                       await contentExists.save();
                     }
                   } catch (err) {
-                    console.error(`Error updating content reference for ID ${contentId}:`, err.message);
+                    console.error(
+                      `Error updating content reference for ID ${contentId}:`,
+                      err.message
+                    );
                   }
                 }
 
@@ -855,11 +928,12 @@ exports.updateCourse = async (req, res) => {
                 // Create a new quiz
                 const quiz = new Quiz({
                   title: quizData.title || `${newModule.title} Quiz`,
-                  description: quizData.description || `Quiz for ${newModule.title}`,
+                  description:
+                    quizData.description || `Quiz for ${newModule.title}`,
                   course: course._id,
                   questions: quizData.questions || [],
                   timeLimit: quizData.timeLimit || 30,
-                  passingScore: quizData.passingScore || 60
+                  passingScore: quizData.passingScore || 60,
                 });
 
                 await quiz.save();
@@ -878,14 +952,18 @@ exports.updateCourse = async (req, res) => {
 
           // Remove modules that are no longer in the update
           const updatedModuleIds = parsedModules
-            .filter(m => m._id)
-            .map(m => m._id.toString());
+            .filter((m) => m._id)
+            .map((m) => m._id.toString());
 
-          const modulesToRemove = existingModuleIds.filter(id => !updatedModuleIds.includes(id));
+          const modulesToRemove = existingModuleIds.filter(
+            (id) => !updatedModuleIds.includes(id)
+          );
 
           if (modulesToRemove.length > 0) {
             // Remove modules from course
-            course.modules = course.modules.filter(id => !modulesToRemove.includes(id.toString()));
+            course.modules = course.modules.filter(
+              (id) => !modulesToRemove.includes(id.toString())
+            );
 
             // Delete the modules
             for (const moduleId of modulesToRemove) {
@@ -906,13 +984,17 @@ exports.updateCourse = async (req, res) => {
     }
 
     // Process content files if they exist
-    const contentFileIds = req.body.contentFileIds ?
-      Array.isArray(req.body.contentFileIds) ? req.body.contentFileIds : [req.body.contentFileIds] : [];
+    const contentFileIds = req.body.contentFileIds
+      ? Array.isArray(req.body.contentFileIds)
+        ? req.body.contentFileIds
+        : [req.body.contentFileIds]
+      : [];
 
     // Parse content if it's a string
     let parsedContent;
     try {
-      parsedContent = typeof content === 'string' ? JSON.parse(content) : content || [];
+      parsedContent =
+        typeof content === "string" ? JSON.parse(content) : content || [];
     } catch (err) {
       console.error("Error parsing content JSON:", err);
       parsedContent = [];
@@ -922,11 +1004,16 @@ exports.updateCourse = async (req, res) => {
     const contentItems = [];
 
     // Process content files if any
-    if (req.files && req.files.length > 0 && contentFileIds && contentFileIds.length > 0) {
+    if (
+      req.files &&
+      req.files.length > 0 &&
+      contentFileIds &&
+      contentFileIds.length > 0
+    ) {
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
         // Skip the thumbnail file
-        if (file.fieldname === 'thumbnail') continue;
+        if (file.fieldname === "thumbnail") continue;
 
         // Extract the index from the fieldname (contentFiles[0], contentFiles[1], etc.)
         const fieldnameParts = file.fieldname.match(/\[(\d+)\]/);
@@ -941,20 +1028,22 @@ exports.updateCourse = async (req, res) => {
         }
 
         // Find the content details in the content array
-        const contentItem = parsedContent.find(item => item._id === contentId);
+        const contentItem = parsedContent.find(
+          (item) => item._id === contentId
+        );
         if (!contentItem) {
           console.warn(`Content item not found for ID: ${contentId}`);
           continue;
         }
 
-        let mediaType = 'document';
+        let mediaType = "document";
         let mimeType = file.mimetype;
-        const fileExt = file.originalname.split('.').pop().toLowerCase();
+        const fileExt = file.originalname.split(".").pop().toLowerCase();
 
-        if (['mp4', 'mov', 'avi', 'mkv'].includes(fileExt)) {
-          mediaType = 'video';
-        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-          mediaType = 'image';
+        if (["mp4", "mov", "avi", "mkv"].includes(fileExt)) {
+          mediaType = "video";
+        } else if (["jpg", "jpeg", "png", "gif", "webp"].includes(fileExt)) {
+          mediaType = "image";
         }
 
         // Create a new content item
@@ -963,18 +1052,24 @@ exports.updateCourse = async (req, res) => {
           description: contentItem.description,
           fileUrl: file.path,
           creator: req.user.id,
-          status: 'approved',
-          type: contentItem.type || (mediaType === 'video' ? 'video' : mediaType === 'image' ? 'image' : 'document'),
+          status: "approved",
+          type:
+            contentItem.type ||
+            (mediaType === "video"
+              ? "video"
+              : mediaType === "image"
+              ? "image"
+              : "document"),
           mediaType,
           mimeType,
           size: file.size,
-          module: contentItem.module || null
+          module: contentItem.module || null,
         });
 
         await newContent.save();
         contentItems.push({
           id: contentId,
-          dbId: newContent._id
+          dbId: newContent._id,
         });
       }
     }
@@ -984,10 +1079,10 @@ exports.updateCourse = async (req, res) => {
       try {
         // Process text content items separately - these don't need file uploads
         const textContentPromises = parsedContent
-          .filter(item => item.type === 'text')
+          .filter((item) => item.type === "text")
           .map(async (item) => {
             // If it's not a temp item (already exists in DB), skip creation
-            if (!item._id.startsWith('temp_')) {
+            if (!item._id.startsWith("temp_")) {
               // Update existing text content if it's been edited
               if (item.textContent) {
                 try {
@@ -1000,7 +1095,10 @@ exports.updateCourse = async (req, res) => {
                     console.log(`Updated existing text content: ${item._id}`);
                   }
                 } catch (err) {
-                  console.error(`Error updating existing text content: ${item._id}`, err);
+                  console.error(
+                    `Error updating existing text content: ${item._id}`,
+                    err
+                  );
                 }
               }
               return null;
@@ -1011,13 +1109,13 @@ exports.updateCourse = async (req, res) => {
             const newTextContent = new Content({
               title: item.title,
               description: item.description,
-              textContent: item.textContent || '',
+              textContent: item.textContent || "",
               creator: req.user.id,
-              status: 'approved',
-              type: 'text',
-              mediaType: 'text',
-              mimeType: 'text/html',
-              module: item.module || null
+              status: "approved",
+              type: "text",
+              mediaType: "text",
+              mimeType: "text/html",
+              module: item.module || null,
             });
 
             await newTextContent.save();
@@ -1025,13 +1123,15 @@ exports.updateCourse = async (req, res) => {
 
             return {
               id: item._id,
-              dbId: newTextContent._id
+              dbId: newTextContent._id,
             };
           });
 
         // Filter out null values from items that don't need creation
         const textContentItemsResults = await Promise.all(textContentPromises);
-        const textContentItems = textContentItemsResults.filter(item => item !== null);
+        const textContentItems = textContentItemsResults.filter(
+          (item) => item !== null
+        );
 
         contentItems.push(...textContentItems);
         console.log(`Processed ${textContentItems.length} text content items`);
@@ -1039,10 +1139,18 @@ exports.updateCourse = async (req, res) => {
         // Replace temporary IDs with database IDs for newly created content
         if (contentItems.length > 0) {
           // Filter out content items that have been replaced with new uploads
-          parsedContent = parsedContent.filter(item => !contentItems.some(newItem => newItem && newItem.id === item._id));
+          parsedContent = parsedContent.filter(
+            (item) =>
+              !contentItems.some(
+                (newItem) => newItem && newItem.id === item._id
+              )
+          );
 
           // Add the newly created content items
-          course.content = [...parsedContent, ...contentItems.map(item => item.dbId)];
+          course.content = [
+            ...parsedContent,
+            ...contentItems.map((item) => item.dbId),
+          ];
         } else {
           course.content = parsedContent;
         }
@@ -1053,7 +1161,8 @@ exports.updateCourse = async (req, res) => {
 
     if (quizzes) {
       try {
-        course.quizzes = typeof quizzes === 'string' ? JSON.parse(quizzes) : quizzes;
+        course.quizzes =
+          typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
       } catch (err) {
         console.error("Error parsing quizzes JSON:", err);
       }
@@ -1065,15 +1174,17 @@ exports.updateCourse = async (req, res) => {
     }
 
     if (isDraft !== undefined) {
-      course.isDraft = isDraft === 'true' || isDraft === true;
+      course.isDraft = isDraft === "true" || isDraft === true;
     }
 
     // Save the updated course
     await course.save();
     res.json(course);
   } catch (error) {
-    console.error('Course update error:', error);
-    res.status(500).json({ message: 'Error updating course', error: error.message });
+    console.error("Course update error:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating course", error: error.message });
   }
 };
 
@@ -1082,16 +1193,18 @@ exports.deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     // Soft delete - update status to 0 (inactive)
     course.status = 0;
     await course.save();
 
-    res.json({ message: 'Course deleted successfully' });
+    res.json({ message: "Course deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting course', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting course", error: error.message });
   }
 };
 
@@ -1102,13 +1215,13 @@ exports.addContentToCourse = async (req, res) => {
 
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     // Check if content exists
     const content = await Content.findById(contentId);
     if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
+      return res.status(404).json({ message: "Content not found" });
     }
 
     // Add content to course if not already added
@@ -1119,7 +1232,10 @@ exports.addContentToCourse = async (req, res) => {
 
     res.json(course);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding content to course', error: error.message });
+    res.status(500).json({
+      message: "Error adding content to course",
+      error: error.message,
+    });
   }
 };
 
@@ -1130,7 +1246,7 @@ exports.addQuizToCourse = async (req, res) => {
 
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     // Check if quiz is already in the course
@@ -1141,29 +1257,32 @@ exports.addQuizToCourse = async (req, res) => {
 
     res.json(course);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding quiz to course', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error adding quiz to course", error: error.message });
   }
 };
 
 // Create a quiz
 exports.createQuiz = async (req, res) => {
   try {
-    const { title, description, courseId, questions, timeLimit, passingScore } = req.body;
+    const { title, description, courseId, questions, timeLimit, passingScore } =
+      req.body;
 
     // Check if course exists
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
-    const Quiz = require('../models/Quiz');
+    const Quiz = require("../models/Quiz");
     const quiz = new Quiz({
       title,
       description,
       course: courseId,
       questions: questions || [],
       timeLimit: timeLimit || 30,
-      passingScore: passingScore || 60
+      passingScore: passingScore || 60,
     });
 
     await quiz.save();
@@ -1176,7 +1295,9 @@ exports.createQuiz = async (req, res) => {
 
     res.status(201).json(quiz);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating quiz', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error creating quiz", error: error.message });
   }
 };
 
@@ -1186,10 +1307,10 @@ exports.updateQuiz = async (req, res) => {
     const { title, description, questions, timeLimit, passingScore } = req.body;
     const { quizId } = req.params;
 
-    const Quiz = require('../models/Quiz');
+    const Quiz = require("../models/Quiz");
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
-      return res.status(404).json({ message: 'Quiz not found' });
+      return res.status(404).json({ message: "Quiz not found" });
     }
 
     quiz.title = title || quiz.title;
@@ -1201,20 +1322,23 @@ exports.updateQuiz = async (req, res) => {
     await quiz.save();
     res.json(quiz);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating quiz', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating quiz", error: error.message });
   }
 };
 
 // Get all quizzes
 exports.getQuizzes = async (_, res) => {
   try {
-    const Quiz = require('../models/Quiz');
-    const quizzes = await Quiz.find()
-      .populate('course', 'title');
+    const Quiz = require("../models/Quiz");
+    const quizzes = await Quiz.find().populate("course", "title");
 
     res.json(quizzes);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving quizzes', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving quizzes", error: error.message });
   }
 };
 
@@ -1222,17 +1346,18 @@ exports.getQuizzes = async (_, res) => {
 exports.getQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const Quiz = require('../models/Quiz');
-    const quiz = await Quiz.findById(quizId)
-      .populate('course', 'title');
+    const Quiz = require("../models/Quiz");
+    const quiz = await Quiz.findById(quizId).populate("course", "title");
 
     if (!quiz) {
-      return res.status(404).json({ message: 'Quiz not found' });
+      return res.status(404).json({ message: "Quiz not found" });
     }
 
     res.json(quiz);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving quiz', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving quiz", error: error.message });
   }
 };
 
@@ -1249,45 +1374,49 @@ exports.updatePassword = async (req, res) => {
 
   // Validate passwords match
   if (newPassword !== confirmPassword) {
-    return res.status(400).json({ msg: 'New passwords do not match' });
+    return res.status(400).json({ msg: "New passwords do not match" });
   }
 
   const user = await User.findById(req.user.id);
   if (!user) {
-    return res.status(404).json({ msg: 'User not found' });
+    return res.status(404).json({ msg: "User not found" });
   }
 
   const isMatch = await bcrypt.compare(currentPassword, user.password);
   if (!isMatch) {
-    return res.status(400).json({ msg: 'Invalid current password' });
+    return res.status(400).json({ msg: "Invalid current password" });
   }
 
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
-  res.json({ msg: 'Password updated' });
+  res.json({ msg: "Password updated" });
 };
 
 // Get all users (admin, university, educator)
 exports.getAllUsers = async (_, res) => {
   try {
     // Return all users regardless of status
-    const users = await User.find().select('-password');
+    const users = await User.find().select("-password");
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving users', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving users", error: error.message });
   }
 };
 // Get all educators
 exports.getAllEducators = async (_, res) => {
   try {
     // Return all educators regardless of status or university
-    const educators = await User.find({ role: 'educator' })
-      .populate('university', 'name category')
-      .populate('roleRef', 'name') // Populate the role reference
-      .select('-password');
+    const educators = await User.find({ role: "educator" })
+      .populate("university", "name category")
+      .populate("roleRef", "name") // Populate the role reference
+      .select("-password");
     res.json(educators);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educators', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving educators", error: error.message });
   }
 };
 
@@ -1303,10 +1432,10 @@ exports.createEducator = async (req, res, next) => {
       zipcode,
       state,
       category,
-      schoolName
+      schoolName,
     } = req.body;
 
-    console.log('Admin creating educator with roleId:', roleId);
+    console.log("Admin creating educator with roleId:", roleId);
 
     // Prepare profile object
     const profile = {
@@ -1315,7 +1444,7 @@ exports.createEducator = async (req, res, next) => {
       state,
       category,
       schoolName,
-      socialLinks: {}
+      socialLinks: {},
     };
 
     // Add avatar if profile image was uploaded
@@ -1324,23 +1453,33 @@ exports.createEducator = async (req, res, next) => {
     }
 
     // Determine the role based on roleId
-    let roleName = 'educator'; // Default role
+    // Using standardized role mapping: UI role names -> DB role values
+    let roleName = "educator"; // Default DB role value for Educator
     if (roleId) {
-      const Role = require('../models/Role');
+      const Role = require("../models/Role");
       const role = await Role.findById(roleId);
       if (role) {
-        roleName = role.name.toLowerCase(); // Convert to lowercase
-        console.log('Admin controller - Using role name:', roleName);
+        // Map UI role names to DB role values
+        const roleMappings = {
+          "Super Admin": "admin",
+          "IIM Staff": "staff",
+          "School Admin": "university",
+          Educator: "educator",
+        };
+
+        // Get the DB role value from the mapping, or use lowercase role name as fallback
+        roleName = roleMappings[role.name] || role.name.toLowerCase();
+        console.log("Admin controller - Using role name:", roleName);
       }
     }
 
     const educator = new User({
       email,
-      role: roleName, // Use the determined role name
+      role: roleName, // Use the determined DB role value
       name,
       phoneNumber,
       roleRef: roleId || undefined, // Assign role if provided
-      profile
+      profile,
     });
 
     await educator.save();
@@ -1355,30 +1494,43 @@ exports.getEducatorById = async (req, res) => {
   try {
     const educator = await User.findOne({
       _id: req.params.id,
-      role: 'educator'
+      role: "educator",
     })
-    .populate('roleRef', 'name') // Populate the role reference
-    .select('-password');
+      .populate("roleRef", "name") // Populate the role reference
+      .select("-password");
 
     if (!educator) {
-      return res.status(404).json({ message: 'Educator not found' });
+      return res.status(404).json({ message: "Educator not found" });
     }
 
-    console.log('Educator with populated roleRef:', educator);
+    console.log("Educator with populated roleRef:", educator);
     res.json(educator);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving educator', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving educator", error: error.message });
   }
 };
 
 // Update educator
 exports.updateEducator = async (req, res) => {
   try {
-    const { name, email, phoneNumber, address, zipcode, state, status, category, schoolName, roleId } = req.body;
+    const {
+      name,
+      email,
+      phoneNumber,
+      address,
+      zipcode,
+      state,
+      status,
+      category,
+      schoolName,
+      roleId,
+    } = req.body;
     const educator = await User.findById(req.params.id);
 
     if (!educator) {
-      return res.status(404).json({ message: 'Educator not found' });
+      return res.status(404).json({ message: "Educator not found" });
     }
 
     // Only update fields that are provided
@@ -1390,15 +1542,15 @@ exports.updateEducator = async (req, res) => {
     // Update roleRef and role if roleId is provided
     if (roleId) {
       educator.roleRef = roleId;
-      console.log('Admin controller - Updated roleRef:', roleId);
+      console.log("Admin controller - Updated roleRef:", roleId);
 
       // Fetch the role to get its name
-      const Role = require('../models/Role');
+      const Role = require("../models/Role");
       const role = await Role.findById(roleId);
       if (role) {
         // Update the role field based on the role name (convert to lowercase)
         educator.role = role.name.toLowerCase();
-        console.log('Admin controller - Updated role to:', educator.role);
+        console.log("Admin controller - Updated role to:", educator.role);
       }
     }
 
@@ -1422,6 +1574,8 @@ exports.updateEducator = async (req, res) => {
     await educator.save();
     res.json(educator);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating educator', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating educator", error: error.message });
   }
 };

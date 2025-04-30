@@ -12,14 +12,12 @@ exports.getStaffMembers = catchAsync(async (req, res, next) => {
   // Find the IIM Staff role
   const Role = require("../models/Role");
   const staffRole = await Role.findOne({ name: "IIM Staff" });
-  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
-  // Find all users with the IIM Staff role or Super Admin role
+  // Find all users with the IIM Staff role (role="staff") or with the IIM Staff roleRef
+  // Exclude users with role="admin" (Super Admin)
   const staffMembers = await User.find({
-    $or: [
-      { roleRef: staffRole ? staffRole._id : null },
-      { roleRef: superAdminRole ? superAdminRole._id : null },
-    ],
+    $or: [{ role: "staff" }, { roleRef: staffRole ? staffRole._id : null }],
+    role: { $ne: "admin" }, // Exclude users with role="admin"
   }).populate("roleRef");
 
   res.status(200).json({
@@ -35,10 +33,9 @@ exports.getStaffMembers = catchAsync(async (req, res, next) => {
  * @access Private (Admin only)
  */
 exports.getStaffMemberById = catchAsync(async (req, res, next) => {
-  // Find the IIM Staff and Super Admin roles
+  // Find the IIM Staff role
   const Role = require("../models/Role");
   const staffRole = await Role.findOne({ name: "IIM Staff" });
-  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
   // Find staff member
   const staffMember = await User.findById(req.params.id).populate("roleRef");
@@ -49,15 +46,14 @@ exports.getStaffMemberById = catchAsync(async (req, res, next) => {
   }
 
   // Check if the user has a staff-related role
-  // Modified to also accept 'staff' as a role name
+  // Only accept 'staff' role or IIM Staff roleRef, exclude admin role
   const isStaffRole =
     staffMember.role === "staff" ||
     (staffMember.roleRef &&
-      (staffMember.roleRef.toString() === (staffRole?._id?.toString() || "") ||
-        staffMember.roleRef.toString() ===
-          (superAdminRole?._id?.toString() || "")));
+      staffMember.roleRef.toString() === (staffRole?._id?.toString() || ""));
 
-  if (!isStaffRole) {
+  // Exclude users with admin role
+  if (!isStaffRole || staffMember.role === "admin") {
     return next(new AppError("No staff member found with that ID", 404));
   }
 
@@ -127,7 +123,7 @@ exports.createStaffMember = catchAsync(async (req, res, next) => {
     name,
     email,
     phoneNumber,
-    role: "staff", // Use 'staff' as the role name
+    role: "staff", // DB role value for IIM Staff (UI: IIM Staff -> DB: staff)
     roleRef: staffRole._id, // Assign IIM Staff role
     status: req.body.status || 1, // Default to active
   };
@@ -190,10 +186,9 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
 
   const { name, email, phoneNumber } = req.body;
 
-  // Find the IIM Staff and Super Admin roles
+  // Find the IIM Staff role
   const Role = require("../models/Role");
   const staffRole = await Role.findOne({ name: "IIM Staff" });
-  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
   // Check if staff member exists
   const staffMember = await User.findById(req.params.id).populate("roleRef");
@@ -204,15 +199,14 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
   }
 
   // Check if the user has a staff-related role
-  // Modified to also accept 'staff' as a role name
+  // Only accept 'staff' role or IIM Staff roleRef, exclude admin role
   const isStaffRole =
     staffMember.role === "staff" ||
     (staffMember.roleRef &&
-      (staffMember.roleRef.toString() === (staffRole?._id?.toString() || "") ||
-        staffMember.roleRef.toString() ===
-          (superAdminRole?._id?.toString() || "")));
+      staffMember.roleRef.toString() === (staffRole?._id?.toString() || ""));
 
-  if (!isStaffRole) {
+  // Exclude users with admin role
+  if (!isStaffRole || staffMember.role === "admin") {
     return next(new AppError("No staff member found with that ID", 404));
   }
 
@@ -248,7 +242,7 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
     name: name || staffMember.name,
     email: email || staffMember.email,
     phoneNumber: phoneNumber || staffMember.phoneNumber,
-    role: "staff", // Use 'staff' as the role name
+    role: "staff", // DB role value for IIM Staff (UI: IIM Staff -> DB: staff)
     roleRef: staffRole._id, // Use IIM Staff role
     status: req.body.status || staffMember.status,
   };
@@ -315,10 +309,9 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
  * @access Private (Admin only)
  */
 exports.deleteStaffMember = catchAsync(async (req, res, next) => {
-  // Find the IIM Staff and Super Admin roles
+  // Find the IIM Staff role
   const Role = require("../models/Role");
   const staffRole = await Role.findOne({ name: "IIM Staff" });
-  const superAdminRole = await Role.findOne({ name: "Super Admin" });
 
   // Check if staff member exists
   const staffMember = await User.findById(req.params.id).populate("roleRef");
@@ -329,15 +322,14 @@ exports.deleteStaffMember = catchAsync(async (req, res, next) => {
   }
 
   // Check if the user has a staff-related role
-  // Modified to also accept 'staff' as a role name
+  // Only accept 'staff' role or IIM Staff roleRef, exclude admin role
   const isStaffRole =
     staffMember.role === "staff" ||
     (staffMember.roleRef &&
-      (staffMember.roleRef.toString() === (staffRole?._id?.toString() || "") ||
-        staffMember.roleRef.toString() ===
-          (superAdminRole?._id?.toString() || "")));
+      staffMember.roleRef.toString() === (staffRole?._id?.toString() || ""));
 
-  if (!isStaffRole) {
+  // Exclude users with admin role
+  if (!isStaffRole || staffMember.role === "admin") {
     return next(new AppError("No staff member found with that ID", 404));
   }
 
