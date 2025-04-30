@@ -359,6 +359,68 @@ const createContent = async (req, res) => {
   }
 };
 
+const getQuizAttempts = async (req, res) => {
+  try {
+    const { id: courseId, quizId } = req.params;
+    // Use the userId from query parameters if provided, otherwise use the authenticated user's ID
+    // This allows us to check if a specific user has attempted the quiz
+    const userId = req.query.userId || req.user.id;
+
+    console.log(`Fetching quiz attempts for user: ${userId}, quiz: ${quizId}`);
+
+    // Find the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ msg: 'Course not found' });
+    }
+
+    // Find the quiz
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ msg: 'Quiz not found' });
+    }
+
+    // Find the user's attempts for this quiz
+    const userAttempts = quiz.attempts.filter(attempt =>
+      attempt.user.toString() === userId
+    );
+
+    console.log(`Found ${userAttempts.length} attempts for user: ${userId}, quiz: ${quizId}`);
+
+    if (userAttempts.length === 0) {
+      // Return null to indicate no attempts found
+      // This will cause the frontend to show the quiz questions
+      return res.json(null);
+    }
+
+    // Get the most recent attempt
+    const latestAttempt = userAttempts.sort((a, b) =>
+      new Date(b.completedAt) - new Date(a.completedAt)
+    )[0];
+
+    // Return the latest attempt with quiz questions for context
+    const result = {
+      ...latestAttempt.toObject(),
+      questions: quiz.questions.map(q => ({
+        id: q._id,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        points: q.points || 1
+      })),
+      score: latestAttempt.score,
+      totalPoints: quiz.questions.reduce((sum, q) => sum + (q.points || 1), 0),
+      percentage: latestAttempt.score,
+      passed: latestAttempt.score >= quiz.passingScore
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching quiz attempts:', error);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
 const submitQuiz = async (req, res) => {
   try {
     const { answers } = req.body; // { questionId: answer }
@@ -390,11 +452,21 @@ const submitQuiz = async (req, res) => {
     // Calculate total possible points from all questions
     const totalPossiblePoints = quiz.questions.reduce((sum, q) => sum + (q.points || 1), 0);
 
-    quiz.questions.forEach(question => {
+    // Track evaluated answers with correct/incorrect status
+    const evaluatedAnswers = quiz.questions.map(question => {
       const questionId = question._id.toString();
-      if (answers[questionId] === question.correctAnswer) {
-        score += question.points || 1;
-      }
+      const selectedAnswer = answers[questionId];
+      const isCorrect = selectedAnswer === question.correctAnswer;
+
+      if (isCorrect) score += question.points || 1;
+
+      return {
+        questionIndex: quiz.questions.findIndex(q => q._id.toString() === questionId),
+        questionId: questionId,
+        selectedAnswer: selectedAnswer,
+        correctAnswer: question.correctAnswer,
+        isCorrect
+      };
     });
 
     const percentage = Math.round((score / totalPossiblePoints) * 100);
@@ -403,12 +475,9 @@ const submitQuiz = async (req, res) => {
     // Create a new attempt record
     const attempt = {
       user: req.user.id,
-      answers,
-      score,
-      totalPoints: totalPossiblePoints,
-      percentage,
-      passed,
-      date: new Date()
+      answers: evaluatedAnswers,
+      score: percentage,
+      completedAt: new Date()
     };
 
     // Add the attempt to the quiz
@@ -431,11 +500,20 @@ const submitQuiz = async (req, res) => {
       console.log('Quiz passed, would update enrollment status in production');
     }
 
+    // Return detailed results including correct answers
     res.json({
       score,
       totalPoints: totalPossiblePoints,
       percentage,
       passed,
+      answers: evaluatedAnswers,
+      questions: quiz.questions.map(q => ({
+        id: q._id,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        points: q.points || 1
+      })),
       attemptId: quiz.attempts[quiz.attempts.length - 1]._id
     });
   } catch (error) {
@@ -600,6 +678,7 @@ module.exports = {
   getMyContent,
   createContent,
   submitQuiz,
+  getQuizAttempts,
   updateProfile,
   updatePassword,
   updateProgress
