@@ -139,13 +139,12 @@ const AdminDashboard = () => {
 
   // Edit handler
   const handleEdit = (row) => {
-    console.log(`Edit clicked for: ${row.title}`);
-    navigate(`/dashboard/admin/courses/edit/${row.id}`);
+    // navigate(`/dashboard/admin/courses/edit/${row.id}`);
+    navigate(`/dashboard/admin/courses/edit-flow/${row.id}`);
   };
 
   // View handler
   const handleView = (row) => {
-    console.log(`View clicked for: ${row.title}`);
     navigate(`/dashboard/admin/courses/${row.id}`);
   };
 
