@@ -154,7 +154,7 @@
 }
 
 /* Status Indicator - Toggle Switch Style */
-.status-indicator {
+.permission-toggle .status-indicator {
   width: 36px;
   height: 20px;
   border-radius: 20px;
@@ -205,7 +205,9 @@
   margin-top: 20px;
 }
 
-.cancel-btn, .save-btn, .debug-btn {
+.cancel-btn,
+.save-btn,
+.debug-btn {
   padding: 10px 20px;
   border-radius: var(--border-small-radius);
   font-size: var(--basefont);
@@ -339,7 +341,8 @@
     flex-direction: column;
   }
 
-  .cancel-btn, .save-btn {
+  .cancel-btn,
+  .save-btn {
     width: 100%;
   }
 

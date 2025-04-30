@@ -85,7 +85,7 @@
 
 .educator-details-page .details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -147,19 +147,19 @@
 }
 
 .educator-details-page .status-toggle-btn.activate {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .educator-details-page .status-toggle-btn.activate:hover {
-  background-color: #43A047;
+  background-color: #43a047;
 }
 
 .educator-details-page .status-toggle-btn.deactivate {
-  background-color: #F44336;
+  background-color: #f44336;
 }
 
 .educator-details-page .status-toggle-btn.deactivate:hover {
-  background-color: #E53935;
+  background-color: #e53935;
 }
 
 .educator-details-page .action-buttons {
@@ -239,6 +239,16 @@
   .educator-details-page .edit-btn {
     width: 100%;
     text-align: center;
+  }
+
+  .educator-details-page .info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .educator-details-page .info-row label {
+    min-width: 100%;
+    font-weight: 600;
   }
 }
 

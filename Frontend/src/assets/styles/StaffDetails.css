@@ -85,7 +85,7 @@
 
 .staff-details-page .details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -129,57 +129,21 @@
   color: var(--text-color);
 }
 
+.staff-details-page .permission-row {
+  margin-bottom: 0.25rem;
+}
+
+.staff-details-page .permission-row span {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
 .staff-details-page .status-toggle-container {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Status Indicator - Toggle Switch Style */
-.staff-details-page .status-indicator {
-  width: 36px;
-  height: 20px;
-  border-radius: 20px;
-  background-color: #e5e7eb;
-  position: relative;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  flex-shrink: 0;
-}
-
-.staff-details-page .status-indicator::before {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: white;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s ease;
-}
-
-.staff-details-page .status-indicator.active {
-  background-color: var(--primary-color);
-}
-
-.staff-details-page .status-indicator.active::before {
-  transform: translateX(16px);
-}
-
-.staff-details-page .text-green-600 {
-  color: #16a34a;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.staff-details-page .text-red-600 {
-  color: #dc2626;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* Keep the existing button styles for backward compatibility */
 .staff-details-page .status-toggle-btn {
   padding: 5px 12px;
   border-radius: 4px;
@@ -189,6 +153,7 @@
   transition: all 0.3s ease;
   border: none;
   color: white;
+  margin-left: 8px;
 }
 
 .staff-details-page .status-toggle-btn.activate {
@@ -205,6 +170,18 @@
 
 .staff-details-page .status-toggle-btn.deactivate:hover {
   background-color: #e53935;
+}
+
+.staff-details-page .text-green-600 {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.staff-details-page .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .staff-details-page .action-buttons {
@@ -317,6 +294,11 @@
 
   .staff-details-page .info-row label {
     min-width: auto;
+    font-weight: 600;
+  }
+
+  .staff-details-page .details-section {
+    padding: 0.75rem;
   }
 }
 

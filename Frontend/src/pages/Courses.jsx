@@ -158,7 +158,7 @@ const Courses = ({ userType }) => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={ VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img src={VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
           <span>{row.title}</span>
         </div>
       ),
