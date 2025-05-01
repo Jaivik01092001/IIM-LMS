@@ -90,7 +90,7 @@
 .educator-form-container .form-group select {
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   color: var(--text-color);
   width: 100%;
@@ -125,7 +125,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   overflow: hidden;
 }
 
@@ -150,7 +150,7 @@
   gap: 2rem;
   padding: 1.5rem;
   background-color: var(--bg-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
 }
 
 .educator-form-container .profile-preview {
@@ -198,7 +198,7 @@
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   font-weight: 500;
   cursor: pointer;
@@ -224,7 +224,7 @@
 .educator-form-container .cancel-btn,
 .educator-form-container .submit-btn {
   padding: 0.75rem 2rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   font-weight: 500;
   cursor: pointer;
@@ -437,7 +437,7 @@
 @media (max-width: 576px) {
   .educator-form-container .educator-form {
     padding: 1rem;
-    border-radius: var(--border-medium-small-radius);
+    border-radius: var(--border-small-radius);
   }
 
   .educator-form-container .form-actions {

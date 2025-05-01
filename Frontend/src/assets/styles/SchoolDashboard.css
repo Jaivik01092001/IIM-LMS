@@ -227,7 +227,7 @@
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;

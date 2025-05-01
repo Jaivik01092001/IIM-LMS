@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import {
   FaPlus,
   FaUserCircle,
+  FaSearch,
+  FaFilter,
 } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
 import DataTableComponent from "../components/DataTable";
@@ -29,12 +31,17 @@ const Blog = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+  const [sortBy, setSortBy] = useState("");
 
   // Get user role and blogs from Redux store
   const { user } = useSelector((state) => state.auth);
   const { blogs, loading } = useSelector((state) => state.blog);
 
   const userRole = user?.role || "educator"; // Default to educator view if role not found
+
   // Fetch blogs on component mount
   useEffect(() => {
     dispatch(getBlogsThunk());
@@ -244,6 +251,42 @@ const Blog = () => {
     }))
     : [];
 
+  // Extract unique tags for filter dropdown
+  const uniqueTags = [...new Set(transformedBlogs.flatMap(blog => blog.tags || []))].filter(Boolean);
+
+  // Get filtered data based on search term, status filter, and tag filter
+  const getFilteredData = () => {
+    return transformedBlogs
+      // Apply search filter
+      .filter(blog =>
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (blog.tags && blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (blog.createdBy?.name && blog.createdBy.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      // Apply status filter
+      .filter(blog =>
+        !statusFilter || blog.status === statusFilter
+      )
+      // Apply tag filter
+      .filter(blog =>
+        !tagFilter || (blog.tags && blog.tags.includes(tagFilter))
+      )
+      // Apply sorting
+      .sort((a, b) => {
+        if (!sortBy) return 0;
+
+        switch (sortBy) {
+          case "title-asc": return a.title.localeCompare(b.title);
+          case "title-desc": return b.title.localeCompare(a.title);
+          case "date-asc": return new Date(a.createdAt) - new Date(b.createdAt);
+          case "date-desc": return new Date(b.createdAt) - new Date(a.createdAt);
+          case "status": return a.status === b.status ? 0 : a.status === "published" ? -1 : 1;
+          default: return 0;
+        }
+      });
+  };
+
   // Render loading state
   if (isLoading) {
     return <LoadingSpinner />;
@@ -280,7 +323,7 @@ const Blog = () => {
               >
                 {blog.coverImage ? (
                   <img
-                  src={fixImageUrl(VITE_IMAGE_URL + blog.coverImage)}
+                    src={fixImageUrl(VITE_IMAGE_URL + blog.coverImage)}
                     alt={blog.title}
                     className="blog-card-image"
                   />
@@ -323,26 +366,65 @@ const Blog = () => {
   // Render Admin and University View (Data Table)
   return (
     <div className="blog-container">
-      <div className="blog-header">
-        <h1 className="blog-title">
-          <FaFilePen className="blog-title-icon" /> Blogs
-        </h1>
-        <div className="blog-actions">
-          {hasLocalPermission("create_blog") && (
-            <button className="btn btn-primary" onClick={handleCreateBlog}>
-              <FaPlus /> New Blog
-            </button>
-          )}
+      <div className="search-filter-container">
+        <div className="search-input">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search blogs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
+
+        <select
+          className="filter-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+
+        <select
+          className="filter-select"
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+        >
+          <option value="">All Tags</option>
+          {uniqueTags.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="filter-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="">Sort By</option>
+          <option value="title-asc">Title (A-Z)</option>
+          <option value="title-desc">Title (Z-A)</option>
+          <option value="date-asc">Date (Oldest first)</option>
+          <option value="date-desc">Date (Newest first)</option>
+          <option value="status">Status</option>
+        </select>
+
+        <button className="add-blog-btn" onClick={handleCreateBlog}>
+          <FaPlus /> Add Blog
+        </button>
       </div>
 
       <div className="blog-table-container">
         <DataTableComponent
           columns={columns}
-          data={transformedBlogs}
+          data={getFilteredData()}
           pagination
           title=""
-          searchPlaceholder="Search blogs..."
+          showSearch={false}
         />
       </div>
     </div>
