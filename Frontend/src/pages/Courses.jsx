@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  FaBook,
-  FaUserGraduate,
   FaClock,
-  FaPencilAlt,
-  FaTrashAlt,
-  FaEye,
   FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +14,8 @@ import {
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ActionButtons from "../components/common/ActionButtons";
+import { hasLocalPermission } from "../utils/localPermissions";
 import "../assets/styles/Courses.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -65,8 +62,12 @@ const Courses = ({ userType }) => {
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getCoursesThunk());
-    dispatch(getUsersThunk());
-  }, [dispatch]);
+
+    // Only fetch users data for admin and school views, not for tutor view
+    if (userType !== 'tutor') {
+      dispatch(getUsersThunk());
+    }
+  }, [dispatch, userType]);
 
   // Transform courses data for the table
   const [tableData, setTableData] = useState([]);
@@ -78,7 +79,7 @@ const Courses = ({ userType }) => {
   useEffect(() => {
     if (courses && courses.length > 0) {
       const formattedCourses = courses.map(course => {
-        // For testing: mock enrollment data 
+        // For testing: mock enrollment data
         // In production, this should come from the API
         const mockEnrollment = userType === 'tutor' && (
           // For demo purposes: every other course is considered "enrolled"
@@ -214,21 +215,15 @@ const Courses = ({ userType }) => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
-            <FaEye />
-          </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
-            <FaPencilAlt />
-          </button>
-          <button
-            className="action-btn delete"
-            onClick={() => handleDelete(row)}
-            title="Delete Course"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          viewPermission="view_courses"
+          editPermission="edit_course"
+          deletePermission="delete_course"
+        />
       ),
       width: "150px",
       center: true,
@@ -337,12 +332,14 @@ const Courses = ({ userType }) => {
             {userType === 'tutor' ? 'My Courses' : `All Courses (${tableData.length})`}
           </h2>
           <div className="header-actions">
-            <button
-              className="add-course-btn"
-              onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
-            >
-              Add Course
-            </button>
+            {hasLocalPermission("create_course") && (
+              <button
+                className="add-course-btn"
+                onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
+              >
+                Add Course
+              </button>
+            )}
             <button
               className="view-all-btn"
               onClick={() => navigate(`/dashboard/${userType}/courses`)}

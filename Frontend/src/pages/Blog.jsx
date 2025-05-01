@@ -3,14 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   FaPlus,
-  FaPencilAlt,
-  FaTrashAlt,
-  FaEye,
   FaUserCircle,
 } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ActionButtons from "../components/common/ActionButtons";
+import { hasLocalPermission } from "../utils/localPermissions";
 import {
   getBlogsThunk,
   deleteBlogThunk,
@@ -186,9 +185,8 @@ const Blog = () => {
       cell: (row) => (
         <div className="status-cell">
           <div
-            className={`status-indicator ${
-              row.status === "published" ? "active" : ""
-            }`}
+            className={`status-indicator ${row.status === "published" ? "active" : ""
+              }`}
             onClick={() => handleStatusToggle(row)}
             title={
               row.status === "published"
@@ -211,29 +209,16 @@ const Blog = () => {
     {
       name: "Actions",
       cell: (row) => (
-        <div className="blog-actions-cell">
-          <button
-            className="blog-action-btn blog-view-btn"
-            onClick={() => handleViewBlog(row)}
-            title="View"
-          >
-            <FaEye />
-          </button>
-          <button
-            className="blog-action-btn blog-edit-btn"
-            onClick={() => handleEditBlog(row)}
-            title="Edit"
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            className="blog-action-btn blog-delete-btn"
-            onClick={() => handleDeleteBlog(row)}
-            title="Delete"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleViewBlog}
+          onEdit={handleEditBlog}
+          onDelete={handleDeleteBlog}
+          viewPermission="view_blogs"
+          editPermission="edit_blog"
+          deletePermission="delete_blog"
+          className="blog-actions-cell"
+        />
       ),
       width: "120px",
       center: true,
@@ -243,20 +228,20 @@ const Blog = () => {
   // Transform blogs data for display
   const transformedBlogs = Array.isArray(blogs)
     ? blogs.map((blog) => ({
-        id: blog._id,
-        title: blog.title || "Untitled Blog",
-        content: blog.content || "",
-        shortDescription: blog.shortDescription || "",
-        tags: blog.tags || [],
-        coverImage: fixImageUrl(blog.coverImage) || null,
-        status: blog.status || "draft",
-        createdAt: blog.createdAt || new Date().toISOString(),
-        updatedAt: blog.updatedAt || new Date().toISOString(),
-        createdBy: blog.createdBy || null,
-        slug: blog.slug || "",
-        isDeleted: blog.isDeleted || false,
-        activeStatus: blog.activeStatus || 1,
-      }))
+      id: blog._id,
+      title: blog.title || "Untitled Blog",
+      content: blog.content || "",
+      shortDescription: blog.shortDescription || "",
+      tags: blog.tags || [],
+      coverImage: fixImageUrl(blog.coverImage) || null,
+      status: blog.status || "draft",
+      createdAt: blog.createdAt || new Date().toISOString(),
+      updatedAt: blog.updatedAt || new Date().toISOString(),
+      createdBy: blog.createdBy || null,
+      slug: blog.slug || "",
+      isDeleted: blog.isDeleted || false,
+      activeStatus: blog.activeStatus || 1,
+    }))
     : [];
 
   // Render loading state
@@ -273,9 +258,11 @@ const Blog = () => {
             <FaFilePen className="blog-title-icon" /> Blogs
           </h1>
           <div className="blog-actions">
-            <button className="btn btn-primary" onClick={handleCreateBlog}>
-              <FaPlus /> New Blog
-            </button>
+            {hasLocalPermission("create_blog") && (
+              <button className="btn btn-primary" onClick={handleCreateBlog}>
+                <FaPlus /> New Blog
+              </button>
+            )}
           </div>
         </div>
 
@@ -341,9 +328,11 @@ const Blog = () => {
           <FaFilePen className="blog-title-icon" /> Blogs
         </h1>
         <div className="blog-actions">
-          <button className="btn btn-primary" onClick={handleCreateBlog}>
-            <FaPlus /> New Blog
-          </button>
+          {hasLocalPermission("create_blog") && (
+            <button className="btn btn-primary" onClick={handleCreateBlog}>
+              <FaPlus /> New Blog
+            </button>
+          )}
         </div>
       </div>
 

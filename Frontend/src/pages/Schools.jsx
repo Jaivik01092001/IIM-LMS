@@ -8,7 +8,9 @@ import {
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
+import ActionButtons from "../components/common/ActionButtons";
+import { hasLocalPermission } from "../utils/localPermissions";
+import { FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
 const Schools = () => {
@@ -225,17 +227,15 @@ const Schools = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button className="action-button view" onClick={() => handleView(row)}>
-            <FaEye />
-          </button>
-          <button className="action-button edit" onClick={() => handleEdit(row)}>
-            <FaPencilAlt />
-          </button>
-          <button className="action-button delete" onClick={() => handleDelete(row)}>
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          viewPermission="view_schools"
+          editPermission="edit_school"
+          deletePermission="delete_school"
+        />
       ),
       width: "150px",
       center: true,
@@ -292,12 +292,14 @@ const Schools = () => {
             <option value="Status">Status</option>
           </select>
 
-          <button
-            className="create-account-btn"
-            onClick={handleCreateAccount}
-          >
-            Create Account
-          </button>
+          {hasLocalPermission("create_school") && (
+            <button
+              className="create-account-btn"
+              onClick={handleCreateAccount}
+            >
+              Create Account
+            </button>
+          )}
         </div>
       </div>
 

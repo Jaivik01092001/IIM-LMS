@@ -34,8 +34,11 @@ const SchoolDashboard = () => {
   useEffect(() => {
     dispatch(getEducatorsThunk());
     dispatch(getCoursesThunk());
-    dispatch(getUsersThunk());
-  }, [dispatch]);
+    // Only fetch users data if the user has permission to view users
+    if (user?.permissions?.view_users) {
+      dispatch(getUsersThunk());
+    }
+  }, [dispatch, user]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -58,7 +61,7 @@ const SchoolDashboard = () => {
       const schoolCourses = courses.filter(course => {
         // Check if the course creator is the current user or an educator from this university
         return course.creator?._id === user.id ||
-               (course.creator?.university && course.creator.university === user.id);
+          (course.creator?.university && course.creator.university === user.id);
       });
 
       const formattedCourses = schoolCourses.map(course => ({

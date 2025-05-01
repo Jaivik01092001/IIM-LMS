@@ -123,7 +123,7 @@
   color: white;
   border: none;
 }
-.courses-container .add-educator-btn{
+.courses-container .add-educator-btn {
   background-color: var(--bg-primary);
   color: white;
   border: none;
@@ -333,7 +333,8 @@
   justify-content: center;
 }
 
-.courses-container .action-btn {
+.courses-container .action-btn,
+.courses-container .action-button {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -346,26 +347,37 @@
   justify-content: center;
 }
 
-.courses-container .action-btn.view {
-  background-color: #e7eee5;
-  color: #4abb66;
-}
-
-.courses-container .action-btn.edit {
-  background-color: #eef2ff;
+.courses-container .action-btn.view,
+.courses-container .action-button.view {
+  background-color: var(--primary-light-bg);
   color: var(--primary-color);
 }
 
-.courses-container .action-btn.delete {
+.courses-container .action-btn.edit,
+.courses-container .action-button.edit {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.courses-container .action-btn.delete,
+.courses-container .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.courses-container .action-btn:hover {
+.courses-container .action-btn.add,
+.courses-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
+.courses-container .action-btn:hover,
+.courses-container .action-button:hover {
   transform: translateY(-1px);
 }
 
-.courses-container .action-btn svg {
+.courses-container .action-btn svg,
+.courses-container .action-button svg {
   width: 14px;
   height: 14px;
 }
@@ -662,7 +674,8 @@
   justify-content: center;
 }
 
-.resume-btn, .start-learning-btn {
+.resume-btn,
+.start-learning-btn {
   width: 100%;
   padding: 10px;
   border-radius: 6px;

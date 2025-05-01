@@ -136,32 +136,43 @@
 .action-button {
   width: 32px;
   height: 32px;
-  border-radius: 4px;
+  padding: 0;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
 }
 
 .action-button.view {
-  background-color: var(--view-btn-color);
-  color: white;
+  background-color: var(--primary-light-bg);
+  color: var(--primary-color);
 }
 
 .action-button.edit {
-  background-color: var(--edit-btn-color);
-  color: white;
+  background-color: #ecfdf5;
+  color: #059669;
 }
 
 .action-button.delete {
-  background-color: var(--delete-btn-color);
-  color: white;
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .action-button:hover {
-  filter: brightness(90%);
+  transform: translateY(-1px);
+}
+
+.action-button svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Responsive */
@@ -372,6 +383,11 @@
 .staffs-container .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
+}
+
+.staffs-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .staffs-container .action-button:hover {

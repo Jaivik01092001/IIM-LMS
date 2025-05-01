@@ -31,8 +31,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Stats Cards */
@@ -262,7 +266,8 @@
   justify-content: center;
 }
 
-.admin-dashboard .action-btn {
+.admin-dashboard .action-btn,
+.admin-dashboard .action-button {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -275,26 +280,37 @@
   justify-content: center;
 }
 
-.admin-dashboard .action-btn.view {
-  background-color: #eef2ff;
+.admin-dashboard .action-btn.view,
+.admin-dashboard .action-button.view {
+  background-color: var(--primary-light-bg);
   color: var(--primary-color);
 }
 
-.admin-dashboard .action-btn.edit {
+.admin-dashboard .action-btn.edit,
+.admin-dashboard .action-button.edit {
   background-color: #ecfdf5;
   color: #059669;
 }
 
-.admin-dashboard .action-btn.delete {
+.admin-dashboard .action-btn.delete,
+.admin-dashboard .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.admin-dashboard .action-btn:hover {
+.admin-dashboard .action-btn.add,
+.admin-dashboard .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
+.admin-dashboard .action-btn:hover,
+.admin-dashboard .action-button:hover {
   transform: translateY(-1px);
 }
 
-.admin-dashboard .action-btn svg {
+.admin-dashboard .action-btn svg,
+.admin-dashboard .action-button svg {
   width: 14px;
   height: 14px;
 }

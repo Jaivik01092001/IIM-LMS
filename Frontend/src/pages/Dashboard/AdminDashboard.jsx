@@ -52,12 +52,19 @@ const AdminDashboard = () => {
   const universityCount = getCountByRole("university");
   const educatorCount = getCountByRole("educator");
 
+  // Get user from Redux store
+  const { user } = useSelector((state) => state.auth);
+
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getUniversitiesThunk());
     dispatch(getCoursesThunk());
-    dispatch(getUsersThunk());
-  }, [dispatch]);
+
+    // Admin users should have permission to view users, but let's check anyway
+    if (user?.role === 'admin' || user?.permissions?.view_users) {
+      dispatch(getUsersThunk());
+    }
+  }, [dispatch, user]);
 
   // Log users data when it changes
   useEffect(() => {
@@ -195,8 +202,7 @@ const AdminDashboard = () => {
       .unwrap()
       .then(() => {
         console.log(
-          `Successfully ${row.status ? "deactivated" : "activated"} ${
-            row.title
+          `Successfully ${row.status ? "deactivated" : "activated"} ${row.title
           }`
         );
         // Refresh courses data

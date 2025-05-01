@@ -15,6 +15,7 @@ import {
   FaIdBadge,
 } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
+import { hasLocalPermission, hasAnyLocalPermission } from "../../utils/localPermissions";
 import "../../assets/styles/Sidebar.css";
 
 /**
@@ -33,83 +34,135 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       try {
         const userData = JSON.parse(user);
         setUserRole(userData.role || "admin");
+
+        // Log user permissions for debugging
+        console.debug("Sidebar - User permissions:", {
+          role: userData.role,
+          roleRef: userData.roleRef || 'none',
+          permissions: userData.permissions || {}
+        });
       } catch (error) {
         console.error("Error parsing user data", error);
       }
     }
   }, []);
 
-  // Generate menu items based on user role
+  // Generate menu items based on user role and permissions
   const getMenuItems = () => {
-    // Common menu items for all roles
-    const items = [
-      {
-        id: "dashboard",
-        name: t("common.dashboard"),
-        icon: <FaHome className="menu-icon" />,
-        path: `/dashboard/${getDashboardPath()}`,
-        exact: true,
-      },
-      {
+    // Common menu items - still check permissions
+    const items = [];
+
+    // Dashboard is always visible
+    items.push({
+      id: "dashboard",
+      name: t("common.dashboard"),
+      icon: <FaHome className="menu-icon" />,
+      path: `/dashboard/${getDashboardPath()}`,
+      exact: true,
+    });
+
+    // Courses - visible if user has any course-related permission
+    if (hasAnyLocalPermission([
+      "view_courses", "create_course", "edit_course", "delete_course"
+    ])) {
+      items.push({
         id: "courses",
         name: t("courses.allCourses"),
         icon: <FaGraduationCap className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/courses`,
-      },
-      {
+      });
+    }
+
+    // Blogs - visible if user has any blog-related permission
+    if (hasAnyLocalPermission([
+      "view_blogs", "create_blog", "edit_blog", "delete_blog"
+    ])) {
+      items.push({
         id: "blogs",
         name: t("blog.blogs"),
         icon: <FaFilePen className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/blogs`,
-      },
-    ];
+      });
+    }
 
-    // Add role-specific items
+    // Users dropdown menu - check permissions for each submenu item
+    const userSubmenu = [];
+
+    // Schools submenu - visible if user has any school-related permission
+    if (hasAnyLocalPermission([
+      "view_schools", "create_school", "edit_school", "delete_school"
+    ])) {
+      userSubmenu.push({
+        id: "universities",
+        name: t("schools.schools"),
+        path: `/dashboard/admin/schools`,
+        icon: <FaUniversity />,
+      });
+    }
+
+    // Educators submenu - visible if user has any educator-related permission
+    if (hasAnyLocalPermission([
+      "view_educators", "create_educator", "edit_educator", "delete_educator"
+    ])) {
+      userSubmenu.push({
+        id: "educators",
+        name: t("educators.educators"),
+        path: `/dashboard/admin/educators`,
+        icon: <FaUserTie />,
+      });
+    }
+
+    // Staff submenu - only visible for admin and staff roles
     if (userRole === "admin" || userRole === "staff") {
-      // Insert after courses but before blogs
-      items.splice(2, 0, {
+      userSubmenu.push({
+        id: "staffs",
+        name: t("staff.staff"),
+        path: `/dashboard/admin/staffs`,
+        icon: <FaIdBadge />,
+      });
+    }
+
+    // Add the Users dropdown if it has any submenu items
+    if (userSubmenu.length > 0) {
+      // Find the right position to insert (after courses if it exists)
+      const coursesIndex = items.findIndex(item => item.id === "courses");
+      const insertIndex = coursesIndex !== -1 ? coursesIndex + 1 : items.length;
+
+      items.splice(insertIndex, 0, {
         id: "users",
         name: t("common.users"),
         icon: <FaUsers className="menu-icon" />,
         isDropdown: true,
-        submenu: [
-          {
-            id: "universities",
-            name: t("schools.schools"),
-            path: `/dashboard/admin/schools`,
-            icon: <FaUniversity />,
-          },
-          {
-            id: "educators",
-            name: t("educators.educators"),
-            path: `/dashboard/admin/educators`,
-            icon: <FaUserTie />,
-          },
-          {
-            id: "staffs",
-            name: t("staff.staff"),
-            path: `/dashboard/admin/staffs`,
-            icon: <FaIdBadge />,
-          },
-        ],
+        submenu: userSubmenu,
       });
+    }
 
-      // Add Role/Permission tab for admin only (not for staff)
-      if (userRole === "admin") {
-        items.push({
-          id: "role-permission",
-          name: t("common.roleAndPermission"),
-          icon: <FaUserShield className="menu-icon" />,
-          path: `/dashboard/admin/role-permission`,
+    // Special case for university role - add educators link if they have permission
+    if (userRole === "university" && hasAnyLocalPermission([
+      "view_educators", "create_educator", "edit_educator", "delete_educator"
+    ])) {
+      // Find the right position to insert (after courses if it exists)
+      const coursesIndex = items.findIndex(item => item.id === "courses");
+      const insertIndex = coursesIndex !== -1 ? coursesIndex + 1 : items.length;
+
+      // Only add if not already added via the dropdown
+      if (!items.some(item => item.id === "users")) {
+        items.splice(insertIndex, 0, {
+          id: "educators",
+          name: t("educators.educators"),
+          icon: <FaChalkboardTeacher className="menu-icon" />,
+          path: `/dashboard/school/educators`,
         });
       }
-    } else if (userRole === "university") {
-      // Insert after courses but before blogs
-      items.splice(2, 0, {
-        id: "educators",
-        name: t("educators.educators"),
-        icon: <FaChalkboardTeacher className="menu-icon" />,
-        path: `/dashboard/school/educators`,
+    }
+
+    // Add Role/Permission tab for admin only
+    if (userRole === "admin" && hasLocalPermission("manage_roles")) {
+      items.push({
+        id: "role-permission",
+        name: t("common.roleAndPermission"),
+        icon: <FaUserShield className="menu-icon" />,
+        path: `/dashboard/admin/role-permission`,
       });
     }
 
@@ -182,16 +235,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               {getMenuItems().map((item) => (
                 <li
                   key={item.id}
-                  className={`menu-item ${
-                    item.isDropdown ? "dropdown-menu" : ""
-                  }`}
+                  className={`menu-item ${item.isDropdown ? "dropdown-menu" : ""
+                    }`}
                 >
                   {item.isDropdown ? (
                     <>
                       <button
-                        className={`dropdown-toggle ${
-                          openDropdown === item.id ? "open" : ""
-                        } ${isSubmenuActive(item.submenu) ? "active" : ""}`}
+                        className={`dropdown-toggle ${openDropdown === item.id ? "open" : ""
+                          } ${isSubmenuActive(item.submenu) ? "active" : ""}`}
                         onClick={() => toggleDropdown(item.id)}
                       >
                         <div className="menu-icon-wrapper">
@@ -201,9 +252,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         <FaChevronDown className="dropdown-arrow" size={12} />
                       </button>
                       <div
-                        className={`dropdown-content ${
-                          openDropdown === item.id ? "open" : ""
-                        }`}
+                        className={`dropdown-content ${openDropdown === item.id ? "open" : ""
+                          }`}
                       >
                         {item.submenu.map((subItem) => (
                           <div key={subItem.id} className="submenu-item">

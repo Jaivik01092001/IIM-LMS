@@ -30,8 +30,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .educators-container .educators-header {
@@ -180,6 +184,11 @@
 .educators-container .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
+}
+
+.educators-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .educators-container .action-button:hover {

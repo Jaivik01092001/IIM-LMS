@@ -229,14 +229,8 @@ exports.updateUniversity = async (req, res) => {
     // Handle roleId update if provided
     if (req.body.roleId) {
       university.roleRef = req.body.roleId;
-
-      // Update role name based on roleId
-      const Role = require("../models/Role");
-      const role = await Role.findById(req.body.roleId);
-      if (role) {
-        university.role = role.name.toLowerCase();
-        console.log("Updated role to:", university.role);
-      }
+      console.log("Updated roleRef to:", req.body.roleId);
+      // Note: We no longer update the core role field, it remains fixed as "university"
     }
 
     await university.save();
@@ -321,8 +315,8 @@ exports.createContent = async (req, res) => {
         (mediaType === "video"
           ? "video"
           : mediaType === "image"
-            ? "image"
-            : "document"),
+          ? "image"
+          : "document"),
       mediaType,
       mimeType,
       size: req.file.size,
@@ -1071,8 +1065,8 @@ exports.updateCourse = async (req, res) => {
             (mediaType === "video"
               ? "video"
               : mediaType === "image"
-                ? "image"
-                : "document"),
+              ? "image"
+              : "document"),
           mediaType,
           mimeType,
           size: file.size,
@@ -1465,35 +1459,21 @@ exports.createEducator = async (req, res, next) => {
       profile.avatar = `/uploads/profiles/${req.file.filename}`;
     }
 
-    // Determine the role based on roleId
-    // Using standardized role mapping: UI role names -> DB role values
-    let roleName = "educator"; // Default DB role value for Educator
-    if (roleId) {
-      const Role = require("../models/Role");
-      const role = await Role.findById(roleId);
-      if (role) {
-        // Map UI role names to DB role values
-        const roleMappings = {
-          "Super Admin": "admin",
-          "IIM Staff": "staff",
-          "School Admin": "university",
-          Educator: "educator",
-        };
-
-        // Get the DB role value from the mapping, or use lowercase role name as fallback
-        roleName = roleMappings[role.name] || role.name.toLowerCase();
-        console.log("Admin controller - Using role name:", roleName);
-      }
-    }
-
+    // We always use "educator" as the core role value
+    // The roleId only updates the roleRef field for permissions
     const educator = new User({
       email,
-      role: roleName, // Use the determined DB role value
+      role: "educator", // Fixed core role value
       name,
       phoneNumber,
       roleRef: roleId || undefined, // Assign role if provided
       profile,
     });
+
+    console.log(
+      "Admin controller - Creating educator with fixed role 'educator' and roleRef:",
+      roleId
+    );
 
     await educator.save();
     res.json(educator);
@@ -1552,19 +1532,11 @@ exports.updateEducator = async (req, res) => {
     if (phoneNumber) educator.phoneNumber = phoneNumber;
     if (status !== undefined) educator.status = Number(status);
 
-    // Update roleRef and role if roleId is provided
+    // Update only roleRef if roleId is provided
     if (roleId) {
       educator.roleRef = roleId;
       console.log("Admin controller - Updated roleRef:", roleId);
-
-      // Fetch the role to get its name
-      const Role = require("../models/Role");
-      const role = await Role.findById(roleId);
-      if (role) {
-        // Update the role field based on the role name (convert to lowercase)
-        educator.role = role.name.toLowerCase();
-        console.log("Admin controller - Updated role to:", educator.role);
-      }
+      // Note: We no longer update the core role field, it remains fixed as "educator"
     }
 
     // Initialize profile if it doesn't exist

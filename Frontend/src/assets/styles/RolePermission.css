@@ -146,6 +146,28 @@
   color: var(--text-color);
 }
 
+/* Special styling for view_courses permission */
+.view-courses-permission {
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.view-courses-permission:hover {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.required-permission {
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.status-indicator.disabled {
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
 /* Permission Toggle */
 .permission-toggle {
   display: flex;
