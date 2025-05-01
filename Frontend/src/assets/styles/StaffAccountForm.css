@@ -90,7 +90,7 @@
 .staff-form-container .form-group select {
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   color: var(--text-color);
   width: 100%;
@@ -129,7 +129,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   overflow: hidden;
 }
 
@@ -154,7 +154,7 @@
   gap: 2rem;
   padding: 1.5rem;
   background-color: var(--bg-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
 }
 
 .staff-form-container .profile-preview {
@@ -202,7 +202,7 @@
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   font-weight: 500;
   cursor: pointer;
@@ -222,7 +222,7 @@
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   font-weight: 500;
   cursor: pointer;
@@ -252,7 +252,7 @@
 .staff-form-container .cancel-btn,
 .staff-form-container .submit-btn {
   padding: 0.75rem 2rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   font-weight: 500;
   cursor: pointer;
@@ -309,7 +309,7 @@
 .staff-form-container .credentials-note {
   background-color: var(--bg-gray);
   padding: 1rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   margin-top: 1rem;
 }
 
@@ -462,7 +462,7 @@
 @media (max-width: 576px) {
   .staff-form-container .staff-form {
     padding: 1rem;
-    border-radius: var(--border-medium-small-radius);
+    border-radius: var(--border-small-radius);
   }
 
   .staff-form-container .form-actions {

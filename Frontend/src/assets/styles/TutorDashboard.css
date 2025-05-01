@@ -29,8 +29,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Stats Cards */
@@ -139,7 +143,7 @@
   background-color: transparent;
   color: var(--bg-primary, #6366f1);
   border: 1px solid var(--bg-primary, #6366f1);
-  border-radius: 8px;
+  border-radius: var(--border-small-radius);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -160,7 +164,7 @@
 .tutor-dashboard .course-thumbnail {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: var(--border-small-radius);
   object-fit: cover;
 }
 
@@ -284,7 +288,7 @@
   background-color: var(--bg-primary, #6366f1);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--border-small-radius);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -306,18 +310,18 @@
   .tutor-dashboard {
     padding: 16px;
   }
-  
+
   .tutor-dashboard .dashboard-stats {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
   }
-  
+
   .tutor-dashboard .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .tutor-dashboard .view-all-btn {
     width: 100%;
   }
@@ -327,13 +331,13 @@
   .tutor-dashboard .dashboard-stats {
     grid-template-columns: 1fr;
   }
-  
+
   .tutor-dashboard .progress-container {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .tutor-dashboard .progress-text {
     text-align: left;
     width: auto;

@@ -53,17 +53,7 @@ const DataTableComponent = ({
       ? t("common.search") + "..."
       : searchPlaceholder;
 
-  const subHeaderComponent = showSearch ? (
-    <div className="search-container">
-      <input
-        type="text"
-        placeholder={translatedSearchPlaceholder}
-        value={filterText}
-        onChange={(e) => setFilterText(e.target.value)}
-        className="search-input"
-      />
-    </div>
-  ) : null;
+
 
   return (
     <div className="data-table-container">
@@ -72,8 +62,6 @@ const DataTableComponent = ({
         columns={processedColumns}
         data={filteredItems}
         pagination={pagination}
-        subHeader={showSearch}
-        subHeaderComponent={subHeaderComponent}
         persistTableHead
         highlightOnHover
         pointerOnHover

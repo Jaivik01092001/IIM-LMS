@@ -31,8 +31,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Stats Cards */
@@ -136,7 +140,7 @@
 .admin-dashboard .add-course-btn,
 .admin-dashboard .view-all-btn {
   padding: 8px 16px;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--smallfont);
   font-weight: 500;
   cursor: pointer;
@@ -175,7 +179,7 @@
 .admin-dashboard .search-input {
   padding: 10px 16px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: var(--border-small-radius);
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
@@ -189,7 +193,7 @@
 .admin-dashboard .filter-select {
   padding: 10px 16px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: var(--border-small-radius);
   font-size: 14px;
   background-color: white;
   outline: none;
@@ -213,7 +217,7 @@
 .admin-dashboard .course-thumbnail {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: var(--border-small-radius);
   object-fit: cover;
 }
 
@@ -267,7 +271,7 @@
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
