@@ -152,7 +152,7 @@ exports.updateBlog = async (req, res) => {
     if (req.file) {
       // The file has been uploaded to uploads/blogs directory
       // The path should be relative to the public directory
-      blog.coverImage = `/uploads/blogs/${req.file.filename}`;
+      blog.coverImage = `uploads/blogs/${req.file.filename}`;
       console.log('Blog cover image updated to:', blog.coverImage);
     }
 

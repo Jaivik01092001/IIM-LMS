@@ -293,7 +293,7 @@ const Blog = () => {
               >
                 {blog.coverImage ? (
                   <img
-                    src={fixImageUrl(blog.coverImage)}
+                  src={fixImageUrl(VITE_IMAGE_URL + blog.coverImage)}
                     alt={blog.title}
                     className="blog-card-image"
                   />
