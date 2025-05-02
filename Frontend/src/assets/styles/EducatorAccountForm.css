@@ -206,6 +206,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  width: fit-content;
 }
 
 .educator-form-container .upload-photo-btn:hover {
@@ -454,6 +455,7 @@
   .educator-form-container .back-button {
     width: 36px;
     height: 36px;
+    padding: 0px;
   }
 
   .educator-form-container .upload-photo-btn {

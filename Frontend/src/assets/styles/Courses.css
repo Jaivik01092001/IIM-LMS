@@ -347,13 +347,13 @@
 }
 
 .courses-container .action-btn.view {
-  background-color: #e7eee5;
-  color: #4abb66;
+  background-color: #eef2ff;
+  color: var(--bg-primary);
 }
 
 .courses-container .action-btn.edit {
-  background-color: #eef2ff;
-  color: var(--primary-color);
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .courses-container .action-btn.delete {
