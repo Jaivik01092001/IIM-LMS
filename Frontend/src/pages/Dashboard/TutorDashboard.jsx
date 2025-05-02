@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { getCoursesThunk } from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
+import ProgressBar from "../../components/common/ProgressBar";
 import "../../assets/styles/TutorDashboard.css";
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -40,15 +41,15 @@ const TutorDashboard = () => {
         // For demo: generate random enrollment status and progress
         const isEnrolled =
           course._id.toString().charCodeAt(course._id.toString().length - 1) %
-            2 ===
+          2 ===
           0;
         const progress = isEnrolled ? Math.floor(Math.random() * 100) : 0;
         const status =
           progress === 100
             ? "completed"
             : isEnrolled
-            ? "ongoing"
-            : "not-enrolled";
+              ? "ongoing"
+              : "not-enrolled";
 
         return {
           id: course._id,
@@ -139,13 +140,12 @@ const TutorDashboard = () => {
       name: "Progress",
       cell: (row) => (
         <div className="progress-container">
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${row.progress}%` }}
-            />
-          </div>
-          <span className="progress-text">{row.progress}%</span>
+          <ProgressBar
+            percentage={row.progress}
+            size="small"
+            color="primary"
+            animated={false}
+          />
         </div>
       ),
       sortable: true,

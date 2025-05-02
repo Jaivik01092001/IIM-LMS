@@ -13,6 +13,7 @@ import {
   FaFilePdf,
   FaLock
 } from 'react-icons/fa';
+import ProgressBar from '../components/common/ProgressBar';
 import { toast } from 'react-toastify';
 import { getCourse } from '../redux/admin/adminApi';
 import {
@@ -113,6 +114,8 @@ const EnrollCourseDetail = () => {
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
     if (moduleProgress && course) {
+      console.log('Initializing progress from backend data:', moduleProgress);
+
       // Start with all sessions NOT completed
       const newSessionCompleted = {};
       course.modules.forEach(mod => {
@@ -132,7 +135,7 @@ const EnrollCourseDetail = () => {
       // Then apply the progress from the backend
       moduleProgress.moduleProgress.forEach(mp => {
         // Get the module ID - handle both object and string formats
-        const moduleId = mp.module._id || mp.module;
+        const moduleId = typeof mp.module === 'object' ? mp.module._id : mp.module.toString();
 
         // Update module completion status
         newModuleState[moduleId] = mp.isCompleted;
@@ -141,31 +144,42 @@ const EnrollCourseDetail = () => {
         if (mp.completedContent && mp.completedContent.length > 0) {
           mp.completedContent.forEach(contentId => {
             if (contentId) {
-              newSessionCompleted[contentId] = true;
+              // Handle both object and string formats for content ID
+              const contentIdStr = typeof contentId === 'object' ? contentId._id : contentId.toString();
+              newSessionCompleted[contentIdStr] = true;
             }
           });
         }
       });
 
       // IMPORTANT FIX: Ensure module unlocking is consistent
-      // Find the highest completed module index
-      let highestCompletedModuleIndex = -1;
+      // First module is always unlocked
+      if (course.modules && course.modules.length > 0) {
+        newModuleState[course.modules[0]._id] = true;
+      }
 
-      course.modules.forEach((module, index) => {
-        // If this module is completed or has any completed content
-        if (newModuleState[module._id] ||
-          (module.content && module.content.some(content => newSessionCompleted[content._id]))) {
-          highestCompletedModuleIndex = Math.max(highestCompletedModuleIndex, index);
-        }
-      });
+      // For each module after the first one, check if all previous modules are fully completed
+      for (let i = 1; i < course.modules.length; i++) {
+        const allPreviousModulesCompleted = course.modules
+          .slice(0, i) // Get all modules before the current one
+          .every((prevModule) => {
+            // For each previous module, check if it's marked as completed
+            // AND check if all its content is completed
+            const isPrevModuleCompleted = newModuleState[prevModule._id];
+            const isAllPrevModuleContentCompleted = prevModule.content?.every(
+              content => newSessionCompleted[content._id] === true
+            ) || false;
 
-      // Ensure all modules up to and including the highest completed one are unlocked
-      // Also unlock the next module after the highest completed one
-      course.modules.forEach((module, index) => {
-        if (index <= highestCompletedModuleIndex + 1) {
-          newModuleState[module._id] = true;
+            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+          });
+
+        // Only unlock this module if all previous modules are fully completed
+        if (allPreviousModulesCompleted) {
+          newModuleState[course.modules[i]._id] = true;
+        } else {
+          newModuleState[course.modules[i]._id] = false;
         }
-      });
+      }
 
       // Update the module completion state
       setModuleCompleted(newModuleState);
@@ -173,9 +187,10 @@ const EnrollCourseDetail = () => {
       // Update session completion state
       setSessionCompleted(newSessionCompleted);
 
-      // Calculate overall progress
+      // Calculate overall progress based on completed content
       const completedCount = Object.values(newSessionCompleted).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionCompleted).length;
+      const calculatedProgress = totalSessions > 0 ? Math.round((completedCount / totalSessions) * 100) : 0;
 
       // Check if the course has enrolled users and if the current user is one of them
       if (course.enrolledUsers && course.enrolledUsers.length > 0 && currentUserId) {
@@ -186,23 +201,27 @@ const EnrollCourseDetail = () => {
         );
 
         // If user enrollment exists, use the progress from the backend
-        if (userEnrollment) {
-          setUserProgress(userEnrollment.progress || 0);
-        } else if (totalSessions > 0) {
-          // Fallback to calculated progress if no enrollment found
-          const newProgress = Math.round((completedCount / totalSessions) * 100);
-          setUserProgress(newProgress);
+        if (userEnrollment && typeof userEnrollment.progress === 'number') {
+          console.log('Setting progress from enrollment:', userEnrollment.progress);
+          setUserProgress(userEnrollment.progress);
+        } else {
+          // Fallback to calculated progress if no enrollment found or progress is not a number
+          console.log('Setting calculated progress:', calculatedProgress);
+          setUserProgress(calculatedProgress);
         }
-      } else if (totalSessions > 0) {
+      } else {
         // Fallback to calculated progress if no enrollment data
-        const newProgress = Math.round((completedCount / totalSessions) * 100);
-        setUserProgress(newProgress);
+        console.log('No enrollment found, setting calculated progress:', calculatedProgress);
+        setUserProgress(calculatedProgress);
       }
 
       // If there's a last accessed module, set it as active
       if (moduleProgress.lastAccessedModule) {
         // Find the module index
-        const lastModuleId = moduleProgress.lastAccessedModule;
+        const lastModuleId = typeof moduleProgress.lastAccessedModule === 'object'
+          ? moduleProgress.lastAccessedModule._id
+          : moduleProgress.lastAccessedModule.toString();
+
         const moduleIndex = course.modules.findIndex(
           m => m._id === lastModuleId
         );
@@ -285,10 +304,13 @@ const EnrollCourseDetail = () => {
         [sessionId]: !sessionCompleted[sessionId],
       };
 
-      // Calculate progress for all sessions
+      // Calculate progress for all sessions across all modules
       const completedCount = Object.values(newSessionState).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionState).length;
-      const newProgress = Math.round((completedCount / totalSessions) * 100);
+
+      // Store the calculated progress in a variable but don't set it yet
+      // We'll use the value returned from the backend instead
+      const calculatedProgress = Math.round((completedCount / totalSessions) * 100);
 
       // Check if all sessions in this module are completed
       const moduleSessionsCompleted =
@@ -310,10 +332,27 @@ const EnrollCourseDetail = () => {
         }
       });
 
-      // If this module is completed, unlock the next module if it exists
+      // Only unlock the next module if this module is completed AND all previous modules are completed
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
-        const nextModuleId = course.modules[moduleIndex + 1]._id;
-        newModuleState[nextModuleId] = true;
+        // Check if all previous modules are completed
+        const allPreviousModulesCompleted = course.modules
+          .slice(0, moduleIndex + 1) // Get all modules up to and including the current one
+          .every((prevModule) => {
+            // For each previous module, check if it's marked as completed
+            // AND check if all its content is completed
+            const isPrevModuleCompleted = newModuleState[prevModule._id];
+            const isAllPrevModuleContentCompleted = prevModule.content?.every(
+              content => newSessionState[content._id] === true
+            ) || false;
+
+            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+          });
+
+        // Only unlock the next module if all previous modules are fully completed
+        if (allPreviousModulesCompleted) {
+          const nextModuleId = course.modules[moduleIndex + 1]._id;
+          newModuleState[nextModuleId] = true;
+        }
       }
 
       // Prepare data for backend update
@@ -328,8 +367,8 @@ const EnrollCourseDetail = () => {
           .map(content => content._id) || [];
       });
 
-      // Update backend first
-      await dispatch(updateModuleProgressThunk({
+      // Update backend first and capture the response
+      const response = await dispatch(updateModuleProgressThunk({
         courseId: id,
         progressData: {
           moduleId,
@@ -343,7 +382,26 @@ const EnrollCourseDetail = () => {
       // Only update local state after successful backend update
       setSessionCompleted(newSessionState);
       setModuleCompleted(newModuleState);
-      setUserProgress(newProgress);
+
+      // Use the progress value returned from the backend instead of the locally calculated one
+      // This ensures we're always in sync with the server's calculation
+      console.log('Progress response from backend:', response);
+
+      // First try to use userProgress which comes directly from the course enrollment
+      if (typeof response.userProgress === 'number') {
+        console.log('Using userProgress from backend:', response.userProgress);
+        setUserProgress(response.userProgress);
+      }
+      // Then try overallProgress which is calculated from module content
+      else if (typeof response.overallProgress === 'number') {
+        console.log('Using overallProgress from backend:', response.overallProgress);
+        setUserProgress(response.overallProgress);
+      }
+      // Fallback to calculated progress if backend doesn't return a value
+      else {
+        console.log('Using locally calculated progress:', calculatedProgress);
+        setUserProgress(calculatedProgress);
+      }
 
       toast.success('Progress updated successfully');
     } catch (error) {
@@ -486,8 +544,15 @@ const EnrollCourseDetail = () => {
       <div className="course-header">
         <h1>{course.title}</h1>
         <div className="progress-container">
-          <div className="progress-bar" style={{ width: `${userProgress}%` }}></div>
-          <span className="progress-text">{userProgress}%</span>
+          <ProgressBar
+            percentage={userProgress}
+            size="medium"
+            color="warning"
+            animated={true}
+            className="course-progress-bar custom-progress"
+            textPosition="right"
+            showText={true}
+          />
         </div>
         <div className="user-profile">
           <FaUserCircle size={40} />
