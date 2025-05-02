@@ -9,6 +9,7 @@ import {
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
 import { hasLocalPermission } from "../utils/localPermissions";
 import { FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Schools.css";
@@ -212,16 +213,11 @@ const Schools = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status ? "Click to deactivate" : "Click to activate"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_school"
+        />
       ),
       sortable: true,
       width: "120px",
@@ -233,10 +229,8 @@ const Schools = () => {
           row={row}
           onView={handleView}
           onEdit={handleEdit}
-          onDelete={handleDelete}
           viewPermission="view_schools"
           editPermission="edit_school"
-          deletePermission="delete_school"
         />
       ),
       width: "150px",

@@ -13,8 +13,9 @@ import {
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
 import { hasLocalPermission } from "../utils/localPermissions";
-import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
+import { FaPencilAlt, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Educators.css";
 
 const Educators = () => {
@@ -239,16 +240,11 @@ const Educators = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status ? "Click to deactivate" : "Click to activate"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_educator"
+        />
       ),
       sortable: true,
       width: "120px",
@@ -260,10 +256,8 @@ const Educators = () => {
           row={row}
           onView={handleView}
           onEdit={handleEdit}
-          onDelete={handleDelete}
           viewPermission="view_educators"
           editPermission="edit_educator"
-          deletePermission="delete_educator"
         />
       ),
       width: "150px",

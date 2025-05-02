@@ -11,6 +11,7 @@ import { FaFilePen } from "react-icons/fa6";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
 import { hasLocalPermission } from "../utils/localPermissions";
 import {
   getBlogsThunk,
@@ -190,25 +191,15 @@ const Blog = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status === "published" ? "active" : ""
-              }`}
-            onClick={() => handleStatusToggle(row)}
-            title={
-              row.status === "published"
-                ? "Click to unpublish"
-                : "Click to publish"
-            }
-          />
-          <span
-            className={
-              row.status === "published" ? "text-green-600" : "text-red-600"
-            }
-          >
-            {row.status === "published" ? "Published" : "Draft"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_blog"
+          activeText="Published"
+          inactiveText="Draft"
+          activeTooltip="Click to unpublish"
+          inactiveTooltip="Click to publish"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -220,10 +211,8 @@ const Blog = () => {
           row={row}
           onView={handleViewBlog}
           onEdit={handleEditBlog}
-          onDelete={handleDeleteBlog}
           viewPermission="view_blogs"
           editPermission="edit_blog"
-          deletePermission="delete_blog"
           className="blog-actions-cell"
         />
       ),

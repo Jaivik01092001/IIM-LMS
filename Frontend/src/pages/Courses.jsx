@@ -15,6 +15,7 @@ import {
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
 import { hasLocalPermission } from "../utils/localPermissions";
 import "../assets/styles/Courses.css";
 
@@ -197,16 +198,11 @@ const Courses = ({ userType }) => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status ? "Active" : "Inactive"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_course"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -219,10 +215,8 @@ const Courses = ({ userType }) => {
           row={row}
           onView={handleView}
           onEdit={handleEdit}
-          onDelete={handleDelete}
           viewPermission="view_courses"
           editPermission="edit_course"
-          deletePermission="delete_course"
         />
       ),
       width: "150px",

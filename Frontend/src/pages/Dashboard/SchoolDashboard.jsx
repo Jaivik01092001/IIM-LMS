@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaPencilAlt, FaTrashAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher } from 'react-icons/fa';
+import { FaPencilAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher } from 'react-icons/fa';
 import { IoBookOutline } from 'react-icons/io5';
 import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
 import { getCoursesThunk, updateCourseThunk, deleteCourseThunk, getUsersThunk } from '../../redux/admin/adminSlice';
 import DataTableComponent from '../../components/DataTable';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import StatusToggle from '../../components/common/StatusToggle';
+import ActionButtons from '../../components/common/ActionButtons';
 import '../../assets/styles/Courses.css';
 import '../../assets/styles/SchoolDashboard.css';
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -258,16 +260,11 @@ const SchoolDashboard = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleCourseStatusToggle(row)}
-            title={row.status ? "Active" : "Inactive"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleCourseStatusToggle(row)}
+          permission="delete_course"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -276,21 +273,13 @@ const SchoolDashboard = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleCourseView(row)} title="View Details">
-            <FaEye />
-          </button>
-          <button className="action-btn edit" onClick={() => handleCourseEdit(row)} title="Edit Course">
-            <FaPencilAlt />
-          </button>
-          <button
-            className="action-btn delete"
-            onClick={() => handleCourseDelete(row)}
-            title="Delete Course"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleCourseView}
+          onEdit={handleCourseEdit}
+          viewPermission="view_courses"
+          editPermission="edit_course"
+        />
       ),
       width: "150px",
       center: true,
@@ -333,16 +322,11 @@ const SchoolDashboard = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleEducatorStatusToggle(row)}
-            title={row.status ? "Active" : "Inactive"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleEducatorStatusToggle(row)}
+          permission="delete_educator"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -351,17 +335,13 @@ const SchoolDashboard = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleEducatorView(row)} title="View Details">
-            <FaEye />
-          </button>
-          <button className="action-btn edit" onClick={() => handleEducatorEdit(row)} title="Edit Educator">
-            <FaPencilAlt />
-          </button>
-          <button className="action-btn delete" onClick={() => handleEducatorDelete(row)} title="Delete Educator">
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleEducatorView}
+          onEdit={handleEducatorEdit}
+          viewPermission="view_educators"
+          editPermission="edit_educator"
+        />
       ),
       width: "150px",
       center: true,

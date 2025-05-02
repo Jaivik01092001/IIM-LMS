@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FaEye, FaPencilAlt, FaTrashAlt, FaPlus } from 'react-icons/fa';
+import { FaEye, FaPencilAlt, FaPlus } from 'react-icons/fa';
 import ActionButton from './ActionButton';
 
 /**
@@ -10,11 +10,9 @@ import ActionButton from './ActionButton';
  * @param {Object} props.row - The data row for the current item
  * @param {Function} props.onView - View handler function
  * @param {Function} props.onEdit - Edit handler function
- * @param {Function} props.onDelete - Delete handler function
  * @param {Function} props.onAdd - Add handler function (optional)
  * @param {String} props.viewPermission - Permission required for view button
  * @param {String} props.editPermission - Permission required for edit button
- * @param {String} props.deletePermission - Permission required for delete button
  * @param {String} props.addPermission - Permission required for add button
  * @param {String} props.className - Additional CSS classes for the container
  */
@@ -22,11 +20,9 @@ const ActionButtons = ({
   row,
   onView,
   onEdit,
-  onDelete,
   onAdd,
   viewPermission,
   editPermission,
-  deletePermission,
   addPermission,
   className
 }) => {
@@ -34,7 +30,6 @@ const ActionButtons = ({
   console.debug('ActionButtons permissions:', {
     viewPermission,
     editPermission,
-    deletePermission,
     addPermission
   });
 
@@ -60,15 +55,7 @@ const ActionButtons = ({
         />
       )}
 
-      {onDelete && (
-        <ActionButton
-          type="delete"
-          onClick={() => onDelete(row)}
-          permission={deletePermission}
-          icon={<FaTrashAlt />}
-          title="Delete"
-        />
-      )}
+
 
       {onAdd && (
         <ActionButton
@@ -87,11 +74,9 @@ ActionButtons.propTypes = {
   row: PropTypes.object.isRequired,
   onView: PropTypes.func,
   onEdit: PropTypes.func,
-  onDelete: PropTypes.func,
   onAdd: PropTypes.func,
   viewPermission: PropTypes.string,
   editPermission: PropTypes.string,
-  deletePermission: PropTypes.string,
   addPermission: PropTypes.string,
   className: PropTypes.string
 };
