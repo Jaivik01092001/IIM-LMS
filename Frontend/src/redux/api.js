@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios from "axios";
+import { showErrorToast } from "../utils/toast";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -6,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true, // Enable sending cookies
 });
@@ -14,14 +15,14 @@ const api = axios.create({
 // Add request interceptor to add auth token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers["Authorization"] = `Bearer ${token}`;
     }
 
     // Don't set Content-Type for FormData, let the browser set it with boundary
     if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
+      delete config.headers["Content-Type"];
     }
 
     return config;
@@ -29,7 +30,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add response interceptor to handle token refresh
+// Add response interceptor to handle token refresh and errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -41,30 +42,42 @@ api.interceptors.response.use(
 
       try {
         // Get refresh token from local storage
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = localStorage.getItem("refreshToken");
         if (!refreshToken) {
-          throw new Error('No refresh token available');
+          throw new Error("No refresh token available");
         }
 
         // Request new access token
-        const response = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
+        const response = await axios.post(`${API_URL}/auth/refresh-token`, {
+          refreshToken,
+        });
 
         // Store the new access token
-        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem("accessToken", response.data.accessToken);
 
         // Update the original request with the new token
-        originalRequest.headers['Authorization'] = `Bearer ${response.data.accessToken}`;
+        originalRequest.headers[
+          "Authorization"
+        ] = `Bearer ${response.data.accessToken}`;
 
         // Retry the original request
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh token is invalid, redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/';
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.location.href = "/";
         return Promise.reject(refreshError);
       }
+    }
+
+    // Handle permission errors (403)
+    if (error.response?.status === 403) {
+      const errorMessage =
+        error.response.data?.message ||
+        "You do not have permission to perform this action";
+      showErrorToast(errorMessage);
     }
 
     return Promise.reject(error);

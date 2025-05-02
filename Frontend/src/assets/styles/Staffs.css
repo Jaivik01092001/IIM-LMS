@@ -1,8 +1,4 @@
 /* Staffs page styles */
-.schools-container {
-  padding: 20px;
-}
-
 .schools-header {
   display: flex;
   justify-content: space-between;
@@ -136,32 +132,43 @@
 .action-button {
   width: 32px;
   height: 32px;
-  border-radius: 4px;
+  border-radius: var(--border-small-radius);
   border: none;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
 }
 
 .action-button.view {
-  background-color: var(--view-btn-color);
-  color: white;
+  background-color: var(--primary-light-bg);
+  color: var(--primary-color);
 }
 
 .action-button.edit {
-  background-color: var(--edit-btn-color);
-  color: white;
+  background-color: #ecfdf5;
+  color: #059669;
 }
 
 .action-button.delete {
-  background-color: var(--delete-btn-color);
-  color: white;
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .action-button:hover {
-  filter: brightness(90%);
+  transform: translateY(-1px);
+}
+
+.action-button svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Responsive */
@@ -239,14 +246,14 @@
   align-items: center;
   gap: 1rem;
   flex-grow: 1;
-  margin-bottom: 0rem;
+  margin-bottom: 2rem;
   grid-template-columns: 4fr 3fr 3fr 1fr 1fr;
 }
 
 .staffs-container .search-input {
   padding: 10px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   font-size: 14px;
   min-width: 250px;
   outline: none;
@@ -268,7 +275,7 @@
 .staffs-container .filter-select {
   padding: 10px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   background-color: white;
   font-size: 14px;
   min-width: 150px;
@@ -290,7 +297,7 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
@@ -351,7 +358,7 @@
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -372,6 +379,11 @@
 .staffs-container .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
+}
+
+.staffs-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .staffs-container .action-button:hover {

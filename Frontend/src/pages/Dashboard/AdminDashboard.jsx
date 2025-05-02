@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { FaPencilAlt, FaTrashAlt, FaEye, FaBook } from "react-icons/fa";
+import { FaPencilAlt, FaEye, FaBook } from "react-icons/fa";
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   getUniversitiesThunk,
   getCoursesThunk,
@@ -13,12 +14,15 @@ import {
 } from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import StatusToggle from "../../components/common/StatusToggle";
+import ActionButtons from "../../components/common/ActionButtons";
 import "../../assets/styles/AdminDashboard.css";
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
@@ -50,12 +54,19 @@ const AdminDashboard = () => {
   const universityCount = getCountByRole("university");
   const educatorCount = getCountByRole("educator");
 
+  // Get user from Redux store
+  const { user } = useSelector((state) => state.auth);
+
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getUniversitiesThunk());
     dispatch(getCoursesThunk());
-    dispatch(getUsersThunk());
-  }, [dispatch]);
+
+    // Admin users should have permission to view users, but let's check anyway
+    if (user?.role === 'admin' || user?.permissions?.view_users) {
+      dispatch(getUsersThunk());
+    }
+  }, [dispatch, user]);
 
   // Log users data when it changes
   useEffect(() => {
@@ -193,8 +204,7 @@ const AdminDashboard = () => {
       .unwrap()
       .then(() => {
         console.log(
-          `Successfully ${row.status ? "deactivated" : "activated"} ${
-            row.title
+          `Successfully ${row.status ? "deactivated" : "activated"} ${row.title
           }`
         );
         // Refresh courses data
@@ -261,11 +271,11 @@ const AdminDashboard = () => {
       name: "Creator",
       cell: (row) => (
         <div className="professor-info">
-          <img
+          {/* <img
             src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
             alt={row.professor}
             className="professor-avatar"
-          />
+          /> */}
           <span>{row.professor}</span>
         </div>
       ),
@@ -284,10 +294,10 @@ const AdminDashboard = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleStatusToggle(row)}
-          title={row.status ? "Active" : "Inactive"}
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_course"
         />
       ),
       sortable: true,
@@ -297,29 +307,13 @@ const AdminDashboard = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button
-            className="action-btn view"
-            onClick={() => handleView(row)}
-            title="View Details"
-          >
-            <FaEye />
-          </button>
-          <button
-            className="action-btn edit"
-            onClick={() => handleEdit(row)}
-            title="Edit Course"
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            className="action-btn delete"
-            onClick={() => handleDelete(row)}
-            title="Delete Course"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          viewPermission="view_courses"
+          editPermission="edit_course"
+        />
       ),
       width: "150px",
       center: true,
@@ -329,7 +323,7 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       {isLoading && (
-        <LoadingSpinner overlay={true} message="Loading dashboard data..." />
+        <LoadingSpinner overlay={true} message={t("common.loading")} />
       )}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
@@ -338,8 +332,10 @@ const AdminDashboard = () => {
             <FaBook size={24} />
             <FaBook className="icondesign3" />
           </div>
-          <div className="stat-count">{courses?.length || 0}</div>
-          <div className="stat-title">Total Courses</div>
+          <div>
+            <div className="stat-count">{courses?.length || 0}</div>
+            <div className="stat-title">{t("dashboard.totalCourses")}</div>
+          </div>
         </div>
 
         <div className="stat-card schools">
@@ -347,21 +343,25 @@ const AdminDashboard = () => {
             <LuSchool size={24} />
             <LuSchool className="icondesign1" />
           </div>
-          <div className="stat-count">
-            {universityCount || universities?.length || 0}
+          <div>
+            <div className="stat-count">
+              {universityCount || universities?.length || 0}
+            </div>
+            <div className="stat-title">{t("dashboard.totalSchools")}</div>
           </div>
-          <div className="stat-title">Total Schools</div>
         </div>
 
         <div className="stat-card educators">
           <div className="stat-icon2">
-            <LiaChalkboardTeacherSolid size={24} />
+            <LiaChalkboardTeacherSolid size={30} />
             <LiaChalkboardTeacherSolid className="icondesign2" />
           </div>
-          <div className="stat-count">
-            {educatorCount || educatorsCountFromUniversities}
+          <div>
+            <div className="stat-count">
+              {educatorCount || educatorsCountFromUniversities}
+            </div>
+            <div className="stat-title">{t("dashboard.totalEducators")}</div>
           </div>
-          <div className="stat-title">Total Educators</div>
         </div>
       </div>
 
@@ -369,20 +369,20 @@ const AdminDashboard = () => {
       <div className="dashboard-section">
         <div className="section-header">
           <h2 className="section-title">
-            All Courses ({courses?.length || 0})
+            {t("courses.courses")} ({courses?.length || 0})
           </h2>
           <div className="header-actions">
             <button
               className="add-course-btn"
               onClick={() => navigate("/dashboard/admin/courses/create")}
             >
-              Add Course
+              {t("common.add")} {t("courses.course")}
             </button>
             <button
               className="view-all-btn"
               onClick={() => navigate("/dashboard/admin/courses")}
             >
-              View All Courses
+              {t("common.view")} {t("courses.allCourses")}
             </button>
           </div>
         </div>
@@ -391,7 +391,7 @@ const AdminDashboard = () => {
         <div className="search-filter-container">
           <input
             type="text"
-            placeholder="Search Courses"
+            placeholder={t("common.search") + " " + t("courses.courses")}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -401,7 +401,7 @@ const AdminDashboard = () => {
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
-            <option value="">All Categories</option>
+            <option value="">{t("courses.allCategories")}</option>
             {categories.map((category, index) => (
               <option key={index} value={category}>
                 {category}
@@ -413,12 +413,16 @@ const AdminDashboard = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="">Sort by</option>
-            <option value="title-asc">Title (A-Z)</option>
-            <option value="title-desc">Title (Z-A)</option>
-            <option value="level-asc">Level (Beginner-Advanced)</option>
-            <option value="level-desc">Level (Advanced-Beginner)</option>
-            <option value="status">Status</option>
+            <option value="">{t("courses.sortBy")}</option>
+            <option value="title-asc">{t("courses.title")} (A-Z)</option>
+            <option value="title-desc">{t("courses.title")} (Z-A)</option>
+            <option value="level-asc">
+              {t("courses.level")} ({t("courses.beginnerToAdvanced")})
+            </option>
+            <option value="level-desc">
+              {t("courses.level")} ({t("courses.advancedToBeginner")})
+            </option>
+            <option value="status">{t("courses.status")}</option>
           </select>
         </div>
 

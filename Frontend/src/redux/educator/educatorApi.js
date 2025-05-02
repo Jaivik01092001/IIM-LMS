@@ -61,8 +61,20 @@ export const createContent = async (formData) => {
   return response.data;
 };
 
-export const submitQuiz = async ({ id, answers }) => {
-  const response = await axios.post(`${API_URL}/educator/quiz/${id}`, { answers }, getConfig());
+export const submitQuiz = async ({ courseId, quizId, answers }) => {
+  const response = await axios.post(`${API_URL}/educator/courses/${courseId}/quizzes/${quizId}/submit`, { answers }, getConfig());
+  return response.data;
+};
+
+export const getQuizAttempts = async ({ courseId, quizId, userId }) => {
+  // Include userId in the query parameters to ensure we only get attempts for this user
+  const response = await axios.get(
+    `${API_URL}/educator/courses/${courseId}/quizzes/${quizId}/attempts`,
+    {
+      ...getConfig(),
+      params: { userId } // Pass userId as a query parameter
+    }
+  );
   return response.data;
 };
 

@@ -8,7 +8,9 @@ import {
 } from "../redux/admin/staffSlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
+import StatusToggle from "../components/common/StatusToggle";
+import ActionButtons from "../components/common/ActionButtons";
+import { FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Staffs.css";
 
 const Staffs = () => {
@@ -217,16 +219,11 @@ const Staffs = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status ? "Click to deactivate" : "Click to activate"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_user"
+        />
       ),
       sortable: true,
       width: "120px",
@@ -234,29 +231,13 @@ const Staffs = () => {
     {
       name: "Actions",
       cell: (row) => (
-        <div className="action-buttons">
-          <button
-            onClick={() => handleView(row)}
-            className="action-button view"
-            title="View Details"
-          >
-            <FaEye />
-          </button>
-          <button
-            onClick={() => handleEdit(row)}
-            className="action-button edit"
-            title="Edit"
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            onClick={() => handleDelete(row)}
-            className="action-button delete"
-            title="Delete"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          viewPermission="view_users"
+          editPermission="edit_user"
+        />
       ),
       ignoreRowClick: true,
       allowOverflow: true,
@@ -316,7 +297,7 @@ const Staffs = () => {
           <option value="Status">Status</option>
         </select>
         <button className="create-account-btn" onClick={handleCreateAccount}>
-          Create Staff Account
+          Create Staff
         </button>
       </div>
 

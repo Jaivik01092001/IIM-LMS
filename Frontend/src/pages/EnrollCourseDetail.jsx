@@ -9,11 +9,11 @@ import {
   FaChevronUp,
   FaChevronDown,
   FaUserCircle,
-  FaCheck,
   FaTrophy,
   FaFilePdf,
   FaLock
 } from 'react-icons/fa';
+import ProgressBar from '../components/common/ProgressBar';
 import { toast } from 'react-toastify';
 import { getCourse } from '../redux/admin/adminApi';
 import {
@@ -21,8 +21,11 @@ import {
   updateModuleProgressThunk,
   generateCertificateThunk,
   getMyCertificatesThunk,
-  updateProgressThunk
+  updateProgressThunk,
+  submitQuizThunk,
+  getQuizAttemptsThunk
 } from '../redux/educator/educatorSlice';
+import QuizSubmission from '../components/QuizSubmission';
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -33,18 +36,17 @@ const EnrollCourseDetail = () => {
 
   const [activeTab, setActiveTab] = useState('content');
   const [expandedSections, setExpandedSections] = useState({});
+  const [expandedQuizzes, setExpandedQuizzes] = useState({});
   const [sessionCompleted, setSessionCompleted] = useState({});
   const [moduleCompleted, setModuleCompleted] = useState({});
   const [userProgress, setUserProgress] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [course, setCourse] = useState(null);
   const [selectedContent, setSelectedContent] = useState(null);
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
   // Get the current user ID from the Redux store
   const { user } = useSelector((state) => state.auth);
+  const { quizAttempts: storeQuizAttempts } = useSelector((state) => state.educator);
   const currentUserId = user?.id;
-
-  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
 
   // Check if certificate exists for this course AND belongs to the current user
   // This is used to determine whether to show the Generate Certificate button
@@ -66,6 +68,13 @@ const EnrollCourseDetail = () => {
           defaultExpanded[mod._id] = index === 0;
         });
         setExpandedSections(defaultExpanded);
+
+        // Initialize quiz accordion state - first quiz expanded by default
+        const defaultQuizExpanded = {};
+        if (res.quizzes && res.quizzes.length > 0) {
+          defaultQuizExpanded[res.quizzes[0]._id] = true;
+        }
+        setExpandedQuizzes(defaultQuizExpanded);
 
         // Initialize session completion status - ALL sessions are NOT completed by default
         const completed = {};
@@ -105,6 +114,8 @@ const EnrollCourseDetail = () => {
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
     if (moduleProgress && course) {
+      console.log('Initializing progress from backend data:', moduleProgress);
+
       // Start with all sessions NOT completed
       const newSessionCompleted = {};
       course.modules.forEach(mod => {
@@ -124,29 +135,51 @@ const EnrollCourseDetail = () => {
       // Then apply the progress from the backend
       moduleProgress.moduleProgress.forEach(mp => {
         // Get the module ID - handle both object and string formats
-        const moduleId = mp.module._id || mp.module;
+        const moduleId = typeof mp.module === 'object' ? mp.module._id : mp.module.toString();
 
         // Update module completion status
         newModuleState[moduleId] = mp.isCompleted;
-
-        // If a module is completed, also unlock the next module
-        if (mp.isCompleted) {
-          const moduleIndex = course.modules.findIndex(m => m._id === moduleId);
-          if (moduleIndex !== -1 && moduleIndex < course.modules.length - 1) {
-            const nextModuleId = course.modules[moduleIndex + 1]._id;
-            newModuleState[nextModuleId] = true;
-          }
-        }
 
         // Update ONLY explicitly completed content items
         if (mp.completedContent && mp.completedContent.length > 0) {
           mp.completedContent.forEach(contentId => {
             if (contentId) {
-              newSessionCompleted[contentId] = true;
+              // Handle both object and string formats for content ID
+              const contentIdStr = typeof contentId === 'object' ? contentId._id : contentId.toString();
+              newSessionCompleted[contentIdStr] = true;
             }
           });
         }
       });
+
+      // IMPORTANT FIX: Ensure module unlocking is consistent
+      // First module is always unlocked
+      if (course.modules && course.modules.length > 0) {
+        newModuleState[course.modules[0]._id] = true;
+      }
+
+      // For each module after the first one, check if all previous modules are fully completed
+      for (let i = 1; i < course.modules.length; i++) {
+        const allPreviousModulesCompleted = course.modules
+          .slice(0, i) // Get all modules before the current one
+          .every((prevModule) => {
+            // For each previous module, check if it's marked as completed
+            // AND check if all its content is completed
+            const isPrevModuleCompleted = newModuleState[prevModule._id];
+            const isAllPrevModuleContentCompleted = prevModule.content?.every(
+              content => newSessionCompleted[content._id] === true
+            ) || false;
+
+            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+          });
+
+        // Only unlock this module if all previous modules are fully completed
+        if (allPreviousModulesCompleted) {
+          newModuleState[course.modules[i]._id] = true;
+        } else {
+          newModuleState[course.modules[i]._id] = false;
+        }
+      }
 
       // Update the module completion state
       setModuleCompleted(newModuleState);
@@ -154,9 +187,10 @@ const EnrollCourseDetail = () => {
       // Update session completion state
       setSessionCompleted(newSessionCompleted);
 
-      // Calculate overall progress
+      // Calculate overall progress based on completed content
       const completedCount = Object.values(newSessionCompleted).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionCompleted).length;
+      const calculatedProgress = totalSessions > 0 ? Math.round((completedCount / totalSessions) * 100) : 0;
 
       // Check if the course has enrolled users and if the current user is one of them
       if (course.enrolledUsers && course.enrolledUsers.length > 0 && currentUserId) {
@@ -167,23 +201,27 @@ const EnrollCourseDetail = () => {
         );
 
         // If user enrollment exists, use the progress from the backend
-        if (userEnrollment) {
-          setUserProgress(userEnrollment.progress || 0);
-        } else if (totalSessions > 0) {
-          // Fallback to calculated progress if no enrollment found
-          const newProgress = Math.round((completedCount / totalSessions) * 100);
-          setUserProgress(newProgress);
+        if (userEnrollment && typeof userEnrollment.progress === 'number') {
+          console.log('Setting progress from enrollment:', userEnrollment.progress);
+          setUserProgress(userEnrollment.progress);
+        } else {
+          // Fallback to calculated progress if no enrollment found or progress is not a number
+          console.log('Setting calculated progress:', calculatedProgress);
+          setUserProgress(calculatedProgress);
         }
-      } else if (totalSessions > 0) {
+      } else {
         // Fallback to calculated progress if no enrollment data
-        const newProgress = Math.round((completedCount / totalSessions) * 100);
-        setUserProgress(newProgress);
+        console.log('No enrollment found, setting calculated progress:', calculatedProgress);
+        setUserProgress(calculatedProgress);
       }
 
       // If there's a last accessed module, set it as active
       if (moduleProgress.lastAccessedModule) {
         // Find the module index
-        const lastModuleId = moduleProgress.lastAccessedModule;
+        const lastModuleId = typeof moduleProgress.lastAccessedModule === 'object'
+          ? moduleProgress.lastAccessedModule._id
+          : moduleProgress.lastAccessedModule.toString();
+
         const moduleIndex = course.modules.findIndex(
           m => m._id === lastModuleId
         );
@@ -260,18 +298,19 @@ const EnrollCourseDetail = () => {
 
   const handleToggleSession = async (sessionId, moduleId, moduleIndex) => {
     try {
-      setIsUpdatingProgress(true);
-
       // Calculate new session state
       const newSessionState = {
         ...sessionCompleted,
         [sessionId]: !sessionCompleted[sessionId],
       };
 
-      // Calculate progress for all sessions
+      // Calculate progress for all sessions across all modules
       const completedCount = Object.values(newSessionState).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionState).length;
-      const newProgress = Math.round((completedCount / totalSessions) * 100);
+
+      // Store the calculated progress in a variable but don't set it yet
+      // We'll use the value returned from the backend instead
+      const calculatedProgress = Math.round((completedCount / totalSessions) * 100);
 
       // Check if all sessions in this module are completed
       const moduleSessionsCompleted =
@@ -279,16 +318,41 @@ const EnrollCourseDetail = () => {
           newSessionState[content._id] === true
         ) || false;
 
-      // Update module completion status
-      const newModuleState = {
-        ...moduleCompleted,
-        [moduleId]: moduleSessionsCompleted
-      };
+      // Create a new module state object starting with the current state
+      const newModuleState = { ...moduleCompleted };
 
-      // If this module is completed, unlock the next module if it exists
+      // Update the current module's completion status
+      newModuleState[moduleId] = moduleSessionsCompleted;
+
+      // IMPORTANT FIX: Ensure all previous modules remain unlocked
+      course.modules.forEach((module, idx) => {
+        // If this is a previous module or the current module, ensure it's unlocked
+        if (idx <= moduleIndex) {
+          newModuleState[module._id] = newModuleState[module._id] || true;
+        }
+      });
+
+      // Only unlock the next module if this module is completed AND all previous modules are completed
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
-        const nextModuleId = course.modules[moduleIndex + 1]._id;
-        newModuleState[nextModuleId] = true;
+        // Check if all previous modules are completed
+        const allPreviousModulesCompleted = course.modules
+          .slice(0, moduleIndex + 1) // Get all modules up to and including the current one
+          .every((prevModule) => {
+            // For each previous module, check if it's marked as completed
+            // AND check if all its content is completed
+            const isPrevModuleCompleted = newModuleState[prevModule._id];
+            const isAllPrevModuleContentCompleted = prevModule.content?.every(
+              content => newSessionState[content._id] === true
+            ) || false;
+
+            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+          });
+
+        // Only unlock the next module if all previous modules are fully completed
+        if (allPreviousModulesCompleted) {
+          const nextModuleId = course.modules[moduleIndex + 1]._id;
+          newModuleState[nextModuleId] = true;
+        }
       }
 
       // Prepare data for backend update
@@ -303,8 +367,8 @@ const EnrollCourseDetail = () => {
           .map(content => content._id) || [];
       });
 
-      // Update backend first
-      const result = await dispatch(updateModuleProgressThunk({
+      // Update backend first and capture the response
+      const response = await dispatch(updateModuleProgressThunk({
         courseId: id,
         progressData: {
           moduleId,
@@ -318,14 +382,31 @@ const EnrollCourseDetail = () => {
       // Only update local state after successful backend update
       setSessionCompleted(newSessionState);
       setModuleCompleted(newModuleState);
-      setUserProgress(newProgress);
+
+      // Use the progress value returned from the backend instead of the locally calculated one
+      // This ensures we're always in sync with the server's calculation
+      console.log('Progress response from backend:', response);
+
+      // First try to use userProgress which comes directly from the course enrollment
+      if (typeof response.userProgress === 'number') {
+        console.log('Using userProgress from backend:', response.userProgress);
+        setUserProgress(response.userProgress);
+      }
+      // Then try overallProgress which is calculated from module content
+      else if (typeof response.overallProgress === 'number') {
+        console.log('Using overallProgress from backend:', response.overallProgress);
+        setUserProgress(response.overallProgress);
+      }
+      // Fallback to calculated progress if backend doesn't return a value
+      else {
+        console.log('Using locally calculated progress:', calculatedProgress);
+        setUserProgress(calculatedProgress);
+      }
 
       toast.success('Progress updated successfully');
     } catch (error) {
       console.error('Failed to update progress:', error);
       toast.error('Failed to update progress. Please try again.');
-    } finally {
-      setIsUpdatingProgress(false);
     }
   };
 
@@ -333,21 +414,23 @@ const EnrollCourseDetail = () => {
     toast.success('Note saved');
   };
 
-  const handleQuizAnswerChange = (questionId, answer) => {
-    setQuizAnswers((prev) => ({
-      ...prev,
-      [questionId]: answer,
-    }));
-  };
+  const handleQuizSubmit = async (quizId, answers) => {
+    try {
+      // Use Redux thunk to submit quiz with courseId and quizId
+      const result = await dispatch(submitQuizThunk({
+        courseId: id, // The course ID from the URL params
+        quizId: quizId,
+        answers
+      })).unwrap();
 
-  const handleQuizSubmit = () => {
-    setQuizSubmitted(true);
-    toast.success('Quiz submitted successfully!');
-  };
+      // Toast notifications are handled in the thunk, so we don't need to add them here
 
-  const resetQuiz = () => {
-    setQuizAnswers({});
-    setQuizSubmitted(false);
+      return result;
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      // Error toast is already shown in the thunk
+      throw error;
+    }
   };
 
   // Check if a module is locked (all previous modules must be completed)
@@ -378,6 +461,14 @@ const EnrollCourseDetail = () => {
       progressData: {
         lastAccessedModule: module._id
       }
+    }));
+  };
+
+  // Toggle quiz expansion in accordion
+  const toggleQuiz = (quizId) => {
+    setExpandedQuizzes(prev => ({
+      ...prev,
+      [quizId]: !prev[quizId]
     }));
   };
 
@@ -453,8 +544,15 @@ const EnrollCourseDetail = () => {
       <div className="course-header">
         <h1>{course.title}</h1>
         <div className="progress-container">
-          <div className="progress-bar" style={{ width: `${userProgress}%` }}></div>
-          <span className="progress-text">{userProgress}%</span>
+          <ProgressBar
+            percentage={userProgress}
+            size="medium"
+            color="warning"
+            animated={true}
+            className="course-progress-bar custom-progress"
+            textPosition="right"
+            showText={true}
+          />
         </div>
         <div className="user-profile">
           <FaUserCircle size={40} />
@@ -568,7 +666,33 @@ const EnrollCourseDetail = () => {
               <button
                 key={tab}
                 className={`tab-button ${activeTab === tab ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+
+                  // If switching to quizzes tab, fetch quiz attempts for all quizzes in the course
+                  if (tab === 'quizzes' && course?.quizzes?.length > 0) {
+                    setLoadingAttempts(true);
+
+                    // Create an array of promises for all quiz attempt fetches
+                    const fetchPromises = course.quizzes.map(quiz =>
+                      dispatch(getQuizAttemptsThunk({
+                        courseId: id,
+                        quizId: quiz._id,
+                        userId: currentUserId // Pass the current user ID to ensure we only get attempts for this user
+                      }))
+                    );
+
+                    // Wait for all fetches to complete
+                    Promise.all(fetchPromises)
+                      .then(() => {
+                        setLoadingAttempts(false);
+                      })
+                      .catch(error => {
+                        console.error("Error fetching quiz attempts:", error);
+                        setLoadingAttempts(false);
+                      });
+                  }
+                }}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -653,52 +777,59 @@ const EnrollCourseDetail = () => {
 
           {activeTab === 'quizzes' && (
             <div className="quizzes-tab">
-              {course.quizzes?.map((quiz) => (
-                <div key={quiz._id} className="quiz-card">
-                  <div className="quiz-header">
-                    <h3>{quiz.title}</h3>
-                    <p className="quiz-description">{quiz.description}</p>
-                  </div>
-                  {quiz.questions?.length > 0 ? (
-                    <div className="quiz-content">
-                      {!quizSubmitted ? (
-                        quiz.questions.map((question, index) => (
-                          <div key={question._id} className="quiz-question">
-                            <h4>Q{index + 1}: {question.question}</h4>
-                            {question.options.map((option, i) => (
-                              <label key={i}>
-                                <input
-                                  type="radio"
-                                  name={question._id}
-                                  value={option}
-                                  checked={quizAnswers[question._id] === option}
-                                  onChange={() => handleQuizAnswerChange(question._id, option)}
-                                />
-                                {option}
-                              </label>
-                            ))}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="quiz-results">
-                          <div className="score-message">
-                            <FaCheck className="success-icon" />
-                            <span>You passed!</span>
-                          </div>
-                          <button onClick={resetQuiz}>Retake Quiz</button>
+              {loadingAttempts ? (
+                <div className="loading-container">
+                  <div className="loading-spinner"></div>
+                  <p>Loading quiz data...</p>
+                </div>
+              ) : (
+                <>
+                  {course.quizzes?.map((quiz) => (
+                    <div key={quiz._id} className="quiz-card accordion-quiz">
+                      <div
+                        className={`quiz-header ${storeQuizAttempts[quiz._id] ? 'quiz-attempted' : ''}`}
+                        onClick={() => toggleQuiz(quiz._id)}
+                      >
+                        <div className="quiz-title-section">
+                          <h3>{quiz.title}</h3>
+                          <p className="quiz-description">{quiz.description}</p>
+                        </div>
+                        <div className="quiz-status">
+                          {storeQuizAttempts[quiz._id] && (
+                            <span className={`quiz-result-badge ${storeQuizAttempts[quiz._id].passed ? 'passed' : 'failed'}`}>
+                              {storeQuizAttempts[quiz._id].passed ? 'Passed' : 'Failed'} ({storeQuizAttempts[quiz._id].percentage}%)
+                            </span>
+                          )}
+                          <span className="toggle-icon">
+                            {expandedQuizzes[quiz._id] ? <FaChevronUp /> : <FaChevronDown />}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedQuizzes[quiz._id] && (
+                        <div className="quiz-content">
+                          {quiz.questions?.length > 0 ? (
+                            <QuizSubmission
+                              quiz={quiz}
+                              onSubmit={(answers) => handleQuizSubmit(quiz._id, answers)}
+                              existingAttempt={storeQuizAttempts[quiz._id] || null}
+                            />
+                          ) : (
+                            <div className="quiz-empty-state">
+                              <p className="no-questions-message">No questions available for this quiz.</p>
+                            </div>
+                          )}
                         </div>
                       )}
-                      {!quizSubmitted && (
-                        <button className="quiz-submit-button" onClick={handleQuizSubmit}>
-                          Submit Quiz
-                        </button>
-                      )}
                     </div>
-                  ) : (
-                    <p>No questions available</p>
+                  ))}
+                  {!course.quizzes?.length && (
+                    <div className="no-quizzes-message">
+                      <p>No quizzes available for this course.</p>
+                    </div>
                   )}
-                </div>
-              ))}
+                </>
+              )}
             </div>
           )}
 

@@ -26,6 +26,10 @@
   outline: none;
   transition: border-color 0.2s;
 }
+.data-table-container .hZInOG svg {
+  top: 50%;
+  transform: translateY(-50%);
+}
 
 @media (max-width: 576px) {
   .data-table-container .search-input {
@@ -82,7 +86,8 @@
 .data-table-container .status-indicator::after {
   content: "";
   position: absolute;
-  top: 2px;  left: 2px;
+  top: 2px;
+  left: 2px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -100,21 +105,26 @@
 
 /* Action buttons */
 .data-table-container .action-button {
-  background: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.data-table-container .action-button:hover {
-  background-color: #f1f5f9;
+.data-table-container .action-button.view {
+  background-color: var(--primary-light-bg);
+  color: var(--primary-color);
 }
 
 .data-table-container .action-button.edit {
-  background-color: var(--primary-light-bg);
-  color: var(--primary-color);
+  background-color: #ecfdf5;
+  color: #059669;
 }
 
 .data-table-container .action-button.delete {
@@ -122,3 +132,16 @@
   color: #dc2626;
 }
 
+.data-table-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
+.data-table-container .action-button:hover {
+  transform: translateY(-1px);
+}
+
+.data-table-container .action-button svg {
+  width: 14px;
+  height: 14px;
+}

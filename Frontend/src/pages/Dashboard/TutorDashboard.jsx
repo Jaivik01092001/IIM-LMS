@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { FaBook, FaGraduationCap, FaClock, FaCalendarAlt, FaEye } from 'react-icons/fa';
-import { getCoursesThunk } from '../../redux/admin/adminSlice';
-import DataTableComponent from '../../components/DataTable';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  FaBook,
+  FaGraduationCap,
+  FaClock,
+  FaCalendarAlt,
+  FaEye,
+} from "react-icons/fa";
+import { getCoursesThunk } from "../../redux/admin/adminSlice";
+import DataTableComponent from "../../components/DataTable";
+import ProgressBar from "../../components/common/ProgressBar";
 import "../../assets/styles/TutorDashboard.css";
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -30,37 +37,49 @@ const TutorDashboard = () => {
   // Process courses data when it changes
   useEffect(() => {
     if (courses && courses.length > 0) {
-      const formattedCourses = courses.map(course => {
+      const formattedCourses = courses.map((course) => {
         // For demo: generate random enrollment status and progress
-        const isEnrolled = course._id.toString().charCodeAt(course._id.toString().length - 1) % 2 === 0;
+        const isEnrolled =
+          course._id.toString().charCodeAt(course._id.toString().length - 1) %
+          2 ===
+          0;
         const progress = isEnrolled ? Math.floor(Math.random() * 100) : 0;
-        const status = progress === 100 ? 'completed' : isEnrolled ? 'ongoing' : 'not-enrolled';
-        
+        const status =
+          progress === 100
+            ? "completed"
+            : isEnrolled
+              ? "ongoing"
+              : "not-enrolled";
+
         return {
           id: course._id,
-          title: course.title || 'Untitled Course',
-          category: course.category || 'Uncategorized',
-          professor: course.creator?.name || 'Unknown',
-          duration: course.duration || 'N/A',
-          level: course.level || 'N/A',
-          description: course.description || 'No description available',
-          tags: course.tags?.join(', ') || 'No tags',
-          language: course.language || 'English',
+          title: course.title || "Untitled Course",
+          category: course.category || "Uncategorized",
+          professor: course.creator?.name || "Unknown",
+          duration: course.duration || "N/A",
+          level: course.level || "N/A",
+          description: course.description || "No description available",
+          tags: course.tags?.join(", ") || "No tags",
+          language: course.language || "English",
           status: course.status === 1,
-          thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+          thumbnail:
+            course.thumbnail ||
+            "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
           hasModules: course.hasModules || false,
           isEnrolled: isEnrolled,
           progress: progress,
           enrollmentStatus: status,
-          startDate: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+          startDate: new Date(
+            Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000
+          ).toLocaleDateString(),
         };
       });
-      
+
       setCoursesData(formattedCourses);
-      
+
       // Filter for ongoing courses
-      const ongoing = formattedCourses.filter(course => 
-        course.isEnrolled && course.progress < 100
+      const ongoing = formattedCourses.filter(
+        (course) => course.isEnrolled && course.progress < 100
       );
       setOngoingCourses(ongoing);
     }
@@ -68,15 +87,19 @@ const TutorDashboard = () => {
 
   // Count courses by status
   const getCompletedCourses = () => {
-    return coursesData.filter(course => course.isEnrolled && course.progress === 100).length;
+    return coursesData.filter(
+      (course) => course.isEnrolled && course.progress === 100
+    ).length;
   };
 
   const getOngoingCourses = () => {
-    return coursesData.filter(course => course.isEnrolled && course.progress < 100).length;
+    return coursesData.filter(
+      (course) => course.isEnrolled && course.progress < 100
+    ).length;
   };
 
   const getTotalCourses = () => {
-    return coursesData.filter(course => course.isEnrolled).length;
+    return coursesData.filter((course) => course.isEnrolled).length;
   };
 
   // View course handler
@@ -90,7 +113,11 @@ const TutorDashboard = () => {
       name: "Course",
       cell: (row) => (
         <div className="course-info">
-          <img src={VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img
+            src={VITE_IMAGE_URL + row.thumbnail}
+            alt={row.title}
+            className="course-thumbnail"
+          />
           <div className="course-details">
             <span className="course-title">{row.title}</span>
             <span className="course-category">{row.category}</span>
@@ -113,13 +140,12 @@ const TutorDashboard = () => {
       name: "Progress",
       cell: (row) => (
         <div className="progress-container">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${row.progress}%` }}
-            />
-          </div>
-          <span className="progress-text">{row.progress}%</span>
+          <ProgressBar
+            percentage={row.progress}
+            size="small"
+            color="primary"
+            animated={false}
+          />
         </div>
       ),
       sortable: true,
@@ -128,7 +154,11 @@ const TutorDashboard = () => {
       name: "Actions",
       cell: (row) => (
         <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleViewCourse(row)} title="View Course">
+          <button
+            className="action-btn view"
+            onClick={() => handleViewCourse(row)}
+            title="View Course"
+          >
             <FaEye />
           </button>
         </div>
@@ -154,8 +184,10 @@ const TutorDashboard = () => {
                 <FaClock size={24} />
                 <FaClock className="icondesign1" />
               </div>
-              <div className="stat-count">{getOngoingCourses()}</div>
-              <div className="stat-title">Ongoing Courses</div>
+              <div>
+                <div className="stat-count">{getOngoingCourses()}</div>
+                <div className="stat-title">Ongoing Courses</div>
+              </div>
             </div>
 
             <div className="stat-card completed">
@@ -163,8 +195,10 @@ const TutorDashboard = () => {
                 <FaGraduationCap size={24} />
                 <FaGraduationCap className="icondesign2" />
               </div>
-              <div className="stat-count">{getCompletedCourses()}</div>
-              <div className="stat-title">Completed Courses</div>
+              <div>
+                <div className="stat-count">{getCompletedCourses()}</div>
+                <div className="stat-title">Completed Courses</div>
+              </div>
             </div>
 
             <div className="stat-card total">
@@ -172,8 +206,10 @@ const TutorDashboard = () => {
                 <FaBook size={24} />
                 <FaBook className="icondesign3" />
               </div>
-              <div className="stat-count">{getTotalCourses()}</div>
-              <div className="stat-title">Total Courses</div>
+              <div>
+                <div className="stat-count">{getTotalCourses()}</div>
+                <div className="stat-title">Total Courses</div>
+              </div>
             </div>
           </div>
 
@@ -181,9 +217,9 @@ const TutorDashboard = () => {
           <div className="dashboard-section">
             <div className="section-header">
               <h2 className="section-title">My Ongoing Courses</h2>
-              <button 
+              <button
                 className="view-all-btn"
-                onClick={() => navigate('/dashboard/tutor/courses')}
+                onClick={() => navigate("/dashboard/tutor/courses")}
               >
                 View All Courses
               </button>
@@ -203,9 +239,9 @@ const TutorDashboard = () => {
                   <FaBook className="empty-icon" />
                   <h3>No ongoing courses</h3>
                   <p>You don't have any courses in progress right now.</p>
-                  <button 
+                  <button
                     className="browse-courses-btn"
-                    onClick={() => navigate('/dashboard/tutor/courses')}
+                    onClick={() => navigate("/dashboard/tutor/courses")}
                   >
                     Browse Courses
                   </button>

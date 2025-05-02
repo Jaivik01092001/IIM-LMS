@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  createRoleThunk, 
-  updateRoleThunk, 
-  getPermissionsByCategoryThunk 
+import {
+  createRoleThunk,
+  updateRoleThunk,
+  getPermissionsByCategoryThunk
 } from '../redux/role/roleSlice';
 import PermissionGroup from './PermissionGroup';
 import { PERMISSIONS } from '../utils/permissions';
@@ -14,48 +14,60 @@ import { PERMISSIONS } from '../utils/permissions';
 function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
   const dispatch = useDispatch();
   const { permissionsByCategory, loading } = useSelector((state) => state.role);
-  
+
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [permissions, setPermissions] = useState({});
-  
+  const [permissions, setPermissions] = useState({ view_courses: true });
+
   // Load permissions by category when component mounts
   useEffect(() => {
     dispatch(getPermissionsByCategoryThunk());
   }, [dispatch]);
-  
+
   // Set form values when editing a role
   useEffect(() => {
     if (editRole) {
       setName(editRole.name || '');
       setDescription(editRole.description || '');
-      setPermissions(editRole.permissions || {});
+      // Ensure view_courses is always true
+      setPermissions({
+        ...(editRole.permissions || {}),
+        view_courses: true
+      });
     } else {
       setName('');
       setDescription('');
-      setPermissions({});
+      setPermissions({ view_courses: true });
     }
   }, [editRole]);
-  
+
   // Handle permission toggle
   const handlePermissionChange = (category, updates) => {
+    // If updates contains view_courses, ensure it's always true
+    if ('view_courses' in updates) {
+      updates.view_courses = true;
+    }
+
     setPermissions(prev => ({
       ...prev,
       ...updates
     }));
   };
-  
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     const roleData = {
       name,
       description,
-      permissions
+      permissions: {
+        ...permissions,
+        view_courses: true // Always ensure view_courses is true
+      }
     };
-    
+
     if (editRole) {
       dispatch(updateRoleThunk({ id: editRole._id, roleData }))
         .unwrap()
@@ -70,17 +82,17 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
         });
     }
   };
-  
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Overlay */}
-      <div 
+      <div
         className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
         onClick={onClose}
       ></div>
-      
+
       {/* Sidebar panel */}
       <div className="absolute inset-y-0 right-0 max-w-full flex">
         <div className="relative w-screen max-w-md">
@@ -103,7 +115,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                 </button>
               </div>
             </div>
-            
+
             {/* Form */}
             <div className="flex-1 px-4 py-6 sm:px-6 overflow-y-auto">
               <form onSubmit={handleSubmit}>
@@ -140,11 +152,11 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Permissions */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Permissions</h3>
-                  
+
                   {/* Course Management */}
                   <PermissionGroup
                     title="Course Management"
@@ -153,7 +165,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     onChange={(updates) => handlePermissionChange('course_management', updates)}
                     disabled={loading}
                   />
-                  
+
                   {/* Quiz Management */}
                   <PermissionGroup
                     title="Quiz Management"
@@ -162,7 +174,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     onChange={(updates) => handlePermissionChange('quiz_management', updates)}
                     disabled={loading}
                   />
-                  
+
                   {/* User Management */}
                   <PermissionGroup
                     title="User Management"
@@ -171,7 +183,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     onChange={(updates) => handlePermissionChange('user_management', updates)}
                     disabled={loading}
                   />
-                  
+
                   {/* Content Management */}
                   <PermissionGroup
                     title="Content Management"
@@ -180,7 +192,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     onChange={(updates) => handlePermissionChange('content_management', updates)}
                     disabled={loading}
                   />
-                  
+
                   {/* Certificate Management */}
                   <PermissionGroup
                     title="Certificate Management"
@@ -189,7 +201,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     onChange={(updates) => handlePermissionChange('certificate_management', updates)}
                     disabled={loading}
                   />
-                  
+
                   {/* Reports & Analytics */}
                   <PermissionGroup
                     title="Reports & Analytics"
@@ -198,7 +210,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                     onChange={(updates) => handlePermissionChange('reports_analytics', updates)}
                     disabled={loading}
                   />
-                  
+
                   {/* System Settings */}
                   <PermissionGroup
                     title="System Settings"
@@ -210,7 +222,7 @@ function RoleManagementSidebar({ isOpen, onClose, editRole = null }) {
                 </div>
               </form>
             </div>
-            
+
             {/* Footer */}
             <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 sm:px-6">
               <div className="flex justify-end space-x-3">

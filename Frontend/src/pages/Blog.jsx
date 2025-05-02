@@ -1,25 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  FaPlus,
+  FaUserCircle,
+  FaSearch,
+  FaFilter,
+} from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
-import DataTableComponent from '../components/DataTable';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import { getBlogsThunk, deleteBlogThunk, updateBlogThunk } from '../redux/blog/blogSlice';
+import DataTableComponent from "../components/DataTable";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
+import { hasLocalPermission } from "../utils/localPermissions";
+import {
+  getBlogsThunk,
+  deleteBlogThunk,
+  updateBlogThunk,
+} from "../redux/blog/blogSlice";
 import "../assets/styles/Blog.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
+// Function to fix double slashes in URLs
+const fixImageUrl = (url) => {
+  if (!url) return url;
+  return url.replace(/([^:]\/)\/+/g, "$1");
+};
 
 const Blog = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+  const [sortBy, setSortBy] = useState("");
 
   // Get user role and blogs from Redux store
   const { user } = useSelector((state) => state.auth);
   const { blogs, loading } = useSelector((state) => state.blog);
 
-  const userRole = user?.role || 'educator'; // Default to educator view if role not found
+  const userRole = user?.role || "educator"; // Default to educator view if role not found
+
   // Fetch blogs on component mount
   useEffect(() => {
     dispatch(getBlogsThunk());
@@ -33,10 +56,10 @@ const Blog = () => {
   // Format date for display
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -47,20 +70,26 @@ const Blog = () => {
 
   // Handle edit blog
   const handleEditBlog = (blog) => {
-    navigate(`/dashboard/${getDashboardPath()}/blog/edit/${blog._id || blog.id}`);
+    navigate(
+      `/dashboard/${getDashboardPath()}/blog/edit/${blog._id || blog.id}`
+    );
   };
 
   // Handle delete blog
   const handleDeleteBlog = (blog) => {
-    if (window.confirm(`Are you sure you want to delete "${blog.title}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${blog.title}"? This action cannot be undone.`
+      )
+    ) {
       dispatch(deleteBlogThunk(blog._id || blog.id))
         .unwrap()
         .then(() => {
           // Refresh blogs data
           dispatch(getBlogsThunk());
         })
-        .catch(error => {
-          console.error('Error deleting blog:', error);
+        .catch((error) => {
+          console.error("Error deleting blog:", error);
         });
     }
   };
@@ -68,21 +97,25 @@ const Blog = () => {
   // Status toggle handler
   const handleStatusToggle = (blog) => {
     // Convert between 'published'/'draft' and boolean/number as needed
-    const currentStatus = blog.status === 'published';
-    const newStatus = currentStatus ? 'draft' : 'published';
+    const currentStatus = blog.status === "published";
+    const newStatus = currentStatus ? "draft" : "published";
 
-    dispatch(updateBlogThunk({
-      id: blog._id || blog.id,
-      status: newStatus
-    }))
+    dispatch(
+      updateBlogThunk({
+        id: blog._id || blog.id,
+        status: newStatus,
+      })
+    )
       .unwrap()
       .then(() => {
-        console.log(`Successfully changed status to ${newStatus} for "${blog.title}"`);
+        console.log(
+          `Successfully changed status to ${newStatus} for "${blog.title}"`
+        );
         // Refresh blogs data
         dispatch(getBlogsThunk());
       })
-      .catch(error => {
-        console.error('Error updating blog status:', error);
+      .catch((error) => {
+        console.error("Error updating blog status:", error);
       });
   };
 
@@ -93,12 +126,12 @@ const Blog = () => {
 
   // Get the dashboard path based on user role
   const getDashboardPath = () => {
-    if (userRole === 'admin') {
-      return 'admin';
-    } else if (userRole === 'university') {
-      return 'school';
+    if (userRole === "admin") {
+      return "admin";
+    } else if (userRole === "university") {
+      return "school";
     } else {
-      return 'tutor'; // Default for educator
+      return "tutor"; // Default for educator
     }
   };
 
@@ -115,9 +148,16 @@ const Blog = () => {
       cell: (row) => (
         <div className="blog-image-cell">
           {row.coverImage ? (
-            <img src={VITE_IMAGE_URL + row.coverImage} alt={row.title} className="blog-table-image" />
+            <img
+              src={fixImageUrl(VITE_IMAGE_URL + row.coverImage)}
+              alt={row.title}
+              className="blog-table-image"
+            />
           ) : (
-            <div className="blog-table-image" style={{ backgroundColor: 'var(--bg-gray)' }} />
+            <div
+              className="blog-table-image"
+              style={{ backgroundColor: "var(--bg-gray)" }}
+            />
           )}
           <div className="blog-table-title">
             <span className="blog-table-title-text">{row.title}</span>
@@ -130,7 +170,7 @@ const Blog = () => {
     },
     {
       name: "Tags",
-      selector: (row) => row.tags?.join(', ') || 'No tags',
+      selector: (row) => row.tags?.join(", ") || "No tags",
       sortable: true,
     },
     {
@@ -138,7 +178,7 @@ const Blog = () => {
       cell: (row) => (
         <div className="blog-author-cell">
           <FaUserCircle className="blog-author-icon" />
-          <span>{row.createdBy?.name || 'Unknown'}</span>
+          <span>{row.createdBy?.name || "Unknown"}</span>
         </div>
       ),
       sortable: true,
@@ -151,16 +191,15 @@ const Blog = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status === 'published' ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status === 'published' ? "Click to unpublish" : "Click to publish"}
-          />
-          <span className={row.status === 'published' ? "text-green-600" : "text-red-600"}>
-            {row.status === 'published' ? "Published" : "Draft"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_blog"
+          activeText="Published"
+          inactiveText="Draft"
+          activeTooltip="Click to unpublish"
+          inactiveTooltip="Click to publish"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -168,29 +207,14 @@ const Blog = () => {
     {
       name: "Actions",
       cell: (row) => (
-        <div className="blog-actions-cell">
-          <button
-            className="blog-action-btn blog-view-btn"
-            onClick={() => handleViewBlog(row)}
-            title="View"
-          >
-            <FaEye />
-          </button>
-          <button
-            className="blog-action-btn blog-edit-btn"
-            onClick={() => handleEditBlog(row)}
-            title="Edit"
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            className="blog-action-btn blog-delete-btn"
-            onClick={() => handleDeleteBlog(row)}
-            title="Delete"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleViewBlog}
+          onEdit={handleEditBlog}
+          viewPermission="view_blogs"
+          editPermission="edit_blog"
+          className="blog-actions-cell"
+        />
       ),
       width: "120px",
       center: true,
@@ -198,23 +222,59 @@ const Blog = () => {
   ];
 
   // Transform blogs data for display
-  const transformedBlogs = Array.isArray(blogs) ? blogs.map(blog => ({
-    id: blog._id,
-    title: blog.title || 'Untitled Blog',
-    content: blog.content || '',
-    shortDescription: blog.shortDescription || '',
-    tags: blog.tags || [],
-    coverImage: blog.coverImage || null,
-    status: blog.status || 'draft',
-    createdAt: blog.createdAt || new Date().toISOString(),
-    updatedAt: blog.updatedAt || new Date().toISOString(),
-    createdBy: blog.createdBy || null,
-    slug: blog.slug || '',
-    isDeleted: blog.isDeleted || false,
-    activeStatus: blog.activeStatus || 1
-  })) : [];
+  const transformedBlogs = Array.isArray(blogs)
+    ? blogs.map((blog) => ({
+      id: blog._id,
+      title: blog.title || "Untitled Blog",
+      content: blog.content || "",
+      shortDescription: blog.shortDescription || "",
+      tags: blog.tags || [],
+      coverImage: fixImageUrl(blog.coverImage) || null,
+      status: blog.status || "draft",
+      createdAt: blog.createdAt || new Date().toISOString(),
+      updatedAt: blog.updatedAt || new Date().toISOString(),
+      createdBy: blog.createdBy || null,
+      slug: blog.slug || "",
+      isDeleted: blog.isDeleted || false,
+      activeStatus: blog.activeStatus || 1,
+    }))
+    : [];
 
+  // Extract unique tags for filter dropdown
+  const uniqueTags = [...new Set(transformedBlogs.flatMap(blog => blog.tags || []))].filter(Boolean);
 
+  // Get filtered data based on search term, status filter, and tag filter
+  const getFilteredData = () => {
+    return transformedBlogs
+      // Apply search filter
+      .filter(blog =>
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (blog.tags && blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (blog.createdBy?.name && blog.createdBy.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      // Apply status filter
+      .filter(blog =>
+        !statusFilter || blog.status === statusFilter
+      )
+      // Apply tag filter
+      .filter(blog =>
+        !tagFilter || (blog.tags && blog.tags.includes(tagFilter))
+      )
+      // Apply sorting
+      .sort((a, b) => {
+        if (!sortBy) return 0;
+
+        switch (sortBy) {
+          case "title-asc": return a.title.localeCompare(b.title);
+          case "title-desc": return b.title.localeCompare(a.title);
+          case "date-asc": return new Date(a.createdAt) - new Date(b.createdAt);
+          case "date-desc": return new Date(b.createdAt) - new Date(a.createdAt);
+          case "status": return a.status === b.status ? 0 : a.status === "published" ? -1 : 1;
+          default: return 0;
+        }
+      });
+  };
 
   // Render loading state
   if (isLoading) {
@@ -222,15 +282,19 @@ const Blog = () => {
   }
 
   // Render Educator View (Card Layout)
-  if (userRole === 'educator') {
+  if (userRole === "educator") {
     return (
       <div className="blog-container">
         <div className="blog-header">
-          <h1 className="blog-title"><FaFilePen className="blog-title-icon" /> Blogs</h1>
+          <h1 className="blog-title">
+            <FaFilePen className="blog-title-icon" /> Blogs
+          </h1>
           <div className="blog-actions">
-            <button className="btn btn-primary" onClick={handleCreateBlog}>
-              <FaPlus /> New Blog
-            </button>
+            {hasLocalPermission("create_blog") && (
+              <button className="btn btn-primary" onClick={handleCreateBlog}>
+                <FaPlus /> New Blog
+              </button>
+            )}
           </div>
         </div>
 
@@ -247,25 +311,36 @@ const Blog = () => {
                 onClick={() => handleViewBlog(blog)}
               >
                 {blog.coverImage ? (
-                  <img src={blog.coverImage} alt={blog.title} className="blog-card-image" />
+                  <img
+                    src={fixImageUrl(VITE_IMAGE_URL + blog.coverImage)}
+                    alt={blog.title}
+                    className="blog-card-image"
+                  />
                 ) : (
-                  <div className="blog-card-image" style={{ backgroundColor: 'var(--bg-gray)' }} />
+                  <div
+                    className="blog-card-image"
+                    style={{ backgroundColor: "var(--bg-gray)" }}
+                  />
                 )}
                 <div className="blog-card-content">
                   <h3 className="blog-card-title">{blog.title}</h3>
                   <p className="blog-card-excerpt">{blog.shortDescription}</p>
                   <div className="blog-card-footer">
                     <div className="blog-card-tags">
-                      {blog.tags?.map(tag => (
-                        <span key={tag} className="blog-tag">{tag}</span>
+                      {blog.tags?.map((tag) => (
+                        <span key={tag} className="blog-tag">
+                          {tag}
+                        </span>
                       ))}
                     </div>
                     <div className="blog-card-meta">
                       <div className="blog-card-author">
                         <FaUserCircle className="blog-author-icon" />
-                        <span>{blog.createdBy?.name || 'Unknown'}</span>
+                        <span>{blog.createdBy?.name || "Unknown"}</span>
                       </div>
-                      <div className="blog-card-date">{formatDate(blog.createdAt)}</div>
+                      <div className="blog-card-date">
+                        {formatDate(blog.createdAt)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -280,22 +355,65 @@ const Blog = () => {
   // Render Admin and University View (Data Table)
   return (
     <div className="blog-container">
-      <div className="blog-header">
-        <h1 className="blog-title"><FaFilePen className="blog-title-icon" /> Blogs</h1>
-        <div className="blog-actions">
-          <button className="btn btn-primary" onClick={handleCreateBlog}>
-            <FaPlus /> New Blog
-          </button>
+      <div className="search-filter-container">
+        <div className="search-input">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search blogs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
+
+        <select
+          className="filter-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+
+        <select
+          className="filter-select"
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+        >
+          <option value="">All Tags</option>
+          {uniqueTags.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="filter-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="">Sort By</option>
+          <option value="title-asc">Title (A-Z)</option>
+          <option value="title-desc">Title (Z-A)</option>
+          <option value="date-asc">Date (Oldest first)</option>
+          <option value="date-desc">Date (Newest first)</option>
+          <option value="status">Status</option>
+        </select>
+
+        <button className="add-blog-btn" onClick={handleCreateBlog}>
+          <FaPlus /> Add Blog
+        </button>
       </div>
 
       <div className="blog-table-container">
         <DataTableComponent
           columns={columns}
-          data={transformedBlogs}
+          data={getFilteredData()}
           pagination
           title=""
-          searchPlaceholder="Search blogs..."
+          showSearch={false}
         />
       </div>
     </div>

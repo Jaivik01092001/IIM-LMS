@@ -33,8 +33,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Stats Cards */
@@ -210,19 +214,20 @@
   gap: 8px;
 }
 
-/* Action Buttons - Match Courses.css */
+/* Action Buttons */
 .school-dashboard .action-buttons {
   display: flex;
   gap: 8px;
   justify-content: center;
 }
 
-.school-dashboard .action-btn {
+.school-dashboard .action-btn,
+.school-dashboard .action-button {
   width: 32px;
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -230,26 +235,37 @@
   justify-content: center;
 }
 
-.school-dashboard .action-btn.view {
-  background-color: #e7eee5;
-  color: #4abb66;
-}
-
-.school-dashboard .action-btn.edit {
-  background-color: #eef2ff;
+.school-dashboard .action-btn.view,
+.school-dashboard .action-button.view {
+  background-color: var(--primary-light-bg);
   color: var(--primary-color);
 }
 
-.school-dashboard .action-btn.delete {
+.school-dashboard .action-btn.edit,
+.school-dashboard .action-button.edit {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.school-dashboard .action-btn.delete,
+.school-dashboard .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.school-dashboard .action-btn:hover {
+.school-dashboard .action-btn.add,
+.school-dashboard .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
+.school-dashboard .action-btn:hover,
+.school-dashboard .action-button:hover {
   transform: translateY(-1px);
 }
 
-.school-dashboard .action-btn svg {
+.school-dashboard .action-btn svg,
+.school-dashboard .action-button svg {
   width: 14px;
   height: 14px;
 }

@@ -30,8 +30,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .educators-container .educators-header {
@@ -55,7 +59,7 @@
 .educators-container .search-input {
   padding: 10px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   font-size: 14px;
   min-width: 250px;
   outline: none;
@@ -77,7 +81,7 @@
 .educators-container .filter-select {
   padding: 10px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   background-color: white;
   font-size: 14px;
   min-width: 150px;
@@ -99,7 +103,7 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
@@ -159,7 +163,7 @@
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -180,6 +184,11 @@
 .educators-container .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
+}
+
+.educators-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .educators-container .action-button:hover {

@@ -333,7 +333,7 @@ const StaffDetails = () => {
       <div className="action-buttons">
         <button
           onClick={handleBack}
-          className="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50 transition font-medium"
+          className="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50 transition font-medium edit-btn"
         >
           Back to Staff List
         </button>

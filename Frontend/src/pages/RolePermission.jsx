@@ -19,7 +19,7 @@ const RolePermission = () => {
 
   const [roleName, setRoleName] = useState("");
   const [roleDescription, setRoleDescription] = useState("");
-  const [permissions, setPermissions] = useState({});
+  const [permissions, setPermissions] = useState({ view_courses: true });
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -55,6 +55,12 @@ const RolePermission = () => {
 
   // Handle permission toggle
   const handlePermissionToggle = (permissionId) => {
+    // Don't allow toggling view_courses - it should always be true
+    if (permissionId === 'view_courses') {
+      console.log('view_courses permission cannot be changed - it is always enabled');
+      return;
+    }
+
     // Get the current value of the permission (default to false if undefined)
     const currentValue = Boolean(permissions[permissionId]);
     const newValue = !currentValue;
@@ -82,10 +88,14 @@ const RolePermission = () => {
     }
 
     // Create role data object with name, description and permissions
+    // Ensure view_courses is always set to true
     const roleData = {
       name: roleName,
       description: roleDescription,
-      permissions: permissions
+      permissions: {
+        ...permissions,
+        view_courses: true // Always ensure view_courses is true
+      }
     };
 
     if (editMode && currentRoleId) {
@@ -117,7 +127,7 @@ const RolePermission = () => {
   const resetForm = () => {
     setRoleName("");
     setRoleDescription("");
-    setPermissions({});
+    setPermissions({ view_courses: true }); // Always ensure view_courses is true
     setShowForm(false);
     setEditMode(false);
     setCurrentRoleId(null);
@@ -134,8 +144,11 @@ const RolePermission = () => {
     const permissionsObj = role.permissions || {};
     console.log("Role permissions from API:", permissionsObj);
 
-    // Ensure we're setting the permissions state correctly
-    setPermissions(permissionsObj);
+    // Ensure we're setting the permissions state correctly and view_courses is always true
+    setPermissions({
+      ...permissionsObj,
+      view_courses: true // Always ensure view_courses is true
+    });
     setCurrentRoleId(role._id);
     setEditMode(true);
     setShowForm(true);
@@ -272,34 +285,40 @@ const RolePermission = () => {
 
             {Object.keys(permissionsByCategory || {}).length > 0 ? (
               Object.entries(permissionsByCategory || {}).map(([category, categoryPermissions]) => (
-              <div key={category} className="permission-category">
-                <h3>{category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
-                <div className="permission-grid">
-                  {categoryPermissions.map((permission) => {
-                    // The permission key from the API response
-                    // In the API, permissions are stored with keys like 'view_courses', 'create_course', etc.
-                    const permissionKey = permission.name;
+                <div key={category} className="permission-category">
+                  <h3>{category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
+                  <div className="permission-grid">
+                    {categoryPermissions.map((permission) => {
+                      // The permission key from the API response
+                      // In the API, permissions are stored with keys like 'view_courses', 'create_course', etc.
+                      const permissionKey = permission.name;
 
-                    // Get the permission value from the permissions object
-                    // This checks if the permission is enabled in the role
-                    const isChecked = Boolean(permissions[permissionKey]);
+                      // Get the permission value from the permissions object
+                      // This checks if the permission is enabled in the role
+                      const isChecked = Boolean(permissions[permissionKey]);
 
-                    return (
-                      <div key={permissionKey} className="permission-item">
-                        <label htmlFor={permissionKey}>{permission.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</label>
-                        <div className="permission-toggle">
-                          <div
-                            className={`status-indicator ${isChecked ? "active" : ""}`}
-                            onClick={() => handlePermissionToggle(permissionKey)}
-                            title={isChecked ? "Click to deactivate" : "Click to activate"}
-                          />
+                      const isViewCourses = permissionKey === 'view_courses';
+
+                      return (
+                        <div key={permissionKey} className={`permission-item ${isViewCourses ? 'view-courses-permission' : ''}`}>
+                          <label htmlFor={permissionKey}>
+                            {permission.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {isViewCourses && <span className="required-permission"> (Always enabled)</span>}
+                          </label>
+                          <div className="permission-toggle">
+                            <div
+                              className={`status-indicator ${isChecked ? "active" : ""} ${isViewCourses ? "disabled" : ""}`}
+                              onClick={() => handlePermissionToggle(permissionKey)}
+                              title={isViewCourses ? "This permission is always enabled and cannot be changed" : (isChecked ? "Click to deactivate" : "Click to activate")}
+                              style={isViewCourses ? { cursor: 'not-allowed', opacity: 0.7 } : {}}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
             ) : (
               <div className="no-permissions-message">
                 <p>Loading permissions or no permissions available. Please try again later.</p>
