@@ -249,7 +249,7 @@
 
 .content-preview-item {
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   padding: 15px;
 }
 
@@ -332,7 +332,7 @@
 
 .module-quiz-section {
   background-color: var(--bg-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   padding: 20px;
 }
 
@@ -617,7 +617,7 @@
   align-items: center;
   padding: 15px;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   transition: all 0.3s;
 }
 
@@ -695,7 +695,7 @@
   height: 120px;
   padding: 15px;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-family: var(--font-Poppins);
   font-size: var(--basefont);
   resize: none;
@@ -713,7 +713,7 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.3s;
@@ -813,7 +813,7 @@
 
 .faq-item {
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   overflow: hidden;
 }
 

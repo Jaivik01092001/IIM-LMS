@@ -41,16 +41,57 @@ export const createContentThunk = createAsyncThunk('educator/createContent', asy
 
 export const submitQuizThunk = createAsyncThunk('educator/submitQuiz', async (quizData, { rejectWithValue }) => {
   try {
+    // Make sure we have the required parameters
+    if (!quizData.courseId) {
+      console.error('Missing courseId in quiz submission data');
+      showErrorToast('Missing course information for quiz submission');
+      return rejectWithValue('Missing courseId in quiz submission data');
+    }
+
     const data = await api.submitQuiz(quizData);
-    if (data.passed) {
+
+    // Check if we have percentage or passed properties in the response
+    const percentage = data.percentage || (data.data && data.data.percentage);
+    const passed = data.passed || (data.data && data.data.passed);
+
+    if (passed) {
       showSuccessToast('Quiz completed successfully! You passed!');
     } else {
-      showInfoToast(`Quiz completed. Your score: ${data.percentage}%. Try again to improve.`);
+      showInfoToast(`Quiz completed. Your score: ${percentage}%. Try again to improve.`);
     }
-    return data;
+
+    return data.data || data; // Handle both response formats
   } catch (error) {
+    console.error('Quiz submission error:', error);
     showErrorToast(error.response?.data?.msg || 'Failed to submit quiz');
     return rejectWithValue(error.response?.data?.msg || 'Failed to submit quiz');
+  }
+});
+
+export const getQuizAttemptsThunk = createAsyncThunk('educator/getQuizAttempts', async (quizData, { rejectWithValue }) => {
+  try {
+    // Make sure we have the required parameters
+    if (!quizData.courseId || !quizData.quizId) {
+      console.error('Missing courseId or quizId in quiz attempts request');
+      return rejectWithValue('Missing required parameters for quiz attempts');
+    }
+
+    // Log the user ID to ensure we're passing it correctly
+    console.log(`Fetching quiz attempts for user: ${quizData.userId}, quiz: ${quizData.quizId}`);
+
+    const data = await api.getQuizAttempts(quizData);
+
+    // If no attempts found, return null
+    if (!data) {
+      console.log(`No attempts found for user: ${quizData.userId}, quiz: ${quizData.quizId}`);
+      return null;
+    }
+
+    return data.data || data; // Handle both response formats
+  } catch (error) {
+    console.error('Error fetching quiz attempts:', error);
+    // Don't show a toast for this error as it's not user-initiated
+    return rejectWithValue(error.response?.data?.msg || 'Failed to fetch quiz attempts');
   }
 });
 
@@ -149,6 +190,7 @@ const educatorSlice = createSlice({
     myContent: [],
     courseDetail: null,
     quizResult: null,
+    quizAttempts: {},  // Store quiz attempts by quizId
     certificates: [],
     currentCertificate: null,
     moduleProgress: null,
@@ -164,6 +206,7 @@ const educatorSlice = createSlice({
       .addCase(getMyContentThunk.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(getCourseDetailThunk.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(submitQuizThunk.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(getQuizAttemptsThunk.pending, (state) => { state.loading = true; state.error = null; })
 
       // Success states
       .addCase(getCoursesThunk.fulfilled, (state, action) => { state.courses = action.payload; state.loading = false; })
@@ -175,7 +218,30 @@ const educatorSlice = createSlice({
         state.courseDetail = action.payload;
         state.loading = false;
       })
-      .addCase(submitQuizThunk.fulfilled, (state, action) => { state.quizResult = action.payload; state.loading = false; })
+      .addCase(submitQuizThunk.fulfilled, (state, action) => {
+        state.quizResult = action.payload;
+
+        // Also update the quizAttempts store with the latest attempt
+        if (action.meta.arg.quizId) {
+          const quizId = action.meta.arg.quizId;
+          state.quizAttempts[quizId] = action.payload;
+        }
+
+        state.loading = false;
+      })
+      .addCase(getQuizAttemptsThunk.fulfilled, (state, action) => {
+        // Store the attempts by quiz ID
+        const quizId = action.meta.arg.quizId;
+
+        if (quizId) {
+          // If payload is null, it means the user hasn't attempted the quiz yet
+          // We still want to store this in the state to indicate we've checked
+          state.quizAttempts[quizId] = action.payload;
+          console.log(`Stored quiz attempt for quiz ${quizId}:`, action.payload);
+        }
+
+        state.loading = false;
+      })
       .addCase(updateProgressThunk.fulfilled, (state, action) => {
         if (state.courseDetail && state.courseDetail.enrolledUsers && state.courseDetail.enrolledUsers.length > 0) {
           // Update progress in the course detail
@@ -221,6 +287,7 @@ const educatorSlice = createSlice({
         state.loading = false;
       })
       .addCase(submitQuizThunk.rejected, (state, action) => { state.error = action.error.message; state.loading = false; })
+      .addCase(getQuizAttemptsThunk.rejected, (state, action) => { state.error = action.error.message; state.loading = false; })
 
       // Certificate actions
       .addCase(getMyCertificatesThunk.pending, (state) => { state.loading = true; state.error = null; })

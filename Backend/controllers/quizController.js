@@ -7,7 +7,7 @@ const catchAsync = require('../utils/catchAsync');
 exports.createQuiz = catchAsync(async (req, res, next) => {
   const { courseId } = req.params;
   const course = await Course.findById(courseId);
-  
+
   if (!course) {
     return next(new AppError('Course not found', 404));
   }
@@ -48,7 +48,7 @@ exports.getQuiz = catchAsync(async (req, res, next) => {
 // Update a quiz
 exports.updateQuiz = catchAsync(async (req, res, next) => {
   const quiz = await Quiz.findById(req.params.quizId);
-  
+
   if (!quiz) {
     return next(new AppError('Quiz not found', 404));
   }
@@ -73,7 +73,7 @@ exports.updateQuiz = catchAsync(async (req, res, next) => {
 // Delete a quiz
 exports.deleteQuiz = catchAsync(async (req, res, next) => {
   const quiz = await Quiz.findById(req.params.quizId);
-  
+
   if (!quiz) {
     return next(new AppError('Quiz not found', 404));
   }
@@ -84,7 +84,7 @@ exports.deleteQuiz = catchAsync(async (req, res, next) => {
   }
 
   await Quiz.findByIdAndDelete(req.params.quizId);
-  
+
   // Remove quiz reference from course
   course.quizzes = course.quizzes.filter(q => q.toString() !== quiz._id.toString());
   await course.save();
@@ -98,39 +98,79 @@ exports.deleteQuiz = catchAsync(async (req, res, next) => {
 // Submit quiz attempt
 exports.submitQuiz = catchAsync(async (req, res, next) => {
   const quiz = await Quiz.findById(req.params.quizId);
-  
+
   if (!quiz) {
     return next(new AppError('Quiz not found', 404));
   }
 
   const { answers } = req.body;
   let score = 0;
-  const evaluatedAnswers = answers.map((answer, index) => {
-    const isCorrect = answer === quiz.questions[index].correctAnswer;
-    if (isCorrect) score += quiz.questions[index].points;
-    return {
-      questionIndex: index,
-      selectedAnswer: answer,
-      isCorrect
-    };
-  });
+  const totalPoints = quiz.questions.reduce((acc, q) => acc + (q.points || 1), 0);
 
-  const finalScore = (score / quiz.questions.reduce((acc, q) => acc + q.points, 0)) * 100;
+  // Handle different answer formats (array or object with question IDs as keys)
+  let evaluatedAnswers = [];
 
+  if (Array.isArray(answers)) {
+    // Handle array format (legacy)
+    evaluatedAnswers = answers.map((answer, index) => {
+      const isCorrect = answer === quiz.questions[index].correctAnswer;
+      if (isCorrect) score += quiz.questions[index].points || 1;
+      return {
+        questionIndex: index,
+        questionId: quiz.questions[index]._id,
+        selectedAnswer: answer,
+        correctAnswer: quiz.questions[index].correctAnswer,
+        isCorrect
+      };
+    });
+  } else {
+    // Handle object format with question IDs as keys
+    evaluatedAnswers = quiz.questions.map((question, index) => {
+      const questionId = question._id.toString();
+      const selectedAnswer = answers[questionId];
+      const isCorrect = selectedAnswer === question.correctAnswer;
+
+      if (isCorrect) score += question.points || 1;
+
+      return {
+        questionIndex: index,
+        questionId: questionId,
+        selectedAnswer: selectedAnswer,
+        correctAnswer: question.correctAnswer,
+        isCorrect
+      };
+    });
+  }
+
+  const finalScore = Math.round((score / totalPoints) * 100);
+  const passed = finalScore >= quiz.passingScore;
+
+  // Save the attempt
   quiz.attempts.push({
     user: req.user._id,
     score: finalScore,
-    answers: evaluatedAnswers
+    answers: evaluatedAnswers,
+    completedAt: new Date()
   });
 
   await quiz.save();
 
+  // Return detailed results including correct answers
   res.status(200).json({
     status: 'success',
     data: {
-      score: finalScore,
-      passed: finalScore >= quiz.passingScore,
-      answers: evaluatedAnswers
+      score,
+      totalPoints,
+      percentage: finalScore,
+      passed,
+      answers: evaluatedAnswers,
+      questions: quiz.questions.map(q => ({
+        id: q._id,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        points: q.points || 1
+      }))
     }
   });
 });
@@ -156,4 +196,4 @@ exports.getQuizResults = catchAsync(async (req, res, next) => {
     status: 'success',
     data: userAttempt
   });
-}); 
+});

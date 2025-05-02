@@ -9,7 +9,6 @@ import {
   FaChevronUp,
   FaChevronDown,
   FaUserCircle,
-  FaCheck,
   FaTrophy,
   FaFilePdf,
   FaLock
@@ -21,8 +20,11 @@ import {
   updateModuleProgressThunk,
   generateCertificateThunk,
   getMyCertificatesThunk,
-  updateProgressThunk
+  updateProgressThunk,
+  submitQuizThunk,
+  getQuizAttemptsThunk
 } from '../redux/educator/educatorSlice';
+import QuizSubmission from '../components/QuizSubmission';
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -33,18 +35,17 @@ const EnrollCourseDetail = () => {
 
   const [activeTab, setActiveTab] = useState('content');
   const [expandedSections, setExpandedSections] = useState({});
+  const [expandedQuizzes, setExpandedQuizzes] = useState({});
   const [sessionCompleted, setSessionCompleted] = useState({});
   const [moduleCompleted, setModuleCompleted] = useState({});
   const [userProgress, setUserProgress] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [course, setCourse] = useState(null);
   const [selectedContent, setSelectedContent] = useState(null);
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
   // Get the current user ID from the Redux store
   const { user } = useSelector((state) => state.auth);
+  const { quizAttempts: storeQuizAttempts } = useSelector((state) => state.educator);
   const currentUserId = user?.id;
-
-  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
 
   // Check if certificate exists for this course AND belongs to the current user
   // This is used to determine whether to show the Generate Certificate button
@@ -66,6 +67,13 @@ const EnrollCourseDetail = () => {
           defaultExpanded[mod._id] = index === 0;
         });
         setExpandedSections(defaultExpanded);
+
+        // Initialize quiz accordion state - first quiz expanded by default
+        const defaultQuizExpanded = {};
+        if (res.quizzes && res.quizzes.length > 0) {
+          defaultQuizExpanded[res.quizzes[0]._id] = true;
+        }
+        setExpandedQuizzes(defaultQuizExpanded);
 
         // Initialize session completion status - ALL sessions are NOT completed by default
         const completed = {};
@@ -129,15 +137,6 @@ const EnrollCourseDetail = () => {
         // Update module completion status
         newModuleState[moduleId] = mp.isCompleted;
 
-        // If a module is completed, also unlock the next module
-        if (mp.isCompleted) {
-          const moduleIndex = course.modules.findIndex(m => m._id === moduleId);
-          if (moduleIndex !== -1 && moduleIndex < course.modules.length - 1) {
-            const nextModuleId = course.modules[moduleIndex + 1]._id;
-            newModuleState[nextModuleId] = true;
-          }
-        }
-
         // Update ONLY explicitly completed content items
         if (mp.completedContent && mp.completedContent.length > 0) {
           mp.completedContent.forEach(contentId => {
@@ -145,6 +144,26 @@ const EnrollCourseDetail = () => {
               newSessionCompleted[contentId] = true;
             }
           });
+        }
+      });
+
+      // IMPORTANT FIX: Ensure module unlocking is consistent
+      // Find the highest completed module index
+      let highestCompletedModuleIndex = -1;
+
+      course.modules.forEach((module, index) => {
+        // If this module is completed or has any completed content
+        if (newModuleState[module._id] ||
+          (module.content && module.content.some(content => newSessionCompleted[content._id]))) {
+          highestCompletedModuleIndex = Math.max(highestCompletedModuleIndex, index);
+        }
+      });
+
+      // Ensure all modules up to and including the highest completed one are unlocked
+      // Also unlock the next module after the highest completed one
+      course.modules.forEach((module, index) => {
+        if (index <= highestCompletedModuleIndex + 1) {
+          newModuleState[module._id] = true;
         }
       });
 
@@ -260,8 +279,6 @@ const EnrollCourseDetail = () => {
 
   const handleToggleSession = async (sessionId, moduleId, moduleIndex) => {
     try {
-      setIsUpdatingProgress(true);
-
       // Calculate new session state
       const newSessionState = {
         ...sessionCompleted,
@@ -279,11 +296,19 @@ const EnrollCourseDetail = () => {
           newSessionState[content._id] === true
         ) || false;
 
-      // Update module completion status
-      const newModuleState = {
-        ...moduleCompleted,
-        [moduleId]: moduleSessionsCompleted
-      };
+      // Create a new module state object starting with the current state
+      const newModuleState = { ...moduleCompleted };
+
+      // Update the current module's completion status
+      newModuleState[moduleId] = moduleSessionsCompleted;
+
+      // IMPORTANT FIX: Ensure all previous modules remain unlocked
+      course.modules.forEach((module, idx) => {
+        // If this is a previous module or the current module, ensure it's unlocked
+        if (idx <= moduleIndex) {
+          newModuleState[module._id] = newModuleState[module._id] || true;
+        }
+      });
 
       // If this module is completed, unlock the next module if it exists
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
@@ -304,7 +329,7 @@ const EnrollCourseDetail = () => {
       });
 
       // Update backend first
-      const result = await dispatch(updateModuleProgressThunk({
+      await dispatch(updateModuleProgressThunk({
         courseId: id,
         progressData: {
           moduleId,
@@ -324,8 +349,6 @@ const EnrollCourseDetail = () => {
     } catch (error) {
       console.error('Failed to update progress:', error);
       toast.error('Failed to update progress. Please try again.');
-    } finally {
-      setIsUpdatingProgress(false);
     }
   };
 
@@ -333,21 +356,23 @@ const EnrollCourseDetail = () => {
     toast.success('Note saved');
   };
 
-  const handleQuizAnswerChange = (questionId, answer) => {
-    setQuizAnswers((prev) => ({
-      ...prev,
-      [questionId]: answer,
-    }));
-  };
+  const handleQuizSubmit = async (quizId, answers) => {
+    try {
+      // Use Redux thunk to submit quiz with courseId and quizId
+      const result = await dispatch(submitQuizThunk({
+        courseId: id, // The course ID from the URL params
+        quizId: quizId,
+        answers
+      })).unwrap();
 
-  const handleQuizSubmit = () => {
-    setQuizSubmitted(true);
-    toast.success('Quiz submitted successfully!');
-  };
+      // Toast notifications are handled in the thunk, so we don't need to add them here
 
-  const resetQuiz = () => {
-    setQuizAnswers({});
-    setQuizSubmitted(false);
+      return result;
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      // Error toast is already shown in the thunk
+      throw error;
+    }
   };
 
   // Check if a module is locked (all previous modules must be completed)
@@ -378,6 +403,14 @@ const EnrollCourseDetail = () => {
       progressData: {
         lastAccessedModule: module._id
       }
+    }));
+  };
+
+  // Toggle quiz expansion in accordion
+  const toggleQuiz = (quizId) => {
+    setExpandedQuizzes(prev => ({
+      ...prev,
+      [quizId]: !prev[quizId]
     }));
   };
 
@@ -568,7 +601,33 @@ const EnrollCourseDetail = () => {
               <button
                 key={tab}
                 className={`tab-button ${activeTab === tab ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+
+                  // If switching to quizzes tab, fetch quiz attempts for all quizzes in the course
+                  if (tab === 'quizzes' && course?.quizzes?.length > 0) {
+                    setLoadingAttempts(true);
+
+                    // Create an array of promises for all quiz attempt fetches
+                    const fetchPromises = course.quizzes.map(quiz =>
+                      dispatch(getQuizAttemptsThunk({
+                        courseId: id,
+                        quizId: quiz._id,
+                        userId: currentUserId // Pass the current user ID to ensure we only get attempts for this user
+                      }))
+                    );
+
+                    // Wait for all fetches to complete
+                    Promise.all(fetchPromises)
+                      .then(() => {
+                        setLoadingAttempts(false);
+                      })
+                      .catch(error => {
+                        console.error("Error fetching quiz attempts:", error);
+                        setLoadingAttempts(false);
+                      });
+                  }
+                }}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -653,52 +712,59 @@ const EnrollCourseDetail = () => {
 
           {activeTab === 'quizzes' && (
             <div className="quizzes-tab">
-              {course.quizzes?.map((quiz) => (
-                <div key={quiz._id} className="quiz-card">
-                  <div className="quiz-header">
-                    <h3>{quiz.title}</h3>
-                    <p className="quiz-description">{quiz.description}</p>
-                  </div>
-                  {quiz.questions?.length > 0 ? (
-                    <div className="quiz-content">
-                      {!quizSubmitted ? (
-                        quiz.questions.map((question, index) => (
-                          <div key={question._id} className="quiz-question">
-                            <h4>Q{index + 1}: {question.question}</h4>
-                            {question.options.map((option, i) => (
-                              <label key={i}>
-                                <input
-                                  type="radio"
-                                  name={question._id}
-                                  value={option}
-                                  checked={quizAnswers[question._id] === option}
-                                  onChange={() => handleQuizAnswerChange(question._id, option)}
-                                />
-                                {option}
-                              </label>
-                            ))}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="quiz-results">
-                          <div className="score-message">
-                            <FaCheck className="success-icon" />
-                            <span>You passed!</span>
-                          </div>
-                          <button onClick={resetQuiz}>Retake Quiz</button>
+              {loadingAttempts ? (
+                <div className="loading-container">
+                  <div className="loading-spinner"></div>
+                  <p>Loading quiz data...</p>
+                </div>
+              ) : (
+                <>
+                  {course.quizzes?.map((quiz) => (
+                    <div key={quiz._id} className="quiz-card accordion-quiz">
+                      <div
+                        className={`quiz-header ${storeQuizAttempts[quiz._id] ? 'quiz-attempted' : ''}`}
+                        onClick={() => toggleQuiz(quiz._id)}
+                      >
+                        <div className="quiz-title-section">
+                          <h3>{quiz.title}</h3>
+                          <p className="quiz-description">{quiz.description}</p>
+                        </div>
+                        <div className="quiz-status">
+                          {storeQuizAttempts[quiz._id] && (
+                            <span className={`quiz-result-badge ${storeQuizAttempts[quiz._id].passed ? 'passed' : 'failed'}`}>
+                              {storeQuizAttempts[quiz._id].passed ? 'Passed' : 'Failed'} ({storeQuizAttempts[quiz._id].percentage}%)
+                            </span>
+                          )}
+                          <span className="toggle-icon">
+                            {expandedQuizzes[quiz._id] ? <FaChevronUp /> : <FaChevronDown />}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedQuizzes[quiz._id] && (
+                        <div className="quiz-content">
+                          {quiz.questions?.length > 0 ? (
+                            <QuizSubmission
+                              quiz={quiz}
+                              onSubmit={(answers) => handleQuizSubmit(quiz._id, answers)}
+                              existingAttempt={storeQuizAttempts[quiz._id] || null}
+                            />
+                          ) : (
+                            <div className="quiz-empty-state">
+                              <p className="no-questions-message">No questions available for this quiz.</p>
+                            </div>
+                          )}
                         </div>
                       )}
-                      {!quizSubmitted && (
-                        <button className="quiz-submit-button" onClick={handleQuizSubmit}>
-                          Submit Quiz
-                        </button>
-                      )}
                     </div>
-                  ) : (
-                    <p>No questions available</p>
+                  ))}
+                  {!course.quizzes?.length && (
+                    <div className="no-quizzes-message">
+                      <p>No quizzes available for this course.</p>
+                    </div>
                   )}
-                </div>
-              ))}
+                </>
+              )}
             </div>
           )}
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "../common/LanguageSelector";
 import "../../assets/styles/TopBar.css";
 
 /**
@@ -9,6 +11,7 @@ import "../../assets/styles/TopBar.css";
 const TopBar = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("");
   const [dashboardType, setDashboardType] = useState("");
@@ -199,8 +202,11 @@ const TopBar = ({ toggleSidebar }) => {
       <div className="topbar-actions">
         {/* Search box */}
         <div className="search-box">
-          <input type="text" placeholder="Search..." />
+          <input type="text" placeholder={t("common.search") + "..."} />
         </div>
+
+        {/* Language Selector */}
+        {/* <LanguageSelector /> */}
 
         {/* Notification button */}
         {/* <button className="notification-btn">
@@ -215,14 +221,14 @@ const TopBar = ({ toggleSidebar }) => {
             <span className="user-name">{userName}</span>
             <span className="user-role">
               {userRole === "admin"
-                ? "Super Admin"
+                ? t("dashboard.superAdmin")
                 : userRole === "staff"
-                ? "IIM Staff"
+                ? t("dashboard.iimStaff")
                 : userRole === "university"
-                ? "School Admin"
+                ? t("dashboard.schoolAdmin")
                 : userRole === "educator"
-                ? "Educator"
-                : "User"}
+                ? t("dashboard.educator")
+                : t("dashboard.user")}
             </span>
           </div>
 
@@ -232,12 +238,12 @@ const TopBar = ({ toggleSidebar }) => {
               <ul>
                 <li>
                   <a href="#">
-                    <FaCog /> Settings
+                    <FaCog /> {t("common.settings")}
                   </a>
                 </li>
                 <li>
                   <button onClick={handleLogout}>
-                    <FaSignOutAlt /> Logout
+                    <FaSignOutAlt /> {t("common.logout")}
                   </button>
                 </li>
               </ul>

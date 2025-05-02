@@ -262,180 +262,193 @@ const SchoolAccountForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="school-form">
+        {/* General Information Section */}
         <div className="form-section">
           <h2>General Information</h2>
-
           <div className="form-grid">
-            <div className="form-column">
-              <div className="form-group">
-                <label htmlFor="schoolName">School/University Name</label>
+            <div className="form-group">
+              <label htmlFor="schoolName">School/University Name</label>
+              <input
+                type="text"
+                id="schoolName"
+                name="schoolName"
+                value={formData.schoolName}
+                onChange={handleInputChange}
+                placeholder="Enter School/University Name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="ownerName">Contact Person</label>
+              <input
+                type="text"
+                id="ownerName"
+                name="ownerName"
+                value={formData.ownerName}
+                onChange={handleInputChange}
+                placeholder="Enter Contact Person Name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="status">Account Status</label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+              >
+                <option value={1}>Active</option>
+                <option value={0}>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Information Section */}
+        <div className="form-section">
+          <h2>Contact Information</h2>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter Email Address"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phoneNumber">Phone Number</label>
+              <div className="phone-input-wrapper">
+                <span className="phone-prefix">+91</span>
                 <input
-                  type="text"
-                  id="schoolName"
-                  name="schoolName"
-                  value={formData.schoolName}
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  placeholder="Enter School/University Name"
+                  placeholder="Enter Phone Number"
                   required
                 />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="ownerName">Contact Person</label>
-                <input
-                  type="text"
-                  id="ownerName"
-                  name="ownerName"
-                  value={formData.ownerName}
-                  onChange={handleInputChange}
-                  placeholder="Enter Contact Person Name"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter Email Address"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="phoneNumber">Phone Number</label>
-                <div className="phone-input-wrapper">
-                  <span className="phone-prefix">+91</span>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="Enter Phone Number"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Role dropdown - only shows custom roles */}
-              {filteredRoles.length >= 1 && (
-                <div className="form-group">
-                  <label htmlFor="roleId">Role</label>
-                  <select
-                    id="roleId"
-                    name="roleId"
-                    value={formData.roleId}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select Role</option>
-                    {filteredRoles.map((role) => (
-                      <option key={role._id} value={role._id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="form-group">
-                <label htmlFor="status">Status</label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value={1}>Active</option>
-                  <option value={0}>Inactive</option>
-                </select>
               </div>
             </div>
 
-            <div className="form-column">
+            {/* Role dropdown - only shows custom roles */}
+            {filteredRoles.length >= 1 && (
               <div className="form-group">
-                <label htmlFor="address">Address</label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
+                <label htmlFor="roleId">Role</label>
+                <select
+                  id="roleId"
+                  name="roleId"
+                  value={formData.roleId}
                   onChange={handleInputChange}
-                  placeholder="Enter Address"
-                  required
+                >
+                  <option value="">Select Role</option>
+                  {filteredRoles.map((role) => (
+                    <option key={role._id} value={role._id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Address Information Section */}
+        <div className="form-section">
+          <h2>Address Information</h2>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="address">Address</label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                placeholder="Enter Address"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="zipcode">Zipcode</label>
+              <input
+                type="text"
+                id="zipcode"
+                name="zipcode"
+                value={formData.zipcode}
+                onChange={handleInputChange}
+                placeholder="Enter Zipcode"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="state">State</label>
+              <select
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((state, index) => (
+                  <option key={index} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Image Section */}
+        <div className="form-section">
+          <h2>School Logo</h2>
+          <div className="profile-section">
+            <div className="profile-preview">
+              {formData.profileImageUrl ? (
+                <img
+                  src={formData.profileImageUrl}
+                  alt="School Logo"
+                  className="profile-preview-image"
                 />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group half-width">
-                  <label htmlFor="zipcode">Zipcode</label>
-                  <input
-                    type="text"
-                    id="zipcode"
-                    name="zipcode"
-                    value={formData.zipcode}
-                    onChange={handleInputChange}
-                    placeholder="Enter Zipcode"
-                    required
-                  />
+              ) : (
+                <div className="profile-placeholder">
+                  <FaUserCircle className="placeholder-icon" />
                 </div>
-                <div className="form-group half-width">
-                  <label htmlFor="state">State</label>
-                  <select
-                    id="state"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select State</option>
-                    {INDIAN_STATES.map((state, index) => (
-                      <option key={index} value={state}>
-                        {state}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group profile-image-container">
-                <label>School Logo</label>
-                <div className="profile-image-upload">
-                  {formData.profileImageUrl ? (
-                    <img
-                      src={formData.profileImageUrl}
-                      alt="School Logo"
-                      className="profile-preview-image"
-                    />
-                  ) : (
-                    <div className="profile-placeholder">
-                      <FaUserCircle className="placeholder-icon" />
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    className="upload-photo-btn"
-                    onClick={() =>
-                      document.getElementById("profileImage").click()
-                    }
-                  >
-                    Upload Photo
-                  </button>
-                  <input
-                    type="file"
-                    id="profileImage"
-                    name="profileImage"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden-input"
-                  />
-                </div>
-              </div>
+              )}
+            </div>
+            <div className="profile-actions">
+              <button
+                type="button"
+                className="upload-photo-btn"
+                onClick={() => document.getElementById("profileImage").click()}
+              >
+                Upload Logo
+              </button>
+              <p className="upload-hint">
+                Recommended size: 300x300px. Max file size: 5MB
+              </p>
+              <input
+                type="file"
+                id="profileImage"
+                name="profileImage"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden-input"
+              />
             </div>
           </div>
         </div>

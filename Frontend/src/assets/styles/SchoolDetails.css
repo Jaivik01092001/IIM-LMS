@@ -104,7 +104,7 @@
 
 .details-section {
   background-color: var(--bg-white);
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   border: 1px solid var(--border-gray);
   padding: 1rem;
 }
@@ -150,7 +150,7 @@
 .delete-btn,
 .edit-btn {
   padding: 0.75rem 2rem;
-  border-radius: var(--border-medium-small-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--basefont);
   font-weight: 500;
   cursor: pointer;

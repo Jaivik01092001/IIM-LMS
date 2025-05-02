@@ -24,7 +24,7 @@
 .schools-container .search-input {
   padding: 10px 16px;
   border: 1px solid var(--border-gray);
-  border-radius: var(--border-medium-radius);
+  border-radius: var(--border-small-radius);
   font-size: var(--smallfont);
   min-width: 250px;
   outline: none;
@@ -46,7 +46,7 @@
 .schools-container .filter-select {
   padding: 10px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   background-color: white;
   font-size: 14px;
   min-width: 150px;
@@ -68,7 +68,7 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
@@ -130,7 +130,7 @@
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-small-radius);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;

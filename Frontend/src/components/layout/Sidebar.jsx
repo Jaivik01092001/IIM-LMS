@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import bluelogo from "../..//assets/images/login_page/bluelogo.svg";
 import {
   FaChalkboardTeacher,
@@ -23,6 +24,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const [userRole, setUserRole] = useState("admin");
   const [openDropdown, setOpenDropdown] = useState("");
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Get user role from localStorage
   useEffect(() => {
@@ -43,20 +45,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     const items = [
       {
         id: "dashboard",
-        name: "Dashboard",
+        name: t("common.dashboard"),
         icon: <FaHome className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}`,
         exact: true,
       },
       {
         id: "courses",
-        name: "All Courses",
+        name: t("courses.allCourses"),
         icon: <FaGraduationCap className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/courses`,
       },
       {
         id: "blogs",
-        name: "Blogs",
+        name: t("blog.blogs"),
         icon: <FaFilePen className="menu-icon" />,
         path: `/dashboard/${getDashboardPath()}/blogs`,
       },
@@ -67,25 +69,25 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       // Insert after courses but before blogs
       items.splice(2, 0, {
         id: "users",
-        name: "Users",
+        name: t("common.users"),
         icon: <FaUsers className="menu-icon" />,
         isDropdown: true,
         submenu: [
           {
             id: "universities",
-            name: "Universities/Schools",
+            name: t("schools.schools"),
             path: `/dashboard/admin/schools`,
             icon: <FaUniversity />,
           },
           {
             id: "educators",
-            name: "Educators",
+            name: t("educators.educators"),
             path: `/dashboard/admin/educators`,
             icon: <FaUserTie />,
           },
           {
             id: "staffs",
-            name: "IIM Staff",
+            name: t("staff.staff"),
             path: `/dashboard/admin/staffs`,
             icon: <FaIdBadge />,
           },
@@ -96,7 +98,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       if (userRole === "admin") {
         items.push({
           id: "role-permission",
-          name: "Role & Permission",
+          name: t("common.roleAndPermission"),
           icon: <FaUserShield className="menu-icon" />,
           path: `/dashboard/admin/role-permission`,
         });
@@ -105,7 +107,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       // Insert after courses but before blogs
       items.splice(2, 0, {
         id: "educators",
-        name: "Educators",
+        name: t("educators.educators"),
         icon: <FaChalkboardTeacher className="menu-icon" />,
         path: `/dashboard/school/educators`,
       });
@@ -168,7 +170,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           {/* Logo & close button container for mobile */}
           <div className="sidebar-header">
             <img src={bluelogo} alt="" />
-            <h1 className="sidebar-logo">IIM Ahmedabad</h1>
+            <h1 className="sidebar-logo">{t("common.iimAhmedabad")}</h1>
             <button className="close-sidebar-btn" onClick={toggleSidebar}>
               <FaTimes />
             </button>

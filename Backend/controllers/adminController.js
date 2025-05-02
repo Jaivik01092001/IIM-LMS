@@ -321,8 +321,8 @@ exports.createContent = async (req, res) => {
         (mediaType === "video"
           ? "video"
           : mediaType === "image"
-          ? "image"
-          : "document"),
+            ? "image"
+            : "document"),
       mediaType,
       mimeType,
       size: req.file.size,
@@ -698,7 +698,16 @@ exports.updateCourse = async (req, res) => {
     } = req.body;
 
     console.log("Update course data:", req.body);
-    console.log("Request file:", req.file);
+
+    // Debug uploaded files
+    console.log("Uploaded Files:");
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((f, i) => {
+        console.log(`${i + 1}. ${f.fieldname} -> ${f.originalname}`);
+      });
+    } else {
+      console.log("No files uploaded in the request");
+    }
 
     const course = await Course.findById(req.params.id);
     if (!course) {
@@ -713,10 +722,14 @@ exports.updateCourse = async (req, res) => {
     if (level) course.level = level;
 
     // Handle thumbnail update
-    if (req.file) {
-      course.thumbnail = req.file.path;
+    // Check for thumbnail in req.files array since we're using upload.any()
+    const thumbnailFile = req.files?.find((f) => f.fieldname === "thumbnail");
+    if (thumbnailFile) {
+      course.thumbnail = thumbnailFile.path;
+      console.log("Updated thumbnail to:", thumbnailFile.path);
     } else if (thumbnailUrl) {
       course.thumbnail = thumbnailUrl;
+      console.log("Using provided thumbnailUrl:", thumbnailUrl);
     }
 
     // No array fields to parse anymore
@@ -1058,8 +1071,8 @@ exports.updateCourse = async (req, res) => {
             (mediaType === "video"
               ? "video"
               : mediaType === "image"
-              ? "image"
-              : "document"),
+                ? "image"
+                : "document"),
           mediaType,
           mimeType,
           size: file.size,
