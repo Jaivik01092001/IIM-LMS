@@ -51,7 +51,7 @@
 
 .search-icon {
   position: absolute;
-  left: 15px;
+  right: 15px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-gray);
@@ -78,6 +78,7 @@
   gap: 8px;
   transition: background-color 0.2s;
   white-space: nowrap;
+  width: fit-content;
 }
 
 .add-blog-btn:hover {
@@ -189,7 +190,6 @@
   background-color: var(--white);
   border-radius: var(--border-medium-radius);
   box-shadow: var(--box-shadow-light);
-  padding: 15px;
 }
 
 .blog-image-cell {
