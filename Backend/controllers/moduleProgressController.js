@@ -151,13 +151,27 @@ exports.updateModuleProgress = async (req, res) => {
     await progress.save();
 
     // Calculate overall course progress
-    const totalContentItems = progress.moduleProgress.reduce(
-      (total, mp) => total + (mp.module.content ? mp.module.content.length : 0),
-      0
-    );
+    // We need to get the actual module content counts from the course
+    const courseWithModules = await Course.findById(courseId).populate('modules');
 
+    // Calculate total content items across all modules
+    let totalContentItems = 0;
+    if (courseWithModules && courseWithModules.modules) {
+      // Populate the modules with their content
+      const populatedModules = await Module.find({
+        _id: { $in: courseWithModules.modules.map(m => m._id) }
+      }).populate('content');
+
+      // Count all content items
+      totalContentItems = populatedModules.reduce(
+        (total, module) => total + (module.content ? module.content.length : 0),
+        0
+      );
+    }
+
+    // Count completed content items from the progress record
     const completedContentItems = progress.moduleProgress.reduce(
-      (total, mp) => total + mp.completedContent.length,
+      (total, mp) => total + (mp.completedContent ? mp.completedContent.length : 0),
       0
     );
 
@@ -190,10 +204,33 @@ exports.updateModuleProgress = async (req, res) => {
       }
     }
 
+    // Get the updated course with the latest progress
+    const updatedCourse = await Course.findById(courseId);
+    let userProgress = 0;
+
+    if (updatedCourse) {
+      const userEnrollment = updatedCourse.enrolledUsers.find(
+        e => e.user.toString() === userId
+      );
+
+      if (userEnrollment) {
+        userProgress = userEnrollment.progress;
+      }
+    }
+
+    // Log the progress values for debugging
+    console.log(`Progress calculation:
+      - Total content items: ${totalContentItems}
+      - Completed content items: ${completedContentItems}
+      - Calculated progress: ${overallProgress}%
+      - Stored user progress: ${userProgress}%
+    `);
+
     res.json({
       message: 'Module progress updated successfully',
       progress,
-      overallProgress
+      overallProgress,
+      userProgress
     });
   } catch (error) {
     console.error('Error updating module progress:', error);

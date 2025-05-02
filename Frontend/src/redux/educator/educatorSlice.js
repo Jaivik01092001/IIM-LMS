@@ -567,19 +567,51 @@ const educatorSlice = createSlice({
         state.error = null;
       })
       .addCase(updateModuleProgressThunk.fulfilled, (state, action) => {
+        console.log('Module progress update response:', action.payload);
+
         // Store the full progress object, not just the progress field
         state.moduleProgress = action.payload.progress || action.payload;
         state.loading = false;
 
         // Also update the overall course progress if available
-        if (
-          action.payload.overallProgress &&
+        // First try to use userProgress which comes directly from the course enrollment
+        const progressToUse = action.payload.userProgress !== undefined
+          ? action.payload.userProgress
+          : action.payload.overallProgress;
+
+        if (progressToUse !== undefined &&
           state.courseDetail &&
           state.courseDetail.enrolledUsers &&
-          state.courseDetail.enrolledUsers.length > 0
-        ) {
-          state.courseDetail.enrolledUsers[0].progress =
-            action.payload.overallProgress;
+          state.courseDetail.enrolledUsers.length > 0) {
+
+          console.log('Updating course progress in Redux state:', progressToUse);
+          state.courseDetail.enrolledUsers[0].progress = progressToUse;
+
+          // If progress is 100%, also update the status
+          if (progressToUse === 100) {
+            state.courseDetail.enrolledUsers[0].status = 'completed';
+            state.courseDetail.enrolledUsers[0].completedAt = new Date().toISOString();
+          }
+
+          // Also update the progress in the myCourses list if the course exists there
+          if (state.myCourses && state.myCourses.length > 0) {
+            const courseId = action.meta.arg.courseId;
+            const courseIndex = state.myCourses.findIndex(course => course._id === courseId);
+
+            if (courseIndex !== -1 &&
+              state.myCourses[courseIndex].enrolledUsers &&
+              state.myCourses[courseIndex].enrolledUsers.length > 0) {
+
+              // Update progress in the first enrollment (current user)
+              state.myCourses[courseIndex].enrolledUsers[0].progress = progressToUse;
+
+              // If progress is 100%, also update the status
+              if (progressToUse === 100) {
+                state.myCourses[courseIndex].enrolledUsers[0].status = 'completed';
+                state.myCourses[courseIndex].enrolledUsers[0].completedAt = new Date().toISOString();
+              }
+            }
+          }
         }
       })
       .addCase(updateModuleProgressThunk.rejected, (state, action) => {
