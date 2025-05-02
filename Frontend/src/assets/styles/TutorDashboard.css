@@ -49,7 +49,11 @@
   position: relative;
   border-radius: 16px;
   padding: 24px;
+  display: flex;
   overflow: hidden;
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  align-items: center;
 }
 
 .tutor-dashboard .stat-card.ongoing {
@@ -79,7 +83,8 @@
 .tutor-dashboard .stat-icon1 {
   background-color: #fa5a7d;
   border-radius: 50%;
-  padding: 8px;
+  height: 50px;
+  width: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -89,7 +94,8 @@
 .tutor-dashboard .stat-icon2 {
   background-color: #3cd856;
   border-radius: 50%;
-  padding: 8px;
+  height: 50px;
+  width: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -99,7 +105,8 @@
 .tutor-dashboard .stat-icon3 {
   background-color: #ff947a;
   border-radius: 50%;
-  padding: 8px;
+  height: 50px;
+  width: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

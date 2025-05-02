@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import axios from "axios";
 
 function VerifyCertificate() {
   const { certificateId } = useParams();
@@ -10,11 +10,13 @@ function VerifyCertificate() {
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [manualCertificateId, setManualCertificateId] = useState(certificateId || '');
+  const [manualCertificateId, setManualCertificateId] = useState(
+    certificateId || ""
+  );
 
   const verifyCertificate = async (id) => {
     if (!id) {
-      setError(t('Please enter a certificate ID'));
+      setError(t("Please enter a certificate ID"));
       return;
     }
 
@@ -24,17 +26,19 @@ function VerifyCertificate() {
     try {
       const API_URL = import.meta.env.VITE_API_URL;
       const response = await axios.get(`${API_URL}/certificate/verify/${id}`);
-      
-      if (response.data.status === 'success') {
+
+      if (response.data.status === "success") {
         setCertificate(response.data.data.certificate);
         if (id !== certificateId) {
           navigate(`/verify-certificate/${id}`, { replace: true });
         }
       } else {
-        setError(t('Invalid certificate'));
+        setError(t("Invalid certificate"));
       }
     } catch (error) {
-      setError(t('Certificate verification failed. Please check the ID and try again.'));
+      setError(
+        t("Certificate verification failed. Please check the ID and try again.")
+      );
     } finally {
       setLoading(false);
     }
@@ -51,13 +55,15 @@ function VerifyCertificate() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
-          <h1 className="text-xl font-bold text-white">{t('Certificate Verification')}</h1>
+          <h1 className="text-xl font-bold text-white">
+            {t("Certificate Verification")}
+          </h1>
         </div>
 
         <div className="p-6">
           <div className="mb-8">
             <p className="text-gray-600 mb-4">
-              {t('Enter the certificate ID to verify its authenticity.')}
+              {t("Enter the certificate ID to verify its authenticity.")}
             </p>
 
             <div className="flex space-x-2">
@@ -65,7 +71,7 @@ function VerifyCertificate() {
                 type="text"
                 value={manualCertificateId}
                 onChange={(e) => setManualCertificateId(e.target.value)}
-                placeholder={t('Enter certificate ID')}
+                placeholder={t("Enter certificate ID")}
                 className="flex-1 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
@@ -108,7 +114,7 @@ function VerifyCertificate() {
                     />
                   </svg>
                 )}
-                {t('Verify')}
+                {t("Verify")}
               </button>
             </div>
 
@@ -139,35 +145,45 @@ function VerifyCertificate() {
               </div>
 
               <h2 className="text-xl font-bold text-center text-gray-900 mb-6">
-                {t('Certificate Verified')}
+                {t("Certificate Verified")}
               </h2>
 
               <div className="space-y-4">
                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">{t('Certificate ID')}:</span>
-                  <span className="font-medium text-gray-900">{certificate.id}</span>
+                  <span className="text-gray-600">{t("Certificate ID")}:</span>
+                  <span className="font-medium text-gray-900">
+                    {certificate.id}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">{t('Student Name')}:</span>
-                  <span className="font-medium text-gray-900">{certificate.studentName}</span>
+                  <span className="text-gray-600">{t("Student Name")}:</span>
+                  <span className="font-medium text-gray-900">
+                    {certificate.studentName}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">{t('Course')}:</span>
-                  <span className="font-medium text-gray-900">{certificate.courseName}</span>
+                  <span className="text-gray-600">{t("Course")}:</span>
+                  <span className="font-medium text-gray-900">
+                    {certificate.courseName}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">{t('Instructor')}:</span>
-                  <span className="font-medium text-gray-900">{certificate.instructorName}</span>
+                  <span className="text-gray-600">{t("Instructor")}:</span>
+                  <span className="font-medium text-gray-900">
+                    {certificate.instructorName}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">{t('Issue Date')}:</span>
+                  <span className="text-gray-600">{t("Issue Date")}:</span>
                   <span className="font-medium text-gray-900">
                     {new Date(certificate.issueDate).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('Completion Date')}:</span>
-                  <span className="font-medium text-gray-900">{certificate.completionDate}</span>
+                  <span className="text-gray-600">{t("Completion Date")}:</span>
+                  <span className="font-medium text-gray-900">
+                    {certificate.completionDate}
+                  </span>
                 </div>
               </div>
             </div>

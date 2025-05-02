@@ -1,5 +1,4 @@
 .enroll-course-detail {
-  padding: 20px;
   width: 100%;
   /* max-width: 1200px; */
   margin: 0 auto;
@@ -88,6 +87,12 @@
   margin-bottom: 20px;
   border-radius: var(--border-large-radius);
   overflow: hidden;
+  height: 500px;
+}
+.enroll-course-detail .video-player {
+  height: 500px;
+  background-color: aqua;
+  object-fit: fill;
 }
 
 /* HTML Content Preview Styles */
@@ -950,6 +955,7 @@
   padding: 20px;
   margin-bottom: 20px;
   align-items: center;
+  justify-content: space-between !important;
 }
 
 .enroll-course-detail .certificate-icon {

@@ -4,11 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getEducatorsThunk as getUniversityEducatorsThunk,
   deleteEducatorThunk,
-  updateEducatorThunk
+  updateEducatorThunk,
 } from "../redux/university/universitySlice";
 import {
   getUniversitiesThunk,
-  getEducatorsThunk as getAdminEducatorsThunk
+  getEducatorsThunk as getAdminEducatorsThunk,
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -24,11 +24,16 @@ const Educators = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { educators: universityEducators, loading: universityLoading } = useSelector((state) => state.university);
-  const { educators: adminEducators, universities, loading: adminLoading } = useSelector((state) => state.admin);
+  const { educators: universityEducators, loading: universityLoading } =
+    useSelector((state) => state.university);
+  const {
+    educators: adminEducators,
+    universities,
+    loading: adminLoading,
+  } = useSelector((state) => state.admin);
   const { user } = useSelector((state) => state.auth);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
   const educators = isAdmin ? adminEducators : universityEducators;
   const loading = isAdmin ? adminLoading : universityLoading;
 
@@ -60,23 +65,24 @@ const Educators = () => {
       // Find university name for each educator
       const formattedEducators = educators.map((educator) => {
         // Get university name from populated university field or find it in universities array
-        let universityName = 'N/A';
-        let universityCategory = 'University';
+        let universityName = "N/A";
+        let universityCategory = "University";
 
         // First try to get from populated university field
-        if (educator.university && typeof educator.university === 'object') {
-          universityName = educator.university.name || 'N/A';
-          universityCategory = educator.university.category || 'University';
+        if (educator.university && typeof educator.university === "object") {
+          universityName = educator.university.name || "N/A";
+          universityCategory = educator.university.category || "University";
         }
         // Fallback to finding in universities array
         else if (educator.university && universities) {
-          const university = universities.find(uni =>
-            uni._id === educator.university ||
-            uni.educators?.includes(educator._id)
+          const university = universities.find(
+            (uni) =>
+              uni._id === educator.university ||
+              uni.educators?.includes(educator._id)
           );
           if (university) {
-            universityName = university.name || 'N/A';
-            universityCategory = university.category || 'University';
+            universityName = university.name || "N/A";
+            universityCategory = university.category || "University";
           }
         }
 
@@ -85,24 +91,30 @@ const Educators = () => {
 
         return {
           id: educator._id,
-          professor: educator.name || 'Unknown',
+          professor: educator.name || "Unknown",
           school: schoolName,
           category: educator.profile?.category || universityCategory,
-          avatar: educator.profile?.avatar ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${educator.profile.avatar}` : null,
-          mobile: educator.phoneNumber || 'N/A',
+          avatar: educator.profile?.avatar
+            ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${
+                educator.profile.avatar
+              }`
+            : null,
+          mobile: educator.phoneNumber || "N/A",
           status: educator.status === 1,
-          email: educator.email || 'N/A',
-          address: educator.profile?.address || 'N/A',
-          zipcode: educator.profile?.zipcode || 'N/A',
-          state: educator.profile?.state || 'N/A',
-          roleId: educator.roleRef || '',
+          email: educator.email || "N/A",
+          address: educator.profile?.address || "N/A",
+          zipcode: educator.profile?.zipcode || "N/A",
+          state: educator.profile?.state || "N/A",
+          roleId: educator.roleRef || "",
         };
       });
 
       setTableData(formattedEducators);
 
       // Extract unique categories
-      const uniqueCategories = [...new Set(formattedEducators.map(edu => edu.category))];
+      const uniqueCategories = [
+        ...new Set(formattedEducators.map((edu) => edu.category)),
+      ];
       setCategories(uniqueCategories);
     }
   }, [educators, universities]);
@@ -110,13 +122,19 @@ const Educators = () => {
   // Status toggle handler
   const handleStatusToggle = (row) => {
     // Only send the id and status to avoid issues with socialLinks
-    dispatch(updateEducatorThunk({
-      id: row.id,
-      status: row.status ? 0 : 1
-    }))
+    dispatch(
+      updateEducatorThunk({
+        id: row.id,
+        status: row.status ? 0 : 1,
+      })
+    )
       .unwrap()
       .then(() => {
-        console.log(`Successfully ${row.status ? 'deactivated' : 'activated'} ${row.professor}`);
+        console.log(
+          `Successfully ${row.status ? "deactivated" : "activated"} ${
+            row.professor
+          }`
+        );
         // Refresh educators data based on user role
         if (isAdmin) {
           dispatch(getAdminEducatorsThunk());
@@ -124,7 +142,7 @@ const Educators = () => {
           dispatch(getUniversityEducatorsThunk());
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(`Error updating educator status:`, error);
       });
   };
@@ -138,9 +156,9 @@ const Educators = () => {
         educator: {
           ...row,
           // Ensure we're using the MongoDB _id for API calls
-          id: row.id
-        }
-      }
+          id: row.id,
+        },
+      },
     });
   };
 
@@ -153,7 +171,11 @@ const Educators = () => {
 
   // Delete handler
   const handleDelete = (row) => {
-    if (window.confirm(`Are you sure you want to delete "${row.professor}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${row.professor}"? This action cannot be undone.`
+      )
+    ) {
       dispatch(deleteEducatorThunk(row.id))
         .unwrap()
         .then(() => {
@@ -165,7 +187,7 @@ const Educators = () => {
             dispatch(getUniversityEducatorsThunk());
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(`Error deleting educator:`, error);
         });
     }
@@ -184,7 +206,11 @@ const Educators = () => {
       cell: (row) => (
         <div className="professor-cell">
           {row.avatar ? (
-            <img src={row.avatar} alt="Professor" className="professor-avatar" />
+            <img
+              src={row.avatar}
+              alt="Professor"
+              className="professor-avatar"
+            />
           ) : (
             <FaUserCircle className="professor-avatar-placeholder" />
           )}
@@ -273,7 +299,9 @@ const Educators = () => {
           >
             <option value="">All Categories</option>
             {categories.map((category, index) => (
-              <option key={index} value={category}>{category}</option>
+              <option key={index} value={category}>
+                {category}
+              </option>
             ))}
           </select>
           <select
@@ -291,38 +319,42 @@ const Educators = () => {
             className="create-account-btn"
             onClick={() => navigate("/dashboard/admin/educator-account-form")}
           >
-            Create Account
+            Create Educator
           </button>
         </div>
       </div>
 
-      {isLoading && <LoadingSpinner overlay={true} message="Loading educators data..." />}
+      {isLoading && (
+        <LoadingSpinner overlay={true} message="Loading educators data..." />
+      )}
 
       <DataTableComponent
         columns={columns}
         data={tableData
           // Apply search filter
-          .filter(item =>
-            item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.mobile.toLowerCase().includes(searchTerm.toLowerCase())
+          .filter(
+            (item) =>
+              item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.mobile.toLowerCase().includes(searchTerm.toLowerCase())
           )
           // Apply category filter
-          .filter(item =>
-            !categoryFilter || item.category === categoryFilter
-          )
+          .filter((item) => !categoryFilter || item.category === categoryFilter)
           // Apply sorting
           .sort((a, b) => {
             if (!sortBy) return 0;
 
             switch (sortBy) {
-              case "name-asc": return a.professor.localeCompare(b.professor);
-              case "name-desc": return b.professor.localeCompare(a.professor);
-              case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
-              default: return 0;
+              case "name-asc":
+                return a.professor.localeCompare(b.professor);
+              case "name-desc":
+                return b.professor.localeCompare(a.professor);
+              case "status":
+                return a.status === b.status ? 0 : a.status ? -1 : 1;
+              default:
+                return 0;
             }
-          })
-        }
+          })}
         showSearch={false}
       />
     </div>

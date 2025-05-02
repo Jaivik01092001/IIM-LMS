@@ -210,6 +210,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  width: fit-content;
 }
 
 .staff-form-container .upload-photo-btn:hover {

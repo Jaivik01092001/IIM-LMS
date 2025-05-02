@@ -445,3 +445,6 @@ html.lenis {
   font-size: 0.8rem;
   margin-left: 10px;
 }
+.certificatebgcolor {
+  background-color: var(--primary-color);
+}
