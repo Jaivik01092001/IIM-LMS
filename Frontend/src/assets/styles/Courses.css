@@ -347,10 +347,14 @@
   justify-content: center;
 }
 
-.courses-container .action-btn.view,
-.courses-container .action-button.view {
-  background-color: var(--primary-light-bg);
-  color: var(--primary-color);
+.courses-container .action-btn.view {
+  background-color: #eef2ff;
+  color: var(--bg-primary);
+}
+
+.courses-container .action-btn.edit {
+  background-color: #e7eee5;
+  color: #4abb66;
 }
 
 .courses-container .action-btn.edit,

@@ -201,16 +201,7 @@ const Schools = () => {
     },
     {
       name: "Owner",
-      cell: (row) => (
-        <div className="owner-cell">
-          {row.avatar ? (
-            <img src={row.avatar} alt="Owner" className="owner-avatar" />
-          ) : (
-            <FaUserCircle className="owner-avatar-placeholder" />
-          )}
-          <span>{row.owner}</span>
-        </div>
-      ),
+      selector: (row) => row.owner,
       sortable: true,
     },
     {

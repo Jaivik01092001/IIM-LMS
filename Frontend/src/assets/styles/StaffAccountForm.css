@@ -481,6 +481,7 @@
   .staff-form-container .back-button {
     width: 36px;
     height: 36px;
+    padding: 0px;
   }
 
   .staff-form-container .upload-photo-btn,
