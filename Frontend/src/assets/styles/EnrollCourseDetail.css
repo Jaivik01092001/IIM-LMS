@@ -1,5 +1,4 @@
 .enroll-course-detail {
-  padding: 20px;
   width: 100%;
   /* max-width: 1200px; */
   margin: 0 auto;
@@ -88,6 +87,12 @@
   margin-bottom: 20px;
   border-radius: var(--border-large-radius);
   overflow: hidden;
+  height: 500px;
+}
+.enroll-course-detail .video-player {
+  height: 500px;
+  background-color: aqua;
+  object-fit: fill;
 }
 
 /* HTML Content Preview Styles */
@@ -643,9 +648,35 @@
   overflow: hidden;
 }
 
+/* Accordion Quiz Styles */
+.enroll-course-detail .accordion-quiz {
+  transition: box-shadow 0.3s ease;
+}
+
+.enroll-course-detail .accordion-quiz:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .enroll-course-detail .quiz-header {
   padding: 20px;
   border-bottom: 1px solid var(--border-gray);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.enroll-course-detail .quiz-header:hover {
+  background-color: var(--bg-gray);
+}
+
+.enroll-course-detail .quiz-header.quiz-attempted {
+  background-color: rgba(74, 108, 247, 0.05);
+}
+
+.enroll-course-detail .quiz-title-section {
+  flex: 1;
 }
 
 .enroll-course-detail .quiz-header h3 {
@@ -658,7 +689,56 @@
 .enroll-course-detail .quiz-description {
   font-size: var(--smallfont);
   color: var(--text-gray);
-  margin-bottom: 15px;
+  margin-bottom: 5px;
+}
+
+.enroll-course-detail .quiz-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.enroll-course-detail .quiz-result-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.enroll-course-detail .quiz-result-badge.passed {
+  background-color: #4caf50;
+}
+
+.enroll-course-detail .quiz-result-badge.failed {
+  background-color: #f44336;
+}
+
+.enroll-course-detail .toggle-icon {
+  color: var(--text-gray);
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.enroll-course-detail .quiz-content {
+  padding: 0;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enroll-course-detail .quiz-empty-state {
+  padding: 20px;
+  text-align: center;
 }
 
 .enroll-course-detail .no-questions-message,
@@ -705,6 +785,7 @@
 .enroll-course-detail .quiz-submission-container .quiz-header {
   padding: 20px;
   border-bottom: 1px solid var(--border-gray);
+  cursor: default;
 }
 
 .enroll-course-detail .quiz-submission-container .quiz-questions {
@@ -874,6 +955,7 @@
   padding: 20px;
   margin-bottom: 20px;
   align-items: center;
+  justify-content: space-between !important;
 }
 
 .enroll-course-detail .certificate-icon {

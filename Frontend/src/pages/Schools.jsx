@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getUniversitiesThunk,
   deleteUniversityThunk,
-  updateUniversityThunk
+  updateUniversityThunk,
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -26,7 +26,7 @@ const Schools = () => {
     searchTerm: "",
     category: "",
     status: "", // Add status filter
-    sortBy: ""
+    sortBy: "",
   });
 
   // Fetch data on component mount
@@ -46,9 +46,11 @@ const Schools = () => {
       let avatarUrl = null;
       if (profile.avatar) {
         // If avatar starts with http, use it directly, otherwise prepend the base URL
-        avatarUrl = profile.avatar.startsWith('http')
+        avatarUrl = profile.avatar.startsWith("http")
           ? profile.avatar
-          : `${import.meta.env.VITE_API_URL.replace('/api', '')}${profile.avatar}`;
+          : `${import.meta.env.VITE_API_URL.replace("/api", "")}${
+              profile.avatar
+            }`;
       }
 
       return {
@@ -63,7 +65,7 @@ const Schools = () => {
         address: profile.address || "N/A", // Updated to access address from profile
         zipcode: profile.zipcode || "N/A", // Updated to access zipcode from profile
         state: profile.state || "N/A", // Updated to access state from profile
-        educators: uni.educators || []
+        educators: uni.educators || [],
       };
     });
 
@@ -72,7 +74,7 @@ const Schools = () => {
 
   // Handle filter changes
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   // Status toggle handler
@@ -82,17 +84,19 @@ const Schools = () => {
 
     console.log(`Toggling status for ${row.school} to ${newStatus}`);
 
-    dispatch(updateUniversityThunk({
-      id: row.id,
-      status: newStatus
-    }))
+    dispatch(
+      updateUniversityThunk({
+        id: row.id,
+        status: newStatus,
+      })
+    )
       .unwrap()
       .then(() => {
         console.log(`Successfully ${statusText}d ${row.school}`);
         // Get fresh data from the server to ensure state is in sync with backend
         dispatch(getUniversitiesThunk());
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(`Error ${statusText}ing university:`, error);
       });
   };
@@ -114,9 +118,9 @@ const Schools = () => {
         .unwrap()
         .then(() => {
           // Only update local state if API call succeeded
-          setTableData(tableData.filter(item => item.id !== row.id));
+          setTableData(tableData.filter((item) => item.id !== row.id));
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error deleting university:", error);
         });
     }
@@ -133,15 +137,18 @@ const Schools = () => {
     const { searchTerm, category, status, sortBy } = filters;
 
     return tableData
-      .filter(item =>
-        // Apply search filter
-        !searchTerm || item.school.toLowerCase().includes(searchTerm.toLowerCase())
+      .filter(
+        (item) =>
+          // Apply search filter
+          !searchTerm ||
+          item.school.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .filter(item =>
-        // Apply category filter
-        !category || item.category === category
+      .filter(
+        (item) =>
+          // Apply category filter
+          !category || item.category === category
       )
-      .filter(item => {
+      .filter((item) => {
         // Apply status filter
         if (!status) return true; // Show all if no status filter
         if (status === "active") return item.status === true;
@@ -153,10 +160,14 @@ const Schools = () => {
         if (!sortBy) return 0;
 
         switch (sortBy) {
-          case "Name (A-Z)": return a.school.localeCompare(b.school);
-          case "Name (Z-A)": return b.school.localeCompare(a.school);
-          case "Status": return a.status === b.status ? 0 : a.status ? -1 : 1;
-          default: return 0;
+          case "Name (A-Z)":
+            return a.school.localeCompare(b.school);
+          case "Name (Z-A)":
+            return b.school.localeCompare(a.school);
+          case "Status":
+            return a.status === b.status ? 0 : a.status ? -1 : 1;
+          default:
+            return 0;
         }
       });
   };
@@ -247,11 +258,9 @@ const Schools = () => {
     return <LoadingSpinner size="large" message="Loading schools data..." />;
   }
 
-
   return (
     <div className="schools-container">
       <div className="schools-header">
-
         <div className="search-filter-container">
           <input
             type="text"

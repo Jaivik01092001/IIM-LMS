@@ -200,6 +200,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  width: fit-content;
 }
 
 .school-form-container .upload-photo-btn:hover {
@@ -383,6 +384,7 @@
   .school-form-container .back-button {
     width: 36px;
     height: 36px;
+    padding: 0px;
   }
 
   .school-form-container .upload-photo-btn {

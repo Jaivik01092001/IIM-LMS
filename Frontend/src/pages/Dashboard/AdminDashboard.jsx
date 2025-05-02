@@ -346,8 +346,10 @@ const AdminDashboard = () => {
             <FaBook size={24} />
             <FaBook className="icondesign3" />
           </div>
-          <div className="stat-count">{courses?.length || 0}</div>
-          <div className="stat-title">{t("dashboard.totalCourses")}</div>
+          <div>
+            <div className="stat-count">{courses?.length || 0}</div>
+            <div className="stat-title">{t("dashboard.totalCourses")}</div>
+          </div>
         </div>
 
         <div className="stat-card schools">
@@ -355,21 +357,25 @@ const AdminDashboard = () => {
             <LuSchool size={24} />
             <LuSchool className="icondesign1" />
           </div>
-          <div className="stat-count">
-            {universityCount || universities?.length || 0}
+          <div>
+            <div className="stat-count">
+              {universityCount || universities?.length || 0}
+            </div>
+            <div className="stat-title">{t("dashboard.totalSchools")}</div>
           </div>
-          <div className="stat-title">{t("dashboard.totalSchools")}</div>
         </div>
 
         <div className="stat-card educators">
           <div className="stat-icon2">
-            <LiaChalkboardTeacherSolid size={24} />
+            <LiaChalkboardTeacherSolid size={30} />
             <LiaChalkboardTeacherSolid className="icondesign2" />
           </div>
-          <div className="stat-count">
-            {educatorCount || educatorsCountFromUniversities}
+          <div>
+            <div className="stat-count">
+              {educatorCount || educatorsCountFromUniversities}
+            </div>
+            <div className="stat-title">{t("dashboard.totalEducators")}</div>
           </div>
-          <div className="stat-title">{t("dashboard.totalEducators")}</div>
         </div>
       </div>
 

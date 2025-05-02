@@ -26,6 +26,10 @@
   outline: none;
   transition: border-color 0.2s;
 }
+.data-table-container .hZInOG svg {
+  top: 50%;
+  transform: translateY(-50%);
+}
 
 @media (max-width: 576px) {
   .data-table-container .search-input {

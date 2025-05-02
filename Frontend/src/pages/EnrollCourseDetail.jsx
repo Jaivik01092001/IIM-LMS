@@ -35,6 +35,7 @@ const EnrollCourseDetail = () => {
 
   const [activeTab, setActiveTab] = useState('content');
   const [expandedSections, setExpandedSections] = useState({});
+  const [expandedQuizzes, setExpandedQuizzes] = useState({});
   const [sessionCompleted, setSessionCompleted] = useState({});
   const [moduleCompleted, setModuleCompleted] = useState({});
   const [userProgress, setUserProgress] = useState(0);
@@ -66,6 +67,13 @@ const EnrollCourseDetail = () => {
           defaultExpanded[mod._id] = index === 0;
         });
         setExpandedSections(defaultExpanded);
+
+        // Initialize quiz accordion state - first quiz expanded by default
+        const defaultQuizExpanded = {};
+        if (res.quizzes && res.quizzes.length > 0) {
+          defaultQuizExpanded[res.quizzes[0]._id] = true;
+        }
+        setExpandedQuizzes(defaultQuizExpanded);
 
         // Initialize session completion status - ALL sessions are NOT completed by default
         const completed = {};
@@ -129,15 +137,6 @@ const EnrollCourseDetail = () => {
         // Update module completion status
         newModuleState[moduleId] = mp.isCompleted;
 
-        // If a module is completed, also unlock the next module
-        if (mp.isCompleted) {
-          const moduleIndex = course.modules.findIndex(m => m._id === moduleId);
-          if (moduleIndex !== -1 && moduleIndex < course.modules.length - 1) {
-            const nextModuleId = course.modules[moduleIndex + 1]._id;
-            newModuleState[nextModuleId] = true;
-          }
-        }
-
         // Update ONLY explicitly completed content items
         if (mp.completedContent && mp.completedContent.length > 0) {
           mp.completedContent.forEach(contentId => {
@@ -145,6 +144,26 @@ const EnrollCourseDetail = () => {
               newSessionCompleted[contentId] = true;
             }
           });
+        }
+      });
+
+      // IMPORTANT FIX: Ensure module unlocking is consistent
+      // Find the highest completed module index
+      let highestCompletedModuleIndex = -1;
+
+      course.modules.forEach((module, index) => {
+        // If this module is completed or has any completed content
+        if (newModuleState[module._id] ||
+          (module.content && module.content.some(content => newSessionCompleted[content._id]))) {
+          highestCompletedModuleIndex = Math.max(highestCompletedModuleIndex, index);
+        }
+      });
+
+      // Ensure all modules up to and including the highest completed one are unlocked
+      // Also unlock the next module after the highest completed one
+      course.modules.forEach((module, index) => {
+        if (index <= highestCompletedModuleIndex + 1) {
+          newModuleState[module._id] = true;
         }
       });
 
@@ -277,11 +296,19 @@ const EnrollCourseDetail = () => {
           newSessionState[content._id] === true
         ) || false;
 
-      // Update module completion status
-      const newModuleState = {
-        ...moduleCompleted,
-        [moduleId]: moduleSessionsCompleted
-      };
+      // Create a new module state object starting with the current state
+      const newModuleState = { ...moduleCompleted };
+
+      // Update the current module's completion status
+      newModuleState[moduleId] = moduleSessionsCompleted;
+
+      // IMPORTANT FIX: Ensure all previous modules remain unlocked
+      course.modules.forEach((module, idx) => {
+        // If this is a previous module or the current module, ensure it's unlocked
+        if (idx <= moduleIndex) {
+          newModuleState[module._id] = newModuleState[module._id] || true;
+        }
+      });
 
       // If this module is completed, unlock the next module if it exists
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
@@ -376,6 +403,14 @@ const EnrollCourseDetail = () => {
       progressData: {
         lastAccessedModule: module._id
       }
+    }));
+  };
+
+  // Toggle quiz expansion in accordion
+  const toggleQuiz = (quizId) => {
+    setExpandedQuizzes(prev => ({
+      ...prev,
+      [quizId]: !prev[quizId]
     }));
   };
 
@@ -685,18 +720,40 @@ const EnrollCourseDetail = () => {
               ) : (
                 <>
                   {course.quizzes?.map((quiz) => (
-                    <div key={quiz._id} className="quiz-card">
-                      {quiz.questions?.length > 0 ? (
-                        <QuizSubmission
-                          quiz={quiz}
-                          onSubmit={(answers) => handleQuizSubmit(quiz._id, answers)}
-                          existingAttempt={storeQuizAttempts[quiz._id] || null}
-                        />
-                      ) : (
-                        <div className="quiz-header">
+                    <div key={quiz._id} className="quiz-card accordion-quiz">
+                      <div
+                        className={`quiz-header ${storeQuizAttempts[quiz._id] ? 'quiz-attempted' : ''}`}
+                        onClick={() => toggleQuiz(quiz._id)}
+                      >
+                        <div className="quiz-title-section">
                           <h3>{quiz.title}</h3>
                           <p className="quiz-description">{quiz.description}</p>
-                          <p className="no-questions-message">No questions available for this quiz.</p>
+                        </div>
+                        <div className="quiz-status">
+                          {storeQuizAttempts[quiz._id] && (
+                            <span className={`quiz-result-badge ${storeQuizAttempts[quiz._id].passed ? 'passed' : 'failed'}`}>
+                              {storeQuizAttempts[quiz._id].passed ? 'Passed' : 'Failed'} ({storeQuizAttempts[quiz._id].percentage}%)
+                            </span>
+                          )}
+                          <span className="toggle-icon">
+                            {expandedQuizzes[quiz._id] ? <FaChevronUp /> : <FaChevronDown />}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedQuizzes[quiz._id] && (
+                        <div className="quiz-content">
+                          {quiz.questions?.length > 0 ? (
+                            <QuizSubmission
+                              quiz={quiz}
+                              onSubmit={(answers) => handleQuizSubmit(quiz._id, answers)}
+                              existingAttempt={storeQuizAttempts[quiz._id] || null}
+                            />
+                          ) : (
+                            <div className="quiz-empty-state">
+                              <p className="no-questions-message">No questions available for this quiz.</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

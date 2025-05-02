@@ -774,6 +774,7 @@ textarea:focus {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  border-radius: var(--border-small-radius);
 }
 
 .next-button,
@@ -1139,5 +1140,13 @@ textarea:focus {
 
   .correct-toggle {
     align-self: flex-start;
+  }
+}
+@media (max-width: 500px) {
+  .navigation-buttons {
+    display: grid;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 10px;
   }
 }

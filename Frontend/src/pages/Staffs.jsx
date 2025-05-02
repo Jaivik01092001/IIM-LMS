@@ -316,7 +316,7 @@ const Staffs = () => {
           <option value="Status">Status</option>
         </select>
         <button className="create-account-btn" onClick={handleCreateAccount}>
-          Create Staff Account
+          Create Staff
         </button>
       </div>
 

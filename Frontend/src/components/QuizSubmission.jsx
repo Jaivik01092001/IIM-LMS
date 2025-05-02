@@ -81,8 +81,8 @@ const QuizSubmission = ({ quiz, onSubmit, existingAttempt = null }) => {
             <h2>{quiz.title}</h2>
             <p>{quiz.description}</p>
             <div className="quiz-meta">
-              <span>Time Limit: {quiz.timeLimit} minutes</span>
-              <span>Passing Score: {quiz.passingScore}%</span>
+              {/* <span>Time Limit: {quiz.timeLimit} minutes</span>
+              <span>Passing Score: {quiz.passingScore}%</span> */}
             </div>
           </div>
 
