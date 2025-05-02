@@ -137,15 +137,6 @@ const EnrollCourseDetail = () => {
         // Update module completion status
         newModuleState[moduleId] = mp.isCompleted;
 
-        // If a module is completed, also unlock the next module
-        if (mp.isCompleted) {
-          const moduleIndex = course.modules.findIndex(m => m._id === moduleId);
-          if (moduleIndex !== -1 && moduleIndex < course.modules.length - 1) {
-            const nextModuleId = course.modules[moduleIndex + 1]._id;
-            newModuleState[nextModuleId] = true;
-          }
-        }
-
         // Update ONLY explicitly completed content items
         if (mp.completedContent && mp.completedContent.length > 0) {
           mp.completedContent.forEach(contentId => {
@@ -153,6 +144,26 @@ const EnrollCourseDetail = () => {
               newSessionCompleted[contentId] = true;
             }
           });
+        }
+      });
+
+      // IMPORTANT FIX: Ensure module unlocking is consistent
+      // Find the highest completed module index
+      let highestCompletedModuleIndex = -1;
+
+      course.modules.forEach((module, index) => {
+        // If this module is completed or has any completed content
+        if (newModuleState[module._id] ||
+          (module.content && module.content.some(content => newSessionCompleted[content._id]))) {
+          highestCompletedModuleIndex = Math.max(highestCompletedModuleIndex, index);
+        }
+      });
+
+      // Ensure all modules up to and including the highest completed one are unlocked
+      // Also unlock the next module after the highest completed one
+      course.modules.forEach((module, index) => {
+        if (index <= highestCompletedModuleIndex + 1) {
+          newModuleState[module._id] = true;
         }
       });
 
@@ -285,11 +296,19 @@ const EnrollCourseDetail = () => {
           newSessionState[content._id] === true
         ) || false;
 
-      // Update module completion status
-      const newModuleState = {
-        ...moduleCompleted,
-        [moduleId]: moduleSessionsCompleted
-      };
+      // Create a new module state object starting with the current state
+      const newModuleState = { ...moduleCompleted };
+
+      // Update the current module's completion status
+      newModuleState[moduleId] = moduleSessionsCompleted;
+
+      // IMPORTANT FIX: Ensure all previous modules remain unlocked
+      course.modules.forEach((module, idx) => {
+        // If this is a previous module or the current module, ensure it's unlocked
+        if (idx <= moduleIndex) {
+          newModuleState[module._id] = newModuleState[module._id] || true;
+        }
+      });
 
       // If this module is completed, unlock the next module if it exists
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
