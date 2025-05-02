@@ -91,8 +91,8 @@
 }
 .enroll-course-detail .video-player {
   height: 500px;
-  background-color: aqua;
-  object-fit: fill;
+  background-color: #1a2e6e0d;
+  object-fit: contain;
 }
 
 /* HTML Content Preview Styles */

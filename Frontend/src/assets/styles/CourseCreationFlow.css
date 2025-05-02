@@ -259,8 +259,8 @@ textarea:focus {
 
 .remove-thumbnail {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: 2px;
+  right: 2px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -870,6 +870,7 @@ textarea:focus {
 .review-content {
   padding: 20px;
   display: flex;
+  gap: 20px;
 }
 
 .review-details {
