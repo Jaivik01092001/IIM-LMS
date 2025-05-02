@@ -35,6 +35,7 @@ const EnrollCourseDetail = () => {
 
   const [activeTab, setActiveTab] = useState('content');
   const [expandedSections, setExpandedSections] = useState({});
+  const [expandedQuizzes, setExpandedQuizzes] = useState({});
   const [sessionCompleted, setSessionCompleted] = useState({});
   const [moduleCompleted, setModuleCompleted] = useState({});
   const [userProgress, setUserProgress] = useState(0);
@@ -66,6 +67,13 @@ const EnrollCourseDetail = () => {
           defaultExpanded[mod._id] = index === 0;
         });
         setExpandedSections(defaultExpanded);
+
+        // Initialize quiz accordion state - first quiz expanded by default
+        const defaultQuizExpanded = {};
+        if (res.quizzes && res.quizzes.length > 0) {
+          defaultQuizExpanded[res.quizzes[0]._id] = true;
+        }
+        setExpandedQuizzes(defaultQuizExpanded);
 
         // Initialize session completion status - ALL sessions are NOT completed by default
         const completed = {};
@@ -379,6 +387,14 @@ const EnrollCourseDetail = () => {
     }));
   };
 
+  // Toggle quiz expansion in accordion
+  const toggleQuiz = (quizId) => {
+    setExpandedQuizzes(prev => ({
+      ...prev,
+      [quizId]: !prev[quizId]
+    }));
+  };
+
   // Handle content click - only allow selection if module is not locked
   const handleContentClick = (content, moduleIndex) => {
     // If module is locked, show warning and don't allow content selection
@@ -685,18 +701,40 @@ const EnrollCourseDetail = () => {
               ) : (
                 <>
                   {course.quizzes?.map((quiz) => (
-                    <div key={quiz._id} className="quiz-card">
-                      {quiz.questions?.length > 0 ? (
-                        <QuizSubmission
-                          quiz={quiz}
-                          onSubmit={(answers) => handleQuizSubmit(quiz._id, answers)}
-                          existingAttempt={storeQuizAttempts[quiz._id] || null}
-                        />
-                      ) : (
-                        <div className="quiz-header">
+                    <div key={quiz._id} className="quiz-card accordion-quiz">
+                      <div
+                        className={`quiz-header ${storeQuizAttempts[quiz._id] ? 'quiz-attempted' : ''}`}
+                        onClick={() => toggleQuiz(quiz._id)}
+                      >
+                        <div className="quiz-title-section">
                           <h3>{quiz.title}</h3>
                           <p className="quiz-description">{quiz.description}</p>
-                          <p className="no-questions-message">No questions available for this quiz.</p>
+                        </div>
+                        <div className="quiz-status">
+                          {storeQuizAttempts[quiz._id] && (
+                            <span className={`quiz-result-badge ${storeQuizAttempts[quiz._id].passed ? 'passed' : 'failed'}`}>
+                              {storeQuizAttempts[quiz._id].passed ? 'Passed' : 'Failed'} ({storeQuizAttempts[quiz._id].percentage}%)
+                            </span>
+                          )}
+                          <span className="toggle-icon">
+                            {expandedQuizzes[quiz._id] ? <FaChevronUp /> : <FaChevronDown />}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedQuizzes[quiz._id] && (
+                        <div className="quiz-content">
+                          {quiz.questions?.length > 0 ? (
+                            <QuizSubmission
+                              quiz={quiz}
+                              onSubmit={(answers) => handleQuizSubmit(quiz._id, answers)}
+                              existingAttempt={storeQuizAttempts[quiz._id] || null}
+                            />
+                          ) : (
+                            <div className="quiz-empty-state">
+                              <p className="no-questions-message">No questions available for this quiz.</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
