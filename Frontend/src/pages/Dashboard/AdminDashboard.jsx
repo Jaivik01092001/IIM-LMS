@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaPencilAlt, FaTrashAlt, FaEye, FaBook } from "react-icons/fa";
+import { FaPencilAlt, FaEye, FaBook } from "react-icons/fa";
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,8 @@ import {
 } from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import StatusToggle from "../../components/common/StatusToggle";
+import ActionButtons from "../../components/common/ActionButtons";
 import "../../assets/styles/AdminDashboard.css";
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -52,12 +54,19 @@ const AdminDashboard = () => {
   const universityCount = getCountByRole("university");
   const educatorCount = getCountByRole("educator");
 
+  // Get user from Redux store
+  const { user } = useSelector((state) => state.auth);
+
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getUniversitiesThunk());
     dispatch(getCoursesThunk());
-    dispatch(getUsersThunk());
-  }, [dispatch]);
+
+    // Admin users should have permission to view users, but let's check anyway
+    if (user?.role === 'admin' || user?.permissions?.view_users) {
+      dispatch(getUsersThunk());
+    }
+  }, [dispatch, user]);
 
   // Log users data when it changes
   useEffect(() => {
@@ -195,8 +204,7 @@ const AdminDashboard = () => {
       .unwrap()
       .then(() => {
         console.log(
-          `Successfully ${row.status ? "deactivated" : "activated"} ${
-            row.title
+          `Successfully ${row.status ? "deactivated" : "activated"} ${row.title
           }`
         );
         // Refresh courses data
@@ -286,10 +294,10 @@ const AdminDashboard = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div
-          className={`status-indicator ${row.status ? "active" : ""}`}
-          onClick={() => handleStatusToggle(row)}
-          title={row.status ? "Active" : "Inactive"}
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_course"
         />
       ),
       sortable: true,
@@ -299,29 +307,13 @@ const AdminDashboard = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button
-            className="action-btn view"
-            onClick={() => handleView(row)}
-            title="View Details"
-          >
-            <FaEye />
-          </button>
-          <button
-            className="action-btn edit"
-            onClick={() => handleEdit(row)}
-            title="Edit Course"
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            className="action-btn delete"
-            onClick={() => handleDelete(row)}
-            title="Delete Course"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          viewPermission="view_courses"
+          editPermission="edit_course"
+        />
       ),
       width: "150px",
       center: true,

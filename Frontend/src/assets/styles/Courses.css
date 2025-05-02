@@ -333,7 +333,8 @@
   justify-content: center;
 }
 
-.courses-container .action-btn {
+.courses-container .action-btn,
+.courses-container .action-button {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -356,16 +357,31 @@
   color: #4abb66;
 }
 
-.courses-container .action-btn.delete {
+.courses-container .action-btn.edit,
+.courses-container .action-button.edit {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.courses-container .action-btn.delete,
+.courses-container .action-button.delete {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.courses-container .action-btn:hover {
+.courses-container .action-btn.add,
+.courses-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
+.courses-container .action-btn:hover,
+.courses-container .action-button:hover {
   transform: translateY(-1px);
 }
 
-.courses-container .action-btn svg {
+.courses-container .action-btn svg,
+.courses-container .action-button svg {
   width: 14px;
   height: 14px;
 }

@@ -8,7 +8,10 @@ import {
 } from "../redux/admin/adminSlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { FaPencilAlt, FaTrashAlt, FaEye, FaUserCircle } from "react-icons/fa";
+import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
+import { hasLocalPermission } from "../utils/localPermissions";
+import { FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Schools.css";
 
 const Schools = () => {
@@ -199,16 +202,7 @@ const Schools = () => {
     },
     {
       name: "Owner",
-      cell: (row) => (
-        <div className="owner-cell">
-          {row.avatar ? (
-            <img src={row.avatar} alt="Owner" className="owner-avatar" />
-          ) : (
-            <FaUserCircle className="owner-avatar-placeholder" />
-          )}
-          <span>{row.owner}</span>
-        </div>
-      ),
+      selector: (row) => row.owner,
       sortable: true,
     },
     {
@@ -219,16 +213,11 @@ const Schools = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status ? "Click to deactivate" : "Click to activate"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_school"
+        />
       ),
       sortable: true,
       width: "120px",
@@ -236,26 +225,13 @@ const Schools = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button
-            className="action-button view"
-            onClick={() => handleView(row)}
-          >
-            <FaEye />
-          </button>
-          <button
-            className="action-button edit"
-            onClick={() => handleEdit(row)}
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            className="action-button delete"
-            onClick={() => handleDelete(row)}
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          viewPermission="view_schools"
+          editPermission="edit_school"
+        />
       ),
       width: "150px",
       center: true,
@@ -310,9 +286,14 @@ const Schools = () => {
             <option value="Status">Status</option>
           </select>
 
-          <button className="create-account-btn" onClick={handleCreateAccount}>
-            Create Schools
-          </button>
+          {hasLocalPermission("create_school") && (
+            <button
+              className="create-account-btn"
+              onClick={handleCreateAccount}
+            >
+              Create Account
+            </button>
+          )}
         </div>
       </div>
 

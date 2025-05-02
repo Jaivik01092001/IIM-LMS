@@ -6,47 +6,47 @@
 const PERMISSIONS = {
   // Course Management Permissions
   COURSE_MANAGEMENT: {
-    VIEW_COURSES: 'view_courses',
-    CREATE_COURSE: 'create_course',
-    EDIT_COURSE: 'edit_course',
-    DELETE_COURSE: 'delete_course',
+    VIEW_COURSES: "view_courses",
+    CREATE_COURSE: "create_course",
+    EDIT_COURSE: "edit_course",
+    DELETE_COURSE: "delete_course",
   },
 
   // School Management Permissions
   SCHOOL_MANAGEMENT: {
-    VIEW_SCHOOLS: 'view_schools',
-    CREATE_SCHOOL: 'create_school',
-    EDIT_SCHOOL: 'edit_school',
-    DELETE_SCHOOL: 'delete_school',
+    VIEW_SCHOOLS: "view_schools",
+    CREATE_SCHOOL: "create_school",
+    EDIT_SCHOOL: "edit_school",
+    DELETE_SCHOOL: "delete_school",
   },
 
   // Educator Management Permissions
   EDUCATOR_MANAGEMENT: {
-    VIEW_EDUCATORS: 'view_educators',
-    CREATE_EDUCATOR: 'create_educator',
-    EDIT_EDUCATOR: 'edit_educator',
-    DELETE_EDUCATOR: 'delete_educator',
+    VIEW_EDUCATORS: "view_educators",
+    CREATE_EDUCATOR: "create_educator",
+    EDIT_EDUCATOR: "edit_educator",
+    DELETE_EDUCATOR: "delete_educator",
   },
 
   // Blog Management Permissions
   BLOG_MANAGEMENT: {
-    VIEW_BLOGS: 'view_blogs',
-    CREATE_BLOG: 'create_blog',
-    EDIT_BLOG: 'edit_blog',
-    DELETE_BLOG: 'delete_blog',
-  }
+    VIEW_BLOGS: "view_blogs",
+    CREATE_BLOG: "create_blog",
+    EDIT_BLOG: "edit_blog",
+    DELETE_BLOG: "delete_blog",
+  },
 };
 
 // Create a flat array of all permissions for seeding the database
 const getAllPermissions = () => {
   const permissionsList = [];
 
-  Object.keys(PERMISSIONS).forEach(category => {
-    Object.keys(PERMISSIONS[category]).forEach(permission => {
+  Object.keys(PERMISSIONS).forEach((category) => {
+    Object.keys(PERMISSIONS[category]).forEach((permission) => {
       permissionsList.push({
         name: PERMISSIONS[category][permission],
         description: formatPermissionName(PERMISSIONS[category][permission]),
-        category: category.toLowerCase()
+        category: category.toLowerCase(),
       });
     });
   });
@@ -57,17 +57,19 @@ const getAllPermissions = () => {
 // Helper function to format permission names for display
 const formatPermissionName = (permissionName) => {
   return permissionName
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
 // Get permissions by category
 const getPermissionsByCategory = () => {
   const permissionsByCategory = {};
 
-  Object.keys(PERMISSIONS).forEach(category => {
-    permissionsByCategory[category.toLowerCase()] = Object.values(PERMISSIONS[category]);
+  Object.keys(PERMISSIONS).forEach((category) => {
+    permissionsByCategory[category.toLowerCase()] = Object.values(
+      PERMISSIONS[category]
+    );
   });
 
   return permissionsByCategory;
@@ -77,5 +79,5 @@ module.exports = {
   PERMISSIONS,
   getAllPermissions,
   getPermissionsByCategory,
-  formatPermissionName
+  formatPermissionName,
 };

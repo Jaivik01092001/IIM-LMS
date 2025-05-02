@@ -186,6 +186,11 @@
   color: #dc2626;
 }
 
+.educators-container .action-button.add {
+  background-color: #e7eee5;
+  color: #4abb66;
+}
+
 .educators-container .action-button:hover {
   transform: translateY(-1px);
 }
