@@ -499,33 +499,63 @@ exports.createCourse = async (req, res) => {
     if (parsedContent && parsedContent.length > 0) {
       // Process text content items first - they don't need file uploads
       const textContentPromises = parsedContent
-        .filter((item) => item.type === "text")
+        .filter((item) => item.type === "text" || item.type === "youtube")
         .map(async (item) => {
-          console.log(`Creating text content item: ${item.title}`);
-          const textContentDoc = new Content({
-            title: item.title,
-            description: item.description,
-            textContent: item.textContent || "",
-            creator: req.user.id,
-            status: "approved",
-            type: "text",
-            mediaType: "text",
-            mimeType: "text/html",
-            module: null,
-          });
+          console.log(`Creating ${item.type} content item: ${item.title}`);
 
-          await textContentDoc.save();
-          console.log(`Created text content with ID: ${textContentDoc._id}`);
+          // Different handling for YouTube vs regular text content
+          if (item.type === "youtube") {
+            const youtubeContentDoc = new Content({
+              title: item.title,
+              description: item.description,
+              textContent: item.textContent || "", // Store YouTube URL in textContent
+              fileUrl: item.textContent || "", // Also store in fileUrl for backward compatibility
+              creator: req.user.id,
+              status: "approved",
+              type: "youtube",
+              mediaType: "video",
+              mimeType: "video/youtube",
+              module: null,
+            });
 
-          return {
-            id: item._id,
-            dbId: textContentDoc._id,
-          };
+            await youtubeContentDoc.save();
+            console.log(
+              `Created YouTube content with ID: ${youtubeContentDoc._id}`
+            );
+
+            return {
+              id: item._id,
+              dbId: youtubeContentDoc._id,
+            };
+          } else {
+            // Regular text content
+            const textContentDoc = new Content({
+              title: item.title,
+              description: item.description,
+              textContent: item.textContent || "",
+              creator: req.user.id,
+              status: "approved",
+              type: "text",
+              mediaType: "text",
+              mimeType: "text/html",
+              module: null,
+            });
+
+            await textContentDoc.save();
+            console.log(`Created text content with ID: ${textContentDoc._id}`);
+
+            return {
+              id: item._id,
+              dbId: textContentDoc._id,
+            };
+          }
         });
 
       const textContentItems = await Promise.all(textContentPromises);
       contentItems.push(...textContentItems);
-      console.log(`Processed ${textContentItems.length} text content items`);
+      console.log(
+        `Processed ${textContentItems.length} text/youtube content items`
+      );
     }
 
     // Process uploaded files
@@ -1084,13 +1114,13 @@ exports.updateCourse = async (req, res) => {
     // Update course content
     if (content) {
       try {
-        // Process text content items separately - these don't need file uploads
+        // Process text and YouTube content items separately - these don't need file uploads
         const textContentPromises = parsedContent
-          .filter((item) => item.type === "text")
+          .filter((item) => item.type === "text" || item.type === "youtube")
           .map(async (item) => {
             // If it's not a temp item (already exists in DB), skip creation
             if (!item._id.startsWith("temp_")) {
-              // Update existing text content if it's been edited
+              // Update existing text or YouTube content if it's been edited
               if (item.textContent) {
                 try {
                   const existingContent = await Content.findById(item._id);
@@ -1098,17 +1128,55 @@ exports.updateCourse = async (req, res) => {
                     existingContent.title = item.title;
                     existingContent.description = item.description;
                     existingContent.textContent = item.textContent;
+
+                    // For YouTube content, also update fileUrl for backward compatibility
+                    if (item.type === "youtube") {
+                      existingContent.fileUrl = item.textContent;
+                      existingContent.type = "youtube";
+                      existingContent.mediaType = "video";
+                      existingContent.mimeType = "video/youtube";
+                    }
+
                     await existingContent.save();
-                    console.log(`Updated existing text content: ${item._id}`);
+                    console.log(
+                      `Updated existing ${item.type} content: ${item._id}`
+                    );
                   }
                 } catch (err) {
                   console.error(
-                    `Error updating existing text content: ${item._id}`,
+                    `Error updating existing ${item.type} content: ${item._id}`,
                     err
                   );
                 }
               }
               return null;
+            }
+
+            // Handle new YouTube content
+            if (item.type === "youtube") {
+              console.log(`Creating new YouTube content item: ${item.title}`);
+              const newYoutubeContent = new Content({
+                title: item.title,
+                description: item.description,
+                textContent: item.textContent || "",
+                fileUrl: item.textContent || "", // Store YouTube URL in fileUrl for backward compatibility
+                creator: req.user.id,
+                status: "approved",
+                type: "youtube",
+                mediaType: "video",
+                mimeType: "video/youtube",
+                module: item.module || null,
+              });
+
+              await newYoutubeContent.save();
+              console.log(
+                `Created YouTube content with ID: ${newYoutubeContent._id}`
+              );
+
+              return {
+                id: item._id,
+                dbId: newYoutubeContent._id,
+              };
             }
 
             // Create new text content
@@ -1141,7 +1209,9 @@ exports.updateCourse = async (req, res) => {
         );
 
         contentItems.push(...textContentItems);
-        console.log(`Processed ${textContentItems.length} text content items`);
+        console.log(
+          `Processed ${textContentItems.length} text/YouTube content items`
+        );
 
         // Replace temporary IDs with database IDs for newly created content
         if (contentItems.length > 0) {

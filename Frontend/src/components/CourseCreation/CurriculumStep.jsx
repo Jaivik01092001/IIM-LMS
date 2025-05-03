@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaTrash, FaEdit, FaGripVertical, FaVideo, FaFileAlt, FaFileUpload, FaQuestionCircle, FaFileAlt as FaFileText } from "react-icons/fa";
+import { FaPlus, FaTrash, FaEdit, FaGripVertical, FaVideo, FaFileAlt, FaFileUpload, FaQuestionCircle, FaFileAlt as FaFileText, FaYoutube, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import SummernoteEditor from "../Editor/SummernoteEditor";
 
@@ -28,16 +28,28 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const [quizFormData, setQuizFormData] = useState({ title: "", description: "", questions: [] });
     const [currentQuestion, setCurrentQuestion] = useState({ question: "", options: ["", "", "", ""], correctAnswer: 0 });
 
+    // State for expanded modules (accordion behavior)
+    const [expandedModules, setExpandedModules] = useState({});
+
     // Track if we've updated course data to prevent infinite loop
     const [hasUpdatedCourseData, setHasUpdatedCourseData] = useState(false);
 
+    // Initialize expanded state for all modules
+    useEffect(() => {
+        if (modules.length > 0 && Object.keys(expandedModules).length === 0) {
+            const initialExpandedState = {};
+            modules.forEach((module) => {
+                initialExpandedState[module._id] = true; // Set all modules to expanded initially
+            });
+            setExpandedModules(initialExpandedState);
+        }
+    }, [modules]);
+
     // Update parent component state when local states change
     useEffect(() => {
-        // Skip the initial render update to prevent maximum update depth issues
         if (hasUpdatedCourseData) {
             updateCourseData({
                 modules: modules.map(module => {
-                    // Ensure module has the correct structure for backend
                     const moduleData = {
                         _id: module._id,
                         title: module.title,
@@ -46,17 +58,12 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                         order: module.order || 0
                     };
 
-                    // Add quiz if it exists
                     if (module.quiz) {
-                        // If quiz is already an object (from edit mode), use it directly
                         if (typeof module.quiz === 'object') {
                             moduleData.quiz = module.quiz;
                         } else {
-                            // Otherwise, find the quiz in the quizzes array
                             const quizItem = quizzes.find(q => q._id === module.quiz);
-                            if (quizItem) {
-                                moduleData.quiz = quizItem;
-                            }
+                            if (quizItem) moduleData.quiz = quizItem;
                         }
                     }
 
@@ -69,6 +76,14 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             setHasUpdatedCourseData(true);
         }
     }, [modules, content, quizzes, hasUpdatedCourseData]);
+
+    // Toggle module expanded state
+    const toggleModuleExpanded = (moduleId) => {
+        setExpandedModules(prev => ({
+            ...prev,
+            [moduleId]: !prev[moduleId]
+        }));
+    };
 
     // ===== MODULE MANAGEMENT =====
 
@@ -86,6 +101,12 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setModules([...modules, newModule]);
         setEditingModuleId(newModule._id);
         setModuleFormData({ title: newModule.title, description: newModule.description });
+
+        // Auto-expand the new module
+        setExpandedModules(prev => ({
+            ...prev,
+            [newModule._id]: true
+        }));
     };
 
     // Edit module
@@ -173,24 +194,48 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const saveContent = () => {
         const moduleOfEditingContent = content.find(item => item._id === editingContentId)?.module;
 
+        const newContentItem = {
+            ...content.find(item => item._id === editingContentId),
+            title: contentFormData.title,
+            description: contentFormData.description,
+            type: contentFormData.type,
+            file: contentFormData.file,
+            textContent:
+                contentFormData.type === "youtube"
+                    ? contentFormData.textContent
+                    : contentFormData.type === "text"
+                        ? contentFormData.textContent
+                        : "",
+            fileUrl:
+                contentFormData.type === "youtube"
+                    ? contentFormData.textContent
+                    : contentFormData.file
+                        ? URL.createObjectURL(contentFormData.file)
+                        : "",
+            mimeType:
+                contentFormData.type === "youtube"
+                    ? "video/youtube"
+                    : contentFormData.file?.type || "application/octet-stream",
+            module: moduleOfEditingContent
+        };
+
+        console.log("📤 Saving content item to state:", newContentItem);
+
         const updatedContent = content.map(item =>
-            item._id === editingContentId
-                ? {
-                    ...item,
-                    title: contentFormData.title,
-                    description: contentFormData.description,
-                    type: contentFormData.type,
-                    file: contentFormData.file,
-                    textContent: contentFormData.textContent,
-                    fileUrl: contentFormData.file ? URL.createObjectURL(contentFormData.file) : item.fileUrl,
-                    module: moduleOfEditingContent || item.module
-                }
-                : item
+            item._id === editingContentId ? newContentItem : item
         );
 
         setContent(updatedContent);
         setEditingContentId(null);
-        setContentFormData({ title: "", description: "", type: "video", file: null, textContent: "" });
+        setContentFormData({
+            title: "",
+            description: "",
+            type: "video",
+            file: null,
+            textContent: ""
+        });
+
+        console.log("✅ Content state updated. But note: this is LOCAL state only. If backend API is not called, data won't persist.");
     };
 
     // Delete content
@@ -347,6 +392,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             case 'text':
                 icon = <FaFileText className="content-icon" />;
                 break;
+            case 'youtube':
+                icon = <FaYoutube className="content-icon" />;
+                break;
             default:
                 icon = <FaFileAlt className="content-icon" />;
         }
@@ -390,15 +438,17 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
         return (
             <div className="quiz-item" key={quiz._id}>
-                <div className="quiz-item-icon">
-                    <FaQuestionCircle />
-                </div>
-                <div className="quiz-item-info">
-                    <h4>{quizTitle}</h4>
-                    {quizDescription && <p>{quizDescription}</p>}
-                    <span className="quiz-questions-count">
-                        {questionsCount} questions
-                    </span>
+                <div className="quiz-item-header">
+                    <div className="quiz-item-icon">
+                        <FaQuestionCircle />
+                    </div>
+                    <div className="quiz-item-info">
+                        <h4>{quizTitle}</h4>
+                        {quizDescription && <p>{quizDescription}</p>}
+                        <span className="quiz-questions-count">
+                            {questionsCount} questions
+                        </span>
+                    </div>
                 </div>
                 <div className="quiz-item-actions">
                     <button onClick={() => {
@@ -483,203 +533,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                     </div>
                 )}
 
-                {/* Content Editor */}
-                {editingContentId && (
-                    <div className="content-editor">
-                        <h4>{contentFormData.title ? `Edit: ${contentFormData.title}` : 'New Content'}</h4>
-                        <div className="form-group">
-                            <label htmlFor="contentTitle">Content Title</label>
-                            <input
-                                type="text"
-                                id="contentTitle"
-                                value={contentFormData.title}
-                                onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
-                                placeholder="Enter content title"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="contentType">Content Type</label>
-                            <select
-                                id="contentType"
-                                value={contentFormData.type}
-                                onChange={(e) => setContentFormData({ ...contentFormData, type: e.target.value })}
-                            >
-                                <option value="video">Video</option>
-                                <option value="document">Document/PDF</option>
-                                <option value="text">Text</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="contentDescription">Description (Optional)</label>
-                            <textarea
-                                id="contentDescription"
-                                value={contentFormData.description}
-                                onChange={(e) => setContentFormData({ ...contentFormData, description: e.target.value })}
-                                placeholder="Enter content description"
-                                rows={3}
-                            />
-                        </div>
-                        {contentFormData.type === 'text' ? (
-                            <div className="form-group">
-                                <label htmlFor="textEditor">Text Content</label>
-                                <SummernoteEditor
-                                    value={contentFormData.textContent}
-                                    onChange={(content) => setContentFormData({ ...contentFormData, textContent: content })}
-                                    placeholder="Enter your text content here..."
-                                />
-                            </div>
-                        ) : (
-                            <div className="form-group">
-                                <label htmlFor="contentFile">
-                                    Upload {contentFormData.type === 'video' ? 'Video' : 'Document'}
-                                </label>
-                                <div className="file-upload">
-                                    <input
-                                        type="file"
-                                        id="contentFile"
-                                        onChange={(e) => setContentFormData({ ...contentFormData, file: e.target.files[0] })}
-                                        accept={contentFormData.type === 'video' ? 'video/*' : 'application/pdf,application/msword'}
-                                    />
-                                    <label htmlFor="contentFile" className="file-upload-label">
-                                        <FaFileUpload />
-                                        <span>Choose File</span>
-                                    </label>
-                                    {contentFormData.file && (
-                                        <span className="file-name">{contentFormData.file.name}</span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                        <div className="form-actions">
-                            <button
-                                type="button"
-                                className="cancel-button"
-                                onClick={() => setEditingContentId(null)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="save-button"
-                                onClick={saveContent}
-                            >
-                                Save Content
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Quiz Editor */}
-                {editingQuizId && (
-                    <div className="quiz-editor">
-                        <h4>{quizFormData.title ? `Edit: ${quizFormData.title}` : 'New Quiz'}</h4>
-                        <div className="form-group">
-                            <label htmlFor="quizTitle">Quiz Title</label>
-                            <input
-                                type="text"
-                                id="quizTitle"
-                                value={quizFormData.title}
-                                onChange={(e) => setQuizFormData({ ...quizFormData, title: e.target.value })}
-                                placeholder="Enter quiz title"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="quizDescription">Description (Optional)</label>
-                            <textarea
-                                id="quizDescription"
-                                value={quizFormData.description}
-                                onChange={(e) => setQuizFormData({ ...quizFormData, description: e.target.value })}
-                                placeholder="Enter quiz description"
-                                rows={3}
-                            />
-                        </div>
-
-                        {/* Questions List */}
-                        <div className="questions-list">
-                            <h5>Questions ({quizFormData.questions.length})</h5>
-                            {quizFormData.questions.map((q, index) => (
-                                <div key={index} className="question-item">
-                                    <h6>Question {index + 1}: {q.question}</h6>
-                                    <ul className="options-list">
-                                        {q.options.map((option, optIndex) => (
-                                            <li key={optIndex} className={optIndex === q.correctAnswer ? 'correct' : ''}>
-                                                {option} {optIndex === q.correctAnswer && ' (Correct)'}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <button
-                                        type="button"
-                                        className="remove-question"
-                                        onClick={() => removeQuestion(index)}
-                                    >
-                                        <FaTrash />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Add Question Form */}
-                        <div className="add-question-form">
-                            <h5>Add New Question</h5>
-                            <div className="form-group">
-                                <label htmlFor="questionText">Question</label>
-                                <input
-                                    type="text"
-                                    id="questionText"
-                                    value={currentQuestion.question}
-                                    onChange={handleQuestionChange}
-                                    placeholder="Enter question"
-                                />
-                            </div>
-                            <div className="options-container">
-                                <label>Options (select one as correct)</label>
-                                {currentQuestion.options.map((option, index) => (
-                                    <div key={index} className="option-row">
-                                        <input
-                                            type="text"
-                                            value={option}
-                                            onChange={(e) => handleOptionChange(index, e.target.value)}
-                                            placeholder={`Option ${index + 1}`}
-                                        />
-                                        <button
-                                            type="button"
-                                            className={`correct-toggle ${index === currentQuestion.correctAnswer ? 'active' : ''}`}
-                                            onClick={() => setCorrectAnswer(index)}
-                                        >
-                                            {index === currentQuestion.correctAnswer ? 'Correct' : 'Mark as Correct'}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <button
-                                type="button"
-                                className="add-question-button"
-                                onClick={addQuestionToQuiz}
-                            >
-                                <FaPlus />
-                                <span>Add Question</span>
-                            </button>
-                        </div>
-
-                        <div className="form-actions">
-                            <button
-                                type="button"
-                                className="cancel-button"
-                                onClick={() => setEditingQuizId(null)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="save-button"
-                                onClick={saveQuiz}
-                            >
-                                Save Quiz
-                            </button>
-                        </div>
-                    </div>
-                )}
-
                 {/* Modules List with Drag and Drop */}
                 <DragDropContext onDragEnd={onDragEnd}>
                     <Droppable droppableId="modules">
@@ -706,10 +559,16 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                         <div {...provided.dragHandleProps} className="drag-handle">
                                                             <FaGripVertical />
                                                         </div>
-                                                        <h4>
+                                                        <h4 onClick={() => toggleModuleExpanded(module._id)} className="module-title">
                                                             {index + 1}. {module.title}
                                                         </h4>
                                                         <div className="module-actions">
+                                                            <button
+                                                                className="toggle-module-btn"
+                                                                onClick={() => toggleModuleExpanded(module._id)}
+                                                            >
+                                                                {expandedModules[module._id] ? <FaChevronUp /> : <FaChevronDown />}
+                                                            </button>
                                                             <button onClick={() => startEditModule(module)}>
                                                                 <FaEdit />
                                                             </button>
@@ -723,76 +582,304 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                         <p className="module-description">{module.description}</p>
                                                     )}
 
-                                                    {/* Module Content */}
-                                                    <div className="module-content">
-                                                        <h5>Content</h5>
-                                                        <div className="content-list">
-                                                            {module.content && module.content.length > 0 ? (
-                                                                // First try to find content in the module's content array
-                                                                module.content.map(contentId => {
-                                                                    // If contentId is an object, use it directly
-                                                                    if (typeof contentId === 'object') {
-                                                                        return renderContentItem(contentId, module._id);
-                                                                    } else {
-                                                                        // Otherwise, find the content in the content array
-                                                                        const contentItem = content.find(item => item._id === contentId);
-                                                                        return contentItem ? renderContentItem(contentItem, module._id) : null;
-                                                                    }
-                                                                }).filter(Boolean) // Remove any null items
-                                                            ) : (
-                                                                <p className="no-items">No content in this module yet.</p>
-                                                            )}
-                                                            <button
-                                                                className="add-content-button"
-                                                                onClick={() => addContentToModule(module._id)}
-                                                            >
-                                                                <FaPlus />
-                                                                <span>Add Content</span>
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                    {/* Module Content - Shown only when expanded */}
+                                                    {expandedModules[module._id] && (
+                                                        <>
+                                                            <div className="module-content">
+                                                                <h5>Content</h5>
+                                                                <div className="content-list">
+                                                                    {module.content && module.content.length > 0 ? (
+                                                                        // First try to find content in the module's content array
+                                                                        module.content.map(contentId => {
+                                                                            // If contentId is an object, use it directly
+                                                                            if (typeof contentId === 'object') {
+                                                                                return renderContentItem(contentId, module._id);
+                                                                            } else {
+                                                                                // Otherwise, find the content in the content array
+                                                                                const contentItem = content.find(item => item._id === contentId);
+                                                                                return contentItem ? renderContentItem(contentItem, module._id) : null;
+                                                                            }
+                                                                        }).filter(Boolean) // Remove any null items
+                                                                    ) : (
+                                                                        <p className="no-items">No content in this module yet.</p>
+                                                                    )}
 
-                                                    {/* Module Quiz */}
-                                                    <div className="module-quiz">
-                                                        <h5>Quiz</h5>
-                                                        {module.quiz ? (
-                                                            <div className="quiz-container">
-                                                                {/* Handle both object and ID references */}
-                                                                {(() => {
-                                                                    // If quiz is already an object, use it directly
-                                                                    if (typeof module.quiz === 'object') {
-                                                                        return renderQuizItem(module.quiz, module._id);
-                                                                    } else {
-                                                                        // Otherwise, find the quiz in the quizzes array
-                                                                        const quiz = quizzes.find(q => q._id === module.quiz);
-                                                                        return quiz ? renderQuizItem(quiz, module._id) : (
-                                                                            <div className="no-quiz">
-                                                                                <p>Quiz not found. Please add a new quiz.</p>
-                                                                                <button
-                                                                                    className="add-quiz-button"
-                                                                                    onClick={() => addQuizToModule(module._id)}
+                                                                    {/* Content Editor - Show inside module when editing content for this module */}
+                                                                    {editingContentId && content.find(c => c._id === editingContentId)?.module === module._id && (
+                                                                        <div className="content-editor in-module">
+                                                                            <h4>{contentFormData.title ? `Edit: ${contentFormData.title}` : 'New Content'}</h4>
+                                                                            <div className="form-group">
+                                                                                <label htmlFor="contentTitle">Content Title</label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    id="contentTitle"
+                                                                                    value={contentFormData.title}
+                                                                                    onChange={(e) => setContentFormData({ ...contentFormData, title: e.target.value })}
+                                                                                    placeholder="Enter content title"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="form-group">
+                                                                                <label htmlFor="contentType">Content Type</label>
+                                                                                <select
+                                                                                    id="contentType"
+                                                                                    value={contentFormData.type}
+                                                                                    onChange={(e) => setContentFormData({ ...contentFormData, type: e.target.value })}
                                                                                 >
-                                                                                    <FaPlus />
-                                                                                    <span>Add Quiz</span>
+                                                                                    <option value="video">Video</option>
+                                                                                    <option value="document">Document/PDF</option>
+                                                                                    <option value="text">Text</option>
+                                                                                    <option value="youtube">YouTube Link</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div className="form-group">
+                                                                                <label htmlFor="contentDescription">Description (Optional)</label>
+                                                                                <textarea
+                                                                                    id="contentDescription"
+                                                                                    value={contentFormData.description}
+                                                                                    onChange={(e) => setContentFormData({ ...contentFormData, description: e.target.value })}
+                                                                                    placeholder="Enter content description"
+                                                                                    rows={3}
+                                                                                />
+                                                                            </div>
+                                                                            {contentFormData.type === 'text' ? (
+                                                                                <div className="form-group">
+                                                                                    <label htmlFor="textEditor">Text Content</label>
+                                                                                    <SummernoteEditor
+                                                                                        value={contentFormData.textContent}
+                                                                                        onChange={(content) => setContentFormData({ ...contentFormData, textContent: content })}
+                                                                                        placeholder="Enter your text content here..."
+                                                                                    />
+                                                                                </div>
+                                                                            ) : contentFormData.type === 'youtube' ? (
+                                                                                <div className="form-group">
+                                                                                    <label htmlFor="youtubeUrl">YouTube Video URL</label>
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        id="youtubeUrl"
+                                                                                        value={contentFormData.textContent || ''}
+                                                                                        onChange={(e) => setContentFormData({ ...contentFormData, textContent: e.target.value })}
+                                                                                        placeholder="Enter YouTube video URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID)"
+                                                                                    />
+                                                                                    {contentFormData.textContent && (
+                                                                                        <div className="youtube-preview">
+                                                                                            <p>Preview:</p>
+                                                                                            <div className="embed-responsive">
+                                                                                                <iframe
+                                                                                                    width="100%"
+                                                                                                    height="315"
+                                                                                                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(contentFormData.textContent)}`}
+                                                                                                    title="YouTube video player"
+                                                                                                    frameBorder="0"
+                                                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                                                    allowFullScreen>
+                                                                                                </iframe>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="form-group">
+
+                                                                                    <div className="file-upload">
+                                                                                        <input
+                                                                                            type="file"
+                                                                                            id="contentFile"
+                                                                                            onChange={(e) => setContentFormData({ ...contentFormData, file: e.target.files[0] })}
+                                                                                            accept={contentFormData.type === 'video' ? 'video/*' : 'application/pdf,application/msword'}
+                                                                                        />
+                                                                                        <label htmlFor="contentFile" className="file-upload-label">
+                                                                                            <FaFileUpload />
+                                                                                            Upload {contentFormData.type === 'video' ? 'Video' : 'Document'}
+                                                                                        </label>
+                                                                                        {contentFormData.file && (
+                                                                                            <span className="file-name">{contentFormData.file.name}</span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                            <div className="form-actions">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="cancel-button"
+                                                                                    onClick={() => setEditingContentId(null)}
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="save-button"
+                                                                                    onClick={saveContent}
+                                                                                >
+                                                                                    Save Content
                                                                                 </button>
                                                                             </div>
-                                                                        );
-                                                                    }
-                                                                })()}
+                                                                        </div>
+                                                                    )}
+
+                                                                    <button
+                                                                        className="add-content-button"
+                                                                        onClick={() => addContentToModule(module._id)}
+                                                                    >
+                                                                        <FaPlus />
+                                                                        <span>Add Content</span>
+                                                                    </button>
+                                                                </div>
                                                             </div>
-                                                        ) : (
-                                                            <div className="no-quiz">
-                                                                <p>No quiz for this module yet.</p>
-                                                                <button
-                                                                    className="add-quiz-button"
-                                                                    onClick={() => addQuizToModule(module._id)}
-                                                                >
-                                                                    <FaPlus />
-                                                                    <span>Add Quiz</span>
-                                                                </button>
+
+                                                            {/* Module Quiz */}
+                                                            <div className="module-quiz">
+                                                                <h5>Quiz</h5>
+                                                                {module.quiz ? (
+                                                                    <div className="quiz-container">
+                                                                        {/* Handle both object and ID references */}
+                                                                        {(() => {
+                                                                            // If quiz is already an object, use it directly
+                                                                            if (typeof module.quiz === 'object') {
+                                                                                return renderQuizItem(module.quiz, module._id);
+                                                                            } else {
+                                                                                // Otherwise, find the quiz in the quizzes array
+                                                                                const quiz = quizzes.find(q => q._id === module.quiz);
+                                                                                return quiz ? renderQuizItem(quiz, module._id) : (
+                                                                                    <div className="no-quiz">
+                                                                                        <p>Quiz not found. Please add a new quiz.</p>
+                                                                                        <button
+                                                                                            className="add-quiz-button"
+                                                                                            onClick={() => addQuizToModule(module._id)}
+                                                                                        >
+                                                                                            <FaPlus />
+                                                                                            <span>Add Quiz</span>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                );
+                                                                            }
+                                                                        })()}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="no-quiz">
+                                                                        <p className="no-items">No quiz for this module yet.</p>
+                                                                        <button
+                                                                            className="add-quiz-button"
+                                                                            onClick={() => addQuizToModule(module._id)}
+                                                                        >
+                                                                            <FaPlus />
+                                                                            <span>Add Quiz</span>
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Quiz Editor - Show inside module when editing quiz for this module */}
+                                                                {editingQuizId && quizzes.find(q => q._id === editingQuizId)?.module === module._id && (
+                                                                    <div className="quiz-editor in-module">
+                                                                        <h4>{quizFormData.title ? `Edit: ${quizFormData.title}` : 'New Quiz'}</h4>
+                                                                        <div className="form-group">
+                                                                            <label htmlFor="quizTitle">Quiz Title</label>
+                                                                            <input
+                                                                                type="text"
+                                                                                id="quizTitle"
+                                                                                value={quizFormData.title}
+                                                                                onChange={(e) => setQuizFormData({ ...quizFormData, title: e.target.value })}
+                                                                                placeholder="Enter quiz title"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="form-group">
+                                                                            <label htmlFor="quizDescription">Description (Optional)</label>
+                                                                            <textarea
+                                                                                id="quizDescription"
+                                                                                value={quizFormData.description}
+                                                                                onChange={(e) => setQuizFormData({ ...quizFormData, description: e.target.value })}
+                                                                                placeholder="Enter quiz description"
+                                                                                rows={3}
+                                                                            />
+                                                                        </div>
+
+                                                                        {/* Questions List */}
+                                                                        <div className="questions-list">
+                                                                            <h5>Questions ({quizFormData.questions.length})</h5>
+                                                                            {quizFormData.questions.map((q, index) => (
+                                                                                <div key={index} className="question-item">
+                                                                                    <h6>Question {index + 1}: {q.question}</h6>
+                                                                                    <ul className="options-list">
+                                                                                        {q.options.map((option, optIndex) => (
+                                                                                            <li key={optIndex} className={optIndex === q.correctAnswer ? 'correct' : ''}>
+                                                                                                {option} {optIndex === q.correctAnswer && ' (Correct)'}
+                                                                                            </li>
+                                                                                        ))}
+                                                                                    </ul>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="remove-question"
+                                                                                        onClick={() => removeQuestion(index)}
+                                                                                    >
+                                                                                        <FaTrash />
+                                                                                    </button>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+
+                                                                        {/* Add Question Form */}
+                                                                        <div className="add-question-form">
+                                                                            <h5>Add New Question</h5>
+                                                                            <div className="form-group">
+                                                                                <label htmlFor="questionText">Question</label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    id="questionText"
+                                                                                    value={currentQuestion.question}
+                                                                                    onChange={handleQuestionChange}
+                                                                                    placeholder="Enter question"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="options-container">
+                                                                                <label>Options (select one as correct)</label>
+                                                                                {currentQuestion.options.map((option, index) => (
+                                                                                    <div key={index} className="option-row">
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={option}
+                                                                                            onChange={(e) => handleOptionChange(index, e.target.value)}
+                                                                                            placeholder={`Option ${index + 1}`}
+                                                                                        />
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            className={`correct-toggle ${index === currentQuestion.correctAnswer ? 'active' : ''}`}
+                                                                                            onClick={() => setCorrectAnswer(index)}
+                                                                                        >
+                                                                                            {index === currentQuestion.correctAnswer ? 'Correct' : 'Mark as Correct'}
+                                                                                        </button>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="add-question-button"
+                                                                                onClick={addQuestionToQuiz}
+                                                                            >
+                                                                                <FaPlus />
+                                                                                <span>Add Question</span>
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div className="form-actions">
+                                                                            <button
+                                                                                type="button"
+                                                                                className="cancel-button"
+                                                                                onClick={() => setEditingQuizId(null)}
+                                                                            >
+                                                                                Cancel
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="save-button"
+                                                                                onClick={saveQuiz}
+                                                                            >
+                                                                                Save Quiz
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                             )}
                                         </Draggable>
@@ -806,6 +893,17 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             </div>
         </div>
     );
+};
+
+// Helper function to extract YouTube video ID from URL
+const getYoutubeVideoId = (url) => {
+    if (!url) return '';
+
+    // Extract video ID from different YouTube URL formats
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+
+    return (match && match[7].length === 11) ? match[7] : '';
 };
 
 export default CurriculumStep;

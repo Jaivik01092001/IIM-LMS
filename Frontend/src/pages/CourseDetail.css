@@ -851,6 +851,15 @@
   color: var(--text-gray);
   line-height: 1.5;
 }
+.content-item {
+  font-size: var(--basefont);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {

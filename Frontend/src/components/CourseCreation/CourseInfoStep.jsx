@@ -62,24 +62,11 @@ const CourseInfoStep = ({
         updateCourseData({ thumbnail: "" });
     };
 
-    // Handle language selection
-    const languageOptions = [
-        { value: "en", label: "English" },
-        { value: "hi", label: "Hindi" },
-        { value: "es", label: "Spanish" },
-        { value: "fr", label: "French" },
-        { value: "zh", label: "Chinese" },
-        { value: "ja", label: "Japanese" },
-        { value: "de", label: "German" }
-    ];
-
-    // No category or subcategory options needed
-
     return (
         <div className="course-info-step">
             <h2>Course Information</h2>
             <p className="step-description">
-                Provide basic information about your course to help students find it.
+                Start by providing basic information about your course. This helps students understand what they'll learn.
             </p>
 
             <div className="form-section">
@@ -93,91 +80,85 @@ const CourseInfoStep = ({
                         name="title"
                         value={localData.title}
                         onChange={handleInputChange}
-                        placeholder="e.g. Complete Web Development Bootcamp"
-                        required
+                        placeholder="Enter a descriptive title for your course"
+                        className="input-field"
                     />
                     <p className="field-hint">
-                        A great title clearly explains what the course teaches.
+                        A great title is clear, specific, and addresses what students will learn (100 characters max).
                     </p>
                 </div>
 
                 <div className="form-group">
                     <label htmlFor="shortDescription">
-                        Short Description <span className="required">*</span>
-                        <span className="char-count">{localData.shortDescription.length}/200</span>
+                        Course Description <span className="required">*</span>
                     </label>
                     <textarea
                         id="shortDescription"
                         name="shortDescription"
                         value={localData.shortDescription}
                         onChange={handleInputChange}
-                        placeholder="Briefly describe what students will learn in your course"
-                        maxLength={200}
-                        rows={3}
-                        required
-                    />
+                        placeholder="Provide a short description that explains what your course covers"
+                        rows={5}
+                        className="textarea-field"
+                    ></textarea>
                     <p className="field-hint">
-                        This appears in search results and should highlight the key benefits.
+                        Summarize what students will learn in your course. Highlight key points, technologies, or skills they'll gain.
                     </p>
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="language">
-                        Language <span className="required">*</span>
-                    </label>
+                    <label htmlFor="language">Course Language</label>
                     <select
                         id="language"
                         name="language"
                         value={localData.language}
                         onChange={handleInputChange}
-                        required
+                        className="select-field"
                     >
-                        {languageOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
                     </select>
                 </div>
+            </div>
 
-                <div className="form-group thumbnail-section">
-                    <label>
-                        Course Thumbnail <span className="required">*</span>
-                    </label>
+            <div className="thumbnail-section">
+                <label>
+                    Course Thumbnail <span className="required">*</span>
+                </label>
+                <p className="field-hint">
+                    Upload an engaging image that represents your course. Recommended size: 1280x720 pixels (16:9 ratio).
+                </p>
 
-                    <div className="thumbnail-container">
-                        {thumbnailPreview ? (
-                            <div className="thumbnail-preview">
-                                <img src={thumbnailPreview} alt="Course thumbnail preview" />
-                                <button
-                                    type="button"
-                                    className="remove-thumbnail"
-                                    onClick={removeThumbnail}
-                                >
-                                    <FaTimes />
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="thumbnail-upload">
-                                <input
-                                    type="file"
-                                    id="thumbnail"
-                                    name="thumbnail"
-                                    accept="image/*"
-                                    onChange={handleThumbnailChange}
-                                    style={{ display: "none" }}
-                                />
-                                <label htmlFor="thumbnail" className="upload-label">
-                                    <FaImage className="icon" />
-                                    <FaUpload className="upload-icon" />
-                                    <span>Upload Thumbnail</span>
-                                </label>
+                <div className="thumbnail-container">
+                    {thumbnailPreview ? (
+                        <div className="thumbnail-preview">
+                            <img src={thumbnailPreview} alt="Course thumbnail preview" />
+                            <button
+                                type="button"
+                                className="remove-thumbnail"
+                                onClick={removeThumbnail}
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="thumbnail-upload">
+                            <input
+                                type="file"
+                                id="thumbnail"
+                                accept="image/*"
+                                onChange={handleThumbnailChange}
+                                className="hidden-input"
+                            />
+                            <label htmlFor="thumbnail" className="upload-label">
+                                <FaImage className="upload-icon" />
+                                <span>Choose Image</span>
                                 <p className="upload-hint">
-                                    Recommended size: 1280 x 720 pixels (16:9 ratio)
+                                    Click to browse or drop image here
                                 </p>
-                            </div>
-                        )}
-                    </div>
+                            </label>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
