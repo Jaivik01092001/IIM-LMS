@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaPencilAlt, FaEye, FaBook } from "react-icons/fa";
+import { FaBook, FaUsers, FaUserTie, FaNewspaper, FaUserTag } from "react-icons/fa";
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
@@ -9,9 +9,11 @@ import {
   getUniversitiesThunk,
   getCoursesThunk,
   updateCourseThunk,
-  deleteCourseThunk,
   getUsersThunk,
 } from "../../redux/admin/adminSlice";
+import { getStaffMembersThunk } from "../../redux/admin/staffSlice";
+import { getBlogsThunk } from "../../redux/blog/blogSlice";
+import { getRolesThunk } from "../../redux/role/roleSlice";
 import DataTableComponent from "../../components/DataTable";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import StatusToggle from "../../components/common/StatusToggle";
@@ -29,14 +31,23 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { universities, courses, users, loading } = useSelector(
+  const { universities, courses, users, loading: adminLoading } = useSelector(
     (state) => state.admin
   );
+  const { staffMembers, loading: staffLoading } = useSelector(
+    (state) => state.staff
+  );
+  const { blogs, loading: blogLoading } = useSelector(
+    (state) => state.blog
+  );
+  const { roles, loading: roleLoading } = useSelector(
+    (state) => state.role
+  );
 
-  // Update loading state when Redux loading state changes
+  // Update loading state when any Redux loading state changes
   useEffect(() => {
-    setIsLoading(loading);
-  }, [loading]);
+    setIsLoading(adminLoading || staffLoading || blogLoading || roleLoading);
+  }, [adminLoading, staffLoading, blogLoading, roleLoading]);
 
   // Count educators across all universities (legacy method)
   const educatorsCountFromUniversities =
@@ -54,6 +65,16 @@ const AdminDashboard = () => {
   const universityCount = getCountByRole("university");
   const educatorCount = getCountByRole("educator");
 
+  // Count enrolled users across all courses
+  const getEnrolledUsersCount = () => {
+    if (!courses) return 0;
+    return courses.reduce((total, course) => {
+      return total + (course.enrolledUsers?.length || 0);
+    }, 0);
+  };
+
+  const enrolledUsersCount = getEnrolledUsersCount();
+
   // Get user from Redux store
   const { user } = useSelector((state) => state.auth);
 
@@ -61,6 +82,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     dispatch(getUniversitiesThunk());
     dispatch(getCoursesThunk());
+    dispatch(getStaffMembersThunk());
+    dispatch(getBlogsThunk());
+    dispatch(getRolesThunk());
 
     // Admin users should have permission to view users, but let's check anyway
     if (user?.role === 'admin' || user?.permissions?.view_users) {
@@ -156,7 +180,7 @@ const AdminDashboard = () => {
           ).length;
       }, 1000);
     }
-  }, [users]);
+  }, [users, courses?.length]);
   // Transform courses data for the table
   const [tableData, setTableData] = useState([]);
 
@@ -226,26 +250,6 @@ const AdminDashboard = () => {
     navigate(`/dashboard/admin/courses/${row.id}`);
   };
 
-  // Delete handler
-  const handleDelete = (row) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${row.title}"? This action cannot be undone.`
-      )
-    ) {
-      dispatch(deleteCourseThunk(row.id))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully deleted ${row.title}`);
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch((error) => {
-          console.error(`Error deleting course:`, error);
-        });
-    }
-  };
-
   // Table columns configuration
   const columns = [
     {
@@ -263,19 +267,9 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
-      name: "Categories",
-      selector: (row) => row.category,
-      sortable: true,
-    },
-    {
       name: "Creator",
       cell: (row) => (
         <div className="professor-info">
-          {/* <img
-            src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
-            alt={row.professor}
-            className="professor-avatar"
-          /> */}
           <span>{row.professor}</span>
         </div>
       ),
@@ -327,18 +321,18 @@ const AdminDashboard = () => {
       )}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
-        <div className="stat-card courses">
+        <div className="stat-card courses" onClick={() => navigate("/dashboard/admin/courses")}>
           <div className="stat-icon3">
             <FaBook size={24} />
             <FaBook className="icondesign3" />
           </div>
           <div>
             <div className="stat-count">{courses?.length || 0}</div>
-            <div className="stat-title">{t("dashboard.totalCourses")}</div>
+            <div className="stat-title">Courses</div>
           </div>
         </div>
 
-        <div className="stat-card schools">
+        <div className="stat-card schools" onClick={() => navigate("/dashboard/admin/schools")}>
           <div className="stat-icon1">
             <LuSchool size={24} />
             <LuSchool className="icondesign1" />
@@ -347,11 +341,11 @@ const AdminDashboard = () => {
             <div className="stat-count">
               {universityCount || universities?.length || 0}
             </div>
-            <div className="stat-title">{t("dashboard.totalSchools")}</div>
+            <div className="stat-title">Schools</div>
           </div>
         </div>
 
-        <div className="stat-card educators">
+        <div className="stat-card educators" onClick={() => navigate("/dashboard/admin/educators")}>
           <div className="stat-icon2">
             <LiaChalkboardTeacherSolid size={30} />
             <LiaChalkboardTeacherSolid className="icondesign2" />
@@ -360,7 +354,51 @@ const AdminDashboard = () => {
             <div className="stat-count">
               {educatorCount || educatorsCountFromUniversities}
             </div>
-            <div className="stat-title">{t("dashboard.totalEducators")}</div>
+            <div className="stat-title">Educators</div>
+          </div>
+        </div>
+
+        <div className="stat-card enrolled-users" style={{ cursor: "default" }}>
+          <div className="stat-icon4">
+            <FaUsers size={24} />
+            <FaUsers className="icondesign4" />
+          </div>
+          <div>
+            <div className="stat-count">{enrolledUsersCount || 0}</div>
+            <div className="stat-title">Enrolled Users</div>
+          </div>
+        </div>
+
+        <div className="stat-card staff" onClick={() => navigate("/dashboard/admin/staffs")}>
+          <div className="stat-icon5">
+            <FaUserTie size={24} />
+            <FaUserTie className="icondesign5" />
+          </div>
+          <div>
+            <div className="stat-count">{staffMembers?.length || 0}</div>
+            <div className="stat-title">Staff Members</div>
+          </div>
+        </div>
+
+        <div className="stat-card blogs" onClick={() => navigate("/dashboard/admin/blogs")}>
+          <div className="stat-icon6">
+            <FaNewspaper size={24} />
+            <FaNewspaper className="icondesign6" />
+          </div>
+          <div>
+            <div className="stat-count">{blogs?.length || 0}</div>
+            <div className="stat-title">Blogs</div>
+          </div>
+        </div>
+
+        <div className="stat-card roles" onClick={() => navigate("/dashboard/admin/role-permission")}>
+          <div className="stat-icon7">
+            <FaUserTag size={24} />
+            <FaUserTag className="icondesign7" />
+          </div>
+          <div>
+            <div className="stat-count">{roles?.length || 0}</div>
+            <div className="stat-title">Roles</div>
           </div>
         </div>
       </div>

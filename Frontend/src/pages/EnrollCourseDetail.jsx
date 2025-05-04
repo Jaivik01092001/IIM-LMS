@@ -11,7 +11,8 @@ import {
   FaUserCircle,
   FaTrophy,
   FaFilePdf,
-  FaLock
+  FaLock,
+  FaYoutube
 } from 'react-icons/fa';
 import ProgressBar from '../components/common/ProgressBar';
 import { toast } from 'react-toastify';
@@ -104,8 +105,9 @@ const EnrollCourseDetail = () => {
 
         // Fetch certificates to have them ready if needed
         //  dispatch(getMyCertificatesThunk());
-      } catch (err) {
+      } catch (error) {
         toast.error('Failed to load course');
+        console.error('Error loading course:', error);
       }
     };
     fetchCourse();
@@ -263,27 +265,29 @@ const EnrollCourseDetail = () => {
         .unwrap()
         .then(() => {
           // After the course status is updated to 'completed', generate the certificate
-          dispatch(generateCertificateThunk(id)).unwrap().then(() => {
-            // Switch to certificates tab
-            setActiveTab('certificates');
-            // Fetch certificates to display
-            dispatch(getMyCertificatesThunk());
-            //toast.success('Course completed! Your certificate has been generated.');
-          })
-            .catch((error) => {
-              console.error('Failed to generate certificate:', error);
+          dispatch(generateCertificateThunk(id))
+            .unwrap()
+            .then(() => {
+              // Switch to certificates tab
+              setActiveTab('certificates');
+              // Refresh certificates list
+              dispatch(getMyCertificatesThunk());
+              toast.success('Certificate generated successfully!');
+            })
+            .catch(error => {
+              console.error('Certificate generation error:', error);
               if (error.message === "Certificate already exists") {
-                // If certificate already exists, just switch to the certificates tab
-                setActiveTab('certificates');
+                // If certificate already exists, just refresh the list
                 dispatch(getMyCertificatesThunk());
-                toast.info('Certificate already exists.');
+                setActiveTab('certificates');
+                toast.info('Certificate already exists. Refreshing your certificates.');
               } else {
                 toast.error('Failed to generate certificate. Please try again.');
               }
             });
         })
-        .catch((error) => {
-          console.error('Failed to update course status:', error);
+        .catch(error => {
+          console.error('Course status update error:', error);
           toast.error('Failed to update course status. Please try again.');
         });
     }
@@ -492,9 +496,22 @@ const EnrollCourseDetail = () => {
     // }));
   };
 
+  // Helper function to extract YouTube video ID from URL
+  const getYoutubeVideoId = (url) => {
+    if (!url) return '';
 
+    // Extract video ID from different YouTube URL formats
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
 
-  // Use certificateExists in the handleGenerateCertificate function to prevent duplicate certificates
+    return (match && match[7].length === 11) ? match[7] : '';
+  };
+
+  // Helper function to get YouTube URL from content
+  const getYoutubeUrl = (content) => {
+    // First try textContent, then fallback to fileUrl for backward compatibility
+    return content.textContent || content.fileUrl || '';
+  };
 
   // Handle generate certificate
   const handleGenerateCertificate = () => {
@@ -519,9 +536,9 @@ const EnrollCourseDetail = () => {
             dispatch(getMyCertificatesThunk());
             toast.success('Certificate generated successfully!');
           })
-          .catch(err => {
-            console.error('Certificate generation error:', err);
-            if (err.message === "Certificate already exists") {
+          .catch(error => {
+            console.error('Certificate generation error:', error);
+            if (error.message === "Certificate already exists") {
               // If certificate already exists, just refresh the list
               dispatch(getMyCertificatesThunk());
               setActiveTab('certificates');
@@ -531,8 +548,8 @@ const EnrollCourseDetail = () => {
             }
           });
       })
-      .catch(err => {
-        console.error('Course status update error:', err);
+      .catch(error => {
+        console.error('Course status update error:', error);
         toast.error('Failed to update course status. Please try again.');
       });
   };
@@ -554,23 +571,46 @@ const EnrollCourseDetail = () => {
             showText={true}
           />
         </div>
-        <div className="user-profile">
-          <FaUserCircle size={40} />
-          <span>{course.creator?.name}</span>
-        </div>
+
       </div>
 
       <div className="course-content-container">
         <div className="video-container">
           <div className="video-wrapper">
             {selectedContent ? (
-              selectedContent.mimeType?.startsWith('video/') ? (
+              selectedContent.mimeType?.startsWith('video/') && selectedContent.mimeType !== 'video/youtube' ? (
                 <video
                   className="video-player"
                   controls
                   width="100%"
                   src={`${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`}
                 />
+              ) : selectedContent.mimeType === 'video/youtube' ? (
+                <div className="youtube-embed-container" style={{
+                  position: 'relative',
+                  paddingBottom: '56.25%', /* 16:9 aspect ratio */
+                  height: '0',
+                  overflow: 'hidden',
+                  maxWidth: '100%',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <iframe
+                    style={{
+                      position: 'absolute',
+                      top: '0',
+                      left: '0',
+                      width: '100%',
+                      height: '100%',
+                      border: 'none'
+                    }}
+                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(getYoutubeUrl(selectedContent))}`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
               ) : selectedContent.mimeType === 'application/pdf' ? (
                 <iframe
                   title="PDF Preview"
@@ -731,8 +771,10 @@ const EnrollCourseDetail = () => {
                           onClick={() => handleContentClick(content, moduleIndex)}
                         >
                           <div className="topic-icon">
-                            {content.mimeType?.startsWith('video/') ? (
+                            {content.mimeType?.startsWith('video/') && content.mimeType !== 'video/youtube' ? (
                               <FaPlayCircle />
+                            ) : content.mimeType === 'video/youtube' ? (
+                              <FaYoutube />
                             ) : content.mimeType === 'text/html' ? (
                               <FaFilePdf />
                             ) : (
@@ -742,9 +784,10 @@ const EnrollCourseDetail = () => {
                           <div className="topic-details">
                             <h4>{content.title}</h4>
                             <p>
-                              {content.mimeType?.startsWith('video/') ? 'Video' :
-                                content.mimeType === 'text/html' ? 'Text' :
-                                  content.mimeType?.split('/')[1]?.toUpperCase() || 'Document'}
+                              {content.mimeType?.startsWith('video/') && content.mimeType !== 'video/youtube' ? 'Video' :
+                                content.mimeType === 'video/youtube' ? 'YouTube Video' :
+                                  content.mimeType === 'text/html' ? 'Text' :
+                                    content.mimeType?.split('/')[1]?.toUpperCase() || 'Document'}
                               {content.size ? ` | ${(content.size / 1000000).toFixed(2)} MB` : ''}
                             </p>
                             {content.description && (

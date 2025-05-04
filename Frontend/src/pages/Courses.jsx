@@ -8,7 +8,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getCoursesThunk,
   updateCourseThunk,
-  deleteCourseThunk,
   getUsersThunk
 } from "../redux/admin/adminSlice";
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
@@ -139,21 +138,6 @@ const Courses = ({ userType }) => {
     navigate(`/dashboard/${userType}/courses/edit-flow/${row.id}`);
   };
 
-  // Delete handler
-  const handleDelete = (row) => {
-    if (window.confirm(`Are you sure you want to delete "${row.title}"? This action cannot be undone.`)) {
-      dispatch(deleteCourseThunk(row.id))
-        .unwrap()
-        .then(() => {
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch(error => {
-          console.error(`Error deleting course:`, error);
-        });
-    }
-  };
-
   // Table columns configuration
   const columns = [
     {
@@ -167,19 +151,9 @@ const Courses = ({ userType }) => {
       sortable: true,
     },
     {
-      name: "Categories",
-      selector: (row) => row.category,
-      sortable: true,
-    },
-    {
       name: "Creator",
       cell: (row) => (
         <div className="professor-info">
-          <img
-            src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
-            alt={row.professor}
-            className="professor-avatar"
-          />
           <span>{row.professor}</span>
         </div>
       ),
@@ -273,11 +247,6 @@ const Courses = ({ userType }) => {
               </div>
               <div className="course-card-footer">
                 <div className="course-card-professor">
-                  <img
-                    src={`https://i.pravatar.cc/150?img=${course.id + 30}`}
-                    alt={course.professor}
-                    className="professor-avatar-small"
-                  />
                   <span>{course.professor}</span>
                 </div>
                 <div className="course-card-meta">

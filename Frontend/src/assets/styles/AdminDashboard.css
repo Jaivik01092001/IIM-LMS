@@ -42,7 +42,7 @@
 /* Stats Cards */
 .admin-dashboard .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }
@@ -60,14 +60,37 @@
 
 .admin-dashboard .stat-card.schools {
   background-color: #ffecef;
+  cursor: pointer;
 }
 
 .admin-dashboard .stat-card.educators {
   background-color: #e8ffef;
+  cursor: pointer;
 }
 
 .admin-dashboard .stat-card.courses {
   background-color: #fff8e8;
+  cursor: pointer;
+}
+
+.admin-dashboard .stat-card.enrolled-users {
+  background-color: #e6f7ff;
+  cursor: pointer;
+}
+
+.admin-dashboard .stat-card.staff {
+  background-color: #f0f5ff;
+  cursor: pointer;
+}
+
+.admin-dashboard .stat-card.blogs {
+  background-color: #f9f0ff;
+  cursor: pointer;
+}
+
+.admin-dashboard .stat-card.roles {
+  background-color: #fff0f6;
+  cursor: pointer;
 }
 
 .admin-dashboard .stat-count {
@@ -115,9 +138,57 @@
   color: white;
 }
 
+.admin-dashboard .stat-icon4 {
+  background-color: #36cfc9;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.admin-dashboard .stat-icon5 {
+  background-color: #597ef7;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.admin-dashboard .stat-icon6 {
+  background-color: #b37feb;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.admin-dashboard .stat-icon7 {
+  background-color: #f759ab;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
 .admin-dashboard .icondesign1,
 .admin-dashboard .icondesign2,
-.admin-dashboard .icondesign3 {
+.admin-dashboard .icondesign3,
+.admin-dashboard .icondesign4,
+.admin-dashboard .icondesign5,
+.admin-dashboard .icondesign6,
+.admin-dashboard .icondesign7 {
   position: absolute;
   bottom: 10px;
   right: 10px;
