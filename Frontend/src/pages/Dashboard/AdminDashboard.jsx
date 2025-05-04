@@ -9,7 +9,6 @@ import {
   getUniversitiesThunk,
   getCoursesThunk,
   updateCourseThunk,
-  deleteCourseThunk,
   getUsersThunk,
 } from "../../redux/admin/adminSlice";
 import DataTableComponent from "../../components/DataTable";
@@ -226,26 +225,6 @@ const AdminDashboard = () => {
     navigate(`/dashboard/admin/courses/${row.id}`);
   };
 
-  // Delete handler
-  const handleDelete = (row) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${row.title}"? This action cannot be undone.`
-      )
-    ) {
-      dispatch(deleteCourseThunk(row.id))
-        .unwrap()
-        .then(() => {
-          console.log(`Successfully deleted ${row.title}`);
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch((error) => {
-          console.error(`Error deleting course:`, error);
-        });
-    }
-  };
-
   // Table columns configuration
   const columns = [
     {
@@ -263,19 +242,9 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
-      name: "Categories",
-      selector: (row) => row.category,
-      sortable: true,
-    },
-    {
       name: "Creator",
       cell: (row) => (
         <div className="professor-info">
-          {/* <img
-            src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
-            alt={row.professor}
-            className="professor-avatar"
-          /> */}
           <span>{row.professor}</span>
         </div>
       ),

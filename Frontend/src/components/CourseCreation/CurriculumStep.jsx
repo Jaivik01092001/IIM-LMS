@@ -38,8 +38,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     useEffect(() => {
         if (modules.length > 0 && Object.keys(expandedModules).length === 0) {
             const initialExpandedState = {};
-            modules.forEach((module) => {
-                initialExpandedState[module._id] = true; // Set all modules to expanded initially
+            // Only set the first module to be expanded initially
+            modules.forEach((module, index) => {
+                initialExpandedState[module._id] = index === 0; // Only first module is expanded
             });
             setExpandedModules(initialExpandedState);
         }
@@ -79,10 +80,21 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // Toggle module expanded state
     const toggleModuleExpanded = (moduleId) => {
-        setExpandedModules(prev => ({
-            ...prev,
-            [moduleId]: !prev[moduleId]
-        }));
+        // Close all modules first, then open only the clicked one if it was closed
+        const isCurrentlyExpanded = expandedModules[moduleId];
+
+        // Create a new object with all modules closed
+        const newExpandedState = {};
+        modules.forEach(module => {
+            newExpandedState[module._id] = false;
+        });
+
+        // If the clicked module was closed, open it (otherwise all stay closed)
+        if (!isCurrentlyExpanded) {
+            newExpandedState[moduleId] = true;
+        }
+
+        setExpandedModules(newExpandedState);
     };
 
     // ===== MODULE MANAGEMENT =====
@@ -102,11 +114,13 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setEditingModuleId(newModule._id);
         setModuleFormData({ title: newModule.title, description: newModule.description });
 
-        // Auto-expand the new module
-        setExpandedModules(prev => ({
-            ...prev,
-            [newModule._id]: true
-        }));
+        // Close all other modules and only expand the new one
+        const newExpandedState = {};
+        modules.forEach(module => {
+            newExpandedState[module._id] = false;
+        });
+        newExpandedState[newModule._id] = true;
+        setExpandedModules(newExpandedState);
     };
 
     // Edit module
