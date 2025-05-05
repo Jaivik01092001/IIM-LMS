@@ -1872,3 +1872,59 @@ input:checked + .slider:before {
   font-weight: 500;
   margin-left: 8px;
 }
+
+/* Quiz question editing styles */
+.question-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.edit-question, .remove-question {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-question {
+  color: #4a6cf7;
+}
+
+.edit-question:hover {
+  background-color: rgba(74, 108, 247, 0.1);
+}
+
+.remove-question {
+  color: #f74a4a;
+}
+
+.remove-question:hover {
+  background-color: rgba(247, 74, 74, 0.1);
+}
+
+.question-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.cancel-edit-button {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.cancel-edit-button:hover {
+  background-color: #e0e0e0;
+}

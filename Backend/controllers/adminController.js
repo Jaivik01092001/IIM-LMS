@@ -789,8 +789,13 @@ exports.updateCourse = async (req, res) => {
                       existingQuiz.title = quizData.title || existingQuiz.title;
                       existingQuiz.description =
                         quizData.description || existingQuiz.description;
-                      existingQuiz.questions =
-                        quizData.questions || existingQuiz.questions;
+
+                      // Always update questions array if it's provided, even if it's empty
+                      if (quizData.questions !== undefined) {
+                        console.log(`Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions`);
+                        existingQuiz.questions = quizData.questions;
+                      }
+
                       existingQuiz.timeLimit =
                         quizData.timeLimit || existingQuiz.timeLimit;
                       existingQuiz.passingScore =
@@ -976,6 +981,34 @@ exports.updateCourse = async (req, res) => {
     // Create content items for uploaded files
     const contentItems = [];
 
+    // Get content module mappings from request
+    const contentModules = {};
+    if (req.body.contentModules) {
+      // Handle array format
+      if (Array.isArray(req.body.contentModules)) {
+        req.body.contentModules.forEach((moduleId, index) => {
+          if (req.body.contentFileIds && req.body.contentFileIds[index]) {
+            contentModules[req.body.contentFileIds[index]] = moduleId;
+          }
+        });
+      }
+      // Handle object format from formData
+      else {
+        Object.keys(req.body).forEach(key => {
+          if (key.startsWith('contentModules[')) {
+            const match = key.match(/\[(\d+)\]/);
+            if (match && match[1]) {
+              const index = parseInt(match[1]);
+              if (req.body.contentFileIds && req.body[`contentFileIds[${index}]`]) {
+                contentModules[req.body[`contentFileIds[${index}]`]] = req.body[key];
+              }
+            }
+          }
+        });
+      }
+      console.log("Content module mappings:", contentModules);
+    }
+
     // Process content files if any
     if (
       req.files &&
@@ -1019,6 +1052,15 @@ exports.updateCourse = async (req, res) => {
           mediaType = "image";
         }
 
+        // Get module ID from either content item or contentModules mapping
+        let moduleId = contentItem.module || null;
+
+        // If this is a temp ID, check if we have a module mapping for it
+        if (contentId.startsWith('temp_') && contentModules[contentId]) {
+          moduleId = contentModules[contentId];
+          console.log(`Using module mapping for ${contentId}: ${moduleId}`);
+        }
+
         // Create a new content item
         const newContent = new Content({
           title: contentItem.title,
@@ -1036,7 +1078,7 @@ exports.updateCourse = async (req, res) => {
           mediaType,
           mimeType,
           size: file.size,
-          module: contentItem.module || null,
+          module: moduleId,
         });
 
         await newContent.save();
@@ -1044,6 +1086,20 @@ exports.updateCourse = async (req, res) => {
           id: contentId,
           dbId: newContent._id,
         });
+
+        // If we have a module ID, add this content to the module
+        if (moduleId) {
+          try {
+            const module = await Module.findById(moduleId);
+            if (module) {
+              module.content.push(newContent._id);
+              await module.save();
+              console.log(`Added content ${newContent._id} to module ${moduleId}`);
+            }
+          } catch (err) {
+            console.error(`Error adding content to module ${moduleId}:`, err);
+          }
+        }
       }
     }
 
@@ -1088,6 +1144,15 @@ exports.updateCourse = async (req, res) => {
               return null;
             }
 
+            // Get module ID from either content item or contentModules mapping
+            let moduleId = item.module || null;
+
+            // If this is a temp ID, check if we have a module mapping for it
+            if (item._id.startsWith('temp_') && contentModules[item._id]) {
+              moduleId = contentModules[item._id];
+              console.log(`Using module mapping for text/youtube ${item._id}: ${moduleId}`);
+            }
+
             // Handle new YouTube content
             if (item.type === "youtube") {
               console.log(`Creating new YouTube content item: ${item.title}`);
@@ -1101,13 +1166,27 @@ exports.updateCourse = async (req, res) => {
                 type: "youtube",
                 mediaType: "video",
                 mimeType: "video/youtube",
-                module: item.module || null,
+                module: moduleId,
               });
 
               await newYoutubeContent.save();
               console.log(
                 `Created YouTube content with ID: ${newYoutubeContent._id}`
               );
+
+              // If we have a module ID, add this content to the module
+              if (moduleId) {
+                try {
+                  const module = await Module.findById(moduleId);
+                  if (module) {
+                    module.content.push(newYoutubeContent._id);
+                    await module.save();
+                    console.log(`Added YouTube content ${newYoutubeContent._id} to module ${moduleId}`);
+                  }
+                } catch (err) {
+                  console.error(`Error adding YouTube content to module ${moduleId}:`, err);
+                }
+              }
 
               return {
                 id: item._id,
@@ -1126,11 +1205,25 @@ exports.updateCourse = async (req, res) => {
               type: "text",
               mediaType: "text",
               mimeType: "text/html",
-              module: item.module || null,
+              module: moduleId,
             });
 
             await newTextContent.save();
             console.log(`Created text content with ID: ${newTextContent._id}`);
+
+            // If we have a module ID, add this content to the module
+            if (moduleId) {
+              try {
+                const module = await Module.findById(moduleId);
+                if (module) {
+                  module.content.push(newTextContent._id);
+                  await module.save();
+                  console.log(`Added text content ${newTextContent._id} to module ${moduleId}`);
+                }
+              } catch (err) {
+                console.error(`Error adding text content to module ${moduleId}:`, err);
+              }
+            }
 
             return {
               id: item._id,
@@ -1174,10 +1267,40 @@ exports.updateCourse = async (req, res) => {
 
     if (quizzes) {
       try {
-        course.quizzes =
-          typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
+        // Parse quizzes if it's a string
+        const parsedQuizzes = typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
+
+        // Process each quiz to update its questions in the database
+        if (Array.isArray(parsedQuizzes)) {
+          for (const quizData of parsedQuizzes) {
+            // Only process quizzes with an ID (existing quizzes)
+            if (quizData._id) {
+              const existingQuiz = await Quiz.findById(quizData._id);
+              if (existingQuiz) {
+                // Update quiz properties
+                existingQuiz.title = quizData.title || existingQuiz.title;
+                existingQuiz.description = quizData.description || existingQuiz.description;
+
+                // Always update questions array if it's provided, even if it's empty
+                if (quizData.questions !== undefined) {
+                  console.log(`Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`);
+                  existingQuiz.questions = quizData.questions;
+                }
+
+                existingQuiz.timeLimit = quizData.timeLimit || existingQuiz.timeLimit;
+                existingQuiz.passingScore = quizData.passingScore || existingQuiz.passingScore;
+
+                // Save the updated quiz
+                await existingQuiz.save();
+              }
+            }
+          }
+        }
+
+        // Update course.quizzes array with quiz IDs
+        course.quizzes = parsedQuizzes.map(quiz => quiz._id);
       } catch (err) {
-        console.error("Error parsing quizzes JSON:", err);
+        console.error("Error processing quizzes update:", err);
       }
     }
 

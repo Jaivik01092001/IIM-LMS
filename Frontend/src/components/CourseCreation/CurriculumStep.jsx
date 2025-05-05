@@ -27,6 +27,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const [editingQuizId, setEditingQuizId] = useState(null);
     const [quizFormData, setQuizFormData] = useState({ title: "", description: "", questions: [] });
     const [currentQuestion, setCurrentQuestion] = useState({ question: "", options: ["", "", "", ""], correctAnswer: 0 });
+    const [editingQuestionIndex, setEditingQuestionIndex] = useState(null);
 
     // State for expanded modules (accordion behavior)
     const [expandedModules, setExpandedModules] = useState({});
@@ -49,34 +50,49 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     // Update parent component state when local states change
     useEffect(() => {
         if (hasUpdatedCourseData) {
-            updateCourseData({
-                modules: modules.map(module => {
-                    const moduleData = {
-                        _id: module._id,
-                        title: module.title,
-                        description: module.description,
-                        content: module.content || [],
-                        order: module.order || 0
-                    };
-
-                    if (module.quiz) {
-                        if (typeof module.quiz === 'object') {
-                            moduleData.quiz = module.quiz;
+            // Create a deep copy of modules with all nested data properly structured
+            const processedModules = modules.map(module => {
+                const moduleData = {
+                    _id: module._id,
+                    title: module.title,
+                    description: module.description,
+                    order: module.order || 0,
+                    // Process content array to ensure it contains full content objects, not just IDs
+                    content: module.content ? module.content.map(contentId => {
+                        if (typeof contentId === 'object') {
+                            return contentId;
                         } else {
-                            const quizItem = quizzes.find(q => q._id === module.quiz);
-                            if (quizItem) moduleData.quiz = quizItem;
+                            // Find the content item in the content array
+                            const contentItem = content.find(item => item._id === contentId);
+                            return contentItem || contentId; // Return the content item if found, otherwise return the ID
                         }
-                    }
+                    }) : []
+                };
 
-                    return moduleData;
-                }),
+                // Process quiz to ensure it contains the full quiz object, not just the ID
+                if (module.quiz) {
+                    if (typeof module.quiz === 'object') {
+                        moduleData.quiz = module.quiz;
+                    } else {
+                        const quizItem = quizzes.find(q => q._id === module.quiz);
+                        if (quizItem) moduleData.quiz = quizItem;
+                    }
+                }
+
+                return moduleData;
+            });
+
+            updateCourseData({
+                modules: processedModules,
                 content,
                 quizzes
             });
+
+            console.log("Updated course data with processed modules:", processedModules);
         } else {
             setHasUpdatedCourseData(true);
         }
-    }, [modules, content, quizzes, hasUpdatedCourseData]);
+    }, [modules, content, quizzes, hasUpdatedCourseData, updateCourseData]);
 
     // Toggle module expanded state
     const toggleModuleExpanded = (moduleId) => {
@@ -206,10 +222,11 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // Save content
     const saveContent = () => {
-        const moduleOfEditingContent = content.find(item => item._id === editingContentId)?.module;
+        const existingContent = content.find(item => item._id === editingContentId);
+        const moduleOfEditingContent = existingContent?.module;
 
         const newContentItem = {
-            ...content.find(item => item._id === editingContentId),
+            ...existingContent,
             title: contentFormData.title,
             description: contentFormData.description,
             type: contentFormData.type,
@@ -225,21 +242,45 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                     ? contentFormData.textContent
                     : contentFormData.file
                         ? URL.createObjectURL(contentFormData.file)
-                        : "",
+                        : existingContent?.fileUrl || "",
             mimeType:
                 contentFormData.type === "youtube"
                     ? "video/youtube"
-                    : contentFormData.file?.type || "application/octet-stream",
+                    : contentFormData.file?.type || existingContent?.mimeType || "application/octet-stream",
             module: moduleOfEditingContent
         };
 
         console.log("📤 Saving content item to state:", newContentItem);
 
+        // Update content in the content array
         const updatedContent = content.map(item =>
             item._id === editingContentId ? newContentItem : item
         );
-
         setContent(updatedContent);
+
+        // Also update the content reference in the module
+        if (moduleOfEditingContent) {
+            const moduleToUpdate = modules.find(m => m._id === moduleOfEditingContent);
+            if (moduleToUpdate) {
+                // If the module's content array contains objects, update the object
+                // If it contains IDs, no need to update as the ID hasn't changed
+                const updatedModules = modules.map(module => {
+                    if (module._id === moduleOfEditingContent) {
+                        const updatedModuleContent = module.content.map(contentItem => {
+                            if (typeof contentItem === 'object' && contentItem._id === editingContentId) {
+                                return newContentItem;
+                            }
+                            return contentItem;
+                        });
+                        return { ...module, content: updatedModuleContent };
+                    }
+                    return module;
+                });
+                setModules(updatedModules);
+            }
+        }
+
+        // Reset form state
         setEditingContentId(null);
         setContentFormData({
             title: "",
@@ -249,7 +290,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             textContent: ""
         });
 
-        console.log("✅ Content state updated. But note: this is LOCAL state only. If backend API is not called, data won't persist.");
+        console.log("✅ Content state updated in both content array and module reference.");
     };
 
     // Delete content
@@ -295,7 +336,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setQuizFormData({ title: newQuiz.title, description: newQuiz.description, questions: [] });
     };
 
-    // Add question to quiz
+    // Add or update question in quiz
     const addQuestionToQuiz = () => {
         // Validate the current question
         if (!currentQuestion.question || currentQuestion.options.some(opt => !opt)) {
@@ -303,16 +344,35 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             return;
         }
 
-        const updatedFormData = {
-            ...quizFormData,
-            questions: [
+        let updatedQuestions;
+
+        if (editingQuestionIndex !== null) {
+            // Update existing question
+            updatedQuestions = [...quizFormData.questions];
+            updatedQuestions[editingQuestionIndex] = { ...currentQuestion };
+        } else {
+            // Add new question
+            updatedQuestions = [
                 ...quizFormData.questions,
                 { ...currentQuestion }
-            ]
+            ];
+        }
+
+        const updatedFormData = {
+            ...quizFormData,
+            questions: updatedQuestions
         };
 
         setQuizFormData(updatedFormData);
         setCurrentQuestion({ question: "", options: ["", "", "", ""], correctAnswer: 0 });
+        setEditingQuestionIndex(null);
+    };
+
+    // Start editing an existing question
+    const startEditQuestion = (index) => {
+        const questionToEdit = quizFormData.questions[index];
+        setCurrentQuestion({ ...questionToEdit });
+        setEditingQuestionIndex(index);
     };
 
     // Handle question form changes
@@ -355,21 +415,50 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // Save quiz
     const saveQuiz = () => {
-        const updatedQuizzes = quizzes.map(quiz =>
-            quiz._id === editingQuizId
-                ? {
-                    ...quiz,
-                    title: quizFormData.title,
-                    description: quizFormData.description,
-                    questions: quizFormData.questions
-                }
-                : quiz
-        );
+        const existingQuiz = quizzes.find(quiz => quiz._id === editingQuizId);
+        const moduleOfEditingQuiz = existingQuiz?.module;
 
+        const updatedQuiz = {
+            ...existingQuiz,
+            title: quizFormData.title,
+            description: quizFormData.description,
+            questions: quizFormData.questions
+        };
+
+        console.log("Saving quiz with questions:", quizFormData.questions);
+
+        // Update quiz in the quizzes array
+        const updatedQuizzes = quizzes.map(quiz =>
+            quiz._id === editingQuizId ? updatedQuiz : quiz
+        );
         setQuizzes(updatedQuizzes);
+
+        // Also update the quiz reference in the module
+        if (moduleOfEditingQuiz) {
+            const moduleToUpdate = modules.find(m => m._id === moduleOfEditingQuiz);
+            if (moduleToUpdate) {
+                const updatedModules = modules.map(module => {
+                    if (module._id === moduleOfEditingQuiz) {
+                        // If the module's quiz is an object, update the object
+                        // If it's an ID, no need to update as the ID hasn't changed
+                        if (typeof module.quiz === 'object' && module.quiz?._id === editingQuizId) {
+                            return { ...module, quiz: updatedQuiz };
+                        }
+                        return module;
+                    }
+                    return module;
+                });
+                setModules(updatedModules);
+            }
+        }
+
+        // Reset form state
         setEditingQuizId(null);
         setQuizFormData({ title: "", description: "", questions: [] });
         setCurrentQuestion({ question: "", options: ["", "", "", ""], correctAnswer: 0 });
+
+        console.log("✅ Quiz state updated in both quizzes array and module reference.");
+        console.log("Updated quizzes array:", updatedQuizzes);
     };
 
     // Delete quiz
@@ -683,7 +772,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                                                     height="315"
                                                                                                     src={`https://www.youtube.com/embed/${getYoutubeVideoId(contentFormData.textContent)}`}
                                                                                                     title="YouTube video player"
-                                                                                                    frameBorder="0"
+                                                                                                    style={{ border: 0 }}
                                                                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                                                                     allowFullScreen>
                                                                                                 </iframe>
@@ -819,20 +908,29 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                                             </li>
                                                                                         ))}
                                                                                     </ul>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="remove-question"
-                                                                                        onClick={() => removeQuestion(index)}
-                                                                                    >
-                                                                                        <FaTrash />
-                                                                                    </button>
+                                                                                    <div className="question-actions">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            className="edit-question"
+                                                                                            onClick={() => startEditQuestion(index)}
+                                                                                        >
+                                                                                            <FaEdit />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            className="remove-question"
+                                                                                            onClick={() => removeQuestion(index)}
+                                                                                        >
+                                                                                            <FaTrash />
+                                                                                        </button>
+                                                                                    </div>
                                                                                 </div>
                                                                             ))}
                                                                         </div>
 
                                                                         {/* Add Question Form */}
                                                                         <div className="add-question-form">
-                                                                            <h5>Add New Question</h5>
+                                                                            <h5>{editingQuestionIndex !== null ? 'Edit Question' : 'Add New Question'}</h5>
                                                                             <div className="form-group">
                                                                                 <label htmlFor="questionText">Question</label>
                                                                                 <input
@@ -863,14 +961,37 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                                     </div>
                                                                                 ))}
                                                                             </div>
-                                                                            <button
-                                                                                type="button"
-                                                                                className="add-question-button"
-                                                                                onClick={addQuestionToQuiz}
-                                                                            >
-                                                                                <FaPlus />
-                                                                                <span>Add Question</span>
-                                                                            </button>
+                                                                            <div className="question-form-actions">
+                                                                                {editingQuestionIndex !== null && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="cancel-edit-button"
+                                                                                        onClick={() => {
+                                                                                            setEditingQuestionIndex(null);
+                                                                                            setCurrentQuestion({ question: "", options: ["", "", "", ""], correctAnswer: 0 });
+                                                                                        }}
+                                                                                    >
+                                                                                        Cancel Edit
+                                                                                    </button>
+                                                                                )}
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="add-question-button"
+                                                                                    onClick={addQuestionToQuiz}
+                                                                                >
+                                                                                    {editingQuestionIndex !== null ? (
+                                                                                        <>
+                                                                                            <FaEdit />
+                                                                                            <span>Update Question</span>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <>
+                                                                                            <FaPlus />
+                                                                                            <span>Add Question</span>
+                                                                                        </>
+                                                                                    )}
+                                                                                </button>
+                                                                            </div>
                                                                         </div>
 
                                                                         <div className="form-actions">

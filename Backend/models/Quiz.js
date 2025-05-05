@@ -7,7 +7,7 @@ const quizSchema = new mongoose.Schema({
   questions: [{
     question: { type: String, required: true },
     options: [{ type: String, required: true }],
-    correctAnswer: { type: String, required: true },
+    correctAnswer: { type: Number, required: true }, // Changed from String to Number to match frontend
     explanation: { type: String },
     points: { type: Number, default: 1 }
   }],
@@ -25,4 +25,4 @@ const quizSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
-module.exports = mongoose.model('Quiz', quizSchema); 
+module.exports = mongoose.model('Quiz', quizSchema);

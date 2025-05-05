@@ -10,11 +10,6 @@ import {
     FaArrowLeft,
     FaArrowRight,
     FaCheck,
-    FaUpload,
-    FaImage,
-    FaFileAlt,
-    FaVideo,
-    FaTimes,
 } from "react-icons/fa";
 import "../assets/styles/CourseCreationFlow.css";
 
@@ -22,7 +17,6 @@ import "../assets/styles/CourseCreationFlow.css";
 import CourseInfoStep from "../components/CourseCreation/CourseInfoStep";
 import CurriculumStep from "../components/CourseCreation/CurriculumStep";
 import CourseSettingsStep from "../components/CourseCreation/CourseSettingsStep";
-import AccessSettingsStep from "../components/CourseCreation/AccessSettingsStep";
 import ReviewSubmitStep from "../components/CourseCreation/ReviewSubmitStep";
 
 const CourseCreationFlow = () => {
@@ -32,7 +26,7 @@ const CourseCreationFlow = () => {
     const isEditMode = !!id;
 
     // Get data from Redux store
-    const { currentCourse, loading } = useSelector((state) => state.admin);
+    const { currentCourse } = useSelector((state) => state.admin);
     const { user } = useSelector((state) => state.auth);
 
     // State for stepper
@@ -90,20 +84,68 @@ const CourseCreationFlow = () => {
 
             // Process modules to ensure they have the correct structure
             const processedModules = currentCourse.modules.map((module) => {
-                // Ensure module has the correct structure
-                return {
+                // Ensure module has the correct structure with all nested data
+                const processedModule = {
                     _id: module._id,
                     title: module.title || "",
                     description: module.description || "",
                     order: module.order || 0,
-                    content: module.content || [],
-                    // If module has a quiz, include it directly
-                    quiz: module.quiz || null,
+                    // Process content to ensure it's an array of full objects
+                    content: Array.isArray(module.content)
+                        ? module.content.map(contentItem => {
+                            // If content is already an object, use it directly
+                            if (typeof contentItem === 'object' && contentItem !== null) {
+                                return {
+                                    _id: contentItem._id,
+                                    title: contentItem.title || "",
+                                    description: contentItem.description || "",
+                                    type: contentItem.type || "text",
+                                    textContent: contentItem.textContent || "",
+                                    fileUrl: contentItem.fileUrl || "",
+                                    module: module._id, // Ensure module reference is set
+                                    mimeType: contentItem.mimeType || "application/octet-stream"
+                                };
+                            }
+                            // If it's just an ID, find the corresponding content item
+                            return contentItem;
+                        })
+                        : [],
                 };
+
+                // If module has a quiz, include it with full structure
+                if (module.quiz) {
+                    if (typeof module.quiz === 'object' && module.quiz !== null) {
+                        processedModule.quiz = {
+                            _id: module.quiz._id,
+                            title: module.quiz.title || "",
+                            description: module.quiz.description || "",
+                            timeLimit: module.quiz.timeLimit || 30,
+                            passingScore: module.quiz.passingScore || 60,
+                            questions: module.quiz.questions || [],
+                            module: module._id // Ensure module reference is set
+                        };
+                    } else {
+                        // If quiz is just an ID, keep it as is
+                        processedModule.quiz = module.quiz;
+                    }
+                } else {
+                    processedModule.quiz = null;
+                }
+
+                return processedModule;
             });
 
-            // Process content items
+            // Process content items to ensure they have module references
             const processedContent = currentCourse.content.map((item) => {
+                // Find which module this content belongs to
+                const moduleId = currentCourse.modules.find(module =>
+                    Array.isArray(module.content) &&
+                    module.content.some(contentId =>
+                        contentId === item._id ||
+                        (typeof contentId === 'object' && contentId?._id === item._id)
+                    )
+                )?._id;
+
                 return {
                     _id: item._id,
                     title: item.title || "",
@@ -111,12 +153,19 @@ const CourseCreationFlow = () => {
                     type: item.type || "text",
                     textContent: item.textContent || "",
                     fileUrl: item.fileUrl || "",
-                    // Don't include file object as it's not needed for display
+                    mimeType: item.mimeType || "application/octet-stream",
+                    module: moduleId || null // Set module reference if found
                 };
             });
 
-            // Process quizzes
+            // Process quizzes to ensure they have module references
             const processedQuizzes = currentCourse.quizzes.map((quiz) => {
+                // Find which module this quiz belongs to
+                const moduleId = currentCourse.modules.find(module =>
+                    module.quiz === quiz._id ||
+                    (typeof module.quiz === 'object' && module.quiz?._id === quiz._id)
+                )?._id;
+
                 return {
                     _id: quiz._id,
                     title: quiz.title || "",
@@ -124,6 +173,7 @@ const CourseCreationFlow = () => {
                     timeLimit: quiz.timeLimit || 30,
                     passingScore: quiz.passingScore || 60,
                     questions: quiz.questions || [],
+                    module: moduleId || null // Set module reference if found
                 };
             });
 
@@ -143,6 +193,12 @@ const CourseCreationFlow = () => {
                 status: currentCourse.status ?? 1,
                 isDraft: currentCourse.isDraft ?? true,
                 enrolledUsers: currentCourse.enrolledUsers || [],
+            });
+
+            console.log("Processed course data for editing:", {
+                modules: processedModules,
+                content: processedContent,
+                quizzes: processedQuizzes
             });
 
             // Set thumbnail preview if exists
@@ -248,10 +304,22 @@ const CourseCreationFlow = () => {
                 }
             };
 
-            // Handle modules - we need to process quizzes and remove file objects before stringifying
+            // Handle modules - we need to process quizzes and content references before stringifying
             const modulesForSubmission = courseData.modules.map((module) => {
                 // Create a clean copy without file objects
-                const { quiz, ...cleanModule } = module;
+                const { quiz, content, ...cleanModule } = module;
+
+                // Process content references - ensure we're only sending IDs, not full objects
+                cleanModule.content = Array.isArray(content)
+                    ? content.map(contentItem => {
+                        // If content is an object, extract just the ID
+                        if (typeof contentItem === 'object' && contentItem !== null) {
+                            return contentItem._id;
+                        }
+                        // If it's already an ID, use it directly
+                        return contentItem;
+                    })
+                    : [];
 
                 // If module has a quiz, add it with proper structure
                 if (quiz) {
@@ -270,10 +338,16 @@ const CourseCreationFlow = () => {
             });
             formData.append("modules", safeStringify(modulesForSubmission));
 
-            // Handle content - we need to remove file objects before stringifying
+            // Handle content - we need to remove file objects and ensure module references are IDs
             const contentForSubmission = courseData.content.map((item) => {
                 // Create a clean copy without file objects
-                const { file, ...cleanItem } = item;
+                const { file, module, ...cleanItem } = item;
+
+                // Ensure module reference is an ID, not an object
+                if (module) {
+                    cleanItem.module = typeof module === 'object' ? module._id : module;
+                }
+
                 return cleanItem;
             });
             formData.append("content", safeStringify(contentForSubmission));
@@ -284,7 +358,14 @@ const CourseCreationFlow = () => {
                     formData.append(`contentFiles[${index}]`, item.file);
                     // Make sure we're sending the temporary ID as is
                     formData.append(`contentFileIds[${index}]`, item._id);
-                    console.log(`Adding content file for ID: ${item._id}`);
+
+                    // For new content items added during edit, also send the module ID
+                    if (item._id.startsWith('temp_') && item.module) {
+                        const moduleId = typeof item.module === 'object' ? item.module._id : item.module;
+                        formData.append(`contentModules[${index}]`, moduleId);
+                    }
+
+                    console.log(`Adding content file for ID: ${item._id}, module: ${item.module}`);
                 }
             });
 
@@ -294,7 +375,32 @@ const CourseCreationFlow = () => {
                 courseData.content.map((item) => ({ id: item._id, title: item.title }))
             );
 
-            formData.append("quizzes", safeStringify(courseData.quizzes));
+            // Handle quizzes - ensure module references are IDs
+            const quizzesForSubmission = courseData.quizzes.map((quiz) => {
+                // Create a clean copy
+                const { module, ...cleanQuiz } = quiz;
+
+                // Ensure module reference is an ID, not an object
+                if (module) {
+                    cleanQuiz.module = typeof module === 'object' ? module._id : module;
+                }
+
+                // Ensure questions array is included
+                if (!cleanQuiz.questions) {
+                    cleanQuiz.questions = [];
+                }
+
+                return cleanQuiz;
+            });
+
+            console.log("Quizzes for submission:", quizzesForSubmission);
+            console.log("Quiz questions count:", quizzesForSubmission.map(q => ({
+                id: q._id,
+                title: q.title,
+                questionsCount: q.questions ? q.questions.length : 0
+            })));
+
+            formData.append("quizzes", safeStringify(quizzesForSubmission));
 
             // Add creator reference
             formData.append("creator", user.id);
