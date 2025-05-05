@@ -6,6 +6,7 @@ import adminSlice from './admin/adminSlice';
 import roleSlice from './role/roleSlice';
 import staffSlice from './admin/staffSlice';
 import blogSlice from './blog/blogSlice';
+import userSlice from './user/userSlice';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     role: roleSlice,
     staff: staffSlice,
     blog: blogSlice,
+    user: userSlice,
   },
 });
 

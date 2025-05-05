@@ -71,7 +71,7 @@ const StaffDetails = () => {
           avatarUrl = profile.avatar;
         } else {
           // Otherwise prepend the API base URL
-          avatarUrl = `${import.meta.env.VITE_API_URL.replace("/api", "")}${
+          avatarUrl = `${import.meta.env.VITE_IMAGE_URL}${
             profile.avatar
           }`;
         }

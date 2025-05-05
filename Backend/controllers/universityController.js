@@ -28,7 +28,7 @@ exports.createEducator = async (req, res, next) => {
 
     // Add avatar if profile image was uploaded
     if (req.file) {
-      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      profile.avatar = `uploads/profiles/${req.file.filename}`;
     }
 
     console.log(
@@ -208,7 +208,7 @@ exports.updateEducator = async (req, res) => {
     // Update avatar if profile image was uploaded
     if (req.file) {
       console.log("University controller - Profile image uploaded:", req.file);
-      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      educator.profile.avatar = `uploads/profiles/${req.file.filename}`;
       console.log(
         "University controller - Updated avatar path:",
         educator.profile.avatar

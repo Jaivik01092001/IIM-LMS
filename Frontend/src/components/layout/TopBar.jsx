@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import LanguageSelector from "../common/LanguageSelector";
 import "../../assets/styles/TopBar.css";
 
 /**
@@ -237,7 +236,13 @@ const TopBar = ({ toggleSidebar }) => {
             <div className="profile-dropdown">
               <ul>
                 <li>
-                  <a href="#">
+                  <a onClick={() => {
+                    // Navigate to profile page based on current dashboard type
+                    const currentPath = location.pathname;
+                    const basePath = currentPath.split('/').slice(0, 2).join('/');
+                    navigate(`${basePath}/profile`);
+                    setShowDropdown(false);
+                  }}>
                     <FaCog /> {t("common.settings")}
                   </a>
                 </li>

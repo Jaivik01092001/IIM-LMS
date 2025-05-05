@@ -73,7 +73,7 @@ exports.createUniversity = async (req, res, next) => {
         address,
         zipcode,
         state,
-        avatar: req.file ? `/uploads/profiles/${req.file.filename}` : null,
+        avatar: req.file ? `uploads/profiles/${req.file.filename}` : null,
       },
     });
 
@@ -176,7 +176,7 @@ exports.updateUniversity = async (req, res) => {
 
     // Update profile image if provided
     if (req.file) {
-      university.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      university.profile.avatar = `uploads/profiles/${req.file.filename}`;
     } else if (req.body.keepExistingImage === "true") {
       // Keep existing image, no need to update
     }
@@ -1585,7 +1585,7 @@ exports.createEducator = async (req, res, next) => {
 
     // Add avatar if profile image was uploaded
     if (req.file) {
-      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      profile.avatar = `uploads/profiles/${req.file.filename}`;
     }
 
     // We always use "educator" as the core role value
@@ -1682,7 +1682,7 @@ exports.updateEducator = async (req, res) => {
 
     // Handle profile image upload
     if (req.file) {
-      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      educator.profile.avatar = `uploads/profiles/${req.file.filename}`;
     }
 
     await educator.save();

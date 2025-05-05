@@ -41,6 +41,7 @@ import RolePermission from "./pages/RolePermission.jsx";
 import Staffs from "./pages/Staffs.jsx";
 import StaffDetails from "./pages/StaffDetails.jsx";
 import StaffAccountForm from "./pages/StaffAccountForm.jsx";
+import Settings from "./pages/Settings.jsx";
 
 const App = () => {
   return (
@@ -127,6 +128,9 @@ const App = () => {
             <Route path="tutor/blog/create" element={<BlogForm />} />
             <Route path="tutor/blog/edit/:id" element={<BlogForm />} />
             <Route path="tutor/blog/:id" element={<BlogDetail />} />
+
+            {/* Shared routes for all user types */}
+            <Route path="profile" element={<Settings />} />
 
             {/* Default redirect */}
             <Route path="" element={<Navigate to="/" replace />} />
