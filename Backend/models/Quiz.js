@@ -7,7 +7,7 @@ const quizSchema = new mongoose.Schema({
   questions: [{
     question: { type: String, required: true },
     options: [{ type: String, required: true }],
-    correctAnswer: { type: Number, required: true }, // Changed from String to Number to match frontend
+    correctAnswer: { type: String, required: true }, // Using String type for compatibility with frontend
     explanation: { type: String },
     points: { type: Number, default: 1 }
   }],

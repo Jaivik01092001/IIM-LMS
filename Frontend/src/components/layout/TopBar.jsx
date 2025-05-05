@@ -4,6 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import "../../assets/styles/TopBar.css";
 
+const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
+
 /**
  * TopBar component for the dashboard
  */
@@ -16,6 +18,7 @@ const TopBar = ({ toggleSidebar }) => {
   const [dashboardType, setDashboardType] = useState("");
   const [pageTitle, setPageTitle] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [profile, setProfile] = useState("");
 
   // Get user info from localStorage
   useEffect(() => {
@@ -24,7 +27,7 @@ const TopBar = ({ toggleSidebar }) => {
       try {
         const userData = JSON.parse(user);
         setUserName(userData.name || "User");
-
+        setProfile(userData.profile.avatar || "");  // Set profile picture
         // Set user role and dashboard type
         const role = userData.role || "";
         setUserRole(role);
@@ -215,19 +218,19 @@ const TopBar = ({ toggleSidebar }) => {
 
         {/* User profile */}
         <div className="user-profile" onClick={toggleDropdown}>
-          <div className="avatar">{getInitials(userName)}</div>
+          <div className="avatar"><img src={VITE_IMAGE_URL + profile} alt="profile" /></div>
           <div className="user-info">
             <span className="user-name">{userName}</span>
             <span className="user-role">
               {userRole === "admin"
                 ? t("dashboard.superAdmin")
                 : userRole === "staff"
-                ? t("dashboard.iimStaff")
-                : userRole === "university"
-                ? t("dashboard.schoolAdmin")
-                : userRole === "educator"
-                ? t("dashboard.educator")
-                : t("dashboard.user")}
+                  ? t("dashboard.iimStaff")
+                  : userRole === "university"
+                    ? t("dashboard.schoolAdmin")
+                    : userRole === "educator"
+                      ? t("dashboard.educator")
+                      : t("dashboard.user")}
             </span>
           </div>
 

@@ -344,17 +344,25 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             return;
         }
 
+        // Create a copy of the current question with correctAnswer as a string
+        const processedQuestion = {
+            ...currentQuestion,
+            correctAnswer: currentQuestion.correctAnswer.toString() // Convert to string for backend compatibility
+        };
+
+        console.log("Processed question with string correctAnswer:", processedQuestion);
+
         let updatedQuestions;
 
         if (editingQuestionIndex !== null) {
             // Update existing question
             updatedQuestions = [...quizFormData.questions];
-            updatedQuestions[editingQuestionIndex] = { ...currentQuestion };
+            updatedQuestions[editingQuestionIndex] = processedQuestion;
         } else {
             // Add new question
             updatedQuestions = [
                 ...quizFormData.questions,
-                { ...currentQuestion }
+                processedQuestion
             ];
         }
 
@@ -371,7 +379,16 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     // Start editing an existing question
     const startEditQuestion = (index) => {
         const questionToEdit = quizFormData.questions[index];
-        setCurrentQuestion({ ...questionToEdit });
+
+        // Convert correctAnswer from string to number for editing
+        const processedQuestionForEdit = {
+            ...questionToEdit,
+            correctAnswer: parseInt(questionToEdit.correctAnswer, 10) || 0 // Convert string to number for UI
+        };
+
+        console.log("Loading question for editing with numeric correctAnswer:", processedQuestionForEdit);
+
+        setCurrentQuestion(processedQuestionForEdit);
         setEditingQuestionIndex(index);
     };
 
@@ -902,11 +919,18 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                                 <div key={index} className="question-item">
                                                                                     <h6>Question {index + 1}: {q.question}</h6>
                                                                                     <ul className="options-list">
-                                                                                        {q.options.map((option, optIndex) => (
-                                                                                            <li key={optIndex} className={optIndex === q.correctAnswer ? 'correct' : ''}>
-                                                                                                {option} {optIndex === q.correctAnswer && ' (Correct)'}
-                                                                                            </li>
-                                                                                        ))}
+                                                                                        {q.options.map((option, optIndex) => {
+                                                                                            // Convert correctAnswer to number for comparison if it's a string
+                                                                                            const correctAnswerNum = typeof q.correctAnswer === 'string'
+                                                                                                ? parseInt(q.correctAnswer, 10)
+                                                                                                : q.correctAnswer;
+
+                                                                                            return (
+                                                                                                <li key={optIndex} className={optIndex === correctAnswerNum ? 'correct' : ''}>
+                                                                                                    {option} {optIndex === correctAnswerNum && ' (Correct)'}
+                                                                                                </li>
+                                                                                            );
+                                                                                        })}
                                                                                     </ul>
                                                                                     <div className="question-actions">
                                                                                         <button

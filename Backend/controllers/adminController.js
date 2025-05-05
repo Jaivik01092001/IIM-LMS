@@ -793,7 +793,20 @@ exports.updateCourse = async (req, res) => {
                       // Always update questions array if it's provided, even if it's empty
                       if (quizData.questions !== undefined) {
                         console.log(`Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions`);
-                        existingQuiz.questions = quizData.questions;
+
+                        // Process questions to ensure correctAnswer is a string
+                        const processedQuestions = quizData.questions.map(question => {
+                          // Ensure correctAnswer is a string
+                          if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
+                            return {
+                              ...question,
+                              correctAnswer: question.correctAnswer.toString()
+                            };
+                          }
+                          return question;
+                        });
+
+                        existingQuiz.questions = processedQuestions;
                       }
 
                       existingQuiz.timeLimit =
@@ -805,13 +818,25 @@ exports.updateCourse = async (req, res) => {
                     }
                   } else {
                     // Create new quiz
+                    // Process questions to ensure correctAnswer is a string
+                    const processedQuestions = quizData.questions ? quizData.questions.map(question => {
+                      // Ensure correctAnswer is a string
+                      if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
+                        return {
+                          ...question,
+                          correctAnswer: question.correctAnswer.toString()
+                        };
+                      }
+                      return question;
+                    }) : [];
+
                     const quiz = new Quiz({
                       title: quizData.title || `${existingModule.title} Quiz`,
                       description:
                         quizData.description ||
                         `Quiz for ${existingModule.title}`,
                       course: course._id,
-                      questions: quizData.questions || [],
+                      questions: processedQuestions,
                       timeLimit: quizData.timeLimit || 30,
                       passingScore: quizData.passingScore || 60,
                     });
@@ -903,13 +928,25 @@ exports.updateCourse = async (req, res) => {
               if (moduleData.quiz) {
                 const quizData = moduleData.quiz;
 
+                // Process questions to ensure correctAnswer is a string
+                const processedQuestions = quizData.questions ? quizData.questions.map(question => {
+                  // Ensure correctAnswer is a string
+                  if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
+                    return {
+                      ...question,
+                      correctAnswer: question.correctAnswer.toString()
+                    };
+                  }
+                  return question;
+                }) : [];
+
                 // Create a new quiz
                 const quiz = new Quiz({
                   title: quizData.title || `${newModule.title} Quiz`,
                   description:
                     quizData.description || `Quiz for ${newModule.title}`,
                   course: course._id,
-                  questions: quizData.questions || [],
+                  questions: processedQuestions,
                   timeLimit: quizData.timeLimit || 30,
                   passingScore: quizData.passingScore || 60,
                 });
@@ -1284,7 +1321,20 @@ exports.updateCourse = async (req, res) => {
                 // Always update questions array if it's provided, even if it's empty
                 if (quizData.questions !== undefined) {
                   console.log(`Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`);
-                  existingQuiz.questions = quizData.questions;
+
+                  // Process questions to ensure correctAnswer is a string
+                  const processedQuestions = quizData.questions.map(question => {
+                    // Ensure correctAnswer is a string
+                    if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
+                      return {
+                        ...question,
+                        correctAnswer: question.correctAnswer.toString()
+                      };
+                    }
+                    return question;
+                  });
+
+                  existingQuiz.questions = processedQuestions;
                 }
 
                 existingQuiz.timeLimit = quizData.timeLimit || existingQuiz.timeLimit;
