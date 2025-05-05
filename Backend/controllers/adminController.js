@@ -344,7 +344,10 @@ exports.getCourses = async (req, res) => {
 exports.getCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate("creator", "name")
+      .populate({
+        path: "creator",
+        select: "name profile.avatar", // Include avatar from profile
+      })
       .populate("content")
       .populate({
         path: "modules",
