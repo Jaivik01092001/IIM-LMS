@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaToggleOn, FaToggleOff, FaUser, FaUserPlus, FaTimes } from "react-icons/fa";
+import { FaUser, FaUserPlus, FaTimes, FaLock, FaPencilAlt, FaEye, FaEyeSlash, FaCheckCircle, FaTimesCircle, FaChartLine } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
 const AccessSettingsStep = ({ courseData, updateCourseData }) => {
@@ -86,46 +86,94 @@ const AccessSettingsStep = ({ courseData, updateCourseData }) => {
                 Configure who can access your course and its current status.
             </p>
 
-            <div className="form-section">
+            <div className="settings-card">
+                <div className="settings-card-header">
+                    <div className="settings-card-icon">
+                        <FaEye />
+                    </div>
+                    <h3 className="settings-card-title">Visibility Settings</h3>
+                </div>
+                <p className="field-hint">
+                    Control the visibility and publication status of your course.
+                </p>
+
                 <div className="toggle-group">
                     <div className="toggle-item">
                         <div className="toggle-info">
-                            <h3>Course Status</h3>
+                            <h3>
+                                Course Status
+                                <span className={`status-badge ${localData.status === 1 ? 'active' : 'inactive'}`}>
+                                    {localData.status === 1
+                                        ? <><FaCheckCircle /> Active</>
+                                        : <><FaTimesCircle /> Inactive</>
+                                    }
+                                </span>
+                            </h3>
                             <p>
                                 {localData.status === 1
                                     ? "Course is active and can be discovered by students."
                                     : "Course is inactive and hidden from students."}
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            className={`toggle-button ${localData.status === 1 ? 'active' : ''}`}
-                            onClick={toggleStatus}
-                        >
-                            {localData.status === 1 ? <FaToggleOn /> : <FaToggleOff />}
-                            <span>{localData.status === 1 ? 'Active' : 'Inactive'}</span>
-                        </button>
+                        <div className="toggle-wrapper">
+                            <label className="schooljxs-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={localData.status === 1}
+                                    onChange={toggleStatus}
+                                />
+                                <span className="slider"></span>
+                            </label>
+                            <div className="toggle-label-text">
+                                {localData.status === 1 ? 'Active' : 'Inactive'}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="toggle-item">
                         <div className="toggle-info">
-                            <h3>Course Publication</h3>
+                            <h3>
+                                Publication Status
+                                <span className={`status-badge ${!localData.isDraft ? 'active' : 'inactive'}`}>
+                                    {!localData.isDraft
+                                        ? <><FaCheckCircle /> Published</>
+                                        : <><FaPencilAlt /> Draft</>
+                                    }
+                                </span>
+                            </h3>
                             <p>
                                 {localData.isDraft
                                     ? "Course is in draft mode and will not be visible to students."
                                     : "Course is published and available to enrolled students."}
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            className={`toggle-button ${!localData.isDraft ? 'active' : ''}`}
-                            onClick={toggleDraft}
-                        >
-                            {!localData.isDraft ? <FaToggleOn /> : <FaToggleOff />}
-                            <span>{localData.isDraft ? 'Draft' : 'Published'}</span>
-                        </button>
+                        <div className="toggle-wrapper">
+                            <label className="schooljxs-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={!localData.isDraft}
+                                    onChange={toggleDraft}
+                                />
+                                <span className="slider"></span>
+                            </label>
+                            <div className="toggle-label-text">
+                                {!localData.isDraft ? 'Published' : 'Draft'}
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="settings-card">
+                <div className="settings-card-header">
+                    <div className="settings-card-icon">
+                        <FaLock />
+                    </div>
+                    <h3 className="settings-card-title">User Access</h3>
+                </div>
+                <p className="field-hint">
+                    Manage who can access this course during development or testing.
+                </p>
 
                 <div className="enrolled-users-section">
                     <h3>Enrolled Users</h3>
@@ -187,10 +235,16 @@ const AccessSettingsStep = ({ courseData, updateCourseData }) => {
                                             <FaUser />
                                         </div>
                                         <div className="user-info">
-                                            <p className="user-name">{enrollment.userName}</p>
+                                            <p className="user-name">
+                                                {enrollment.userName}
+                                                {enrollment.progress > 0 && (
+                                                    <span className="progress-badge">
+                                                        <FaChartLine /> {enrollment.progress}% Complete
+                                                    </span>
+                                                )}
+                                            </p>
                                             <p className="user-status">
                                                 Status: {enrollment.status === 'in_progress' ? 'In Progress' : 'Completed'}
-                                                {enrollment.progress > 0 && ` (${enrollment.progress}%)`}
                                             </p>
                                         </div>
                                         <button

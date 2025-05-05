@@ -11,8 +11,10 @@ import {
   FaUserCircle,
   FaTrophy,
   FaFilePdf,
-  FaLock
+  FaLock,
+  FaYoutube
 } from 'react-icons/fa';
+import ProgressBar from '../components/common/ProgressBar';
 import { toast } from 'react-toastify';
 import { getCourse } from '../redux/admin/adminApi';
 import {
@@ -103,8 +105,9 @@ const EnrollCourseDetail = () => {
 
         // Fetch certificates to have them ready if needed
         //  dispatch(getMyCertificatesThunk());
-      } catch (err) {
+      } catch (error) {
         toast.error('Failed to load course');
+        console.error('Error loading course:', error);
       }
     };
     fetchCourse();
@@ -113,6 +116,8 @@ const EnrollCourseDetail = () => {
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
     if (moduleProgress && course) {
+      console.log('Initializing progress from backend data:', moduleProgress);
+
       // Start with all sessions NOT completed
       const newSessionCompleted = {};
       course.modules.forEach(mod => {
@@ -132,7 +137,7 @@ const EnrollCourseDetail = () => {
       // Then apply the progress from the backend
       moduleProgress.moduleProgress.forEach(mp => {
         // Get the module ID - handle both object and string formats
-        const moduleId = mp.module._id || mp.module;
+        const moduleId = typeof mp.module === 'object' ? mp.module._id : mp.module.toString();
 
         // Update module completion status
         newModuleState[moduleId] = mp.isCompleted;
@@ -141,31 +146,42 @@ const EnrollCourseDetail = () => {
         if (mp.completedContent && mp.completedContent.length > 0) {
           mp.completedContent.forEach(contentId => {
             if (contentId) {
-              newSessionCompleted[contentId] = true;
+              // Handle both object and string formats for content ID
+              const contentIdStr = typeof contentId === 'object' ? contentId._id : contentId.toString();
+              newSessionCompleted[contentIdStr] = true;
             }
           });
         }
       });
 
       // IMPORTANT FIX: Ensure module unlocking is consistent
-      // Find the highest completed module index
-      let highestCompletedModuleIndex = -1;
+      // First module is always unlocked
+      if (course.modules && course.modules.length > 0) {
+        newModuleState[course.modules[0]._id] = true;
+      }
 
-      course.modules.forEach((module, index) => {
-        // If this module is completed or has any completed content
-        if (newModuleState[module._id] ||
-          (module.content && module.content.some(content => newSessionCompleted[content._id]))) {
-          highestCompletedModuleIndex = Math.max(highestCompletedModuleIndex, index);
-        }
-      });
+      // For each module after the first one, check if all previous modules are fully completed
+      for (let i = 1; i < course.modules.length; i++) {
+        const allPreviousModulesCompleted = course.modules
+          .slice(0, i) // Get all modules before the current one
+          .every((prevModule) => {
+            // For each previous module, check if it's marked as completed
+            // AND check if all its content is completed
+            const isPrevModuleCompleted = newModuleState[prevModule._id];
+            const isAllPrevModuleContentCompleted = prevModule.content?.every(
+              content => newSessionCompleted[content._id] === true
+            ) || false;
 
-      // Ensure all modules up to and including the highest completed one are unlocked
-      // Also unlock the next module after the highest completed one
-      course.modules.forEach((module, index) => {
-        if (index <= highestCompletedModuleIndex + 1) {
-          newModuleState[module._id] = true;
+            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+          });
+
+        // Only unlock this module if all previous modules are fully completed
+        if (allPreviousModulesCompleted) {
+          newModuleState[course.modules[i]._id] = true;
+        } else {
+          newModuleState[course.modules[i]._id] = false;
         }
-      });
+      }
 
       // Update the module completion state
       setModuleCompleted(newModuleState);
@@ -173,9 +189,10 @@ const EnrollCourseDetail = () => {
       // Update session completion state
       setSessionCompleted(newSessionCompleted);
 
-      // Calculate overall progress
+      // Calculate overall progress based on completed content
       const completedCount = Object.values(newSessionCompleted).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionCompleted).length;
+      const calculatedProgress = totalSessions > 0 ? Math.round((completedCount / totalSessions) * 100) : 0;
 
       // Check if the course has enrolled users and if the current user is one of them
       if (course.enrolledUsers && course.enrolledUsers.length > 0 && currentUserId) {
@@ -186,23 +203,27 @@ const EnrollCourseDetail = () => {
         );
 
         // If user enrollment exists, use the progress from the backend
-        if (userEnrollment) {
-          setUserProgress(userEnrollment.progress || 0);
-        } else if (totalSessions > 0) {
-          // Fallback to calculated progress if no enrollment found
-          const newProgress = Math.round((completedCount / totalSessions) * 100);
-          setUserProgress(newProgress);
+        if (userEnrollment && typeof userEnrollment.progress === 'number') {
+          console.log('Setting progress from enrollment:', userEnrollment.progress);
+          setUserProgress(userEnrollment.progress);
+        } else {
+          // Fallback to calculated progress if no enrollment found or progress is not a number
+          console.log('Setting calculated progress:', calculatedProgress);
+          setUserProgress(calculatedProgress);
         }
-      } else if (totalSessions > 0) {
+      } else {
         // Fallback to calculated progress if no enrollment data
-        const newProgress = Math.round((completedCount / totalSessions) * 100);
-        setUserProgress(newProgress);
+        console.log('No enrollment found, setting calculated progress:', calculatedProgress);
+        setUserProgress(calculatedProgress);
       }
 
       // If there's a last accessed module, set it as active
       if (moduleProgress.lastAccessedModule) {
         // Find the module index
-        const lastModuleId = moduleProgress.lastAccessedModule;
+        const lastModuleId = typeof moduleProgress.lastAccessedModule === 'object'
+          ? moduleProgress.lastAccessedModule._id
+          : moduleProgress.lastAccessedModule.toString();
+
         const moduleIndex = course.modules.findIndex(
           m => m._id === lastModuleId
         );
@@ -244,27 +265,29 @@ const EnrollCourseDetail = () => {
         .unwrap()
         .then(() => {
           // After the course status is updated to 'completed', generate the certificate
-          dispatch(generateCertificateThunk(id)).unwrap().then(() => {
-            // Switch to certificates tab
-            setActiveTab('certificates');
-            // Fetch certificates to display
-            dispatch(getMyCertificatesThunk());
-            //toast.success('Course completed! Your certificate has been generated.');
-          })
-            .catch((error) => {
-              console.error('Failed to generate certificate:', error);
+          dispatch(generateCertificateThunk(id))
+            .unwrap()
+            .then(() => {
+              // Switch to certificates tab
+              setActiveTab('certificates');
+              // Refresh certificates list
+              dispatch(getMyCertificatesThunk());
+              toast.success('Certificate generated successfully!');
+            })
+            .catch(error => {
+              console.error('Certificate generation error:', error);
               if (error.message === "Certificate already exists") {
-                // If certificate already exists, just switch to the certificates tab
-                setActiveTab('certificates');
+                // If certificate already exists, just refresh the list
                 dispatch(getMyCertificatesThunk());
-                toast.info('Certificate already exists.');
+                setActiveTab('certificates');
+                toast.info('Certificate already exists. Refreshing your certificates.');
               } else {
                 toast.error('Failed to generate certificate. Please try again.');
               }
             });
         })
-        .catch((error) => {
-          console.error('Failed to update course status:', error);
+        .catch(error => {
+          console.error('Course status update error:', error);
           toast.error('Failed to update course status. Please try again.');
         });
     }
@@ -285,10 +308,13 @@ const EnrollCourseDetail = () => {
         [sessionId]: !sessionCompleted[sessionId],
       };
 
-      // Calculate progress for all sessions
+      // Calculate progress for all sessions across all modules
       const completedCount = Object.values(newSessionState).filter(Boolean).length;
       const totalSessions = Object.keys(newSessionState).length;
-      const newProgress = Math.round((completedCount / totalSessions) * 100);
+
+      // Store the calculated progress in a variable but don't set it yet
+      // We'll use the value returned from the backend instead
+      const calculatedProgress = Math.round((completedCount / totalSessions) * 100);
 
       // Check if all sessions in this module are completed
       const moduleSessionsCompleted =
@@ -310,10 +336,27 @@ const EnrollCourseDetail = () => {
         }
       });
 
-      // If this module is completed, unlock the next module if it exists
+      // Only unlock the next module if this module is completed AND all previous modules are completed
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
-        const nextModuleId = course.modules[moduleIndex + 1]._id;
-        newModuleState[nextModuleId] = true;
+        // Check if all previous modules are completed
+        const allPreviousModulesCompleted = course.modules
+          .slice(0, moduleIndex + 1) // Get all modules up to and including the current one
+          .every((prevModule) => {
+            // For each previous module, check if it's marked as completed
+            // AND check if all its content is completed
+            const isPrevModuleCompleted = newModuleState[prevModule._id];
+            const isAllPrevModuleContentCompleted = prevModule.content?.every(
+              content => newSessionState[content._id] === true
+            ) || false;
+
+            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+          });
+
+        // Only unlock the next module if all previous modules are fully completed
+        if (allPreviousModulesCompleted) {
+          const nextModuleId = course.modules[moduleIndex + 1]._id;
+          newModuleState[nextModuleId] = true;
+        }
       }
 
       // Prepare data for backend update
@@ -328,8 +371,8 @@ const EnrollCourseDetail = () => {
           .map(content => content._id) || [];
       });
 
-      // Update backend first
-      await dispatch(updateModuleProgressThunk({
+      // Update backend first and capture the response
+      const response = await dispatch(updateModuleProgressThunk({
         courseId: id,
         progressData: {
           moduleId,
@@ -343,7 +386,26 @@ const EnrollCourseDetail = () => {
       // Only update local state after successful backend update
       setSessionCompleted(newSessionState);
       setModuleCompleted(newModuleState);
-      setUserProgress(newProgress);
+
+      // Use the progress value returned from the backend instead of the locally calculated one
+      // This ensures we're always in sync with the server's calculation
+      console.log('Progress response from backend:', response);
+
+      // First try to use userProgress which comes directly from the course enrollment
+      if (typeof response.userProgress === 'number') {
+        console.log('Using userProgress from backend:', response.userProgress);
+        setUserProgress(response.userProgress);
+      }
+      // Then try overallProgress which is calculated from module content
+      else if (typeof response.overallProgress === 'number') {
+        console.log('Using overallProgress from backend:', response.overallProgress);
+        setUserProgress(response.overallProgress);
+      }
+      // Fallback to calculated progress if backend doesn't return a value
+      else {
+        console.log('Using locally calculated progress:', calculatedProgress);
+        setUserProgress(calculatedProgress);
+      }
 
       toast.success('Progress updated successfully');
     } catch (error) {
@@ -434,9 +496,22 @@ const EnrollCourseDetail = () => {
     // }));
   };
 
+  // Helper function to extract YouTube video ID from URL
+  const getYoutubeVideoId = (url) => {
+    if (!url) return '';
 
+    // Extract video ID from different YouTube URL formats
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
 
-  // Use certificateExists in the handleGenerateCertificate function to prevent duplicate certificates
+    return (match && match[7].length === 11) ? match[7] : '';
+  };
+
+  // Helper function to get YouTube URL from content
+  const getYoutubeUrl = (content) => {
+    // First try textContent, then fallback to fileUrl for backward compatibility
+    return content.textContent || content.fileUrl || '';
+  };
 
   // Handle generate certificate
   const handleGenerateCertificate = () => {
@@ -461,9 +536,9 @@ const EnrollCourseDetail = () => {
             dispatch(getMyCertificatesThunk());
             toast.success('Certificate generated successfully!');
           })
-          .catch(err => {
-            console.error('Certificate generation error:', err);
-            if (err.message === "Certificate already exists") {
+          .catch(error => {
+            console.error('Certificate generation error:', error);
+            if (error.message === "Certificate already exists") {
               // If certificate already exists, just refresh the list
               dispatch(getMyCertificatesThunk());
               setActiveTab('certificates');
@@ -473,8 +548,8 @@ const EnrollCourseDetail = () => {
             }
           });
       })
-      .catch(err => {
-        console.error('Course status update error:', err);
+      .catch(error => {
+        console.error('Course status update error:', error);
         toast.error('Failed to update course status. Please try again.');
       });
   };
@@ -486,26 +561,56 @@ const EnrollCourseDetail = () => {
       <div className="course-header">
         <h1>{course.title}</h1>
         <div className="progress-container">
-          <div className="progress-bar" style={{ width: `${userProgress}%` }}></div>
-          <span className="progress-text">{userProgress}%</span>
+          <ProgressBar
+            percentage={userProgress}
+            size="medium"
+            color="warning"
+            animated={true}
+            className="course-progress-bar custom-progress"
+            textPosition="right"
+            showText={true}
+          />
         </div>
-        <div className="user-profile">
-          <FaUserCircle size={40} />
-          <span>{course.creator?.name}</span>
-        </div>
+
       </div>
 
       <div className="course-content-container">
         <div className="video-container">
           <div className="video-wrapper">
             {selectedContent ? (
-              selectedContent.mimeType?.startsWith('video/') ? (
+              selectedContent.mimeType?.startsWith('video/') && selectedContent.mimeType !== 'video/youtube' ? (
                 <video
                   className="video-player"
                   controls
                   width="100%"
                   src={`${VITE_IMAGE_URL}${selectedContent.fileUrl.replace(/\\/g, '/')}`}
                 />
+              ) : selectedContent.mimeType === 'video/youtube' ? (
+                <div className="youtube-embed-container" style={{
+                  position: 'relative',
+                  paddingBottom: '56.25%', /* 16:9 aspect ratio */
+                  height: '0',
+                  overflow: 'hidden',
+                  maxWidth: '100%',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <iframe
+                    style={{
+                      position: 'absolute',
+                      top: '0',
+                      left: '0',
+                      width: '100%',
+                      height: '100%',
+                      border: 'none'
+                    }}
+                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(getYoutubeUrl(selectedContent))}`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
               ) : selectedContent.mimeType === 'application/pdf' ? (
                 <iframe
                   title="PDF Preview"
@@ -666,8 +771,10 @@ const EnrollCourseDetail = () => {
                           onClick={() => handleContentClick(content, moduleIndex)}
                         >
                           <div className="topic-icon">
-                            {content.mimeType?.startsWith('video/') ? (
+                            {content.mimeType?.startsWith('video/') && content.mimeType !== 'video/youtube' ? (
                               <FaPlayCircle />
+                            ) : content.mimeType === 'video/youtube' ? (
+                              <FaYoutube />
                             ) : content.mimeType === 'text/html' ? (
                               <FaFilePdf />
                             ) : (
@@ -677,9 +784,10 @@ const EnrollCourseDetail = () => {
                           <div className="topic-details">
                             <h4>{content.title}</h4>
                             <p>
-                              {content.mimeType?.startsWith('video/') ? 'Video' :
-                                content.mimeType === 'text/html' ? 'Text' :
-                                  content.mimeType?.split('/')[1]?.toUpperCase() || 'Document'}
+                              {content.mimeType?.startsWith('video/') && content.mimeType !== 'video/youtube' ? 'Video' :
+                                content.mimeType === 'video/youtube' ? 'YouTube Video' :
+                                  content.mimeType === 'text/html' ? 'Text' :
+                                    content.mimeType?.split('/')[1]?.toUpperCase() || 'Document'}
                               {content.size ? ` | ${(content.size / 1000000).toFixed(2)} MB` : ''}
                             </p>
                             {content.description && (

@@ -402,31 +402,38 @@ const CourseCreationFlow = () => {
                 <h1>{isEditMode ? "Edit Course" : "Create New Course"}</h1>
             </div>
 
-            {/* Stepper UI */}
-            <div className="stepper">
-                {steps.map((label, index) => (
-                    <div
-                        key={index}
-                        className={`step ${index === activeStep ? "active" : ""} ${index < activeStep ? "completed" : ""
-                            }`}
-                        onClick={() => handleStepClick(index)}
-                    >
-                        <div className="step-number">
-                            {index < activeStep ? <FaCheck /> : index + 1}
+            {/* Improved Stepper UI */}
+            <div className="stepper-container">
+                <div className="stepper">
+                    {steps.map((step, index) => (
+                        <div
+                            key={index}
+                            className={`step ${index === activeStep ? "active" : ""} ${index < activeStep ? "completed" : ""
+                                }`}
+                            onClick={() => handleStepClick(index)}
+                        >
+                            <div className="step-number">
+                                {index < activeStep ? (
+                                    <FaCheck />
+                                ) : (
+                                    index + 1
+                                )}
+                            </div>
+                            <div className="step-label">{step}</div>
                         </div>
-                        <div className="step-label">{label}</div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
 
-            {/* Step content */}
+            {/* Step Content */}
             <div className="step-content">{renderStepContent()}</div>
 
-            {/* Navigation buttons */}
+            {/* Navigation Buttons */}
             <div className="navigation-buttons">
                 {activeStep > 0 && (
                     <button
-                        className="back-button"
+                        type="button"
+                        className="back-nav-button"
                         onClick={handleBack}
                         disabled={isSubmitting}
                     >
@@ -435,62 +442,44 @@ const CourseCreationFlow = () => {
                     </button>
                 )}
 
-                {activeStep < 3 && (
-                    <>
-                        <button
-                            className="save-draft-button"
-                            onClick={() => {
-                                // Set isDraft to true and submit
-                                updateCourseData({ isDraft: true });
-                                handleSubmit();
-                            }}
-                            disabled={isSubmitting}
-                        >
-                            <span>Save Draft</span>
-                        </button>
-
-                        <button
-                            className="next-button"
-                            onClick={handleNext}
-                            disabled={isSubmitting}
-                        >
-                            <span>Next</span>
-                            <FaArrowRight />
-                        </button>
-                    </>
-                )}
-
-                {activeStep === 3 && (
-                    <>
-                        <button
-                            className="save-draft-button"
-                            onClick={() => {
-                                // Set isDraft to true and submit
-                                updateCourseData({ isDraft: true });
-                                handleSubmit();
-                            }}
-                            disabled={isSubmitting}
-                        >
-                            <span>Save Draft</span>
-                        </button>
-
-                        <button
-                            className="submit-button"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? (
-                                <span className="loading-spinner"></span>
-                            ) : (
-                                <>
-                                    <span>{isEditMode ? "Update Course" : "Create Course"}</span>
-                                    <FaCheck />
-                                </>
-                            )}
-                        </button>
-                    </>
+                {activeStep < 3 ? (
+                    <button
+                        type="button"
+                        className="next-button"
+                        onClick={handleNext}
+                        disabled={isSubmitting}
+                    >
+                        <span>Next</span>
+                        <FaArrowRight />
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="submit-button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || Object.keys(formErrors).length > 0}
+                    >
+                        {isSubmitting ? (
+                            <span>Submitting...</span>
+                        ) : (
+                            <span>Submit Course</span>
+                        )}
+                        <FaCheck />
+                    </button>
                 )}
             </div>
+
+            {/* Display form errors */}
+            {Object.keys(formErrors).length > 0 && activeStep === 3 && (
+                <div className="validation-errors">
+                    <h3>Please fix the following errors:</h3>
+                    <ul>
+                        {Object.keys(formErrors).map((key) => (
+                            <li key={key}>{formErrors[key]}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 };

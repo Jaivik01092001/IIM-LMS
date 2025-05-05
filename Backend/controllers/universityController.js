@@ -36,36 +36,22 @@ exports.createEducator = async (req, res, next) => {
       roleId
     );
 
-    // Determine the role based on roleId
-    // Using standardized role mapping: UI role names -> DB role values
-    let roleName = "educator"; // Default DB role value for Educator
-    if (roleId) {
-      const Role = require("../models/Role");
-      const role = await Role.findById(roleId);
-      if (role) {
-        // Map UI role names to DB role values
-        const roleMappings = {
-          "Super Admin": "admin",
-          "IIM Staff": "staff",
-          "School Admin": "university",
-          Educator: "educator",
-        };
-
-        // Get the DB role value from the mapping, or use lowercase role name as fallback
-        roleName = roleMappings[role.name] || role.name.toLowerCase();
-        console.log("University controller - Using role name:", roleName);
-      }
-    }
-
+    // We always use "educator" as the core role value
+    // The roleId only updates the roleRef field for permissions
     const educator = new User({
       email,
-      role: roleName, // Use the determined DB role value
+      role: "educator", // Fixed core role value
       name,
       phoneNumber, // No default phone number, must be provided by user
       university: req.user.id,
       roleRef: roleId || undefined, // Assign role if provided
       profile,
     });
+
+    console.log(
+      "University controller - Creating educator with fixed role 'educator' and roleRef:",
+      roleId
+    );
 
     console.log(
       "University controller - Created educator with roleRef:",
@@ -240,23 +226,7 @@ exports.updateEducator = async (req, res) => {
         "University controller - Updated educator roleRef:",
         educator.roleRef
       );
-
-      // Fetch the role to get its name
-      const Role = require("../models/Role");
-      const role = await Role.findById(roleId);
-      if (role) {
-        // Map UI role names to DB role values
-        const roleMappings = {
-          "Super Admin": "admin",
-          "IIM Staff": "staff",
-          "School Admin": "university",
-          Educator: "educator",
-        };
-
-        // Get the DB role value from the mapping, or use lowercase role name as fallback
-        educator.role = roleMappings[role.name] || role.name.toLowerCase();
-        console.log("University controller - Updated role to:", educator.role);
-      }
+      // Note: We no longer update the core role field, it remains fixed as "educator"
     }
 
     await educator.save();

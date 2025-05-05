@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  FaBook,
-  FaUserGraduate,
   FaClock,
-  FaPencilAlt,
-  FaTrashAlt,
-  FaEye,
   FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -13,12 +8,14 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getCoursesThunk,
   updateCourseThunk,
-  deleteCourseThunk,
   getUsersThunk
 } from "../redux/admin/adminSlice";
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
+import { hasLocalPermission } from "../utils/localPermissions";
 import "../assets/styles/Courses.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -65,8 +62,12 @@ const Courses = ({ userType }) => {
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getCoursesThunk());
-    dispatch(getUsersThunk());
-  }, [dispatch]);
+
+    // Only fetch users data for admin and school views, not for tutor view
+    if (userType !== 'tutor') {
+      dispatch(getUsersThunk());
+    }
+  }, [dispatch, userType]);
 
   // Transform courses data for the table
   const [tableData, setTableData] = useState([]);
@@ -78,7 +79,7 @@ const Courses = ({ userType }) => {
   useEffect(() => {
     if (courses && courses.length > 0) {
       const formattedCourses = courses.map(course => {
-        // For testing: mock enrollment data 
+        // For testing: mock enrollment data
         // In production, this should come from the API
         const mockEnrollment = userType === 'tutor' && (
           // For demo purposes: every other course is considered "enrolled"
@@ -137,21 +138,6 @@ const Courses = ({ userType }) => {
     navigate(`/dashboard/${userType}/courses/edit-flow/${row.id}`);
   };
 
-  // Delete handler
-  const handleDelete = (row) => {
-    if (window.confirm(`Are you sure you want to delete "${row.title}"? This action cannot be undone.`)) {
-      dispatch(deleteCourseThunk(row.id))
-        .unwrap()
-        .then(() => {
-          // Refresh courses data
-          dispatch(getCoursesThunk());
-        })
-        .catch(error => {
-          console.error(`Error deleting course:`, error);
-        });
-    }
-  };
-
   // Table columns configuration
   const columns = [
     {
@@ -165,19 +151,9 @@ const Courses = ({ userType }) => {
       sortable: true,
     },
     {
-      name: "Categories",
-      selector: (row) => row.category,
-      sortable: true,
-    },
-    {
       name: "Creator",
       cell: (row) => (
         <div className="professor-info">
-          <img
-            src={`https://i.pravatar.cc/150?img=${row.id + 30}`}
-            alt={row.professor}
-            className="professor-avatar"
-          />
           <span>{row.professor}</span>
         </div>
       ),
@@ -196,16 +172,11 @@ const Courses = ({ userType }) => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status ? "active" : ""}`}
-            onClick={() => handleStatusToggle(row)}
-            title={row.status ? "Active" : "Inactive"}
-          />
-          <span className={row.status ? "text-green-600" : "text-red-600"}>
-            {row.status ? "Active" : "Inactive"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_course"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -214,21 +185,13 @@ const Courses = ({ userType }) => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="action-buttons">
-          <button className="action-btn view" onClick={() => handleView(row)} title="View Details">
-            <FaEye />
-          </button>
-          <button className="action-btn edit" onClick={() => handleEdit(row)} title="Edit Course">
-            <FaPencilAlt />
-          </button>
-          <button
-            className="action-btn delete"
-            onClick={() => handleDelete(row)}
-            title="Delete Course"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleView}
+          onEdit={handleEdit}
+          viewPermission="view_courses"
+          editPermission="edit_course"
+        />
       ),
       width: "150px",
       center: true,
@@ -284,11 +247,6 @@ const Courses = ({ userType }) => {
               </div>
               <div className="course-card-footer">
                 <div className="course-card-professor">
-                  <img
-                    src={`https://i.pravatar.cc/150?img=${course.id + 30}`}
-                    alt={course.professor}
-                    className="professor-avatar-small"
-                  />
                   <span>{course.professor}</span>
                 </div>
                 <div className="course-card-meta">
@@ -337,12 +295,14 @@ const Courses = ({ userType }) => {
             {userType === 'tutor' ? 'My Courses' : `All Courses (${tableData.length})`}
           </h2>
           <div className="header-actions">
-            <button
-              className="add-course-btn"
-              onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
-            >
-              Add Course
-            </button>
+            {hasLocalPermission("create_course") && (
+              <button
+                className="add-course-btn"
+                onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
+              >
+                Add Course
+              </button>
+            )}
             <button
               className="view-all-btn"
               onClick={() => navigate(`/dashboard/${userType}/courses`)}

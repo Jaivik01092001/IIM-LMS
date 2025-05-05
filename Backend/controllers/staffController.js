@@ -123,8 +123,8 @@ exports.createStaffMember = catchAsync(async (req, res, next) => {
     name,
     email,
     phoneNumber,
-    role: "staff", // DB role value for IIM Staff (UI: IIM Staff -> DB: staff)
-    roleRef: staffRole._id, // Assign IIM Staff role
+    role: "staff", // Fixed core role value for staff
+    roleRef: staffRole._id, // Assign IIM Staff role for permissions
     status: req.body.status || 1, // Default to active
   };
 
@@ -242,7 +242,7 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
     name: name || staffMember.name,
     email: email || staffMember.email,
     phoneNumber: phoneNumber || staffMember.phoneNumber,
-    role: "staff", // DB role value for IIM Staff (UI: IIM Staff -> DB: staff)
+    // Keep the existing role value, don't update it
     roleRef: staffRole._id, // Use IIM Staff role
     status: req.body.status || staffMember.status,
   };

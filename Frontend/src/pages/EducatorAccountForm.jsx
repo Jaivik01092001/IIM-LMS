@@ -645,7 +645,7 @@ const EducatorAccountForm = () => {
               )}
             </div>
 
-            {filteredRoles.length >= 1 && (
+            {isAdmin && filteredRoles.length >= 1 && (
               <div className="form-group">
                 <label htmlFor="roleId">Role</label>
                 <select

@@ -24,10 +24,11 @@
 .enroll-course-detail .progress-container {
   display: flex;
   align-items: center;
-  margin-right: 30px;
+  width: 250px;
 }
 
-.enroll-course-detail .progress-bar {
+/* Legacy progress bar styles - kept for backward compatibility */
+.enroll-course-detail .progress-bar:not(.custom-progress) {
   height: 5px;
   width: 200px;
   background-color: #e0e0e0;
@@ -36,7 +37,7 @@
   position: relative;
 }
 
-.enroll-course-detail .progress-bar::before {
+.enroll-course-detail .progress-bar:not(.custom-progress)::before {
   content: "";
   position: absolute;
   top: 0;
@@ -52,6 +53,11 @@
   font-size: var(--smallfont);
   color: var(--text-gray);
   font-weight: 500;
+}
+
+/* Custom progress bar component styles */
+.enroll-course-detail .custom-progress {
+  width: 100%;
 }
 
 .enroll-course-detail .user-profile {

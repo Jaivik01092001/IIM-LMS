@@ -58,6 +58,10 @@ const SchoolAccountForm = () => {
   const { id } = useParams();
   const { currentUniversity, loading } = useSelector((state) => state.admin);
   const { roles } = useSelector((state) => state.role);
+  const { user } = useSelector((state) => state.auth);
+
+  // Determine if user is admin (Super Admin)
+  const isAdmin = user?.role === "admin";
 
   const isEditMode = !!id;
 
@@ -341,8 +345,8 @@ const SchoolAccountForm = () => {
               </div>
             </div>
 
-            {/* Role dropdown - only shows custom roles */}
-            {filteredRoles.length >= 1 && (
+            {/* Role dropdown - only shows for Super Admin */}
+            {isAdmin && filteredRoles.length >= 1 && (
               <div className="form-group">
                 <label htmlFor="roleId">Role</label>
                 <select

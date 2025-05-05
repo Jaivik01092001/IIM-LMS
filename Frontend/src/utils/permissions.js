@@ -65,6 +65,22 @@ export const PERMISSIONS = {
     DELETE_BLOG: "delete_blog",
   },
 
+  // School Management Permissions
+  SCHOOL_MANAGEMENT: {
+    VIEW_SCHOOLS: "view_schools",
+    CREATE_SCHOOL: "create_school",
+    EDIT_SCHOOL: "edit_school",
+    DELETE_SCHOOL: "delete_school",
+  },
+
+  // Educator Management Permissions
+  EDUCATOR_MANAGEMENT: {
+    VIEW_EDUCATORS: "view_educators",
+    CREATE_EDUCATOR: "create_educator",
+    EDIT_EDUCATOR: "edit_educator",
+    DELETE_EDUCATOR: "delete_educator",
+  },
+
   // System Settings Permissions
   SYSTEM_SETTINGS: {
     VIEW_SETTINGS: "view_settings",
@@ -91,43 +107,17 @@ export const hasPermission = (user, permission) => {
     return false;
   }
 
-  // If user has no roleRef or permissions is undefined, check based on role
-  if (!user.roleRef || user.permissions === undefined) {
-    // Default permissions based on role for backward compatibility
-    switch (user.role) {
-      case "admin": // Super Admin
-        return true;
-      case "staff": // IIM Staff
-        return true;
-      case "university": // School Admin
-        return [
-          PERMISSIONS.USER_MANAGEMENT.VIEW_USERS,
-          PERMISSIONS.USER_MANAGEMENT.CREATE_USER,
-          PERMISSIONS.USER_MANAGEMENT.EDIT_USER,
-          PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES,
-          PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT,
-        ].includes(permission);
-      case "educator": // Educator
-        return [
-          PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES,
-          PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE,
-          PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE,
-          PERMISSIONS.QUIZ_MANAGEMENT.VIEW_QUIZZES,
-          PERMISSIONS.QUIZ_MANAGEMENT.CREATE_QUIZ,
-          PERMISSIONS.QUIZ_MANAGEMENT.EDIT_QUIZ,
-          PERMISSIONS.CONTENT_MANAGEMENT.VIEW_CONTENT,
-          PERMISSIONS.CONTENT_MANAGEMENT.CREATE_CONTENT,
-          PERMISSIONS.CONTENT_MANAGEMENT.EDIT_CONTENT,
-        ].includes(permission);
-      default:
-        return false;
-    }
+  // Check if the user has explicit permissions object
+  // This handles the case where permissions are directly assigned via roleRef
+  if (user.permissions && typeof user.permissions === "object") {
+    // Important: Only return true if the permission is explicitly set to true
+    // Otherwise, return false (permission not granted)
+    return user.permissions[permission] === true;
   }
 
-  // Check if the permission is granted in the user's permissions object
-  const hasPermissionResult =
-    user.permissions && user.permissions[permission] === true;
-  return hasPermissionResult;
+  // If no permissions object, return false
+  // This ensures users can only perform actions explicitly set to true in their roleRef
+  return false;
 };
 
 /**

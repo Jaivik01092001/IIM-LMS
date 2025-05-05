@@ -3,9 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   FaPlus,
-  FaPencilAlt,
-  FaTrashAlt,
-  FaEye,
   FaUserCircle,
   FaSearch,
   FaFilter,
@@ -13,6 +10,9 @@ import {
 import { FaFilePen } from "react-icons/fa6";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ActionButtons from "../components/common/ActionButtons";
+import StatusToggle from "../components/common/StatusToggle";
+import { hasLocalPermission } from "../utils/localPermissions";
 import {
   getBlogsThunk,
   deleteBlogThunk,
@@ -191,25 +191,15 @@ const Blog = () => {
     {
       name: "Status",
       cell: (row) => (
-        <div className="status-cell">
-          <div
-            className={`status-indicator ${row.status === "published" ? "active" : ""
-              }`}
-            onClick={() => handleStatusToggle(row)}
-            title={
-              row.status === "published"
-                ? "Click to unpublish"
-                : "Click to publish"
-            }
-          />
-          <span
-            className={
-              row.status === "published" ? "text-green-600" : "text-red-600"
-            }
-          >
-            {row.status === "published" ? "Published" : "Draft"}
-          </span>
-        </div>
+        <StatusToggle
+          status={row.status}
+          onToggle={() => handleStatusToggle(row)}
+          permission="delete_blog"
+          activeText="Published"
+          inactiveText="Draft"
+          activeTooltip="Click to unpublish"
+          inactiveTooltip="Click to publish"
+        />
       ),
       sortable: true,
       width: "150px",
@@ -217,29 +207,14 @@ const Blog = () => {
     {
       name: "Actions",
       cell: (row) => (
-        <div className="blog-actions-cell">
-          <button
-            className="blog-action-btn blog-view-btn"
-            onClick={() => handleViewBlog(row)}
-            title="View"
-          >
-            <FaEye />
-          </button>
-          <button
-            className="blog-action-btn blog-edit-btn"
-            onClick={() => handleEditBlog(row)}
-            title="Edit"
-          >
-            <FaPencilAlt />
-          </button>
-          <button
-            className="blog-action-btn blog-delete-btn"
-            onClick={() => handleDeleteBlog(row)}
-            title="Delete"
-          >
-            <FaTrashAlt />
-          </button>
-        </div>
+        <ActionButtons
+          row={row}
+          onView={handleViewBlog}
+          onEdit={handleEditBlog}
+          viewPermission="view_blogs"
+          editPermission="edit_blog"
+          className="blog-actions-cell"
+        />
       ),
       width: "120px",
       center: true,
@@ -315,9 +290,11 @@ const Blog = () => {
             <FaFilePen className="blog-title-icon" /> Blogs
           </h1>
           <div className="blog-actions">
-            <button className="btn btn-primary" onClick={handleCreateBlog}>
-              <FaPlus /> New Blog
-            </button>
+            {hasLocalPermission("create_blog") && (
+              <button className="btn btn-primary" onClick={handleCreateBlog}>
+                <FaPlus /> New Blog
+              </button>
+            )}
           </div>
         </div>
 

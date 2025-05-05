@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { FaClock, FaCog, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from "react-icons/fa";
 
 const CourseSettingsStep = ({ courseData, updateCourseData }) => {
     // Local state for form fields
@@ -40,49 +40,91 @@ const CourseSettingsStep = ({ courseData, updateCourseData }) => {
         <div className="course-settings-step">
             <h2>Course Settings</h2>
             <p className="step-description">
-                Set the duration and status of your course.
+                Configure important settings for your course to help students understand what to expect.
             </p>
 
-            <div className="form-section">
+            <div className="settings-card">
+                <div className="settings-card-header">
+                    <div className="settings-card-icon">
+                        <FaClock />
+                    </div>
+                    <h3 className="settings-card-title">Time Commitment</h3>
+                </div>
+                <p className="field-hint">
+                    Help students understand how much time they should set aside to complete this course.
+                </p>
                 <div className="form-group">
                     <label htmlFor="duration">
                         Course Duration
                     </label>
-                    <select
-                        id="duration"
-                        name="duration"
-                        value={localData.duration}
-                        onChange={handleInputChange}
-                    >
-                        {durationOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="duration-selector">
+                        <select
+                            id="duration"
+                            name="duration"
+                            value={localData.duration}
+                            onChange={handleInputChange}
+                        >
+                            {durationOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                     <p className="field-hint">
                         Approximate time it takes to complete the course.
                     </p>
-                </div>
 
+                    {localData.duration && (
+                        <div className="duration-badge">
+                            <FaHourglassHalf />
+                            <span>Duration: {localData.duration}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="settings-card">
+                <div className="settings-card-header">
+                    <div className="settings-card-icon">
+                        <FaCog />
+                    </div>
+                    <h3 className="settings-card-title">Course Visibility</h3>
+                </div>
+                <p className="field-hint">
+                    Control whether your course is visible to students.
+                </p>
                 <div className="toggle-group">
                     <div className="toggle-item">
                         <div className="toggle-info">
-                            <h3>Course Status</h3>
+                            <h3>
+                                Course Status
+                                <span className={`status-badge ${localData.status === 1 ? 'active' : 'inactive'}`}>
+                                    {localData.status === 1
+                                        ? <><FaCheckCircle /> Active</>
+                                        : <><FaTimesCircle /> Inactive</>
+                                    }
+                                </span>
+                            </h3>
                             <p>
                                 {localData.status === 1
                                     ? "Course is active and can be discovered by students."
                                     : "Course is inactive and hidden from students."}
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            className={`toggle-button ${localData.status === 1 ? 'active' : ''}`}
-                            onClick={toggleStatus}
-                        >
-                            {localData.status === 1 ? <FaToggleOn /> : <FaToggleOff />}
-                            <span>{localData.status === 1 ? 'Active' : 'Inactive'}</span>
-                        </button>
+                        <div className="toggle-wrapper">
+                            <label className="schooljxs-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={localData.status === 1}
+                                    onChange={toggleStatus}
+                                />
+                                <span className="slider"></span>
+                            </label>
+                            <div className="toggle-label-text">
+                                {localData.status === 1 ? 'Active' : 'Inactive'}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
