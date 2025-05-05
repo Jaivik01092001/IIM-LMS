@@ -24,16 +24,7 @@ exports.getUniversities = async (req, res) => {
 
 exports.createUniversity = async (req, res, next) => {
   try {
-    console.log("Request body:", req.body);
-    console.log("Request headers:", req.headers);
-    console.log("Content-Type:", req.headers["content-type"]);
-    console.log("Request files:", req.files);
 
-    // Log all keys in the request body
-    console.log("Request body keys:", Object.keys(req.body));
-
-    // Extract fields from form data
-    // Handle both direct fields and FormData
     const name = req.body.name || req.body.schoolName;
     const email = req.body.email;
     const roleId = req.body.roleId;
@@ -45,17 +36,6 @@ exports.createUniversity = async (req, res, next) => {
     const state = req.body.state;
     const contactPerson = req.body.contactPerson || req.body.ownerName;
 
-    console.log("Extracted fields:", {
-      name,
-      email,
-      phoneNumber,
-      contactPerson,
-      rawName: req.body.name,
-      rawSchoolName: req.body.schoolName,
-      rawEmail: req.body.email,
-      rawPhoneNumber: req.body.phoneNumber,
-      rawPhone: req.body.phone,
-    });
 
     if (!name || !email || !phoneNumber) {
       return res.status(400).json({
@@ -158,12 +138,6 @@ exports.deleteUniversity = async (req, res) => {
 
 exports.updateUniversity = async (req, res) => {
   try {
-    console.log("Update university request received for ID:", req.params.id);
-    console.log("Update university request body:", req.body);
-    console.log("Update university request file:", req.file);
-    console.log("Request headers:", req.headers);
-    console.log("Request method:", req.method);
-
     // Extract fields from form data
     // Handle both direct fields and FormData
     const name = req.body.name || req.body.schoolName;
@@ -177,18 +151,6 @@ exports.updateUniversity = async (req, res) => {
     const contactPerson = req.body.contactPerson || req.body.ownerName;
     const status = req.body.status;
     const keepExistingImage = req.body.keepExistingImage;
-
-    console.log("Extracted update fields:", {
-      name,
-      email,
-      phoneNumber,
-      contactPerson,
-      status,
-      address,
-      zipcode,
-      state,
-      keepExistingImage,
-    });
 
     const university = await User.findOne({
       _id: req.params.id,
@@ -215,10 +177,8 @@ exports.updateUniversity = async (req, res) => {
     // Update profile image if provided
     if (req.file) {
       university.profile.avatar = `/uploads/profiles/${req.file.filename}`;
-      console.log("Updated profile image to:", university.profile.avatar);
     } else if (req.body.keepExistingImage === "true") {
       // Keep existing image, no need to update
-      console.log("Keeping existing profile image:", university.profile.avatar);
     }
 
     // Handle status update if provided
@@ -229,7 +189,6 @@ exports.updateUniversity = async (req, res) => {
     // Handle roleId update if provided
     if (req.body.roleId) {
       university.roleRef = req.body.roleId;
-      console.log("Updated roleRef to:", req.body.roleId);
       // Note: We no longer update the core role field, it remains fixed as "university"
     }
 
@@ -267,23 +226,6 @@ exports.getContent = async (req, res) => {
   }
 };
 
-// exports.createContent = async (req, res) => {
-//   const { title, description } = req.body;
-//   const fileUrl = req.file ? req.file.path : null;
-//   const content = new Content({
-//     title,
-//     description,
-//     fileUrl,
-//     creator: req.user.id,
-//     status: "approved", // Admin-created content is auto-approved
-//   });
-//   await content.save();
-//   res.json(content);
-// };
-
-// controllers/adminController.js
-//const Content = require('../models/Content');
-
 exports.createContent = async (req, res) => {
   try {
     const { title, description, moduleId, type } = req.body;
@@ -315,8 +257,8 @@ exports.createContent = async (req, res) => {
         (mediaType === "video"
           ? "video"
           : mediaType === "image"
-          ? "image"
-          : "document"),
+            ? "image"
+            : "document"),
       mediaType,
       mimeType,
       size: req.file.size,
@@ -438,12 +380,6 @@ exports.getCourse = async (req, res) => {
 
 exports.createCourse = async (req, res) => {
   try {
-    console.log("Create course route hit");
-    console.log("Request headers:", req.headers);
-    console.log("Request body:", req.body);
-
-    // Debug uploaded files
-    console.log("Uploaded Files:");
     if (req.files && req.files.length > 0) {
       req.files.forEach((f, i) => {
         console.log(`${i + 1}. ${f.fieldname} -> ${f.originalname}`);
@@ -1095,8 +1031,8 @@ exports.updateCourse = async (req, res) => {
             (mediaType === "video"
               ? "video"
               : mediaType === "image"
-              ? "image"
-              : "document"),
+                ? "image"
+                : "document"),
           mediaType,
           mimeType,
           size: file.size,

@@ -222,7 +222,7 @@ const AdminDashboard = () => {
     dispatch(
       updateCourseThunk({
         id: row.id,
-        status: row.status ? 0 : 1,
+        formData: { status: row.status ? 0 : 1 },
       })
     )
       .unwrap()

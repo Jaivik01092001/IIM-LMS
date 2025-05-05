@@ -639,7 +639,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                                     value={contentFormData.type}
                                                                                     onChange={(e) => setContentFormData({ ...contentFormData, type: e.target.value })}
                                                                                 >
-                                                                                    <option value="video">Video</option>
+                                                                                    {/* <option value="video">Video</option> */}
                                                                                     <option value="document">Document/PDF</option>
                                                                                     <option value="text">Text</option>
                                                                                     <option value="youtube">YouTube Link</option>
