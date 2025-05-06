@@ -31,11 +31,32 @@ const CourseDetail = () => {
         setCourse(courseData);
 
         // Check if current user is enrolled
-        const currentUserId = localStorage.getItem('userId'); // Assuming user ID is stored in localStorage
+        let currentUserId = null;
+
+        // Try to get user ID from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const userData = JSON.parse(userStr);
+            currentUserId = userData.id;
+            console.log('Current user ID from localStorage:', currentUserId);
+          } catch (e) {
+            console.error('Error parsing user data from localStorage:', e);
+          }
+        }
+
         if (currentUserId && courseData.enrolledUsers) {
-          const userEnrolled = courseData.enrolledUsers.some(
-            enrollment => enrollment.user === currentUserId
-          );
+          // Fix the comparison to handle both string and object IDs
+          const userEnrolled = courseData.enrolledUsers.some(enrollment => {
+            // Handle different possible data formats of user id
+            const enrollmentUserId = typeof enrollment.user === 'object'
+              ? enrollment.user._id
+              : enrollment.user;
+
+            return enrollmentUserId === currentUserId;
+          });
+
+          console.log('User enrolled status:', userEnrolled);
           setIsUserEnrolled(userEnrolled);
         }
       } catch (error) {
@@ -53,44 +74,6 @@ const CourseDetail = () => {
     setExpandedFaq(expandedFaq === faqId ? null : faqId);
   };
 
-  const handlePreviewClick = (module) => {
-    // Check if the module already has a quiz reference
-    if (module.quiz) {
-      // If it's just an ID, find the full quiz object
-      if (typeof module.quiz === 'string') {
-        const moduleQuiz = course.quizzes?.find(quiz => quiz._id === module.quiz);
-        if (moduleQuiz) {
-          // Module already has the correct quiz ID
-          console.log('Module already has quiz reference:', module.quiz);
-          setSelectedModule(module);
-          setShowModuleContent(true);
-          return;
-        }
-      } else {
-        // Module already has the quiz object
-        console.log('Module already has quiz object:', module.quiz);
-        setSelectedModule(module);
-        setShowModuleContent(true);
-        return;
-      }
-    }
-
-    // If no quiz reference or invalid reference, try to find a matching quiz
-    const moduleQuiz = course.quizzes?.find(quiz =>
-      quiz.title.includes(module.title) ||
-      quiz.description.includes(module.title)
-    );
-
-    // Create an enhanced module object with the quiz ID
-    const enhancedModule = {
-      ...module,
-      quiz: moduleQuiz ? moduleQuiz._id : null
-    };
-
-    console.log('Enhanced module with quiz:', enhancedModule);
-    setSelectedModule(enhancedModule);
-    setShowModuleContent(true);
-  };
 
   const closeModulePreview = () => {
     setShowModuleContent(false);
@@ -149,6 +132,7 @@ const CourseDetail = () => {
   };
 
   const handleEnrollNow = async () => {
+    console.log('Enrollment status before action:', isUserEnrolled);
     // If already enrolled, navigate to course detail page
     if (isUserEnrolled) {
       navigate(`/dashboard/enroll-course-detail/${id}`);
@@ -196,11 +180,7 @@ const CourseDetail = () => {
           <h1 className="course-title">Course Title : {course.title}</h1>
           <div className="course-meta-info">
             <span className="course-category">Language: {course.language}</span>
-            <span className="course-language">Level: {course.level}</span>
-            <div className="course-rating">
-              <FaStar className="star-icon" />
-              <span>{course.rating || "New"}</span>
-            </div>
+
           </div>
         </div>
       </div>
@@ -458,7 +438,12 @@ const CourseDetail = () => {
                   <div className="instructor-info">
                     <div className="instructor-profile">
                       <div className="instructor-image">
-                        <img src={VITE_IMAGE_URL + course.creator?.profile?.avatar} alt={course.creator?.name} />
+                        <img
+                          src={course.creator.profile && course.creator.profile.avatar
+                            ? `${VITE_IMAGE_URL}${course.creator.profile.avatar}`
+                            : 'https://via.placeholder.com/150?text=Instructor'}
+                          alt={course.creator.name}
+                        />
                       </div>
                       <div className="instructor-details">
                         <h4>{course.creator?.name}</h4>
@@ -574,6 +559,10 @@ const CourseDetail = () => {
               >
                 {enrolling ? 'Processing...' : isUserEnrolled ? 'Continue Learning' : 'Enroll Now'}
               </button>
+              {/* Debug info - can be removed after fixing */}
+              <div style={{ fontSize: '10px', color: '#666', marginTop: '5px', display: 'none' }}>
+                Enrolled: {isUserEnrolled ? 'Yes' : 'No'}
+              </div>
             </div>
             <div className="course-stats">
               <div className="stat-item">

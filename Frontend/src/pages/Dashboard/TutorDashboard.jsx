@@ -37,19 +37,44 @@ const TutorDashboard = () => {
   // Process courses data when it changes
   useEffect(() => {
     if (courses && courses.length > 0) {
+      // Get current user ID from localStorage
+      let currentUserId = null;
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          currentUserId = userData.id;
+          console.log('Current user ID from localStorage:', currentUserId);
+        } catch (e) {
+          console.error('Error parsing user data from localStorage:', e);
+        }
+      }
+
       const formattedCourses = courses.map((course) => {
-        // For demo: generate random enrollment status and progress
-        const isEnrolled =
-          course._id.toString().charCodeAt(course._id.toString().length - 1) %
-          2 ===
-          0;
-        const progress = isEnrolled ? Math.floor(Math.random() * 100) : 0;
-        const status =
-          progress === 100
-            ? "completed"
-            : isEnrolled
-              ? "ongoing"
-              : "not-enrolled";
+        // Check if the current user is enrolled in this course
+        let isUserEnrolled = false;
+        let userProgress = 0;
+        let enrollmentStatus = "not-enrolled";
+        let enrollmentDate = new Date();
+
+        if (currentUserId && course.enrolledUsers && course.enrolledUsers.length > 0) {
+          // Find the user's enrollment
+          const userEnrollment = course.enrolledUsers.find(enrollment => {
+            // Handle different possible data formats of user id
+            const enrollmentUserId = typeof enrollment.user === 'object'
+              ? enrollment.user._id
+              : enrollment.user;
+
+            return enrollmentUserId === currentUserId;
+          });
+
+          if (userEnrollment) {
+            isUserEnrolled = true;
+            userProgress = userEnrollment.progress || 0;
+            enrollmentStatus = userProgress === 100 ? "completed" : "ongoing";
+            enrollmentDate = new Date(userEnrollment.enrolledAt || Date.now());
+          }
+        }
 
         return {
           id: course._id,
@@ -65,12 +90,10 @@ const TutorDashboard = () => {
             course.thumbnail ||
             "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
           hasModules: course.hasModules || false,
-          isEnrolled: isEnrolled,
-          progress: progress,
-          enrollmentStatus: status,
-          startDate: new Date(
-            Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000
-          ).toLocaleDateString(),
+          isEnrolled: isUserEnrolled,
+          progress: userProgress,
+          enrollmentStatus: enrollmentStatus,
+          startDate: enrollmentDate.toLocaleDateString(),
         };
       });
 

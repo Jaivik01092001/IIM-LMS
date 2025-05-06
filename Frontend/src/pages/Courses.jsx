@@ -24,7 +24,6 @@ const Courses = ({ userType }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,13 +77,32 @@ const Courses = ({ userType }) => {
   // Update tableData and categories when courses change
   useEffect(() => {
     if (courses && courses.length > 0) {
+      // Get current user ID from localStorage
+      let currentUserId = null;
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          currentUserId = userData.id;
+          console.log('Current user ID from localStorage:', currentUserId);
+        } catch (e) {
+          console.error('Error parsing user data from localStorage:', e);
+        }
+      }
       const formattedCourses = courses.map(course => {
-        // For testing: mock enrollment data
-        // In production, this should come from the API
-        const mockEnrollment = userType === 'tutor' && (
-          // For demo purposes: every other course is considered "enrolled"
-          course._id.toString().charCodeAt(course._id.toString().length - 1) % 2 === 0
-        );
+        // Check if the current user is enrolled in this course
+        let isUserEnrolled = false;
+
+        if (currentUserId && course.enrolledUsers && course.enrolledUsers.length > 0) {
+          isUserEnrolled = course.enrolledUsers.some(enrollment => {
+            // Handle different possible data formats of user id
+            const enrollmentUserId = typeof enrollment.user === 'object'
+              ? enrollment.user._id
+              : enrollment.user;
+
+            return enrollmentUserId === currentUserId;
+          });
+        }
 
         return {
           id: course._id,
@@ -98,8 +116,8 @@ const Courses = ({ userType }) => {
           status: course.status === 1,
           thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
           hasModules: course.hasModules || false,
-          // Check if user is enrolled in the course - real implementation would check API data
-          isEnrolled: Boolean(course.progress || course.enrolled || course.isEnrolled || mockEnrollment)
+          // Use the actual enrollment status based on enrolledUsers array
+          isEnrolled: isUserEnrolled || Boolean(course.progress || course.enrolled || course.isEnrolled)
         };
       });
 
@@ -192,7 +210,7 @@ const Courses = ({ userType }) => {
     },
   ];
 
-  // Filter the data based on search and category filters
+  // Filter the data based on search filter
   const filteredData = tableData
     // Apply search filter
     .filter(item =>
@@ -200,10 +218,6 @@ const Courses = ({ userType }) => {
       item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    // Apply category filter
-    .filter(item =>
-      !categoryFilter || item.category === categoryFilter
     )
     // Apply sorting
     .sort((a, b) => {
@@ -253,7 +267,7 @@ const Courses = ({ userType }) => {
                       className="resume-btn"
                       onClick={() => handleView(course)}
                     >
-                      Resume
+                      Continue Learning
                     </button>
                   ) : (
                     <button
@@ -308,17 +322,6 @@ const Courses = ({ userType }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-
-          <select
-            className="filter-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>{category}</option>
-            ))}
-          </select>
 
           <select
             className="filter-select"

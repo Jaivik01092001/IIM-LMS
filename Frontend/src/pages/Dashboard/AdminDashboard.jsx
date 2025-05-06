@@ -26,7 +26,6 @@ const AdminDashboard = () => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -419,18 +418,6 @@ const AdminDashboard = () => {
           />
           <select
             className="filter-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">{t("courses.allCategories")}</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-          <select
-            className="filter-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -457,10 +444,6 @@ const AdminDashboard = () => {
                   .includes(searchTerm.toLowerCase()) ||
                 (item.tags &&
                   item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
-            )
-            // Apply category filter
-            .filter(
-              (item) => !categoryFilter || item.category === categoryFilter
             )
             // Apply sorting
             .sort((a, b) => {

@@ -282,7 +282,7 @@
 .course-detail-container .instructor-info {
   margin-bottom: 30px;
   padding: 20px;
-  background-color: var(--bg-gray);
+  background-color: var(--white);
   border-radius: var(--border-medium-radius);
 }
 
