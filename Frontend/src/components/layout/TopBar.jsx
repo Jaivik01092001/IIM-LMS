@@ -27,7 +27,7 @@ const TopBar = ({ toggleSidebar }) => {
       try {
         const userData = JSON.parse(user);
         setUserName(userData.name || "User");
-        setProfile(userData.profile.avatar || ""); // Set profile picture
+        setProfile(userData?.profile?.avatar || ""); // Set profile picture
         // Set user role and dashboard type
         const role = userData.role || "";
         setUserRole(role);

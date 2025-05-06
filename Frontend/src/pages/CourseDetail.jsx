@@ -458,10 +458,10 @@ const CourseDetail = () => {
                   <div className="instructor-info">
                     <div className="instructor-profile">
                       <div className="instructor-image">
-                        <img src={VITE_IMAGE_URL + course.creator.profile.avatar} alt={course.creator.name} />
+                        <img src={VITE_IMAGE_URL + course.creator?.profile?.avatar} alt={course.creator?.name} />
                       </div>
                       <div className="instructor-details">
-                        <h4>{course.creator.name}</h4>
+                        <h4>{course.creator?.name}</h4>
                         <p>Course Creator</p>
                       </div>
                     </div>
