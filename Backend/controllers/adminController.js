@@ -370,6 +370,14 @@ exports.getCourse = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
+    // Log module details for debugging
+    if (course.modules && course.modules.length > 0) {
+      console.log("Course modules:");
+      course.modules.forEach((module, index) => {
+        console.log(`Module ${index + 1}: ID=${module._id}, Title=${module.title}, isCompulsory=${module.isCompulsory}`);
+      });
+    }
+
     res.json(course);
   } catch (error) {
     console.error("Error retrieving course:", error);
@@ -565,6 +573,7 @@ exports.createCourse = async (req, res) => {
           course: course._id,
           order: moduleData.order || 0,
           content: [],
+          isCompulsory: moduleData.isCompulsory !== undefined ? moduleData.isCompulsory : true, // Set isCompulsory from moduleData
         });
 
         await newModule.save();
@@ -721,6 +730,10 @@ exports.updateCourse = async (req, res) => {
                   moduleData.order !== undefined
                     ? moduleData.order
                     : existingModule.order;
+                // Update isCompulsory if provided
+                if (moduleData.isCompulsory !== undefined) {
+                  existingModule.isCompulsory = moduleData.isCompulsory;
+                }
 
                 // Update content associations if provided
                 if (moduleData.content && Array.isArray(moduleData.content)) {
@@ -873,6 +886,7 @@ exports.updateCourse = async (req, res) => {
                 course: course._id,
                 order: moduleData.order || 0,
                 content: [], // Initialize with empty content array
+                isCompulsory: moduleData.isCompulsory !== undefined ? moduleData.isCompulsory : true, // Set isCompulsory from moduleData
               });
 
               await newModule.save();
