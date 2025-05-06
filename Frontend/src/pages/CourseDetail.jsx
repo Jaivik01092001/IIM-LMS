@@ -439,10 +439,10 @@ const CourseDetail = () => {
                     <div className="instructor-profile">
                       <div className="instructor-image">
                         <img
-                          src={course.creator.profile && course.creator.profile.avatar
-                            ? `${VITE_IMAGE_URL}${course.creator.profile.avatar}`
+                          src={course.creator?.profile && course.creator?.profile?.avatar
+                            ? `${VITE_IMAGE_URL}${course.creator?.profile?.avatar}`
                             : 'https://via.placeholder.com/150?text=Instructor'}
-                          alt={course.creator.name}
+                          alt={course.creator?.name}
                         />
                       </div>
                       <div className="instructor-details">
