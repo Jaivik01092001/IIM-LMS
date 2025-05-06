@@ -196,7 +196,6 @@ const AdminDashboard = () => {
         category: course.category || "Uncategorized",
         professor: course.creator?.name || "Unknown",
         duration: course.duration || "N/A",
-        level: course.level || "N/A",
         description: course.description || "No description available",
         tags: course.tags?.join(", ") || "No tags",
         language: course.language || "English",
@@ -281,11 +280,6 @@ const AdminDashboard = () => {
       sortable: true,
     },
     {
-      name: "Level",
-      selector: (row) => row.level,
-      sortable: true,
-    },
-    {
       name: "Status",
       cell: (row) => (
         <StatusToggle
@@ -355,17 +349,6 @@ const AdminDashboard = () => {
               {educatorCount || educatorsCountFromUniversities}
             </div>
             <div className="stat-title">Educators</div>
-          </div>
-        </div>
-
-        <div className="stat-card enrolled-users" style={{ cursor: "default" }}>
-          <div className="stat-icon4">
-            <FaUsers size={24} />
-            <FaUsers className="icondesign4" />
-          </div>
-          <div>
-            <div className="stat-count">{enrolledUsersCount || 0}</div>
-            <div className="stat-title">Enrolled Users</div>
           </div>
         </div>
 
@@ -454,12 +437,6 @@ const AdminDashboard = () => {
             <option value="">{t("courses.sortBy")}</option>
             <option value="title-asc">{t("courses.title")} (A-Z)</option>
             <option value="title-desc">{t("courses.title")} (Z-A)</option>
-            <option value="level-asc">
-              {t("courses.level")} ({t("courses.beginnerToAdvanced")})
-            </option>
-            <option value="level-desc">
-              {t("courses.level")} ({t("courses.advancedToBeginner")})
-            </option>
             <option value="status">{t("courses.status")}</option>
           </select>
         </div>
@@ -478,7 +455,6 @@ const AdminDashboard = () => {
                 item.professor
                   .toLowerCase()
                   .includes(searchTerm.toLowerCase()) ||
-                item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (item.tags &&
                   item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
             )
@@ -495,10 +471,6 @@ const AdminDashboard = () => {
                   return a.title.localeCompare(b.title);
                 case "title-desc":
                   return b.title.localeCompare(a.title);
-                case "level-asc":
-                  return a.level.localeCompare(b.level);
-                case "level-desc":
-                  return b.level.localeCompare(a.level);
                 case "status":
                   return a.status === b.status ? 0 : a.status ? -1 : 1;
                 default:

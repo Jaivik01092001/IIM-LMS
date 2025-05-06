@@ -27,7 +27,7 @@ const TopBar = ({ toggleSidebar }) => {
       try {
         const userData = JSON.parse(user);
         setUserName(userData.name || "User");
-        setProfile(userData.profile.avatar || "");  // Set profile picture
+        setProfile(userData.profile.avatar || ""); // Set profile picture
         // Set user role and dashboard type
         const role = userData.role || "";
         setUserRole(role);
@@ -178,15 +178,6 @@ const TopBar = ({ toggleSidebar }) => {
     navigate("/");
   };
 
-  // Get profile picture or initials
-  const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
 
   return (
     <div className="topbar">
@@ -218,7 +209,10 @@ const TopBar = ({ toggleSidebar }) => {
 
         {/* User profile */}
         <div className="user-profile" onClick={toggleDropdown}>
-          <div className="avatar"><img src={VITE_IMAGE_URL + profile} alt="profile" /></div>
+          <div className="avatar">
+            <img src={VITE_IMAGE_URL + profile} alt="profile"
+            />
+          </div>
           <div className="user-info">
             <span className="user-name">{userName}</span>
             <span className="user-role">
@@ -239,13 +233,18 @@ const TopBar = ({ toggleSidebar }) => {
             <div className="profile-dropdown">
               <ul>
                 <li>
-                  <a onClick={() => {
-                    // Navigate to profile page based on current dashboard type
-                    const currentPath = location.pathname;
-                    const basePath = currentPath.split('/').slice(0, 2).join('/');
-                    navigate(`${basePath}/profile`);
-                    setShowDropdown(false);
-                  }}>
+                  <a
+                    onClick={() => {
+                      // Navigate to profile page based on current dashboard type
+                      const currentPath = location.pathname;
+                      const basePath = currentPath
+                        .split("/")
+                        .slice(0, 2)
+                        .join("/");
+                      navigate(`${basePath}/profile`);
+                      setShowDropdown(false);
+                    }}
+                  >
                     <FaCog /> {t("common.settings")}
                   </a>
                 </li>

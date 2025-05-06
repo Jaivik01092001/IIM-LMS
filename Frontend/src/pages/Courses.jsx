@@ -92,7 +92,6 @@ const Courses = ({ userType }) => {
           category: course.category || 'Uncategorized',
           professor: course.creator?.name || 'Unknown',
           duration: course.duration || 'N/A',
-          level: course.level || 'N/A',
           description: course.description || 'No description available',
           tags: course.tags?.join(', ') || 'No tags',
           language: course.language || 'English',
@@ -165,11 +164,6 @@ const Courses = ({ userType }) => {
       sortable: true,
     },
     {
-      name: "Level",
-      selector: (row) => row.level,
-      sortable: true,
-    },
-    {
       name: "Status",
       cell: (row) => (
         <StatusToggle
@@ -205,7 +199,6 @@ const Courses = ({ userType }) => {
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     // Apply category filter
@@ -219,8 +212,6 @@ const Courses = ({ userType }) => {
       switch (sortBy) {
         case "title-asc": return a.title.localeCompare(b.title);
         case "title-desc": return b.title.localeCompare(a.title);
-        case "level-asc": return a.level.localeCompare(b.level);
-        case "level-desc": return b.level.localeCompare(a.level);
         case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
         default: return 0;
       }
@@ -254,10 +245,7 @@ const Courses = ({ userType }) => {
                     <FaClock className="meta-icon" />
                     <span>{course.duration}</span>
                   </div>
-                  <div className="course-card-meta-item">
-                    <FaCalendarAlt className="meta-icon" />
-                    <span>{course.level}</span>
-                  </div>
+
                 </div>
                 <div className="course-card-actions">
                   {course.isEnrolled ? (
@@ -340,8 +328,6 @@ const Courses = ({ userType }) => {
             <option value="">Sort by</option>
             <option value="title-asc">Title (A-Z)</option>
             <option value="title-desc">Title (Z-A)</option>
-            <option value="level-asc">Level (Beginner-Advanced)</option>
-            <option value="level-desc">Level (Advanced-Beginner)</option>
             <option value="status">Status</option>
           </select>
         </div>

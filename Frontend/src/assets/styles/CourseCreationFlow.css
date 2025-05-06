@@ -311,7 +311,7 @@ label {
 .thumbnail-preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--border-medium-radius);
 }
 
@@ -612,9 +612,15 @@ label {
   display: flex;
   gap: 8px;
 }
-
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .content-item-actions button,
-.quiz-item-actions button {
+.quiz-item-actions button,
+.question-actions .new-edit-question,
+.question-actions .new-remove-question {
   background: none;
   border: none;
   color: var(--text-gray);
@@ -1877,13 +1883,10 @@ input:checked + .slider:before {
 .question-actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
-  position: absolute;
-  top: 12px;
-  right: 12px;
 }
 
-.edit-question, .remove-question {
+.edit-question,
+.remove-question {
   background: none;
   border: none;
   cursor: pointer;
@@ -1919,10 +1922,14 @@ input:checked + .slider:before {
 .cancel-edit-button {
   background-color: #f0f0f0;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  color: var(--text-gray);
   cursor: pointer;
-  font-weight: 500;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  border-radius: var(--border-small-radius);
 }
 
 .cancel-edit-button:hover {

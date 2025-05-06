@@ -103,6 +103,7 @@
   justify-content: center;
   font-weight: 600;
   font-size: var(--smallfont);
+  overflow: hidden;
 }
 
 .topbar .user-info {

@@ -917,7 +917,27 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                             <h5>Questions ({quizFormData.questions.length})</h5>
                                                                             {quizFormData.questions.map((q, index) => (
                                                                                 <div key={index} className="question-item">
-                                                                                    <h6>Question {index + 1}: {q.question}</h6>
+                                                                                    <div className="question-header">
+                                                                                        <h6>Question {index + 1}: {q.question}</h6>
+                                                                                        <div className="question-actions">
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                className="new-edit-question"
+                                                                                                onClick={() => startEditQuestion(index)}
+                                                                                                title="Edit Question"
+                                                                                            >
+                                                                                                <FaEdit />
+                                                                                            </button>
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                className="new-remove-question"
+                                                                                                onClick={() => removeQuestion(index)}
+                                                                                                title="Delete Question"
+                                                                                            >
+                                                                                                <FaTrash />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
                                                                                     <ul className="options-list">
                                                                                         {q.options.map((option, optIndex) => {
                                                                                             // Convert correctAnswer to number for comparison if it's a string
@@ -932,22 +952,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                                                             );
                                                                                         })}
                                                                                     </ul>
-                                                                                    <div className="question-actions">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className="edit-question"
-                                                                                            onClick={() => startEditQuestion(index)}
-                                                                                        >
-                                                                                            <FaEdit />
-                                                                                        </button>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className="remove-question"
-                                                                                            onClick={() => removeQuestion(index)}
-                                                                                        >
-                                                                                            <FaTrash />
-                                                                                        </button>
-                                                                                    </div>
                                                                                 </div>
                                                                             ))}
                                                                         </div>

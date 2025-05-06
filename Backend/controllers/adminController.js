@@ -24,7 +24,6 @@ exports.getUniversities = async (req, res) => {
 
 exports.createUniversity = async (req, res, next) => {
   try {
-
     const name = req.body.name || req.body.schoolName;
     const email = req.body.email;
     const roleId = req.body.roleId;
@@ -35,7 +34,6 @@ exports.createUniversity = async (req, res, next) => {
     const zipcode = req.body.zipcode;
     const state = req.body.state;
     const contactPerson = req.body.contactPerson || req.body.ownerName;
-
 
     if (!name || !email || !phoneNumber) {
       return res.status(400).json({
@@ -257,8 +255,8 @@ exports.createContent = async (req, res) => {
         (mediaType === "video"
           ? "video"
           : mediaType === "image"
-            ? "image"
-            : "document"),
+          ? "image"
+          : "document"),
       mediaType,
       mimeType,
       size: req.file.size,
@@ -395,7 +393,6 @@ exports.createCourse = async (req, res) => {
       description,
       duration,
       language,
-      level,
       thumbnailUrl,
       hasModules,
       modules,
@@ -547,7 +544,6 @@ exports.createCourse = async (req, res) => {
       description,
       duration,
       language: language || "en",
-      level: level || "beginner",
       thumbnail,
       hasModules: true, // Always use modules
       modules: [],
@@ -651,7 +647,6 @@ exports.updateCourse = async (req, res) => {
       description,
       duration,
       language,
-      level,
       thumbnailUrl,
       modules,
       content,
@@ -682,7 +677,6 @@ exports.updateCourse = async (req, res) => {
     if (description) course.description = description;
     if (duration) course.duration = duration;
     if (language) course.language = language;
-    if (level) course.level = level;
 
     // Handle thumbnail update
     // Check for thumbnail in req.files array since we're using upload.any()
@@ -795,19 +789,27 @@ exports.updateCourse = async (req, res) => {
 
                       // Always update questions array if it's provided, even if it's empty
                       if (quizData.questions !== undefined) {
-                        console.log(`Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions`);
+                        console.log(
+                          `Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions`
+                        );
 
                         // Process questions to ensure correctAnswer is a string
-                        const processedQuestions = quizData.questions.map(question => {
-                          // Ensure correctAnswer is a string
-                          if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
-                            return {
-                              ...question,
-                              correctAnswer: question.correctAnswer.toString()
-                            };
+                        const processedQuestions = quizData.questions.map(
+                          (question) => {
+                            // Ensure correctAnswer is a string
+                            if (
+                              question.correctAnswer !== undefined &&
+                              typeof question.correctAnswer !== "string"
+                            ) {
+                              return {
+                                ...question,
+                                correctAnswer:
+                                  question.correctAnswer.toString(),
+                              };
+                            }
+                            return question;
                           }
-                          return question;
-                        });
+                        );
 
                         existingQuiz.questions = processedQuestions;
                       }
@@ -822,16 +824,21 @@ exports.updateCourse = async (req, res) => {
                   } else {
                     // Create new quiz
                     // Process questions to ensure correctAnswer is a string
-                    const processedQuestions = quizData.questions ? quizData.questions.map(question => {
-                      // Ensure correctAnswer is a string
-                      if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
-                        return {
-                          ...question,
-                          correctAnswer: question.correctAnswer.toString()
-                        };
-                      }
-                      return question;
-                    }) : [];
+                    const processedQuestions = quizData.questions
+                      ? quizData.questions.map((question) => {
+                          // Ensure correctAnswer is a string
+                          if (
+                            question.correctAnswer !== undefined &&
+                            typeof question.correctAnswer !== "string"
+                          ) {
+                            return {
+                              ...question,
+                              correctAnswer: question.correctAnswer.toString(),
+                            };
+                          }
+                          return question;
+                        })
+                      : [];
 
                     const quiz = new Quiz({
                       title: quizData.title || `${existingModule.title} Quiz`,
@@ -932,16 +939,21 @@ exports.updateCourse = async (req, res) => {
                 const quizData = moduleData.quiz;
 
                 // Process questions to ensure correctAnswer is a string
-                const processedQuestions = quizData.questions ? quizData.questions.map(question => {
-                  // Ensure correctAnswer is a string
-                  if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
-                    return {
-                      ...question,
-                      correctAnswer: question.correctAnswer.toString()
-                    };
-                  }
-                  return question;
-                }) : [];
+                const processedQuestions = quizData.questions
+                  ? quizData.questions.map((question) => {
+                      // Ensure correctAnswer is a string
+                      if (
+                        question.correctAnswer !== undefined &&
+                        typeof question.correctAnswer !== "string"
+                      ) {
+                        return {
+                          ...question,
+                          correctAnswer: question.correctAnswer.toString(),
+                        };
+                      }
+                      return question;
+                    })
+                  : [];
 
                 // Create a new quiz
                 const quiz = new Quiz({
@@ -1034,13 +1046,17 @@ exports.updateCourse = async (req, res) => {
       }
       // Handle object format from formData
       else {
-        Object.keys(req.body).forEach(key => {
-          if (key.startsWith('contentModules[')) {
+        Object.keys(req.body).forEach((key) => {
+          if (key.startsWith("contentModules[")) {
             const match = key.match(/\[(\d+)\]/);
             if (match && match[1]) {
               const index = parseInt(match[1]);
-              if (req.body.contentFileIds && req.body[`contentFileIds[${index}]`]) {
-                contentModules[req.body[`contentFileIds[${index}]`]] = req.body[key];
+              if (
+                req.body.contentFileIds &&
+                req.body[`contentFileIds[${index}]`]
+              ) {
+                contentModules[req.body[`contentFileIds[${index}]`]] =
+                  req.body[key];
               }
             }
           }
@@ -1096,7 +1112,7 @@ exports.updateCourse = async (req, res) => {
         let moduleId = contentItem.module || null;
 
         // If this is a temp ID, check if we have a module mapping for it
-        if (contentId.startsWith('temp_') && contentModules[contentId]) {
+        if (contentId.startsWith("temp_") && contentModules[contentId]) {
           moduleId = contentModules[contentId];
           console.log(`Using module mapping for ${contentId}: ${moduleId}`);
         }
@@ -1113,8 +1129,8 @@ exports.updateCourse = async (req, res) => {
             (mediaType === "video"
               ? "video"
               : mediaType === "image"
-                ? "image"
-                : "document"),
+              ? "image"
+              : "document"),
           mediaType,
           mimeType,
           size: file.size,
@@ -1134,7 +1150,9 @@ exports.updateCourse = async (req, res) => {
             if (module) {
               module.content.push(newContent._id);
               await module.save();
-              console.log(`Added content ${newContent._id} to module ${moduleId}`);
+              console.log(
+                `Added content ${newContent._id} to module ${moduleId}`
+              );
             }
           } catch (err) {
             console.error(`Error adding content to module ${moduleId}:`, err);
@@ -1188,9 +1206,11 @@ exports.updateCourse = async (req, res) => {
             let moduleId = item.module || null;
 
             // If this is a temp ID, check if we have a module mapping for it
-            if (item._id.startsWith('temp_') && contentModules[item._id]) {
+            if (item._id.startsWith("temp_") && contentModules[item._id]) {
               moduleId = contentModules[item._id];
-              console.log(`Using module mapping for text/youtube ${item._id}: ${moduleId}`);
+              console.log(
+                `Using module mapping for text/youtube ${item._id}: ${moduleId}`
+              );
             }
 
             // Handle new YouTube content
@@ -1221,10 +1241,15 @@ exports.updateCourse = async (req, res) => {
                   if (module) {
                     module.content.push(newYoutubeContent._id);
                     await module.save();
-                    console.log(`Added YouTube content ${newYoutubeContent._id} to module ${moduleId}`);
+                    console.log(
+                      `Added YouTube content ${newYoutubeContent._id} to module ${moduleId}`
+                    );
                   }
                 } catch (err) {
-                  console.error(`Error adding YouTube content to module ${moduleId}:`, err);
+                  console.error(
+                    `Error adding YouTube content to module ${moduleId}:`,
+                    err
+                  );
                 }
               }
 
@@ -1258,10 +1283,15 @@ exports.updateCourse = async (req, res) => {
                 if (module) {
                   module.content.push(newTextContent._id);
                   await module.save();
-                  console.log(`Added text content ${newTextContent._id} to module ${moduleId}`);
+                  console.log(
+                    `Added text content ${newTextContent._id} to module ${moduleId}`
+                  );
                 }
               } catch (err) {
-                console.error(`Error adding text content to module ${moduleId}:`, err);
+                console.error(
+                  `Error adding text content to module ${moduleId}:`,
+                  err
+                );
               }
             }
 
@@ -1308,7 +1338,8 @@ exports.updateCourse = async (req, res) => {
     if (quizzes) {
       try {
         // Parse quizzes if it's a string
-        const parsedQuizzes = typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
+        const parsedQuizzes =
+          typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
 
         // Process each quiz to update its questions in the database
         if (Array.isArray(parsedQuizzes)) {
@@ -1319,29 +1350,39 @@ exports.updateCourse = async (req, res) => {
               if (existingQuiz) {
                 // Update quiz properties
                 existingQuiz.title = quizData.title || existingQuiz.title;
-                existingQuiz.description = quizData.description || existingQuiz.description;
+                existingQuiz.description =
+                  quizData.description || existingQuiz.description;
 
                 // Always update questions array if it's provided, even if it's empty
                 if (quizData.questions !== undefined) {
-                  console.log(`Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`);
+                  console.log(
+                    `Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`
+                  );
 
                   // Process questions to ensure correctAnswer is a string
-                  const processedQuestions = quizData.questions.map(question => {
-                    // Ensure correctAnswer is a string
-                    if (question.correctAnswer !== undefined && typeof question.correctAnswer !== 'string') {
-                      return {
-                        ...question,
-                        correctAnswer: question.correctAnswer.toString()
-                      };
+                  const processedQuestions = quizData.questions.map(
+                    (question) => {
+                      // Ensure correctAnswer is a string
+                      if (
+                        question.correctAnswer !== undefined &&
+                        typeof question.correctAnswer !== "string"
+                      ) {
+                        return {
+                          ...question,
+                          correctAnswer: question.correctAnswer.toString(),
+                        };
+                      }
+                      return question;
                     }
-                    return question;
-                  });
+                  );
 
                   existingQuiz.questions = processedQuestions;
                 }
 
-                existingQuiz.timeLimit = quizData.timeLimit || existingQuiz.timeLimit;
-                existingQuiz.passingScore = quizData.passingScore || existingQuiz.passingScore;
+                existingQuiz.timeLimit =
+                  quizData.timeLimit || existingQuiz.timeLimit;
+                existingQuiz.passingScore =
+                  quizData.passingScore || existingQuiz.passingScore;
 
                 // Save the updated quiz
                 await existingQuiz.save();
@@ -1351,7 +1392,7 @@ exports.updateCourse = async (req, res) => {
         }
 
         // Update course.quizzes array with quiz IDs
-        course.quizzes = parsedQuizzes.map(quiz => quiz._id);
+        course.quizzes = parsedQuizzes.map((quiz) => quiz._id);
       } catch (err) {
         console.error("Error processing quizzes update:", err);
       }

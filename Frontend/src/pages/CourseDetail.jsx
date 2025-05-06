@@ -417,7 +417,6 @@ const CourseDetail = () => {
                   )}
 
                   <div className="course-details">
-                    <p><strong>Level:</strong> {course.level}</p>
                     <p><strong>Duration:</strong> {course.duration}</p>
                     <p><strong>Target Audience:</strong> {course.targetAudience}</p>
                   </div>

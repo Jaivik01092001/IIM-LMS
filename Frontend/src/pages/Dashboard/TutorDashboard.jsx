@@ -57,7 +57,6 @@ const TutorDashboard = () => {
           category: course.category || "Uncategorized",
           professor: course.creator?.name || "Unknown",
           duration: course.duration || "N/A",
-          level: course.level || "N/A",
           description: course.description || "No description available",
           tags: course.tags?.join(", ") || "No tags",
           language: course.language || "English",
@@ -129,11 +128,6 @@ const TutorDashboard = () => {
     {
       name: "Started On",
       selector: (row) => row.startDate,
-      sortable: true,
-    },
-    {
-      name: "Level",
-      selector: (row) => row.level,
       sortable: true,
     },
     {
