@@ -1,6 +1,9 @@
 const Certificate = require("../models/Certificate");
 const Course = require("../models/Course");
 const User = require("../models/User");
+const Module = require("../models/Module");
+const Quiz = require("../models/Quiz");
+const UserModuleProgress = require("../models/UserModuleProgress");
 const { generateCertificatePDF } = require("../services/certificateService");
 const { v4: uuidv4 } = require("uuid");
 const AppError = require("../utils/appError");
@@ -61,6 +64,40 @@ exports.generateCertificateInternal = async (userId, courseId) => {
         throw new Error(
           "All compulsory modules must be completed before generating a certificate"
         );
+      }
+
+      // Get all compulsory modules with quizzes
+      const compulsoryModulesWithQuizzes = await Module.find({
+        course: courseId,
+        isCompulsory: true,
+        quiz: { $exists: true, $ne: null }
+      }).populate('quiz');
+
+      // Check if all quizzes for compulsory modules have been passed
+      if (compulsoryModulesWithQuizzes.length > 0) {
+        for (const module of compulsoryModulesWithQuizzes) {
+          if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
+
+          // Find the user's attempts for this quiz
+          const quiz = await Quiz.findById(module.quiz);
+          if (!quiz) continue; // Skip if quiz not found
+
+          // Get user's attempts for this quiz
+          const userAttempts = quiz.attempts.filter(
+            attempt => attempt.user.toString() === userId
+          );
+
+          // Check if user has passed the quiz
+          const hasPassed = userAttempts.some(
+            attempt => attempt.score >= quiz.passingScore
+          );
+
+          if (!hasPassed) {
+            throw new Error(
+              `You must pass the quiz for module "${module.title}" before generating a certificate`
+            );
+          }
+        }
       }
     }
 
@@ -185,6 +222,43 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
           400
         )
       );
+    }
+
+    // Get all compulsory modules with quizzes
+    const compulsoryModulesWithQuizzes = await Module.find({
+      course: courseId,
+      isCompulsory: true,
+      quiz: { $exists: true, $ne: null }
+    }).populate('quiz');
+
+    // Check if all quizzes for compulsory modules have been passed
+    if (compulsoryModulesWithQuizzes.length > 0) {
+      for (const module of compulsoryModulesWithQuizzes) {
+        if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
+
+        // Find the user's attempts for this quiz
+        const quiz = await Quiz.findById(module.quiz);
+        if (!quiz) continue; // Skip if quiz not found
+
+        // Get user's attempts for this quiz
+        const userAttempts = quiz.attempts.filter(
+          attempt => attempt.user.toString() === userId
+        );
+
+        // Check if user has passed the quiz
+        const hasPassed = userAttempts.some(
+          attempt => attempt.score >= quiz.passingScore
+        );
+
+        if (!hasPassed) {
+          return next(
+            new AppError(
+              `You must pass the quiz for module "${module.title}" before generating a certificate`,
+              400
+            )
+          );
+        }
+      }
     }
   }
 

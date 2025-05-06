@@ -104,14 +104,37 @@ const EnrollCourseDetail = () => {
         dispatch(getModuleProgressThunk(id));
 
         // Fetch certificates to have them ready if needed
-        //  dispatch(getMyCertificatesThunk());
+        dispatch(getMyCertificatesThunk());
+
+        // Fetch quiz attempts for all quizzes in the course
+        if (res.quizzes?.length > 0) {
+          // Create an array of promises for all quiz attempt fetches
+          const fetchPromises = res.quizzes.map(quiz => {
+            // Ensure quizId is a string
+            const quizId = typeof quiz._id === 'object' ? quiz._id._id : quiz._id.toString();
+            return dispatch(getQuizAttemptsThunk({
+              courseId: id,
+              quizId: quizId,
+              userId: currentUserId
+            }));
+          });
+
+          // Wait for all fetches to complete
+          Promise.all(fetchPromises)
+            .then(() => {
+              console.log('All quiz attempts loaded');
+            })
+            .catch(error => {
+              console.error("Error fetching quiz attempts:", error);
+            });
+        }
       } catch (error) {
         toast.error('Failed to load course');
         console.error('Error loading course:', error);
       }
     };
     fetchCourse();
-  }, [id, dispatch]);
+  }, [id, dispatch, currentUserId]);
 
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
@@ -177,12 +200,32 @@ const EnrollCourseDetail = () => {
           continue; // Skip to the next module
         }
 
+        // Check if this module is already marked as completed in the progress data
+        const moduleProgressEntry = moduleProgress.moduleProgress.find(
+          mp => (typeof mp.module === 'object' ? mp.module._id : mp.module.toString()) === currentModule._id
+        );
+
+        // If the module is already marked as completed in the backend, always unlock it
+        if (moduleProgressEntry && moduleProgressEntry.isCompleted) {
+          newModuleState[currentModule._id] = true;
+          continue; // Skip to the next module
+        }
+
         // For compulsory modules, check if all previous compulsory modules are completed
         const allPreviousCompulsoryModulesCompleted = course.modules
           .slice(0, i) // Get all modules before the current one
           .filter(prevModule => prevModule.isCompulsory !== false) // Only consider compulsory modules
           .every((prevModule) => {
-            // For each previous compulsory module, check if it's marked as completed
+            // First check if the module is marked as completed in the progress data
+            const prevModuleProgressEntry = moduleProgress.moduleProgress.find(
+              mp => (typeof mp.module === 'object' ? mp.module._id : mp.module.toString()) === prevModule._id
+            );
+
+            if (prevModuleProgressEntry && prevModuleProgressEntry.isCompleted) {
+              return true; // If the module is marked as completed in the backend, consider it completed
+            }
+
+            // Otherwise, check if it's marked as completed in the local state
             // AND check if all its content is completed
             const isPrevModuleCompleted = newModuleState[prevModule._id];
             const isAllPrevModuleContentCompleted = prevModule.content?.every(
@@ -300,6 +343,60 @@ const EnrollCourseDetail = () => {
         return;
       }
 
+      // Check if all quizzes for compulsory modules have been passed
+      const compulsoryModules = course.modules.filter(module => module.isCompulsory !== false);
+      const compulsoryModulesWithQuizzes = compulsoryModules.filter(module => module.quiz);
+
+      if (compulsoryModulesWithQuizzes.length > 0) {
+        // First, check if we have loaded all quiz attempts
+        const missingQuizAttempts = compulsoryModulesWithQuizzes.filter(module => {
+          // Ensure quizId is a string
+          const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+          return storeQuizAttempts[quizId] === undefined;
+        });
+
+        // If we're missing any quiz attempts, load them now and don't proceed with certificate generation
+        if (missingQuizAttempts.length > 0) {
+          console.log('Missing quiz attempts, loading them now...');
+
+          // Create an array of promises for missing quiz attempt fetches
+          const fetchPromises = missingQuizAttempts.map(module => {
+            // Ensure quizId is a string
+            const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+            return dispatch(getQuizAttemptsThunk({
+              courseId: id,
+              quizId: quizId,
+              userId: currentUserId
+            }));
+          });
+
+          // Wait for all fetches to complete but don't auto-generate certificate
+          Promise.all(fetchPromises)
+            .then(() => {
+              console.log('All quiz attempts loaded');
+            })
+            .catch(error => {
+              console.error("Error fetching quiz attempts:", error);
+            });
+
+          return; // Exit early while we load the quiz attempts
+        }
+
+        // Now check if all quizzes have been passed
+        const failedQuizzes = compulsoryModulesWithQuizzes.filter(module => {
+          // Ensure quizId is a string
+          const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+          const quizAttempt = storeQuizAttempts[quizId];
+          return !quizAttempt || !quizAttempt.passed;
+        });
+
+        if (failedQuizzes.length > 0) {
+          // Don't auto-generate certificate if quizzes aren't passed
+          console.log('Not all quizzes passed, skipping auto certificate generation');
+          return;
+        }
+      }
+
       // First, ensure the course status is set to 'completed' in the backend
       dispatch(updateProgressThunk({ courseId: id, progress: 100 }))
         .unwrap()
@@ -331,7 +428,7 @@ const EnrollCourseDetail = () => {
           toast.error('Failed to update course status. Please try again.');
         });
     }
-  }, [userProgress, course, id, dispatch, currentUserId, certificateExists]);
+  }, [userProgress, course, id, dispatch, currentUserId, certificateExists, storeQuizAttempts]);
 
   const toggleSection = (moduleId) => {
     setExpandedSections({
@@ -386,7 +483,11 @@ const EnrollCourseDetail = () => {
 
       // Also check if the module has a quiz and if it's been passed
       if (moduleSessionsCompleted && course.modules[moduleIndex].quiz) {
-        const quizId = course.modules[moduleIndex].quiz;
+        // Ensure quizId is a string
+        const quizId = typeof course.modules[moduleIndex].quiz === 'object'
+          ? course.modules[moduleIndex].quiz._id
+          : course.modules[moduleIndex].quiz.toString();
+
         const quizAttempt = storeQuizAttempts[quizId];
         // If there's no passed quiz attempt, the module is not completed
         if (!quizAttempt || !quizAttempt.passed) {
@@ -636,6 +737,62 @@ const EnrollCourseDetail = () => {
       return;
     }
 
+    // Check if all quizzes for compulsory modules have been passed
+    const compulsoryModulesWithQuizzes = compulsoryModules.filter(module => module.quiz);
+
+    if (compulsoryModulesWithQuizzes.length > 0) {
+      // First, check if we have loaded all quiz attempts
+      const missingQuizAttempts = compulsoryModulesWithQuizzes.filter(module => {
+        // Ensure quizId is a string
+        const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+        return storeQuizAttempts[quizId] === undefined;
+      });
+
+      // If we're missing any quiz attempts, load them now
+      if (missingQuizAttempts.length > 0) {
+        toast.info('Loading quiz data, please wait...');
+
+        // Create an array of promises for missing quiz attempt fetches
+        const fetchPromises = missingQuizAttempts.map(module => {
+          // Ensure quizId is a string
+          const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+          return dispatch(getQuizAttemptsThunk({
+            courseId: id,
+            quizId: quizId,
+            userId: currentUserId
+          }));
+        });
+
+        // Wait for all fetches to complete
+        Promise.all(fetchPromises)
+          .then(() => {
+            // After loading, try generating the certificate again
+            handleGenerateCertificate();
+          })
+          .catch(error => {
+            console.error("Error fetching quiz attempts:", error);
+            toast.error('Failed to load quiz data. Please try again.');
+          });
+
+        return; // Exit early while we load the quiz attempts
+      }
+
+      // Now check if all quizzes have been passed
+      const failedQuizzes = compulsoryModulesWithQuizzes.filter(module => {
+        // Ensure quizId is a string
+        const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+        const quizAttempt = storeQuizAttempts[quizId];
+        return !quizAttempt || !quizAttempt.passed;
+      });
+
+      if (failedQuizzes.length > 0) {
+        // Get the names of the modules with failed quizzes
+        const failedModuleNames = failedQuizzes.map(module => module.title).join(', ');
+        toast.error(`You must pass the quizzes for these modules: ${failedModuleNames}`);
+        return;
+      }
+    }
+
     // First update course status to completed
     dispatch(updateProgressThunk({ courseId: id, progress: 100 }))
       .unwrap()
@@ -659,6 +816,8 @@ const EnrollCourseDetail = () => {
               toast.info('Certificate already exists. Refreshing your certificates.');
             } else if (error.message === "You must complete all compulsory modules before generating a certificate") {
               toast.error('You must complete all compulsory modules before generating a certificate.');
+            } else if (error.message && error.message.includes("You must pass the quiz for module")) {
+              toast.error(error.message);
             } else {
               toast.error('Failed to generate certificate. Please try again.');
             }
@@ -829,13 +988,15 @@ const EnrollCourseDetail = () => {
                     setLoadingAttempts(true);
 
                     // Create an array of promises for all quiz attempt fetches
-                    const fetchPromises = course.quizzes.map(quiz =>
-                      dispatch(getQuizAttemptsThunk({
+                    const fetchPromises = course.quizzes.map(quiz => {
+                      // Ensure quizId is a string
+                      const quizId = typeof quiz._id === 'object' ? quiz._id._id : quiz._id.toString();
+                      return dispatch(getQuizAttemptsThunk({
                         courseId: id,
-                        quizId: quiz._id,
+                        quizId: quizId,
                         userId: currentUserId // Pass the current user ID to ensure we only get attempts for this user
-                      }))
-                    );
+                      }));
+                    });
 
                     // Wait for all fetches to complete
                     Promise.all(fetchPromises)
@@ -951,9 +1112,11 @@ const EnrollCourseDetail = () => {
                                   className="take-quiz-button"
                                   onClick={() => {
                                     // Fetch quiz attempts for this quiz
+                                    // Ensure quizId is a string
+                                    const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
                                     dispatch(getQuizAttemptsThunk({
                                       courseId: id,
-                                      quizId: module.quiz,
+                                      quizId: quizId,
                                       userId: currentUserId
                                     }));
 
@@ -961,21 +1124,40 @@ const EnrollCourseDetail = () => {
                                     setActiveTab('quizzes');
 
                                     // Expand this quiz in the quizzes tab
+                                    // Ensure quizId is a string
+                                    const quizIdForExpand = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
                                     setExpandedQuizzes(prev => ({
                                       ...prev,
-                                      [module.quiz]: true
+                                      [quizIdForExpand]: true
                                     }));
                                   }}
                                 >
-                                  {storeQuizAttempts[module.quiz] ?
-                                    (storeQuizAttempts[module.quiz].passed ? 'Quiz Passed' : 'Retry Quiz') :
-                                    'Take Quiz'}
+                                  {(() => {
+                                    // Ensure quizId is a string
+                                    const quizIdForButton = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+                                    const quizAttempt = storeQuizAttempts[quizIdForButton];
+
+                                    if (quizAttempt) {
+                                      return quizAttempt.passed ? 'Quiz Passed' : 'Retry Quiz';
+                                    } else {
+                                      return 'Take Quiz';
+                                    }
+                                  })()}
                                 </button>
-                                {storeQuizAttempts[module.quiz] && (
-                                  <span className={`quiz-result-badge ${storeQuizAttempts[module.quiz].passed ? 'passed' : 'failed'}`}>
-                                    {storeQuizAttempts[module.quiz].passed ? 'Passed' : 'Failed'} ({storeQuizAttempts[module.quiz].percentage}%)
-                                  </span>
-                                )}
+                                {(() => {
+                                  // Ensure quizId is a string
+                                  const quizIdForBadge = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+                                  const quizAttempt = storeQuizAttempts[quizIdForBadge];
+
+                                  if (quizAttempt) {
+                                    return (
+                                      <span className={`quiz-result-badge ${quizAttempt.passed ? 'passed' : 'failed'}`}>
+                                        {quizAttempt.passed ? 'Passed' : 'Failed'} ({quizAttempt.percentage}%)
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </div>
                           </div>
