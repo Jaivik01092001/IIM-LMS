@@ -333,6 +333,77 @@ const EnrollCourseDetail = () => {
     }
   }, [moduleProgress, course, currentUserId]);
 
+  // Monitor quiz attempts and update module unlock status when a quiz is completed
+  useEffect(() => {
+    if (!course || !storeQuizAttempts) return;
+
+    // Only run this effect if we have course data and quiz attempts
+    console.log('Quiz attempts changed, recalculating module unlock status');
+
+    // Create a new module state object starting with the current state
+    const newModuleState = { ...moduleCompleted };
+
+    // First module is always unlocked
+    if (course.modules && course.modules.length > 0) {
+      newModuleState[course.modules[0]._id] = true;
+    }
+
+    // Make sure all optional modules are always unlocked
+    course.modules.forEach((module) => {
+      if (module.isCompulsory === false) {
+        newModuleState[module._id] = true;
+      }
+    });
+
+    // For each module, check if it should be unlocked based on quiz completion
+    for (let i = 0; i < course.modules.length; i++) {
+      const currentModule = course.modules[i];
+
+      // Skip first module (already unlocked) and optional modules (already unlocked)
+      if (i === 0 || currentModule.isCompulsory === false) continue;
+
+      // Check if all previous compulsory modules are completed
+      const allPreviousCompulsoryModulesCompleted = course.modules
+        .slice(0, i) // Get all modules before the current one
+        .filter(prevModule => prevModule.isCompulsory !== false) // Only consider compulsory modules
+        .every((prevModule) => {
+          // If the previous module has a quiz, check if it's been passed
+          if (prevModule.quiz) {
+            // Ensure quizId is a string
+            const quizId = typeof prevModule.quiz === 'object'
+              ? prevModule.quiz._id
+              : prevModule.quiz.toString();
+
+            const quizAttempt = storeQuizAttempts[quizId];
+            // If there's no passed quiz attempt, the module is not completed
+            if (!quizAttempt || !quizAttempt.passed) {
+              return false;
+            }
+          }
+
+          // Also check if all content in the module is completed
+          const isAllPrevModuleContentCompleted = prevModule.content?.every(
+            content => sessionCompleted[content._id] === true
+          ) || false;
+
+          return isAllPrevModuleContentCompleted;
+        });
+
+      // Update the module's unlock status
+      newModuleState[currentModule._id] = allPreviousCompulsoryModulesCompleted;
+    }
+
+    // Only update state if there are actual changes to avoid infinite loops
+    const hasChanges = Object.keys(newModuleState).some(
+      moduleId => newModuleState[moduleId] !== moduleCompleted[moduleId]
+    );
+
+    if (hasChanges) {
+      console.log('Updating module unlock status after quiz completion');
+      setModuleCompleted(newModuleState);
+    }
+  }, [storeQuizAttempts, course, sessionCompleted, moduleCompleted]);
+
   // Monitor user progress and automatically generate certificate when course is completed
   useEffect(() => {
     // Check if course is 100% completed
@@ -626,6 +697,50 @@ const EnrollCourseDetail = () => {
       })).unwrap();
 
       // Toast notifications are handled in the thunk, so we don't need to add them here
+
+      // If the quiz was passed, update module progress to reflect this
+      if (result.passed) {
+        console.log('Quiz passed, updating module progress');
+
+        // Find which module this quiz belongs to
+        const moduleWithQuiz = course.modules.find(module => {
+          const moduleQuizId = typeof module.quiz === 'object'
+            ? module.quiz._id
+            : module.quiz?.toString();
+          return moduleQuizId === quizId;
+        });
+
+        if (moduleWithQuiz) {
+          // Prepare data for backend update - include all completed modules
+          const completedModules = Object.keys(moduleCompleted).filter(key => moduleCompleted[key]);
+
+          // Add the module with the passed quiz to completed modules if not already there
+          if (!completedModules.includes(moduleWithQuiz._id)) {
+            completedModules.push(moduleWithQuiz._id);
+          }
+
+          // Create a map of completed content by module
+          const completedContent = {};
+          course.modules.forEach(module => {
+            const moduleId = module._id;
+            completedContent[moduleId] = module.content
+              ?.filter(content => sessionCompleted[content._id])
+              .map(content => content._id) || [];
+          });
+
+          // Update backend with the new module progress
+          await dispatch(updateModuleProgressThunk({
+            courseId: id,
+            progressData: {
+              moduleId: moduleWithQuiz._id,
+              completedModules,
+              completedContent
+            }
+          })).unwrap();
+
+          // The useEffect hook will handle updating the UI based on the new quiz attempt
+        }
+      }
 
       return result;
     } catch (error) {
