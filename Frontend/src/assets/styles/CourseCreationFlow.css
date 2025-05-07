@@ -651,6 +651,39 @@ label {
   border-left: 4px solid var(--primary-color);
 }
 
+/* Checkbox group styling */
+.checkbox-group {
+  margin-top: 16px;
+}
+
+.checkbox-container {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.checkbox-container input[type="checkbox"] {
+  margin-right: 10px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.checkbox-text {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-hint {
+  font-size: var(--smallfont);
+  color: var(--text-gray);
+  margin-top: 6px;
+  margin-left: 28px;
+}
+
 .module-editor h4,
 .content-editor h4,
 .quiz-editor h4 {

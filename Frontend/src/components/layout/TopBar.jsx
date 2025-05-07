@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaCog, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import NotificationDropdown from "../NotificationDropdown";
 import "../../assets/styles/TopBar.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -19,15 +20,17 @@ const TopBar = ({ toggleSidebar }) => {
   const [pageTitle, setPageTitle] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [profile, setProfile] = useState("");
+  const [imageError, setImageError] = useState(false);
 
-  // Get user info from localStorage
-  useEffect(() => {
+  // Function to load user data from localStorage
+  const loadUserData = useCallback(() => {
     const user = localStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
         setUserName(userData.name || "User");
         setProfile(userData?.profile?.avatar || ""); // Set profile picture
+        setImageError(false); // Reset image error state when profile changes
         // Set user role and dashboard type
         const role = userData.role || "";
         setUserRole(role);
@@ -49,6 +52,32 @@ const TopBar = ({ toggleSidebar }) => {
       }
     }
   }, []);
+
+  // Initial load of user data
+  useEffect(() => {
+    loadUserData();
+
+    // Set up storage event listener to detect changes to localStorage from other tabs
+    const handleStorageChange = (e) => {
+      if (e.key === 'user') {
+        loadUserData();
+      }
+    };
+
+    // Set up custom event listener for profile updates within the same tab
+    const handleProfileUpdate = () => {
+      loadUserData();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    // Clean up event listeners on component unmount
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, [loadUserData]);
 
   // Function to get page title based on route
   const getPageTitle = useCallback(
@@ -178,6 +207,11 @@ const TopBar = ({ toggleSidebar }) => {
     navigate("/");
   };
 
+  // Handle image loading error
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
 
   return (
     <div className="topbar">
@@ -201,17 +235,21 @@ const TopBar = ({ toggleSidebar }) => {
         {/* Language Selector */}
         {/* <LanguageSelector /> */}
 
-        {/* Notification button */}
-        {/* <button className="notification-btn">
-          <FaBell />
-          <span className="notification-badge">3</span>
-        </button> */}
+        {/* Notification Dropdown */}
+        <NotificationDropdown />
 
         {/* User profile */}
         <div className="user-profile" onClick={toggleDropdown}>
           <div className="avatar">
-            <img src={VITE_IMAGE_URL + profile} alt="profile"
-            />
+            {profile && !imageError ? (
+              <img
+                src={VITE_IMAGE_URL + profile}
+                alt="profile"
+                onError={handleImageError}
+              />
+            ) : (
+              <FaUserCircle className="avatar-fallback" />
+            )}
           </div>
           <div className="user-info">
             <span className="user-name">{userName}</span>

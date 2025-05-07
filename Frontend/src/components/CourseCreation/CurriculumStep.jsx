@@ -11,7 +11,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
     // State for module editing
     const [editingModuleId, setEditingModuleId] = useState(null);
-    const [moduleFormData, setModuleFormData] = useState({ title: "", description: "" });
+    const [moduleFormData, setModuleFormData] = useState({ title: "", description: "", isCompulsory: true });
 
     // State for content editing
     const [editingContentId, setEditingContentId] = useState(null);
@@ -57,6 +57,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                     title: module.title,
                     description: module.description,
                     order: module.order || 0,
+                    isCompulsory: module.isCompulsory !== undefined ? module.isCompulsory : true,
                     // Process content array to ensure it contains full content objects, not just IDs
                     content: module.content ? module.content.map(contentId => {
                         if (typeof contentId === 'object') {
@@ -123,12 +124,17 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             description: "",
             content: [],
             quiz: null,
-            order: modules.length
+            order: modules.length,
+            isCompulsory: true // Default to true
         };
 
         setModules([...modules, newModule]);
         setEditingModuleId(newModule._id);
-        setModuleFormData({ title: newModule.title, description: newModule.description });
+        setModuleFormData({
+            title: newModule.title,
+            description: newModule.description,
+            isCompulsory: newModule.isCompulsory
+        });
 
         // Close all other modules and only expand the new one
         const newExpandedState = {};
@@ -142,20 +148,29 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     // Edit module
     const startEditModule = (module) => {
         setEditingModuleId(module._id);
-        setModuleFormData({ title: module.title, description: module.description });
+        setModuleFormData({
+            title: module.title,
+            description: module.description,
+            isCompulsory: module.isCompulsory !== undefined ? module.isCompulsory : true
+        });
     };
 
     // Save module
     const saveModule = () => {
         const updatedModules = modules.map(module =>
             module._id === editingModuleId
-                ? { ...module, title: moduleFormData.title, description: moduleFormData.description }
+                ? {
+                    ...module,
+                    title: moduleFormData.title,
+                    description: moduleFormData.description,
+                    isCompulsory: moduleFormData.isCompulsory
+                }
                 : module
         );
 
         setModules(updatedModules);
         setEditingModuleId(null);
-        setModuleFormData({ title: "", description: "" });
+        setModuleFormData({ title: "", description: "", isCompulsory: true });
     };
 
     // Delete module
@@ -633,6 +648,20 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                 placeholder="Enter module description"
                                 rows={3}
                             />
+                        </div>
+                        <div className="form-group checkbox-group">
+                            <label className="checkbox-container">
+                                <input
+                                    type="checkbox"
+                                    checked={moduleFormData.isCompulsory}
+                                    onChange={(e) => setModuleFormData({ ...moduleFormData, isCompulsory: e.target.checked })}
+                                />
+                                <span className="checkbox-text">Make this module compulsory</span>
+                                <span className="checkbox-hint">
+                                    If checked, learners must complete this module before proceeding to the next one.
+                                    Optional modules can be skipped and don't affect certificate eligibility.
+                                </span>
+                            </label>
                         </div>
                         <div className="form-actions">
                             <button

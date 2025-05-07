@@ -396,12 +396,31 @@
   border-radius: var(--border-small-radius);
   background-color: var(--bg-white);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   box-shadow: var(--box-shadow-light);
+  position: relative;
 }
 
 .enroll-course-detail .section-header:hover {
   background-color: var(--bg-gray);
+}
+
+/* Locked module styling */
+.enroll-course-detail .section-header.locked-module {
+  background-color: var(--bg-gray);
+  opacity: 0.8;
+  cursor: not-allowed;
+  border-left: 3px solid #ef4444;
+}
+
+.enroll-course-detail .section-header.locked-module:hover {
+  box-shadow: var(--box-shadow-light);
+  transform: none;
+}
+
+.enroll-course-detail .section-header.locked-module .section-title h3,
+.enroll-course-detail .section-header.locked-module .section-title p {
+  color: var(--text-gray);
 }
 
 .enroll-course-detail .section-number {
@@ -428,6 +447,31 @@
   font-weight: 600;
   color: var(--text-color);
   margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Module badges */
+.enroll-course-detail .module-compulsory-badge,
+.enroll-course-detail .module-optional-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--extrasmallfont);
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.enroll-course-detail .module-compulsory-badge {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  color: var(--primary-color);
+}
+
+.enroll-course-detail .module-optional-badge {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: var(--text-gray);
 }
 
 .enroll-course-detail .section-title p {
@@ -496,6 +540,63 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
+}
+
+/* Module quiz styling */
+.enroll-course-detail .module-quiz-container {
+  margin-top: 15px;
+  border-top: 1px dashed var(--border-gray);
+  padding-top: 15px;
+}
+
+.enroll-course-detail .quiz-topic-item {
+  border-radius: var(--border-small-radius);
+}
+
+.enroll-course-detail .quiz-icon {
+  color: var(--primary-color);
+}
+
+.enroll-course-detail .quiz-action {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.enroll-course-detail .take-quiz-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--border-small-radius);
+  font-size: var(--smallfont);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.enroll-course-detail .take-quiz-button:hover {
+  background-color: var(--primary-hover-color);
+  transform: translateY(-2px);
+}
+
+.enroll-course-detail .quiz-result-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: var(--extrasmallfont);
+  font-weight: 600;
+}
+
+.enroll-course-detail .quiz-result-badge.passed {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.enroll-course-detail .quiz-result-badge.failed {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 .enroll-course-detail .session-toggle p {

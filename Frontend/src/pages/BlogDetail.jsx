@@ -14,6 +14,7 @@ import {
   FaPencilAlt,
 } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
+import { hasLocalPermission } from "../utils/localPermissions";
 import "../assets/styles/Blog.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -29,6 +30,16 @@ const BlogDetail = () => {
   const { currentBlog, loading } = useSelector((state) => state.blog);
 
   const userRole = user?.role || "educator"; // Default to educator view if role not found
+
+  // Check if user has permission to edit blogs
+  const canEditBlog = hasLocalPermission("edit_blog");
+
+  // Debug log for permission check
+  console.debug("Blog Detail - Edit permission check:", {
+    canEditBlog,
+    userRole: user?.role,
+    userId: user?._id,
+  });
 
   // Fetch blog on component mount
   useEffect(() => {
@@ -111,27 +122,28 @@ const BlogDetail = () => {
           <FaArrowLeft /> Back to Blogs
         </button>
 
-        <div className="blog-detail-actions">
-          <button className="blog-edit-button" onClick={handleEditBlog}>
-            <FaPencilAlt /> Edit Blog
-          </button>
-          <button
-            className={`blog-status-button ${
-              currentBlog.status === "published" ? "published" : "draft"
-            }`}
-            onClick={handleStatusToggle}
-          >
-            {currentBlog.status === "published" ? (
-              <>
-                <FaCheckCircle /> Published
-              </>
-            ) : (
-              <>
-                <FaTimesCircle /> Draft
-              </>
-            )}
-          </button>
-        </div>
+        {canEditBlog && (
+          <div className="blog-detail-actions">
+            <button className="blog-edit-button" onClick={handleEditBlog}>
+              <FaPencilAlt /> Edit Blog
+            </button>
+            <button
+              className={`blog-status-button ${currentBlog.status === "published" ? "published" : "draft"
+                }`}
+              onClick={handleStatusToggle}
+            >
+              {currentBlog.status === "published" ? (
+                <>
+                  <FaCheckCircle /> Published
+                </>
+              ) : (
+                <>
+                  <FaTimesCircle /> Draft
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="blog-detail-layout">
@@ -202,9 +214,8 @@ const BlogDetail = () => {
             <div className="blog-detail-meta-item">
               <span className="blog-detail-meta-label">Status</span>
               <span
-                className={`blog-detail-meta-status ${
-                  currentBlog.status === "published" ? "published" : "draft"
-                }`}
+                className={`blog-detail-meta-status ${currentBlog.status === "published" ? "published" : "draft"
+                  }`}
               >
                 {currentBlog.status === "published" ? "Published" : "Draft"}
               </span>
@@ -236,22 +247,23 @@ const BlogDetail = () => {
               </div>
             )}
 
-            <div className="blog-detail-meta-actions">
-              <button
-                className={`blog-detail-meta-action-btn ${
-                  currentBlog.status === "published" ? "unpublish" : "publish"
-                }`}
-                onClick={handleStatusToggle}
-              >
-                {currentBlog.status === "published" ? "Unpublish" : "Publish"}
-              </button>
-              <button
-                className="blog-detail-meta-action-btn edit"
-                onClick={handleEditBlog}
-              >
-                Edit Blog
-              </button>
-            </div>
+            {canEditBlog && (
+              <div className="blog-detail-meta-actions">
+                <button
+                  className={`blog-detail-meta-action-btn ${currentBlog.status === "published" ? "unpublish" : "publish"
+                    }`}
+                  onClick={handleStatusToggle}
+                >
+                  {currentBlog.status === "published" ? "Unpublish" : "Publish"}
+                </button>
+                <button
+                  className="blog-detail-meta-action-btn edit"
+                  onClick={handleEditBlog}
+                >
+                  Edit Blog
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

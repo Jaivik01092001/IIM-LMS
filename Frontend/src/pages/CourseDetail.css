@@ -574,7 +574,7 @@
 .course-detail-container .course-preview-placeholder img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .course-detail-container .play-button {

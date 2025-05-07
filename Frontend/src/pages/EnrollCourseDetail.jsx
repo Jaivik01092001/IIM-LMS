@@ -104,14 +104,37 @@ const EnrollCourseDetail = () => {
         dispatch(getModuleProgressThunk(id));
 
         // Fetch certificates to have them ready if needed
-        //  dispatch(getMyCertificatesThunk());
+        dispatch(getMyCertificatesThunk());
+
+        // Fetch quiz attempts for all quizzes in the course
+        if (res.quizzes?.length > 0) {
+          // Create an array of promises for all quiz attempt fetches
+          const fetchPromises = res.quizzes.map(quiz => {
+            // Ensure quizId is a string
+            const quizId = typeof quiz._id === 'object' ? quiz._id._id : quiz._id.toString();
+            return dispatch(getQuizAttemptsThunk({
+              courseId: id,
+              quizId: quizId,
+              userId: currentUserId
+            }));
+          });
+
+          // Wait for all fetches to complete
+          Promise.all(fetchPromises)
+            .then(() => {
+              console.log('All quiz attempts loaded');
+            })
+            .catch(error => {
+              console.error("Error fetching quiz attempts:", error);
+            });
+        }
       } catch (error) {
         toast.error('Failed to load course');
         console.error('Error loading course:', error);
       }
     };
     fetchCourse();
-  }, [id, dispatch]);
+  }, [id, dispatch, currentUserId]);
 
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
@@ -133,6 +156,13 @@ const EnrollCourseDetail = () => {
       if (course.modules && course.modules.length > 0) {
         newModuleState[course.modules[0]._id] = true;
       }
+
+      // Make sure all optional modules are always unlocked
+      course.modules.forEach((module) => {
+        if (module.isCompulsory === false) {
+          newModuleState[module._id] = true;
+        }
+      });
 
       // Then apply the progress from the backend
       moduleProgress.moduleProgress.forEach(mp => {
@@ -160,12 +190,42 @@ const EnrollCourseDetail = () => {
         newModuleState[course.modules[0]._id] = true;
       }
 
-      // For each module after the first one, check if all previous modules are fully completed
+      // For each module after the first one, check if all previous compulsory modules are fully completed
       for (let i = 1; i < course.modules.length; i++) {
-        const allPreviousModulesCompleted = course.modules
+        const currentModule = course.modules[i];
+
+        // If the module is optional (not compulsory), it should always be unlocked
+        if (currentModule.isCompulsory === false) {
+          newModuleState[currentModule._id] = true;
+          continue; // Skip to the next module
+        }
+
+        // Check if this module is already marked as completed in the progress data
+        const moduleProgressEntry = moduleProgress.moduleProgress.find(
+          mp => (typeof mp.module === 'object' ? mp.module._id : mp.module.toString()) === currentModule._id
+        );
+
+        // If the module is already marked as completed in the backend, always unlock it
+        if (moduleProgressEntry && moduleProgressEntry.isCompleted) {
+          newModuleState[currentModule._id] = true;
+          continue; // Skip to the next module
+        }
+
+        // For compulsory modules, check if all previous compulsory modules are completed
+        const allPreviousCompulsoryModulesCompleted = course.modules
           .slice(0, i) // Get all modules before the current one
+          .filter(prevModule => prevModule.isCompulsory !== false) // Only consider compulsory modules
           .every((prevModule) => {
-            // For each previous module, check if it's marked as completed
+            // First check if the module is marked as completed in the progress data
+            const prevModuleProgressEntry = moduleProgress.moduleProgress.find(
+              mp => (typeof mp.module === 'object' ? mp.module._id : mp.module.toString()) === prevModule._id
+            );
+
+            if (prevModuleProgressEntry && prevModuleProgressEntry.isCompleted) {
+              return true; // If the module is marked as completed in the backend, consider it completed
+            }
+
+            // Otherwise, check if it's marked as completed in the local state
             // AND check if all its content is completed
             const isPrevModuleCompleted = newModuleState[prevModule._id];
             const isAllPrevModuleContentCompleted = prevModule.content?.every(
@@ -175,11 +235,11 @@ const EnrollCourseDetail = () => {
             return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
           });
 
-        // Only unlock this module if all previous modules are fully completed
-        if (allPreviousModulesCompleted) {
-          newModuleState[course.modules[i]._id] = true;
+        // Only unlock this compulsory module if all previous compulsory modules are fully completed
+        if (allPreviousCompulsoryModulesCompleted) {
+          newModuleState[currentModule._id] = true;
         } else {
-          newModuleState[course.modules[i]._id] = false;
+          newModuleState[currentModule._id] = false;
         }
       }
 
@@ -189,9 +249,32 @@ const EnrollCourseDetail = () => {
       // Update session completion state
       setSessionCompleted(newSessionCompleted);
 
-      // Calculate overall progress based on completed content
-      const completedCount = Object.values(newSessionCompleted).filter(Boolean).length;
-      const totalSessions = Object.keys(newSessionCompleted).length;
+      // Calculate overall progress based on completed content in compulsory modules only
+      let completedCount = 0;
+      let totalSessions = 0;
+
+      // Only count content from compulsory modules
+      course.modules.forEach(module => {
+        if (module.isCompulsory !== false) { // If module is compulsory
+          module.content?.forEach(content => {
+            totalSessions++; // Count this content item
+            if (newSessionCompleted[content._id]) {
+              completedCount++; // Count as completed if marked as such
+            }
+          });
+
+          // If module has a quiz, count it as a session
+          if (module.quiz) {
+            totalSessions++;
+            // Check if quiz is completed by looking at the module completion status
+            // A module is only marked as completed if its quiz is also completed
+            if (newModuleState && newModuleState[module._id]) {
+              completedCount++;
+            }
+          }
+        }
+      });
+
       const calculatedProgress = totalSessions > 0 ? Math.round((completedCount / totalSessions) * 100) : 0;
 
       // Check if the course has enrolled users and if the current user is one of them
@@ -250,6 +333,77 @@ const EnrollCourseDetail = () => {
     }
   }, [moduleProgress, course, currentUserId]);
 
+  // Monitor quiz attempts and update module unlock status when a quiz is completed
+  useEffect(() => {
+    if (!course || !storeQuizAttempts) return;
+
+    // Only run this effect if we have course data and quiz attempts
+    console.log('Quiz attempts changed, recalculating module unlock status');
+
+    // Create a new module state object starting with the current state
+    const newModuleState = { ...moduleCompleted };
+
+    // First module is always unlocked
+    if (course.modules && course.modules.length > 0) {
+      newModuleState[course.modules[0]._id] = true;
+    }
+
+    // Make sure all optional modules are always unlocked
+    course.modules.forEach((module) => {
+      if (module.isCompulsory === false) {
+        newModuleState[module._id] = true;
+      }
+    });
+
+    // For each module, check if it should be unlocked based on quiz completion
+    for (let i = 0; i < course.modules.length; i++) {
+      const currentModule = course.modules[i];
+
+      // Skip first module (already unlocked) and optional modules (already unlocked)
+      if (i === 0 || currentModule.isCompulsory === false) continue;
+
+      // Check if all previous compulsory modules are completed
+      const allPreviousCompulsoryModulesCompleted = course.modules
+        .slice(0, i) // Get all modules before the current one
+        .filter(prevModule => prevModule.isCompulsory !== false) // Only consider compulsory modules
+        .every((prevModule) => {
+          // If the previous module has a quiz, check if it's been passed
+          if (prevModule.quiz) {
+            // Ensure quizId is a string
+            const quizId = typeof prevModule.quiz === 'object'
+              ? prevModule.quiz._id
+              : prevModule.quiz.toString();
+
+            const quizAttempt = storeQuizAttempts[quizId];
+            // If there's no passed quiz attempt, the module is not completed
+            if (!quizAttempt || !quizAttempt.passed) {
+              return false;
+            }
+          }
+
+          // Also check if all content in the module is completed
+          const isAllPrevModuleContentCompleted = prevModule.content?.every(
+            content => sessionCompleted[content._id] === true
+          ) || false;
+
+          return isAllPrevModuleContentCompleted;
+        });
+
+      // Update the module's unlock status
+      newModuleState[currentModule._id] = allPreviousCompulsoryModulesCompleted;
+    }
+
+    // Only update state if there are actual changes to avoid infinite loops
+    const hasChanges = Object.keys(newModuleState).some(
+      moduleId => newModuleState[moduleId] !== moduleCompleted[moduleId]
+    );
+
+    if (hasChanges) {
+      console.log('Updating module unlock status after quiz completion');
+      setModuleCompleted(newModuleState);
+    }
+  }, [storeQuizAttempts, course, sessionCompleted, moduleCompleted]);
+
   // Monitor user progress and automatically generate certificate when course is completed
   useEffect(() => {
     // Check if course is 100% completed
@@ -258,6 +412,60 @@ const EnrollCourseDetail = () => {
       if (certificateExists) {
         //setActiveTab('certificates');
         return;
+      }
+
+      // Check if all quizzes for compulsory modules have been passed
+      const compulsoryModules = course.modules.filter(module => module.isCompulsory !== false);
+      const compulsoryModulesWithQuizzes = compulsoryModules.filter(module => module.quiz);
+
+      if (compulsoryModulesWithQuizzes.length > 0) {
+        // First, check if we have loaded all quiz attempts
+        const missingQuizAttempts = compulsoryModulesWithQuizzes.filter(module => {
+          // Ensure quizId is a string
+          const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+          return storeQuizAttempts[quizId] === undefined;
+        });
+
+        // If we're missing any quiz attempts, load them now and don't proceed with certificate generation
+        if (missingQuizAttempts.length > 0) {
+          console.log('Missing quiz attempts, loading them now...');
+
+          // Create an array of promises for missing quiz attempt fetches
+          const fetchPromises = missingQuizAttempts.map(module => {
+            // Ensure quizId is a string
+            const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+            return dispatch(getQuizAttemptsThunk({
+              courseId: id,
+              quizId: quizId,
+              userId: currentUserId
+            }));
+          });
+
+          // Wait for all fetches to complete but don't auto-generate certificate
+          Promise.all(fetchPromises)
+            .then(() => {
+              console.log('All quiz attempts loaded');
+            })
+            .catch(error => {
+              console.error("Error fetching quiz attempts:", error);
+            });
+
+          return; // Exit early while we load the quiz attempts
+        }
+
+        // Now check if all quizzes have been passed
+        const failedQuizzes = compulsoryModulesWithQuizzes.filter(module => {
+          // Ensure quizId is a string
+          const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+          const quizAttempt = storeQuizAttempts[quizId];
+          return !quizAttempt || !quizAttempt.passed;
+        });
+
+        if (failedQuizzes.length > 0) {
+          // Don't auto-generate certificate if quizzes aren't passed
+          console.log('Not all quizzes passed, skipping auto certificate generation');
+          return;
+        }
       }
 
       // First, ensure the course status is set to 'completed' in the backend
@@ -291,7 +499,7 @@ const EnrollCourseDetail = () => {
           toast.error('Failed to update course status. Please try again.');
         });
     }
-  }, [userProgress, course, id, dispatch, currentUserId, certificateExists]);
+  }, [userProgress, course, id, dispatch, currentUserId, certificateExists, storeQuizAttempts]);
 
   const toggleSection = (moduleId) => {
     setExpandedSections({
@@ -308,19 +516,55 @@ const EnrollCourseDetail = () => {
         [sessionId]: !sessionCompleted[sessionId],
       };
 
-      // Calculate progress for all sessions across all modules
-      const completedCount = Object.values(newSessionState).filter(Boolean).length;
-      const totalSessions = Object.keys(newSessionState).length;
+      // Calculate progress for all sessions in compulsory modules only
+      let completedCount = 0;
+      let totalSessions = 0;
+
+      // Only count content from compulsory modules
+      course.modules.forEach(module => {
+        if (module.isCompulsory !== false) { // If module is compulsory
+          module.content?.forEach(content => {
+            totalSessions++; // Count this content item
+            if (newSessionState[content._id]) {
+              completedCount++; // Count as completed if marked as such
+            }
+          });
+
+          // If module has a quiz, count it as a session
+          if (module.quiz) {
+            totalSessions++;
+            // Check if quiz is completed by looking at the module completion status
+            // A module is only marked as completed if its quiz is also completed
+            if (moduleCompleted[module._id]) {
+              completedCount++;
+            }
+          }
+        }
+      });
 
       // Store the calculated progress in a variable but don't set it yet
       // We'll use the value returned from the backend instead
-      const calculatedProgress = Math.round((completedCount / totalSessions) * 100);
+      const calculatedProgress = totalSessions > 0 ? Math.round((completedCount / totalSessions) * 100) : 0;
 
       // Check if all sessions in this module are completed
-      const moduleSessionsCompleted =
+      let moduleSessionsCompleted =
         course.modules[moduleIndex].content?.every(content =>
           newSessionState[content._id] === true
         ) || false;
+
+      // Also check if the module has a quiz and if it's been passed
+      if (moduleSessionsCompleted && course.modules[moduleIndex].quiz) {
+        // Ensure quizId is a string
+        const quizId = typeof course.modules[moduleIndex].quiz === 'object'
+          ? course.modules[moduleIndex].quiz._id
+          : course.modules[moduleIndex].quiz.toString();
+
+        const quizAttempt = storeQuizAttempts[quizId];
+        // If there's no passed quiz attempt, the module is not completed
+        if (!quizAttempt || !quizAttempt.passed) {
+          moduleSessionsCompleted = false;
+        }
+      }
 
       // Create a new module state object starting with the current state
       const newModuleState = { ...moduleCompleted };
@@ -336,28 +580,43 @@ const EnrollCourseDetail = () => {
         }
       });
 
-      // Only unlock the next module if this module is completed AND all previous modules are completed
+      // Only unlock the next compulsory module if this module is completed AND all previous compulsory modules are completed
       if (moduleSessionsCompleted && moduleIndex < course.modules.length - 1) {
-        // Check if all previous modules are completed
-        const allPreviousModulesCompleted = course.modules
-          .slice(0, moduleIndex + 1) // Get all modules up to and including the current one
-          .every((prevModule) => {
-            // For each previous module, check if it's marked as completed
-            // AND check if all its content is completed
-            const isPrevModuleCompleted = newModuleState[prevModule._id];
-            const isAllPrevModuleContentCompleted = prevModule.content?.every(
-              content => newSessionState[content._id] === true
-            ) || false;
+        // Get the next module
+        const nextModule = course.modules[moduleIndex + 1];
 
-            return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
-          });
+        // If the next module is optional (not compulsory), it should always be unlocked
+        if (nextModule.isCompulsory === false) {
+          newModuleState[nextModule._id] = true;
+        } else {
+          // For compulsory modules, check if all previous compulsory modules are completed
+          const allPreviousCompulsoryModulesCompleted = course.modules
+            .slice(0, moduleIndex + 1) // Get all modules up to and including the current one
+            .filter(prevModule => prevModule.isCompulsory !== false) // Only consider compulsory modules
+            .every((prevModule) => {
+              // For each previous compulsory module, check if it's marked as completed
+              // AND check if all its content is completed
+              const isPrevModuleCompleted = newModuleState[prevModule._id];
+              const isAllPrevModuleContentCompleted = prevModule.content?.every(
+                content => newSessionState[content._id] === true
+              ) || false;
 
-        // Only unlock the next module if all previous modules are fully completed
-        if (allPreviousModulesCompleted) {
-          const nextModuleId = course.modules[moduleIndex + 1]._id;
-          newModuleState[nextModuleId] = true;
+              return isPrevModuleCompleted && isAllPrevModuleContentCompleted;
+            });
+
+          // Only unlock the next compulsory module if all previous compulsory modules are fully completed
+          if (allPreviousCompulsoryModulesCompleted) {
+            newModuleState[nextModule._id] = true;
+          }
         }
       }
+
+      // Make sure all optional modules are always unlocked
+      course.modules.forEach((module) => {
+        if (module.isCompulsory === false) {
+          newModuleState[module._id] = true;
+        }
+      });
 
       // Prepare data for backend update
       const completedModules = Object.keys(newModuleState).filter(key => newModuleState[key]);
@@ -369,6 +628,16 @@ const EnrollCourseDetail = () => {
         completedContent[moduleId] = module.content
           ?.filter(content => newSessionState[content._id])
           .map(content => content._id) || [];
+      });
+
+      // Log debug information
+      console.log('Updating progress with:', {
+        moduleId,
+        contentId: sessionId,
+        isCompleted: newSessionState[sessionId],
+        completedModules,
+        completedContent,
+        moduleSessionsCompleted
       });
 
       // Update backend first and capture the response
@@ -429,6 +698,50 @@ const EnrollCourseDetail = () => {
 
       // Toast notifications are handled in the thunk, so we don't need to add them here
 
+      // If the quiz was passed, update module progress to reflect this
+      if (result.passed) {
+        console.log('Quiz passed, updating module progress');
+
+        // Find which module this quiz belongs to
+        const moduleWithQuiz = course.modules.find(module => {
+          const moduleQuizId = typeof module.quiz === 'object'
+            ? module.quiz._id
+            : module.quiz?.toString();
+          return moduleQuizId === quizId;
+        });
+
+        if (moduleWithQuiz) {
+          // Prepare data for backend update - include all completed modules
+          const completedModules = Object.keys(moduleCompleted).filter(key => moduleCompleted[key]);
+
+          // Add the module with the passed quiz to completed modules if not already there
+          if (!completedModules.includes(moduleWithQuiz._id)) {
+            completedModules.push(moduleWithQuiz._id);
+          }
+
+          // Create a map of completed content by module
+          const completedContent = {};
+          course.modules.forEach(module => {
+            const moduleId = module._id;
+            completedContent[moduleId] = module.content
+              ?.filter(content => sessionCompleted[content._id])
+              .map(content => content._id) || [];
+          });
+
+          // Update backend with the new module progress
+          await dispatch(updateModuleProgressThunk({
+            courseId: id,
+            progressData: {
+              moduleId: moduleWithQuiz._id,
+              completedModules,
+              completedContent
+            }
+          })).unwrap();
+
+          // The useEffect hook will handle updating the UI based on the new quiz attempt
+        }
+      }
+
       return result;
     } catch (error) {
       console.error('Error submitting quiz:', error);
@@ -437,15 +750,21 @@ const EnrollCourseDetail = () => {
     }
   };
 
-  // Check if a module is locked (all previous modules must be completed)
+  // Check if a module is locked (all previous compulsory modules must be completed)
   const isModuleLocked = (moduleIndex) => {
     if (!course) return true; // If no course data, consider locked
 
     // First module is always unlocked
     if (moduleIndex === 0) return false;
 
-    // For all other modules, check moduleCompleted state directly
-    const moduleId = course.modules[moduleIndex]._id;
+    // Get the current module
+    const currentModule = course.modules[moduleIndex];
+
+    // If the module is optional (not compulsory), it should never be locked
+    if (currentModule.isCompulsory === false) return false;
+
+    // For compulsory modules, check moduleCompleted state directly
+    const moduleId = currentModule._id;
     return !moduleCompleted[moduleId]; // If not explicitly marked as completed, it's locked
   };
 
@@ -522,6 +841,73 @@ const EnrollCourseDetail = () => {
       return;
     }
 
+    // Check if all compulsory modules are completed
+    const compulsoryModules = course.modules.filter(module => module.isCompulsory !== false);
+    const allCompulsoryModulesCompleted = compulsoryModules.every(module =>
+      moduleCompleted[module._id] === true
+    );
+
+    if (!allCompulsoryModulesCompleted) {
+      toast.error('You must complete all compulsory modules before generating a certificate.');
+      return;
+    }
+
+    // Check if all quizzes for compulsory modules have been passed
+    const compulsoryModulesWithQuizzes = compulsoryModules.filter(module => module.quiz);
+
+    if (compulsoryModulesWithQuizzes.length > 0) {
+      // First, check if we have loaded all quiz attempts
+      const missingQuizAttempts = compulsoryModulesWithQuizzes.filter(module => {
+        // Ensure quizId is a string
+        const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+        return storeQuizAttempts[quizId] === undefined;
+      });
+
+      // If we're missing any quiz attempts, load them now
+      if (missingQuizAttempts.length > 0) {
+        toast.info('Loading quiz data, please wait...');
+
+        // Create an array of promises for missing quiz attempt fetches
+        const fetchPromises = missingQuizAttempts.map(module => {
+          // Ensure quizId is a string
+          const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+          return dispatch(getQuizAttemptsThunk({
+            courseId: id,
+            quizId: quizId,
+            userId: currentUserId
+          }));
+        });
+
+        // Wait for all fetches to complete
+        Promise.all(fetchPromises)
+          .then(() => {
+            // After loading, try generating the certificate again
+            handleGenerateCertificate();
+          })
+          .catch(error => {
+            console.error("Error fetching quiz attempts:", error);
+            toast.error('Failed to load quiz data. Please try again.');
+          });
+
+        return; // Exit early while we load the quiz attempts
+      }
+
+      // Now check if all quizzes have been passed
+      const failedQuizzes = compulsoryModulesWithQuizzes.filter(module => {
+        // Ensure quizId is a string
+        const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+        const quizAttempt = storeQuizAttempts[quizId];
+        return !quizAttempt || !quizAttempt.passed;
+      });
+
+      if (failedQuizzes.length > 0) {
+        // Get the names of the modules with failed quizzes
+        const failedModuleNames = failedQuizzes.map(module => module.title).join(', ');
+        toast.error(`You must pass the quizzes for these modules: ${failedModuleNames}`);
+        return;
+      }
+    }
+
     // First update course status to completed
     dispatch(updateProgressThunk({ courseId: id, progress: 100 }))
       .unwrap()
@@ -543,6 +929,10 @@ const EnrollCourseDetail = () => {
               dispatch(getMyCertificatesThunk());
               setActiveTab('certificates');
               toast.info('Certificate already exists. Refreshing your certificates.');
+            } else if (error.message === "You must complete all compulsory modules before generating a certificate") {
+              toast.error('You must complete all compulsory modules before generating a certificate.');
+            } else if (error.message && error.message.includes("You must pass the quiz for module")) {
+              toast.error(error.message);
             } else {
               toast.error('Failed to generate certificate. Please try again.');
             }
@@ -606,7 +996,6 @@ const EnrollCourseDetail = () => {
                     }}
                     src={`https://www.youtube.com/embed/${getYoutubeVideoId(getYoutubeUrl(selectedContent))}`}
                     title="YouTube video player"
-                    frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   ></iframe>
@@ -714,13 +1103,15 @@ const EnrollCourseDetail = () => {
                     setLoadingAttempts(true);
 
                     // Create an array of promises for all quiz attempt fetches
-                    const fetchPromises = course.quizzes.map(quiz =>
-                      dispatch(getQuizAttemptsThunk({
+                    const fetchPromises = course.quizzes.map(quiz => {
+                      // Ensure quizId is a string
+                      const quizId = typeof quiz._id === 'object' ? quiz._id._id : quiz._id.toString();
+                      return dispatch(getQuizAttemptsThunk({
                         courseId: id,
-                        quizId: quiz._id,
+                        quizId: quizId,
                         userId: currentUserId // Pass the current user ID to ensure we only get attempts for this user
-                      }))
-                    );
+                      }));
+                    });
 
                     // Wait for all fetches to complete
                     Promise.all(fetchPromises)
@@ -749,7 +1140,15 @@ const EnrollCourseDetail = () => {
                   >
                     <div className="section-number">{moduleIndex + 1}</div>
                     <div className="section-title">
-                      <h3>{module.title}</h3>
+                      <h3>
+                        {module.title}
+                        {module.isCompulsory === false && (
+                          <span className="module-optional-badge">Optional</span>
+                        )}
+                        {module.isCompulsory !== false && (
+                          <span className="module-compulsory-badge">Compulsory</span>
+                        )}
+                      </h3>
                       <p>{module.content?.length || 0} Topic</p>
                     </div>
                     <div className="section-toggle">
@@ -764,6 +1163,7 @@ const EnrollCourseDetail = () => {
                   {/* Only show content if module is not locked AND it's expanded */}
                   {!isModuleLocked(moduleIndex) && expandedSections[module._id] && (
                     <div className="section-content">
+                      {/* Display module content */}
                       {module.content?.length ? module.content.map((content) => (
                         <div
                           className="topic-item"
@@ -810,6 +1210,73 @@ const EnrollCourseDetail = () => {
                         </div>
                       )) : (
                         <p className="no-content-message">No content available for this module.</p>
+                      )}
+
+                      {/* Display module quiz if it exists */}
+                      {module.quiz && (
+                        <div className="module-quiz-container">
+                          <div className="topic-item quiz-topic-item">
+                            <div className="topic-icon quiz-icon">
+                              <FaTrophy />
+                            </div>
+                            <div className="topic-details">
+                              <h4>Module Quiz</h4>
+                              <p>Complete this quiz to progress</p>
+                              <div className="quiz-action">
+                                <button
+                                  className="take-quiz-button"
+                                  onClick={() => {
+                                    // Fetch quiz attempts for this quiz
+                                    // Ensure quizId is a string
+                                    const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+                                    dispatch(getQuizAttemptsThunk({
+                                      courseId: id,
+                                      quizId: quizId,
+                                      userId: currentUserId
+                                    }));
+
+                                    // Switch to quizzes tab
+                                    setActiveTab('quizzes');
+
+                                    // Expand this quiz in the quizzes tab
+                                    // Ensure quizId is a string
+                                    const quizIdForExpand = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+                                    setExpandedQuizzes(prev => ({
+                                      ...prev,
+                                      [quizIdForExpand]: true
+                                    }));
+                                  }}
+                                >
+                                  {(() => {
+                                    // Ensure quizId is a string
+                                    const quizIdForButton = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+                                    const quizAttempt = storeQuizAttempts[quizIdForButton];
+
+                                    if (quizAttempt) {
+                                      return quizAttempt.passed ? 'Quiz Passed' : 'Retry Quiz';
+                                    } else {
+                                      return 'Take Quiz';
+                                    }
+                                  })()}
+                                </button>
+                                {(() => {
+                                  // Ensure quizId is a string
+                                  const quizIdForBadge = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
+                                  const quizAttempt = storeQuizAttempts[quizIdForBadge];
+
+                                  if (quizAttempt) {
+                                    return (
+                                      <span className={`quiz-result-badge ${quizAttempt.passed ? 'passed' : 'failed'}`}>
+                                        {quizAttempt.passed ? 'Passed' : 'Failed'} ({quizAttempt.percentage}%)
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}

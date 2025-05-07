@@ -1,13 +1,16 @@
-const Certificate = require('../models/Certificate');
-const Course = require('../models/Course');
-const User = require('../models/User');
-const { generateCertificatePDF } = require('../services/certificateService');
-const { v4: uuidv4 } = require('uuid');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
-const fs = require('fs');
-const path = require('path');
-const util = require('util');
+const Certificate = require("../models/Certificate");
+const Course = require("../models/Course");
+const User = require("../models/User");
+const Module = require("../models/Module");
+const Quiz = require("../models/Quiz");
+const UserModuleProgress = require("../models/UserModuleProgress");
+const { generateCertificatePDF } = require("../services/certificateService");
+const { v4: uuidv4 } = require("uuid");
+const AppError = require("../utils/appError");
+const catchAsync = require("../utils/catchAsync");
+const fs = require("fs");
+const path = require("path");
+const util = require("util");
 
 // Convert fs.writeFile to Promise-based
 const writeFileAsync = util.promisify(fs.writeFile);
@@ -16,22 +19,93 @@ const writeFileAsync = util.promisify(fs.writeFile);
 exports.generateCertificateInternal = async (userId, courseId) => {
   try {
     // Check if course exists
-    const course = await Course.findById(courseId).populate('creator', 'name');
+    const course = await Course.findById(courseId)
+      .populate("creator", "name")
+      .populate("modules");
     if (!course) {
-      throw new Error('Course not found');
+      throw new Error("Course not found");
     }
 
     // Check if user is enrolled and has completed the course
     const enrollment = course.enrolledUsers.find(
-      (enrollment) => enrollment.user.toString() === userId && enrollment.status === 'completed'
+      (enrollment) =>
+        enrollment.user.toString() === userId &&
+        enrollment.status === "completed"
     );
 
     if (!enrollment) {
-      throw new Error('Course not completed');
+      throw new Error("Course not completed");
+    }
+
+    // Get all compulsory modules for this course
+    const Module = require("../models/Module");
+    const compulsoryModules = await Module.find({
+      course: courseId,
+      isCompulsory: true,
+    });
+
+    // Get user's module progress
+    const UserModuleProgress = require("../models/UserModuleProgress");
+    const progress = await UserModuleProgress.findOne({
+      user: userId,
+      course: courseId,
+    });
+
+    // Check if all compulsory modules are completed
+    if (progress && compulsoryModules.length > 0) {
+      const completedCompulsoryModules = compulsoryModules.filter((module) => {
+        const moduleProgress = progress.moduleProgress.find(
+          (mp) => mp.module.toString() === module._id.toString()
+        );
+        return moduleProgress && moduleProgress.isCompleted;
+      });
+
+      if (completedCompulsoryModules.length < compulsoryModules.length) {
+        throw new Error(
+          "All compulsory modules must be completed before generating a certificate"
+        );
+      }
+
+      // Get all compulsory modules with quizzes
+      const compulsoryModulesWithQuizzes = await Module.find({
+        course: courseId,
+        isCompulsory: true,
+        quiz: { $exists: true, $ne: null }
+      }).populate('quiz');
+
+      // Check if all quizzes for compulsory modules have been passed
+      if (compulsoryModulesWithQuizzes.length > 0) {
+        for (const module of compulsoryModulesWithQuizzes) {
+          if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
+
+          // Find the user's attempts for this quiz
+          const quiz = await Quiz.findById(module.quiz);
+          if (!quiz) continue; // Skip if quiz not found
+
+          // Get user's attempts for this quiz
+          const userAttempts = quiz.attempts.filter(
+            attempt => attempt.user.toString() === userId
+          );
+
+          // Check if user has passed the quiz
+          const hasPassed = userAttempts.some(
+            attempt => attempt.score >= quiz.passingScore
+          );
+
+          if (!hasPassed) {
+            throw new Error(
+              `You must pass the quiz for module "${module.title}" before generating a certificate`
+            );
+          }
+        }
+      }
     }
 
     // Check if certificate already exists
-    let certificate = await Certificate.findOne({ user: userId, course: courseId });
+    let certificate = await Certificate.findOne({
+      user: userId,
+      course: courseId,
+    });
 
     if (certificate) {
       return certificate;
@@ -40,7 +114,7 @@ exports.generateCertificateInternal = async (userId, courseId) => {
     // Get user details
     const user = await User.findById(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Generate a unique certificate ID
@@ -51,17 +125,23 @@ exports.generateCertificateInternal = async (userId, courseId) => {
       studentName: user.name,
       courseName: course.title,
       instructorName: course.creator.name,
-      completionDate: new Date(enrollment.completedAt || Date.now()).toLocaleDateString(),
-      certificateId
+      completionDate: new Date(
+        enrollment.completedAt || Date.now()
+      ).toLocaleDateString(),
+      certificateId,
     });
 
     // Save certificate to local file system
     const certificateFileName = `${certificateId}.pdf`;
-    const certificatePath = path.join(__dirname, '../uploads/certificates', certificateFileName);
+    const certificatePath = path.join(
+      __dirname,
+      "../uploads/certificates",
+      certificateFileName
+    );
     await writeFileAsync(certificatePath, certificateBuffer);
 
     // Create the certificate URL based on the server's URL
-    const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const baseUrl = process.env.BACKEND_URL || "http://localhost:5000";
     const certificateUrl = `${baseUrl}/api/certificate/view/${certificateId}`;
     const verificationUrl = `${baseUrl}/api/certificate/verify/${certificateId}`;
 
@@ -76,13 +156,15 @@ exports.generateCertificateInternal = async (userId, courseId) => {
         studentName: user.name,
         courseName: course.title,
         instructorName: course.creator.name,
-        completionDate: new Date(enrollment.completedAt || Date.now()).toLocaleDateString()
-      }
+        completionDate: new Date(
+          enrollment.completedAt || Date.now()
+        ).toLocaleDateString(),
+      },
     });
 
     return certificate;
   } catch (error) {
-    console.error('Error generating certificate:', error);
+    console.error("Error generating certificate:", error);
     throw error;
   }
 };
@@ -93,35 +175,111 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
 
   // Check if course exists
-  const course = await Course.findById(courseId).populate('creator', 'name');
+  const course = await Course.findById(courseId)
+    .populate("creator", "name")
+    .populate("modules");
   if (!course) {
-    return next(new AppError('Course not found', 404));
+    return next(new AppError("Course not found", 404));
   }
 
   // Check if user is enrolled and has completed the course
   const enrollment = course.enrolledUsers.find(
-    (enrollment) => enrollment.user.toString() === userId && enrollment.status === 'completed'
+    (enrollment) =>
+      enrollment.user.toString() === userId && enrollment.status === "completed"
   );
 
   if (!enrollment) {
-    return next(new AppError('You have not completed this course yet', 400));
+    return next(new AppError("You have not completed this course yet", 400));
+  }
+
+  // Get all compulsory modules for this course
+  const Module = require("../models/Module");
+  const compulsoryModules = await Module.find({
+    course: courseId,
+    isCompulsory: true,
+  });
+
+  // Get user's module progress
+  const UserModuleProgress = require("../models/UserModuleProgress");
+  const progress = await UserModuleProgress.findOne({
+    user: userId,
+    course: courseId,
+  });
+
+  // Check if all compulsory modules are completed
+  if (progress && compulsoryModules.length > 0) {
+    const completedCompulsoryModules = compulsoryModules.filter((module) => {
+      const moduleProgress = progress.moduleProgress.find(
+        (mp) => mp.module.toString() === module._id.toString()
+      );
+      return moduleProgress && moduleProgress.isCompleted;
+    });
+
+    if (completedCompulsoryModules.length < compulsoryModules.length) {
+      return next(
+        new AppError(
+          "You must complete all compulsory modules before generating a certificate",
+          400
+        )
+      );
+    }
+
+    // Get all compulsory modules with quizzes
+    const compulsoryModulesWithQuizzes = await Module.find({
+      course: courseId,
+      isCompulsory: true,
+      quiz: { $exists: true, $ne: null }
+    }).populate('quiz');
+
+    // Check if all quizzes for compulsory modules have been passed
+    if (compulsoryModulesWithQuizzes.length > 0) {
+      for (const module of compulsoryModulesWithQuizzes) {
+        if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
+
+        // Find the user's attempts for this quiz
+        const quiz = await Quiz.findById(module.quiz);
+        if (!quiz) continue; // Skip if quiz not found
+
+        // Get user's attempts for this quiz
+        const userAttempts = quiz.attempts.filter(
+          attempt => attempt.user.toString() === userId
+        );
+
+        // Check if user has passed the quiz
+        const hasPassed = userAttempts.some(
+          attempt => attempt.score >= quiz.passingScore
+        );
+
+        if (!hasPassed) {
+          return next(
+            new AppError(
+              `You must pass the quiz for module "${module.title}" before generating a certificate`,
+              400
+            )
+          );
+        }
+      }
+    }
   }
 
   // Check if certificate already exists
-  let certificate = await Certificate.findOne({ user: userId, course: courseId });
+  let certificate = await Certificate.findOne({
+    user: userId,
+    course: courseId,
+  });
 
   if (certificate) {
     return res.status(200).json({
-      status: 'success',
-      message: 'Certificate already exists',
-      data: certificate
+      status: "success",
+      message: "Certificate already exists",
+      data: certificate,
     });
   }
 
   // Get user details
   const user = await User.findById(userId);
   if (!user) {
-    return next(new AppError('User not found', 404));
+    return next(new AppError("User not found", 404));
   }
 
   // Generate a unique certificate ID
@@ -132,17 +290,23 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
     studentName: user.name,
     courseName: course.title,
     instructorName: course.creator.name,
-    completionDate: new Date(enrollment.completedAt || Date.now()).toLocaleDateString(),
-    certificateId
+    completionDate: new Date(
+      enrollment.completedAt || Date.now()
+    ).toLocaleDateString(),
+    certificateId,
   });
 
   // Save certificate to local file system
   const certificateFileName = `${certificateId}.pdf`;
-  const certificatePath = path.join(__dirname, '../uploads/certificates', certificateFileName);
+  const certificatePath = path.join(
+    __dirname,
+    "../uploads/certificates",
+    certificateFileName
+  );
   await writeFileAsync(certificatePath, certificateBuffer);
 
   // Create the certificate URL based on the server's URL
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
   const certificateUrl = `${baseUrl}/api/certificate/view/${certificateId}`;
   const verificationUrl = `${baseUrl}/api/certificate/verify/${certificateId}`;
 
@@ -157,47 +321,54 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
       studentName: user.name,
       courseName: course.title,
       instructorName: course.creator.name,
-      completionDate: new Date(enrollment.completedAt || Date.now()).toLocaleDateString()
-    }
+      completionDate: new Date(
+        enrollment.completedAt || Date.now()
+      ).toLocaleDateString(),
+    },
   });
 
   res.status(201).json({
-    status: 'success',
-    data: certificate
+    status: "success",
+    data: certificate,
   });
 });
 
 // Get all certificates for the current user
 exports.getMyCertificates = catchAsync(async (req, res, next) => {
   const certificates = await Certificate.find({ user: req.user.id })
-    .populate('course', 'title')
-    .sort('-createdAt');
+    .populate("course", "title")
+    .sort("-createdAt");
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: certificates.length,
-    data: certificates
+    data: certificates,
   });
 });
 
 // Get a specific certificate by ID
 exports.getCertificate = catchAsync(async (req, res, next) => {
   const certificate = await Certificate.findById(req.params.id)
-    .populate('course', 'title')
-    .populate('user', 'name');
+    .populate("course", "title")
+    .populate("user", "name");
 
   if (!certificate) {
-    return next(new AppError('Certificate not found', 404));
+    return next(new AppError("Certificate not found", 404));
   }
 
   // Check if the certificate belongs to the current user or if the user is an admin
-  if (certificate.user._id.toString() !== req.user.id && req.user.role !== 'admin') {
-    return next(new AppError('You are not authorized to view this certificate', 403));
+  if (
+    certificate.user._id.toString() !== req.user.id &&
+    req.user.role !== "admin"
+  ) {
+    return next(
+      new AppError("You are not authorized to view this certificate", 403)
+    );
   }
 
   res.status(200).json({
-    status: 'success',
-    data: certificate
+    status: "success",
+    data: certificate,
   });
 });
 
@@ -206,17 +377,17 @@ exports.verifyCertificate = catchAsync(async (req, res, next) => {
   const { certificateId } = req.params;
 
   const certificate = await Certificate.findOne({ certificateId })
-    .populate('course', 'title')
-    .populate('user', 'name');
+    .populate("course", "title")
+    .populate("user", "name");
 
   if (!certificate) {
-    return next(new AppError('Invalid certificate ID', 404));
+    return next(new AppError("Invalid certificate ID", 404));
   }
 
   // For API requests, return JSON
-  if (req.headers.accept && req.headers.accept.includes('application/json')) {
+  if (req.headers.accept && req.headers.accept.includes("application/json")) {
     return res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         isValid: true,
         certificate: {
@@ -225,9 +396,9 @@ exports.verifyCertificate = catchAsync(async (req, res, next) => {
           courseName: certificate.metadata.courseName,
           instructorName: certificate.metadata.instructorName,
           issueDate: certificate.issueDate,
-          completionDate: certificate.metadata.completionDate
-        }
-      }
+          completionDate: certificate.metadata.completionDate,
+        },
+      },
     });
   }
 
@@ -239,7 +410,9 @@ exports.verifyCertificate = catchAsync(async (req, res, next) => {
     instructorName: certificate.metadata.instructorName,
     issueDate: new Date(certificate.issueDate).toLocaleDateString(),
     completionDate: certificate.metadata.completionDate,
-    viewUrl: `${req.protocol}://${req.get('host')}/api/certificate/view/${certificateId}`
+    viewUrl: `${req.protocol}://${req.get(
+      "host"
+    )}/api/certificate/view/${certificateId}`,
   };
 
   // Generate HTML for the verification page
@@ -321,23 +494,30 @@ exports.verifyCertificate = catchAsync(async (req, res, next) => {
   `;
 
   // Send HTML response
-  res.setHeader('Content-Type', 'text/html');
+  res.setHeader("Content-Type", "text/html");
   res.status(200).send(html);
 });
 
 // View a certificate in a new tab
 exports.viewCertificate = catchAsync(async (req, res, next) => {
   const { certificateId } = req.params;
-  const certificatePath = path.join(__dirname, '../uploads/certificates', `${certificateId}.pdf`);
+  const certificatePath = path.join(
+    __dirname,
+    "../uploads/certificates",
+    `${certificateId}.pdf`
+  );
 
   // Check if the certificate file exists
   if (!fs.existsSync(certificatePath)) {
-    return next(new AppError('Certificate file not found', 404));
+    return next(new AppError("Certificate file not found", 404));
   }
 
   // Set headers to display PDF in browser
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="certificate-${certificateId}.pdf"`);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `inline; filename="certificate-${certificateId}.pdf"`
+  );
 
   // Stream the file to the response
   const fileStream = fs.createReadStream(certificatePath);
@@ -349,24 +529,36 @@ exports.downloadCertificate = catchAsync(async (req, res, next) => {
   const certificate = await Certificate.findById(req.params.id);
 
   if (!certificate) {
-    return next(new AppError('Certificate not found', 404));
+    return next(new AppError("Certificate not found", 404));
   }
 
   // Check if the certificate belongs to the current user or if the user is an admin
-  if (certificate.user.toString() !== req.user.id && req.user.role !== 'admin') {
-    return next(new AppError('You are not authorized to download this certificate', 403));
+  if (
+    certificate.user.toString() !== req.user.id &&
+    req.user.role !== "admin"
+  ) {
+    return next(
+      new AppError("You are not authorized to download this certificate", 403)
+    );
   }
 
-  const certificatePath = path.join(__dirname, '../uploads/certificates', `${certificate.certificateId}.pdf`);
+  const certificatePath = path.join(
+    __dirname,
+    "../uploads/certificates",
+    `${certificate.certificateId}.pdf`
+  );
 
   // Check if the certificate file exists
   if (!fs.existsSync(certificatePath)) {
-    return next(new AppError('Certificate file not found', 404));
+    return next(new AppError("Certificate file not found", 404));
   }
 
   // Set headers for file download
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="certificate-${certificate.certificateId}.pdf"`);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="certificate-${certificate.certificateId}.pdf"`
+  );
 
   // Stream the file to the response
   const fileStream = fs.createReadStream(certificatePath);

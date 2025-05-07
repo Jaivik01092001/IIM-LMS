@@ -65,7 +65,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/course/:id" element={<CourseDetail />} />
+          {/* Course detail page moved to dashboard layout */}
 
           {/* Dashboard routes with shared layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>

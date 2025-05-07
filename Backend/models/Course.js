@@ -36,6 +36,29 @@ const courseSchema = new mongoose.Schema(
     hasModules: { type: Boolean, default: true }, // Flag to indicate if course uses module structure (always true now)
     isDraft: { type: Boolean, default: true }, // Whether the course is a draft or published
     status: { type: Number, default: 1 }, // 1: active, 0: inactive (soft delete)
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        text: { type: String, required: true },
+        date: { type: Date, default: Date.now },
+        parentId: { type: mongoose.Schema.Types.ObjectId, default: null }, // For threaded comments - null means top-level comment
+        replies: [
+          {
+            user: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "User",
+              required: true,
+            },
+            text: { type: String, required: true },
+            date: { type: Date, default: Date.now },
+          },
+        ],
+      },
+    ],
   },
   { timestamps: true }
 );
