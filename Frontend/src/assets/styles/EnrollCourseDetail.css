@@ -550,9 +550,7 @@
 }
 
 .enroll-course-detail .quiz-topic-item {
-  background-color: rgba(var(--primary-color-rgb), 0.05);
   border-radius: var(--border-small-radius);
-  border-left: 3px solid var(--primary-color);
 }
 
 .enroll-course-detail .quiz-icon {

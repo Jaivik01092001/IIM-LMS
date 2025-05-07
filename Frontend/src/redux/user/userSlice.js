@@ -1,21 +1,24 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getLoggedInUser, updateLoggedInUser } from './userApi';
-import { showSuccessToast, showErrorToast } from '../../utils/toast';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getLoggedInUser, updateLoggedInUser } from "./userApi";
+import { showSuccessToast, showErrorToast } from "../../utils/toast";
 
 // Get logged in user thunk
 export const getLoggedInUserThunk = createAsyncThunk(
-  'user/getLoggedInUser',
+  "user/getLoggedInUser",
   async (_, { rejectWithValue }) => {
     try {
       const data = await getLoggedInUser();
       // Check if the response has the expected structure
-      if (data && data.status === 'success' && data.data && data.data.user) {
+      if (data && data.status === "success" && data.data && data.data.user) {
         return data.data.user;
       } else {
-        throw new Error('Invalid response format');
+        throw new Error("Invalid response format");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch user profile';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch user profile";
       showErrorToast(errorMessage);
       return rejectWithValue(errorMessage);
     }
@@ -24,19 +27,22 @@ export const getLoggedInUserThunk = createAsyncThunk(
 
 // Update logged in user thunk
 export const updateLoggedInUserThunk = createAsyncThunk(
-  'user/updateLoggedInUser',
+  "user/updateLoggedInUser",
   async (userData, { rejectWithValue }) => {
     try {
       const data = await updateLoggedInUser(userData);
       // Check if the response has the expected structure
-      if (data && data.status === 'success' && data.data && data.data.user) {
-        showSuccessToast('Profile updated successfully');
+      if (data && data.status === "success" && data.data && data.data.user) {
+        showSuccessToast("Profile updated successfully");
         return data.data.user;
       } else {
-        throw new Error('Invalid response format');
+        throw new Error("Invalid response format");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update profile";
       showErrorToast(errorMessage);
       return rejectWithValue(errorMessage);
     }
@@ -45,7 +51,7 @@ export const updateLoggedInUserThunk = createAsyncThunk(
 
 // User slice
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState: {
     profile: null,
     loading: false,
@@ -84,13 +90,16 @@ const userSlice = createSlice({
         state.error = null;
 
         // Update user in localStorage to keep it in sync
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
         const updatedUser = {
           ...currentUser,
           name: action.payload.name,
-          profile: action.payload.profile
+          profile: action.payload.profile,
         };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        // Dispatch a custom event to notify components about the profile update
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
       })
       .addCase(updateLoggedInUserThunk.rejected, (state, action) => {
         state.loading = false;
