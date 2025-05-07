@@ -5,6 +5,7 @@ import './CourseDetail.css';
 import { getCourse } from '../redux/admin/adminApi';
 import { enrollCourse } from '../redux/educator/educatorApi';
 import { toast } from 'react-toastify';
+import CourseComments from '../components/CourseComments';
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -482,13 +483,7 @@ const CourseDetail = () => {
 
             {activeTab === 'reviews' && (
               <div className="reviews-tab">
-                <div className="comments-section">
-                  <h3>Comments</h3>
-                  <div className="comment-input">
-                    <textarea placeholder="Write comment here..."></textarea>
-                    <button className="post-comment-button">Post Comments</button>
-                  </div>
-                </div>
+                <CourseComments courseId={id} />
               </div>
             )}
 

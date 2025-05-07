@@ -76,6 +76,8 @@ const routes = [
   "staff",
   "blog",
   "user", // Added user routes
+  "comment", // Added comment routes
+  "notification", // Added notification routes
 ].reduce((acc, route) => {
   try {
     acc[route] = require(`./routes/${route}Routes`);

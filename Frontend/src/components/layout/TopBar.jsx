@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FaBars, FaCog, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import NotificationDropdown from "../NotificationDropdown";
 import "../../assets/styles/TopBar.css";
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -234,11 +235,8 @@ const TopBar = ({ toggleSidebar }) => {
         {/* Language Selector */}
         {/* <LanguageSelector /> */}
 
-        {/* Notification button */}
-        {/* <button className="notification-btn">
-          <FaBell />
-          <span className="notification-badge">3</span>
-        </button> */}
+        {/* Notification Dropdown */}
+        <NotificationDropdown />
 
         {/* User profile */}
         <div className="user-profile" onClick={toggleDropdown}>

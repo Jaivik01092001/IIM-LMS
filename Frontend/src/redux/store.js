@@ -1,12 +1,14 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authSlice from './auth/authSlice';
-import educatorSlice from './educator/educatorSlice';
-import universitySlice from './university/universitySlice';
-import adminSlice from './admin/adminSlice';
-import roleSlice from './role/roleSlice';
-import staffSlice from './admin/staffSlice';
-import blogSlice from './blog/blogSlice';
-import userSlice from './user/userSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import authSlice from "./auth/authSlice";
+import educatorSlice from "./educator/educatorSlice";
+import universitySlice from "./university/universitySlice";
+import adminSlice from "./admin/adminSlice";
+import roleSlice from "./role/roleSlice";
+import staffSlice from "./admin/staffSlice";
+import blogSlice from "./blog/blogSlice";
+import userSlice from "./user/userSlice";
+import commentSlice from "./comment/commentSlice";
+import notificationSlice from "./notification/notificationSlice";
 
 const store = configureStore({
   reducer: {
@@ -18,6 +20,8 @@ const store = configureStore({
     staff: staffSlice,
     blog: blogSlice,
     user: userSlice,
+    comment: commentSlice,
+    notification: notificationSlice,
   },
 });
 
