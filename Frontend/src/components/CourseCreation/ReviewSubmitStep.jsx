@@ -188,16 +188,11 @@ const ReviewSubmitStep = ({ courseData, formErrors, thumbnailPreview }) => {
                             </div>
 
                             <div className="review-item">
-                                <span className="label">Status:</span>
+                                <span className="label">Status & Publication:</span>
                                 <span className="value status">
-                                    {courseData.status === 1 ? 'Active' : 'Inactive'}
-                                </span>
-                            </div>
-
-                            <div className="review-item">
-                                <span className="label">Publication:</span>
-                                <span className="value publication">
-                                    {courseData.isDraft ? 'Draft' : 'Published'}
+                                    {courseData.status === 1
+                                        ? 'Active & Published'
+                                        : 'Inactive & Draft'}
                                 </span>
                             </div>
 

@@ -18,7 +18,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const [contentFormData, setContentFormData] = useState({
         title: "",
         description: "",
-        type: "video",
+        type: "document",
         file: null,
         textContent: ""
     });
@@ -205,7 +205,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
             _id: `temp_content_${Date.now()}`,
             title: "New Content",
             description: "",
-            type: "video",
+            type: "document",
             textContent: "",
             fileUrl: "",
             module: moduleId
@@ -229,7 +229,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setContentFormData({
             title: contentItem.title,
             description: contentItem.description,
-            type: contentItem.type || "video",
+            type: contentItem.type || "document",
             file: null,
             textContent: contentItem.textContent || ""
         });
@@ -300,7 +300,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         setContentFormData({
             title: "",
             description: "",
-            type: "video",
+            type: "document",
             file: null,
             textContent: ""
         });
