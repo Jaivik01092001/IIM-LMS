@@ -17,7 +17,7 @@ export const getUsersThunk = createAsyncThunk(
       console.error("Error in getUsersThunk:", error);
       showErrorToast(
         error.response?.data?.message ||
-          "Failed to fetch users. You may not have permission to view users."
+        "Failed to fetch users. You may not have permission to view users."
       );
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch users"
@@ -304,7 +304,7 @@ export const getCoursesThunk = createAsyncThunk(
       console.error("Error fetching courses:", error);
       showErrorToast(
         error.response?.data?.message ||
-          "Failed to fetch courses. You may not have permission to view courses."
+        "Failed to fetch courses. You may not have permission to view courses."
       );
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch courses"

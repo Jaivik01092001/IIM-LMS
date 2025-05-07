@@ -157,7 +157,7 @@ exports.createStaffMember = catchAsync(async (req, res, next) => {
   // Handle avatar if uploaded
   if (req.file) {
     staffData.profile = staffData.profile || {};
-    staffData.profile.avatar = `/uploads/${req.file.filename}`;
+    staffData.profile.avatar = `uploads/${req.file.filename}`;
   }
 
   console.log(
@@ -277,7 +277,7 @@ exports.updateStaffMember = catchAsync(async (req, res, next) => {
 
   // Handle avatar if uploaded
   if (req.file) {
-    updateData.profile.avatar = `/uploads/${req.file.filename}`;
+    updateData.profile.avatar = `uploads/${req.file.filename}`;
   }
 
   console.log(

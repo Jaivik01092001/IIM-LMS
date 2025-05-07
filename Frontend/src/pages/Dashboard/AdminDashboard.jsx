@@ -26,7 +26,6 @@ const AdminDashboard = () => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -196,7 +195,6 @@ const AdminDashboard = () => {
         category: course.category || "Uncategorized",
         professor: course.creator?.name || "Unknown",
         duration: course.duration || "N/A",
-        level: course.level || "N/A",
         description: course.description || "No description available",
         tags: course.tags?.join(", ") || "No tags",
         language: course.language || "English",
@@ -222,7 +220,7 @@ const AdminDashboard = () => {
     dispatch(
       updateCourseThunk({
         id: row.id,
-        status: row.status ? 0 : 1,
+        formData: { status: row.status ? 0 : 1 },
       })
     )
       .unwrap()
@@ -278,11 +276,6 @@ const AdminDashboard = () => {
     {
       name: "Duration",
       selector: (row) => row.duration,
-      sortable: true,
-    },
-    {
-      name: "Level",
-      selector: (row) => row.level,
       sortable: true,
     },
     {
@@ -358,17 +351,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card enrolled-users" style={{ cursor: "default" }}>
-          <div className="stat-icon4">
-            <FaUsers size={24} />
-            <FaUsers className="icondesign4" />
-          </div>
-          <div>
-            <div className="stat-count">{enrolledUsersCount || 0}</div>
-            <div className="stat-title">Enrolled Users</div>
-          </div>
-        </div>
-
         <div className="stat-card staff" onClick={() => navigate("/dashboard/admin/staffs")}>
           <div className="stat-icon5">
             <FaUserTie size={24} />
@@ -436,30 +418,12 @@ const AdminDashboard = () => {
           />
           <select
             className="filter-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">{t("courses.allCategories")}</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-          <select
-            className="filter-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
             <option value="">{t("courses.sortBy")}</option>
             <option value="title-asc">{t("courses.title")} (A-Z)</option>
             <option value="title-desc">{t("courses.title")} (Z-A)</option>
-            <option value="level-asc">
-              {t("courses.level")} ({t("courses.beginnerToAdvanced")})
-            </option>
-            <option value="level-desc">
-              {t("courses.level")} ({t("courses.advancedToBeginner")})
-            </option>
             <option value="status">{t("courses.status")}</option>
           </select>
         </div>
@@ -478,13 +442,8 @@ const AdminDashboard = () => {
                 item.professor
                   .toLowerCase()
                   .includes(searchTerm.toLowerCase()) ||
-                item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (item.tags &&
                   item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
-            )
-            // Apply category filter
-            .filter(
-              (item) => !categoryFilter || item.category === categoryFilter
             )
             // Apply sorting
             .sort((a, b) => {
@@ -495,10 +454,6 @@ const AdminDashboard = () => {
                   return a.title.localeCompare(b.title);
                 case "title-desc":
                   return b.title.localeCompare(a.title);
-                case "level-asc":
-                  return a.level.localeCompare(b.level);
-                case "level-desc":
-                  return b.level.localeCompare(a.level);
                 case "status":
                   return a.status === b.status ? 0 : a.status ? -1 : 1;
                 default:

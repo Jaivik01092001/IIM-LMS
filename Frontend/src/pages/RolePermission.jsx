@@ -214,6 +214,8 @@ const RolePermission = () => {
                   name: "Name",
                   selector: (row) => row.name,
                   sortable: true,
+                  maxWidth: "200px", // Limit maximum width
+
                 },
                 {
                   name: "Description",
@@ -221,7 +223,6 @@ const RolePermission = () => {
                   sortable: true,
                   wrap: true,
                   grow: 2, // Give this column more space
-                  maxWidth: "400px", // Limit maximum width
                 },
                 {
                   name: "Options",

@@ -42,11 +42,14 @@
 }
 
 .search-input input {
-  width: 100%;
-  padding: 10px 15px 10px 40px;
-  border: 1px solid var(--border-gray);
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
   border-radius: var(--border-small-radius);
-  font-size: var(--smallfont);
+  font-size: 14px;
+  min-width: 250px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
 }
 
 .search-icon {

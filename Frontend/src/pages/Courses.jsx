@@ -24,7 +24,6 @@ const Courses = ({ userType }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,13 +77,32 @@ const Courses = ({ userType }) => {
   // Update tableData and categories when courses change
   useEffect(() => {
     if (courses && courses.length > 0) {
+      // Get current user ID from localStorage
+      let currentUserId = null;
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          currentUserId = userData.id;
+          console.log('Current user ID from localStorage:', currentUserId);
+        } catch (e) {
+          console.error('Error parsing user data from localStorage:', e);
+        }
+      }
       const formattedCourses = courses.map(course => {
-        // For testing: mock enrollment data
-        // In production, this should come from the API
-        const mockEnrollment = userType === 'tutor' && (
-          // For demo purposes: every other course is considered "enrolled"
-          course._id.toString().charCodeAt(course._id.toString().length - 1) % 2 === 0
-        );
+        // Check if the current user is enrolled in this course
+        let isUserEnrolled = false;
+
+        if (currentUserId && course.enrolledUsers && course.enrolledUsers.length > 0) {
+          isUserEnrolled = course.enrolledUsers.some(enrollment => {
+            // Handle different possible data formats of user id
+            const enrollmentUserId = typeof enrollment.user === 'object'
+              ? enrollment.user._id
+              : enrollment.user;
+
+            return enrollmentUserId === currentUserId;
+          });
+        }
 
         return {
           id: course._id,
@@ -92,15 +110,14 @@ const Courses = ({ userType }) => {
           category: course.category || 'Uncategorized',
           professor: course.creator?.name || 'Unknown',
           duration: course.duration || 'N/A',
-          level: course.level || 'N/A',
           description: course.description || 'No description available',
           tags: course.tags?.join(', ') || 'No tags',
           language: course.language || 'English',
           status: course.status === 1,
           thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
           hasModules: course.hasModules || false,
-          // Check if user is enrolled in the course - real implementation would check API data
-          isEnrolled: Boolean(course.progress || course.enrolled || course.isEnrolled || mockEnrollment)
+          // Use the actual enrollment status based on enrolledUsers array
+          isEnrolled: isUserEnrolled || Boolean(course.progress || course.enrolled || course.isEnrolled)
         };
       });
 
@@ -116,7 +133,7 @@ const Courses = ({ userType }) => {
   const handleStatusToggle = (row) => {
     dispatch(updateCourseThunk({
       id: row.id,
-      status: row.status ? 0 : 1
+      formData: { status: row.status ? 0 : 1 },
     }))
       .unwrap()
       .then(() => {
@@ -165,11 +182,6 @@ const Courses = ({ userType }) => {
       sortable: true,
     },
     {
-      name: "Level",
-      selector: (row) => row.level,
-      sortable: true,
-    },
-    {
       name: "Status",
       cell: (row) => (
         <StatusToggle
@@ -198,19 +210,14 @@ const Courses = ({ userType }) => {
     },
   ];
 
-  // Filter the data based on search and category filters
+  // Filter the data based on search filter
   const filteredData = tableData
     // Apply search filter
     .filter(item =>
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    // Apply category filter
-    .filter(item =>
-      !categoryFilter || item.category === categoryFilter
     )
     // Apply sorting
     .sort((a, b) => {
@@ -219,8 +226,6 @@ const Courses = ({ userType }) => {
       switch (sortBy) {
         case "title-asc": return a.title.localeCompare(b.title);
         case "title-desc": return b.title.localeCompare(a.title);
-        case "level-asc": return a.level.localeCompare(b.level);
-        case "level-desc": return b.level.localeCompare(a.level);
         case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
         default: return 0;
       }
@@ -254,10 +259,7 @@ const Courses = ({ userType }) => {
                     <FaClock className="meta-icon" />
                     <span>{course.duration}</span>
                   </div>
-                  <div className="course-card-meta-item">
-                    <FaCalendarAlt className="meta-icon" />
-                    <span>{course.level}</span>
-                  </div>
+
                 </div>
                 <div className="course-card-actions">
                   {course.isEnrolled ? (
@@ -265,7 +267,7 @@ const Courses = ({ userType }) => {
                       className="resume-btn"
                       onClick={() => handleView(course)}
                     >
-                      Resume
+                      Continue Learning
                     </button>
                   ) : (
                     <button
@@ -323,25 +325,12 @@ const Courses = ({ userType }) => {
 
           <select
             className="filter-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>{category}</option>
-            ))}
-          </select>
-
-          <select
-            className="filter-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
             <option value="">Sort by</option>
             <option value="title-asc">Title (A-Z)</option>
             <option value="title-desc">Title (Z-A)</option>
-            <option value="level-asc">Level (Beginner-Advanced)</option>
-            <option value="level-desc">Level (Advanced-Beginner)</option>
             <option value="status">Status</option>
           </select>
         </div>

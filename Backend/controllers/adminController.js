@@ -24,16 +24,6 @@ exports.getUniversities = async (req, res) => {
 
 exports.createUniversity = async (req, res, next) => {
   try {
-    console.log("Request body:", req.body);
-    console.log("Request headers:", req.headers);
-    console.log("Content-Type:", req.headers["content-type"]);
-    console.log("Request files:", req.files);
-
-    // Log all keys in the request body
-    console.log("Request body keys:", Object.keys(req.body));
-
-    // Extract fields from form data
-    // Handle both direct fields and FormData
     const name = req.body.name || req.body.schoolName;
     const email = req.body.email;
     const roleId = req.body.roleId;
@@ -44,18 +34,6 @@ exports.createUniversity = async (req, res, next) => {
     const zipcode = req.body.zipcode;
     const state = req.body.state;
     const contactPerson = req.body.contactPerson || req.body.ownerName;
-
-    console.log("Extracted fields:", {
-      name,
-      email,
-      phoneNumber,
-      contactPerson,
-      rawName: req.body.name,
-      rawSchoolName: req.body.schoolName,
-      rawEmail: req.body.email,
-      rawPhoneNumber: req.body.phoneNumber,
-      rawPhone: req.body.phone,
-    });
 
     if (!name || !email || !phoneNumber) {
       return res.status(400).json({
@@ -93,7 +71,7 @@ exports.createUniversity = async (req, res, next) => {
         address,
         zipcode,
         state,
-        avatar: req.file ? `/uploads/profiles/${req.file.filename}` : null,
+        avatar: req.file ? `uploads/profiles/${req.file.filename}` : null,
       },
     });
 
@@ -158,12 +136,6 @@ exports.deleteUniversity = async (req, res) => {
 
 exports.updateUniversity = async (req, res) => {
   try {
-    console.log("Update university request received for ID:", req.params.id);
-    console.log("Update university request body:", req.body);
-    console.log("Update university request file:", req.file);
-    console.log("Request headers:", req.headers);
-    console.log("Request method:", req.method);
-
     // Extract fields from form data
     // Handle both direct fields and FormData
     const name = req.body.name || req.body.schoolName;
@@ -177,18 +149,6 @@ exports.updateUniversity = async (req, res) => {
     const contactPerson = req.body.contactPerson || req.body.ownerName;
     const status = req.body.status;
     const keepExistingImage = req.body.keepExistingImage;
-
-    console.log("Extracted update fields:", {
-      name,
-      email,
-      phoneNumber,
-      contactPerson,
-      status,
-      address,
-      zipcode,
-      state,
-      keepExistingImage,
-    });
 
     const university = await User.findOne({
       _id: req.params.id,
@@ -214,11 +174,9 @@ exports.updateUniversity = async (req, res) => {
 
     // Update profile image if provided
     if (req.file) {
-      university.profile.avatar = `/uploads/profiles/${req.file.filename}`;
-      console.log("Updated profile image to:", university.profile.avatar);
+      university.profile.avatar = `uploads/profiles/${req.file.filename}`;
     } else if (req.body.keepExistingImage === "true") {
       // Keep existing image, no need to update
-      console.log("Keeping existing profile image:", university.profile.avatar);
     }
 
     // Handle status update if provided
@@ -229,7 +187,6 @@ exports.updateUniversity = async (req, res) => {
     // Handle roleId update if provided
     if (req.body.roleId) {
       university.roleRef = req.body.roleId;
-      console.log("Updated roleRef to:", req.body.roleId);
       // Note: We no longer update the core role field, it remains fixed as "university"
     }
 
@@ -266,23 +223,6 @@ exports.getContent = async (req, res) => {
       .json({ message: "Error retrieving content", error: error.message });
   }
 };
-
-// exports.createContent = async (req, res) => {
-//   const { title, description } = req.body;
-//   const fileUrl = req.file ? req.file.path : null;
-//   const content = new Content({
-//     title,
-//     description,
-//     fileUrl,
-//     creator: req.user.id,
-//     status: "approved", // Admin-created content is auto-approved
-//   });
-//   await content.save();
-//   res.json(content);
-// };
-
-// controllers/adminController.js
-//const Content = require('../models/Content');
 
 exports.createContent = async (req, res) => {
   try {
@@ -402,7 +342,10 @@ exports.getCourses = async (req, res) => {
 exports.getCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate("creator", "name")
+      .populate({
+        path: "creator",
+        select: "name profile.avatar", // Include avatar from profile
+      })
       .populate("content")
       .populate({
         path: "modules",
@@ -421,10 +364,26 @@ exports.getCourse = async (req, res) => {
         path: "quizzes",
         // Include all quiz fields including questions
         select: "title description questions timeLimit passingScore attempts",
+      })
+      .populate({
+        path: "comments.user",
+        select: "name profile.avatar", // Include user name and avatar for comments
       });
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Log module details for debugging
+    if (course.modules && course.modules.length > 0) {
+      console.log("Course modules:");
+      course.modules.forEach((module, index) => {
+        console.log(
+          `Module ${index + 1}: ID=${module._id}, Title=${
+            module.title
+          }, isCompulsory=${module.isCompulsory}`
+        );
+      });
     }
 
     res.json(course);
@@ -438,12 +397,6 @@ exports.getCourse = async (req, res) => {
 
 exports.createCourse = async (req, res) => {
   try {
-    console.log("Create course route hit");
-    console.log("Request headers:", req.headers);
-    console.log("Request body:", req.body);
-
-    // Debug uploaded files
-    console.log("Uploaded Files:");
     if (req.files && req.files.length > 0) {
       req.files.forEach((f, i) => {
         console.log(`${i + 1}. ${f.fieldname} -> ${f.originalname}`);
@@ -456,7 +409,6 @@ exports.createCourse = async (req, res) => {
       description,
       duration,
       language,
-      level,
       thumbnailUrl,
       hasModules,
       modules,
@@ -608,7 +560,6 @@ exports.createCourse = async (req, res) => {
       description,
       duration,
       language: language || "en",
-      level: level || "beginner",
       thumbnail,
       hasModules: true, // Always use modules
       modules: [],
@@ -630,6 +581,10 @@ exports.createCourse = async (req, res) => {
           course: course._id,
           order: moduleData.order || 0,
           content: [],
+          isCompulsory:
+            moduleData.isCompulsory !== undefined
+              ? moduleData.isCompulsory
+              : true, // Set isCompulsory from moduleData
         });
 
         await newModule.save();
@@ -712,7 +667,6 @@ exports.updateCourse = async (req, res) => {
       description,
       duration,
       language,
-      level,
       thumbnailUrl,
       modules,
       content,
@@ -743,7 +697,6 @@ exports.updateCourse = async (req, res) => {
     if (description) course.description = description;
     if (duration) course.duration = duration;
     if (language) course.language = language;
-    if (level) course.level = level;
 
     // Handle thumbnail update
     // Check for thumbnail in req.files array since we're using upload.any()
@@ -788,6 +741,10 @@ exports.updateCourse = async (req, res) => {
                   moduleData.order !== undefined
                     ? moduleData.order
                     : existingModule.order;
+                // Update isCompulsory if provided
+                if (moduleData.isCompulsory !== undefined) {
+                  existingModule.isCompulsory = moduleData.isCompulsory;
+                }
 
                 // Update content associations if provided
                 if (moduleData.content && Array.isArray(moduleData.content)) {
@@ -853,8 +810,34 @@ exports.updateCourse = async (req, res) => {
                       existingQuiz.title = quizData.title || existingQuiz.title;
                       existingQuiz.description =
                         quizData.description || existingQuiz.description;
-                      existingQuiz.questions =
-                        quizData.questions || existingQuiz.questions;
+
+                      // Always update questions array if it's provided, even if it's empty
+                      if (quizData.questions !== undefined) {
+                        console.log(
+                          `Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions`
+                        );
+
+                        // Process questions to ensure correctAnswer is a string
+                        const processedQuestions = quizData.questions.map(
+                          (question) => {
+                            // Ensure correctAnswer is a string
+                            if (
+                              question.correctAnswer !== undefined &&
+                              typeof question.correctAnswer !== "string"
+                            ) {
+                              return {
+                                ...question,
+                                correctAnswer:
+                                  question.correctAnswer.toString(),
+                              };
+                            }
+                            return question;
+                          }
+                        );
+
+                        existingQuiz.questions = processedQuestions;
+                      }
+
                       existingQuiz.timeLimit =
                         quizData.timeLimit || existingQuiz.timeLimit;
                       existingQuiz.passingScore =
@@ -864,13 +847,30 @@ exports.updateCourse = async (req, res) => {
                     }
                   } else {
                     // Create new quiz
+                    // Process questions to ensure correctAnswer is a string
+                    const processedQuestions = quizData.questions
+                      ? quizData.questions.map((question) => {
+                          // Ensure correctAnswer is a string
+                          if (
+                            question.correctAnswer !== undefined &&
+                            typeof question.correctAnswer !== "string"
+                          ) {
+                            return {
+                              ...question,
+                              correctAnswer: question.correctAnswer.toString(),
+                            };
+                          }
+                          return question;
+                        })
+                      : [];
+
                     const quiz = new Quiz({
                       title: quizData.title || `${existingModule.title} Quiz`,
                       description:
                         quizData.description ||
                         `Quiz for ${existingModule.title}`,
                       course: course._id,
-                      questions: quizData.questions || [],
+                      questions: processedQuestions,
                       timeLimit: quizData.timeLimit || 30,
                       passingScore: quizData.passingScore || 60,
                     });
@@ -897,6 +897,10 @@ exports.updateCourse = async (req, res) => {
                 course: course._id,
                 order: moduleData.order || 0,
                 content: [], // Initialize with empty content array
+                isCompulsory:
+                  moduleData.isCompulsory !== undefined
+                    ? moduleData.isCompulsory
+                    : true, // Set isCompulsory from moduleData
               });
 
               await newModule.save();
@@ -962,13 +966,30 @@ exports.updateCourse = async (req, res) => {
               if (moduleData.quiz) {
                 const quizData = moduleData.quiz;
 
+                // Process questions to ensure correctAnswer is a string
+                const processedQuestions = quizData.questions
+                  ? quizData.questions.map((question) => {
+                      // Ensure correctAnswer is a string
+                      if (
+                        question.correctAnswer !== undefined &&
+                        typeof question.correctAnswer !== "string"
+                      ) {
+                        return {
+                          ...question,
+                          correctAnswer: question.correctAnswer.toString(),
+                        };
+                      }
+                      return question;
+                    })
+                  : [];
+
                 // Create a new quiz
                 const quiz = new Quiz({
                   title: quizData.title || `${newModule.title} Quiz`,
                   description:
                     quizData.description || `Quiz for ${newModule.title}`,
                   course: course._id,
-                  questions: quizData.questions || [],
+                  questions: processedQuestions,
                   timeLimit: quizData.timeLimit || 30,
                   passingScore: quizData.passingScore || 60,
                 });
@@ -1040,6 +1061,38 @@ exports.updateCourse = async (req, res) => {
     // Create content items for uploaded files
     const contentItems = [];
 
+    // Get content module mappings from request
+    const contentModules = {};
+    if (req.body.contentModules) {
+      // Handle array format
+      if (Array.isArray(req.body.contentModules)) {
+        req.body.contentModules.forEach((moduleId, index) => {
+          if (req.body.contentFileIds && req.body.contentFileIds[index]) {
+            contentModules[req.body.contentFileIds[index]] = moduleId;
+          }
+        });
+      }
+      // Handle object format from formData
+      else {
+        Object.keys(req.body).forEach((key) => {
+          if (key.startsWith("contentModules[")) {
+            const match = key.match(/\[(\d+)\]/);
+            if (match && match[1]) {
+              const index = parseInt(match[1]);
+              if (
+                req.body.contentFileIds &&
+                req.body[`contentFileIds[${index}]`]
+              ) {
+                contentModules[req.body[`contentFileIds[${index}]`]] =
+                  req.body[key];
+              }
+            }
+          }
+        });
+      }
+      console.log("Content module mappings:", contentModules);
+    }
+
     // Process content files if any
     if (
       req.files &&
@@ -1083,6 +1136,15 @@ exports.updateCourse = async (req, res) => {
           mediaType = "image";
         }
 
+        // Get module ID from either content item or contentModules mapping
+        let moduleId = contentItem.module || null;
+
+        // If this is a temp ID, check if we have a module mapping for it
+        if (contentId.startsWith("temp_") && contentModules[contentId]) {
+          moduleId = contentModules[contentId];
+          console.log(`Using module mapping for ${contentId}: ${moduleId}`);
+        }
+
         // Create a new content item
         const newContent = new Content({
           title: contentItem.title,
@@ -1100,7 +1162,7 @@ exports.updateCourse = async (req, res) => {
           mediaType,
           mimeType,
           size: file.size,
-          module: contentItem.module || null,
+          module: moduleId,
         });
 
         await newContent.save();
@@ -1108,6 +1170,22 @@ exports.updateCourse = async (req, res) => {
           id: contentId,
           dbId: newContent._id,
         });
+
+        // If we have a module ID, add this content to the module
+        if (moduleId) {
+          try {
+            const module = await Module.findById(moduleId);
+            if (module) {
+              module.content.push(newContent._id);
+              await module.save();
+              console.log(
+                `Added content ${newContent._id} to module ${moduleId}`
+              );
+            }
+          } catch (err) {
+            console.error(`Error adding content to module ${moduleId}:`, err);
+          }
+        }
       }
     }
 
@@ -1152,6 +1230,17 @@ exports.updateCourse = async (req, res) => {
               return null;
             }
 
+            // Get module ID from either content item or contentModules mapping
+            let moduleId = item.module || null;
+
+            // If this is a temp ID, check if we have a module mapping for it
+            if (item._id.startsWith("temp_") && contentModules[item._id]) {
+              moduleId = contentModules[item._id];
+              console.log(
+                `Using module mapping for text/youtube ${item._id}: ${moduleId}`
+              );
+            }
+
             // Handle new YouTube content
             if (item.type === "youtube") {
               console.log(`Creating new YouTube content item: ${item.title}`);
@@ -1165,13 +1254,32 @@ exports.updateCourse = async (req, res) => {
                 type: "youtube",
                 mediaType: "video",
                 mimeType: "video/youtube",
-                module: item.module || null,
+                module: moduleId,
               });
 
               await newYoutubeContent.save();
               console.log(
                 `Created YouTube content with ID: ${newYoutubeContent._id}`
               );
+
+              // If we have a module ID, add this content to the module
+              if (moduleId) {
+                try {
+                  const module = await Module.findById(moduleId);
+                  if (module) {
+                    module.content.push(newYoutubeContent._id);
+                    await module.save();
+                    console.log(
+                      `Added YouTube content ${newYoutubeContent._id} to module ${moduleId}`
+                    );
+                  }
+                } catch (err) {
+                  console.error(
+                    `Error adding YouTube content to module ${moduleId}:`,
+                    err
+                  );
+                }
+              }
 
               return {
                 id: item._id,
@@ -1190,11 +1298,30 @@ exports.updateCourse = async (req, res) => {
               type: "text",
               mediaType: "text",
               mimeType: "text/html",
-              module: item.module || null,
+              module: moduleId,
             });
 
             await newTextContent.save();
             console.log(`Created text content with ID: ${newTextContent._id}`);
+
+            // If we have a module ID, add this content to the module
+            if (moduleId) {
+              try {
+                const module = await Module.findById(moduleId);
+                if (module) {
+                  module.content.push(newTextContent._id);
+                  await module.save();
+                  console.log(
+                    `Added text content ${newTextContent._id} to module ${moduleId}`
+                  );
+                }
+              } catch (err) {
+                console.error(
+                  `Error adding text content to module ${moduleId}:`,
+                  err
+                );
+              }
+            }
 
             return {
               id: item._id,
@@ -1238,10 +1365,64 @@ exports.updateCourse = async (req, res) => {
 
     if (quizzes) {
       try {
-        course.quizzes =
+        // Parse quizzes if it's a string
+        const parsedQuizzes =
           typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
+
+        // Process each quiz to update its questions in the database
+        if (Array.isArray(parsedQuizzes)) {
+          for (const quizData of parsedQuizzes) {
+            // Only process quizzes with an ID (existing quizzes)
+            if (quizData._id) {
+              const existingQuiz = await Quiz.findById(quizData._id);
+              if (existingQuiz) {
+                // Update quiz properties
+                existingQuiz.title = quizData.title || existingQuiz.title;
+                existingQuiz.description =
+                  quizData.description || existingQuiz.description;
+
+                // Always update questions array if it's provided, even if it's empty
+                if (quizData.questions !== undefined) {
+                  console.log(
+                    `Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`
+                  );
+
+                  // Process questions to ensure correctAnswer is a string
+                  const processedQuestions = quizData.questions.map(
+                    (question) => {
+                      // Ensure correctAnswer is a string
+                      if (
+                        question.correctAnswer !== undefined &&
+                        typeof question.correctAnswer !== "string"
+                      ) {
+                        return {
+                          ...question,
+                          correctAnswer: question.correctAnswer.toString(),
+                        };
+                      }
+                      return question;
+                    }
+                  );
+
+                  existingQuiz.questions = processedQuestions;
+                }
+
+                existingQuiz.timeLimit =
+                  quizData.timeLimit || existingQuiz.timeLimit;
+                existingQuiz.passingScore =
+                  quizData.passingScore || existingQuiz.passingScore;
+
+                // Save the updated quiz
+                await existingQuiz.save();
+              }
+            }
+          }
+        }
+
+        // Update course.quizzes array with quiz IDs
+        course.quizzes = parsedQuizzes.map((quiz) => quiz._id);
       } catch (err) {
-        console.error("Error parsing quizzes JSON:", err);
+        console.error("Error processing quizzes update:", err);
       }
     }
 
@@ -1526,7 +1707,7 @@ exports.createEducator = async (req, res, next) => {
 
     // Add avatar if profile image was uploaded
     if (req.file) {
-      profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      profile.avatar = `uploads/profiles/${req.file.filename}`;
     }
 
     // We always use "educator" as the core role value
@@ -1623,7 +1804,7 @@ exports.updateEducator = async (req, res) => {
 
     // Handle profile image upload
     if (req.file) {
-      educator.profile.avatar = `/uploads/profiles/${req.file.filename}`;
+      educator.profile.avatar = `uploads/profiles/${req.file.filename}`;
     }
 
     await educator.save();

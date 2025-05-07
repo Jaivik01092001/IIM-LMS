@@ -104,7 +104,7 @@ const StaffAccountForm = () => {
       if (profile.avatar) {
         avatarUrl = profile.avatar.startsWith("http")
           ? profile.avatar
-          : `${import.meta.env.VITE_API_URL.replace("/api", "")}${
+          : `${import.meta.env.VITE_IMAGE_URL}${
               profile.avatar
             }`;
         setAvatarPreview(avatarUrl);

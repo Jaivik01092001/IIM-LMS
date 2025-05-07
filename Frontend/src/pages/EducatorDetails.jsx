@@ -105,7 +105,7 @@ const EducatorDetails = () => {
         // If avatar starts with http, use it directly, otherwise prepend the base URL
         avatarUrl = currentEducator.profile.avatar.startsWith("http")
           ? currentEducator.profile.avatar
-          : `${import.meta.env.VITE_API_URL.replace("/api", "")}${
+          : `${import.meta.env.VITE_IMAGE_URL}${
               currentEducator.profile.avatar
             }`;
       }

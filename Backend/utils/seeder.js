@@ -23,44 +23,99 @@ const seedDatabase = async () => {
     // Insert Users with phone numbers instead of passwords
     const users = await User.insertMany([
       {
+        _id: "681af0cd9533dc70cee7dd70",
         email: "zeel.fabaf@gmail.com",
         phoneNumber: "+919904424789",
         role: "university",
         name: "Zeel",
         profile: {
-          address: "123 University St, Ahmedabad",
-          zipcode: "380001",
-          state: "Gujarat",
+          address: "awdwaawd",
+          zipcode: "165841",
+          state: "Jharkhand",
+          avatar: "uploads/profiles/1746596045262-profileImage.jpg",
         },
+        educators: [],
+        contactPerson: "awdawda",
+        status: 1,
+        createdAt: "2025-05-07T05:34:05.407Z",
+        updatedAt: "2025-05-07T05:34:05.407Z",
+        __v: 0,
       },
       {
+        _id: "681af0cd9533dc70cee7dd71",
         email: "anandkumarbarot@gmail.com",
         phoneNumber: "+918140977185",
         role: "educator",
         name: "Anand",
         profile: {
-          address: "456 Educator Ave, Ahmedabad",
-          zipcode: "380015",
-          state: "Gujarat",
+          address: "awdwaawd",
+          zipcode: "165841",
+          state: "Jharkhand",
+          avatar: "uploads/profiles/1746596045262-profileImage.jpg",
         },
+        educators: [],
+        contactPerson: "awdawda",
+        status: 1,
+        createdAt: "2025-05-07T05:34:05.407Z",
+        updatedAt: "2025-05-07T05:34:05.407Z",
+        __v: 0,
       },
       {
+        _id: "681af0cd9533dc70cee7dd72",
         email: "jaivik.patel@fabaf.in",
         phoneNumber: "+919664774890",
         role: "admin",
         name: "Jaivik",
+        profile: {
+          address: "awdwaawd",
+          zipcode: "165841",
+          state: "Jharkhand",
+          avatar: "uploads/profiles/1746596045262-profileImage.jpg",
+        },
+        educators: [],
+        contactPerson: "awdawda",
+        status: 1,
+        createdAt: "2025-05-07T05:34:05.407Z",
+        updatedAt: "2025-05-07T05:34:05.407Z",
+        __v: 0,
       },
       {
+        _id: "681af0cd9533dc70cee7dd73",
         email: "nishant@fabaf.in",
         phoneNumber: "+918980905254",
         role: "admin",
         name: "Nishant",
+        profile: {
+          address: "awdwaawd",
+          zipcode: "165841",
+          state: "Jharkhand",
+          avatar: "uploads/profiles/1746596045262-profileImage.jpg",
+        },
+        educators: [],
+        contactPerson: "awdawda",
+        status: 1,
+        createdAt: "2025-05-07T05:34:05.407Z",
+        updatedAt: "2025-05-07T05:34:05.407Z",
+        __v: 0,
       },
       {
+        _id: "681af0cd9533dc70cee7dd74",
         email: "fabaf2021@gmail.com",
         phoneNumber: "+919924294542",
         role: "staff",
         name: "Fabaf",
+        profile: {
+          address: "awdwaawd",
+          zipcode: "165841",
+          state: "Jharkhand",
+          avatar: "uploads/profiles/1746596045262-profileImage.jpg",
+        },
+        educators: [],
+        contactPerson: "awdawda",
+        status: 1,
+        createdAt: "2025-05-07T05:34:05.407Z",
+        updatedAt: "2025-05-07T05:34:05.407Z",
+        __v: 0,
       },
     ]);
 
@@ -90,33 +145,66 @@ const seedDatabase = async () => {
         {
           name: "Super Admin", // UI: Super Admin -> DB: admin
           description: "Full access to all system features",
-          permissions: adminPermissions,
+          permissions: {
+            [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.DELETE_COURSE]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.VIEW_SCHOOLS]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.CREATE_SCHOOL]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.EDIT_SCHOOL]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.DELETE_SCHOOL]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.VIEW_EDUCATORS]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.CREATE_EDUCATOR]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.EDIT_EDUCATOR]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.DELETE_EDUCATOR]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.VIEW_BLOGS]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.CREATE_BLOG]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.EDIT_BLOG]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.DELETE_BLOG]: true,
+          },
           createdBy: users[2]._id, // Admin user
         },
         {
           name: "IIM Staff", // UI: IIM Staff -> DB: staff
           description: "Staff members with full system access",
-          permissions: adminPermissions, // Same permissions as Super Admin
+          permissions: {
+            [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.DELETE_COURSE]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.VIEW_SCHOOLS]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.CREATE_SCHOOL]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.EDIT_SCHOOL]: true,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.DELETE_SCHOOL]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.VIEW_EDUCATORS]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.CREATE_EDUCATOR]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.EDIT_EDUCATOR]: true,
+            [PERMISSIONS.EDUCATOR_MANAGEMENT.DELETE_EDUCATOR]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.VIEW_BLOGS]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.CREATE_BLOG]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.EDIT_BLOG]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.DELETE_BLOG]: false,
+          },
           createdBy: users[2]._id,
         },
         {
           name: "School Admin", // UI: School Admin -> DB: university
           description: "Manages university and educators",
           permissions: {
-            // School management permissions
-            [PERMISSIONS.SCHOOL_MANAGEMENT.VIEW_SCHOOLS]: true,
-            [PERMISSIONS.SCHOOL_MANAGEMENT.CREATE_SCHOOL]: true,
-            [PERMISSIONS.SCHOOL_MANAGEMENT.EDIT_SCHOOL]: true,
-            [PERMISSIONS.SCHOOL_MANAGEMENT.DELETE_SCHOOL]: true,
-
-            // Educator management permissions
+            [PERMISSIONS.SCHOOL_MANAGEMENT.VIEW_SCHOOLS]: false,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.CREATE_SCHOOL]: false,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.EDIT_SCHOOL]: false,
+            [PERMISSIONS.SCHOOL_MANAGEMENT.DELETE_SCHOOL]: false,
             [PERMISSIONS.EDUCATOR_MANAGEMENT.VIEW_EDUCATORS]: true,
             [PERMISSIONS.EDUCATOR_MANAGEMENT.CREATE_EDUCATOR]: true,
             [PERMISSIONS.EDUCATOR_MANAGEMENT.EDIT_EDUCATOR]: true,
             [PERMISSIONS.EDUCATOR_MANAGEMENT.DELETE_EDUCATOR]: true,
-
-            // Course management permissions
             [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.VIEW_BLOGS]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.CREATE_BLOG]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.EDIT_BLOG]: true,
+            [PERMISSIONS.BLOG_MANAGEMENT.DELETE_BLOG]: true,
           },
           createdBy: users[2]._id,
         },
@@ -124,11 +212,11 @@ const seedDatabase = async () => {
           name: "Educator", // UI: Educator -> DB: educator
           description: "Creates and manages courses and content",
           permissions: {
-            // Course management permissions
             [PERMISSIONS.COURSE_MANAGEMENT.VIEW_COURSES]: true,
-            [PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE]: true,
-            [PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE]: true,
-            [PERMISSIONS.COURSE_MANAGEMENT.DELETE_COURSE]: true,
+            [PERMISSIONS.COURSE_MANAGEMENT.CREATE_COURSE]: false,
+            [PERMISSIONS.COURSE_MANAGEMENT.EDIT_COURSE]: false,
+            [PERMISSIONS.COURSE_MANAGEMENT.DELETE_COURSE]: false,
+            [PERMISSIONS.BLOG_MANAGEMENT.VIEW_BLOGS]: true,
           },
           createdBy: users[2]._id,
         },
@@ -141,6 +229,7 @@ const seedDatabase = async () => {
       const superAdminRole = await Role.findOne({ name: "Super Admin" });
       const schoolAdminRole = await Role.findOne({ name: "School Admin" });
       const educatorRole = await Role.findOne({ name: "Educator" });
+      const staffRole = await Role.findOne({ name: "IIM Staff" });
 
       // Update users with role references
       await User.findByIdAndUpdate(users[0]._id, {
@@ -149,6 +238,12 @@ const seedDatabase = async () => {
       await User.findByIdAndUpdate(users[1]._id, { roleRef: educatorRole._id });
       await User.findByIdAndUpdate(users[2]._id, {
         roleRef: superAdminRole._id,
+      });
+      await User.findByIdAndUpdate(users[3]._id, {
+        roleRef: superAdminRole._id,
+      });
+      await User.findByIdAndUpdate(users[4]._id, {
+        roleRef: staffRole._id,
       });
 
       console.log("Roles assigned to users");

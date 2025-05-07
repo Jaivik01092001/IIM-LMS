@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaPlay, FaClock, FaBook, FaUserGraduate, FaStar, FaChevronDown, FaFileAlt } from 'react-icons/fa';
+import { FaPlay, FaClock, FaBook, FaUserGraduate, FaStar, FaChevronDown, FaFileAlt, FaUser, FaComment } from 'react-icons/fa';
 import './CourseDetail.css';
 import { getCourse } from '../redux/admin/adminApi';
 import { enrollCourse } from '../redux/educator/educatorApi';
 import { toast } from 'react-toastify';
+import CourseComments from '../components/CourseComments';
 
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
@@ -21,6 +22,7 @@ const CourseDetail = () => {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizResults, setQuizResults] = useState(null);
+  const [isUserEnrolled, setIsUserEnrolled] = useState(false);
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
@@ -28,6 +30,36 @@ const CourseDetail = () => {
       try {
         const courseData = await getCourse(id);
         setCourse(courseData);
+
+        // Check if current user is enrolled
+        let currentUserId = null;
+
+        // Try to get user ID from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const userData = JSON.parse(userStr);
+            currentUserId = userData.id;
+            console.log('Current user ID from localStorage:', currentUserId);
+          } catch (e) {
+            console.error('Error parsing user data from localStorage:', e);
+          }
+        }
+
+        if (currentUserId && courseData.enrolledUsers) {
+          // Fix the comparison to handle both string and object IDs
+          const userEnrolled = courseData.enrolledUsers.some(enrollment => {
+            // Handle different possible data formats of user id
+            const enrollmentUserId = typeof enrollment.user === 'object'
+              ? enrollment.user._id
+              : enrollment.user;
+
+            return enrollmentUserId === currentUserId;
+          });
+
+          console.log('User enrolled status:', userEnrolled);
+          setIsUserEnrolled(userEnrolled);
+        }
       } catch (error) {
         console.error('Error fetching course details:', error);
         // Keep course as null to show error state
@@ -43,44 +75,6 @@ const CourseDetail = () => {
     setExpandedFaq(expandedFaq === faqId ? null : faqId);
   };
 
-  const handlePreviewClick = (module) => {
-    // Check if the module already has a quiz reference
-    if (module.quiz) {
-      // If it's just an ID, find the full quiz object
-      if (typeof module.quiz === 'string') {
-        const moduleQuiz = course.quizzes?.find(quiz => quiz._id === module.quiz);
-        if (moduleQuiz) {
-          // Module already has the correct quiz ID
-          console.log('Module already has quiz reference:', module.quiz);
-          setSelectedModule(module);
-          setShowModuleContent(true);
-          return;
-        }
-      } else {
-        // Module already has the quiz object
-        console.log('Module already has quiz object:', module.quiz);
-        setSelectedModule(module);
-        setShowModuleContent(true);
-        return;
-      }
-    }
-
-    // If no quiz reference or invalid reference, try to find a matching quiz
-    const moduleQuiz = course.quizzes?.find(quiz =>
-      quiz.title.includes(module.title) ||
-      quiz.description.includes(module.title)
-    );
-
-    // Create an enhanced module object with the quiz ID
-    const enhancedModule = {
-      ...module,
-      quiz: moduleQuiz ? moduleQuiz._id : null
-    };
-
-    console.log('Enhanced module with quiz:', enhancedModule);
-    setSelectedModule(enhancedModule);
-    setShowModuleContent(true);
-  };
 
   const closeModulePreview = () => {
     setShowModuleContent(false);
@@ -139,10 +133,18 @@ const CourseDetail = () => {
   };
 
   const handleEnrollNow = async () => {
+    console.log('Enrollment status before action:', isUserEnrolled);
+    // If already enrolled, navigate to course detail page
+    if (isUserEnrolled) {
+      navigate(`/dashboard/enroll-course-detail/${id}`);
+      return;
+    }
+
     try {
       setEnrolling(true);
       await enrollCourse(id);
       toast.success('Successfully enrolled in the course!');
+      setIsUserEnrolled(true);
       navigate(`/dashboard/enroll-course-detail/${id}`);
     } catch (error) {
       console.error('Error enrolling in course:', error);
@@ -176,14 +178,10 @@ const CourseDetail = () => {
       {/* Course Header */}
       <div className="course-detail-header">
         <div className="course-header-content">
-          <h1 className="course-title">{course.title}</h1>
+          <h1 className="course-title">Course Title : {course.title}</h1>
           <div className="course-meta-info">
-            <span className="course-category">Category: {course.category}</span>
-            <span className="course-language">Language: {course.language}</span>
-            <div className="course-rating">
-              <FaStar className="star-icon" />
-              <span>{course.rating || "New"}</span>
-            </div>
+            <span className="course-category">Language: {course.language}</span>
+
           </div>
         </div>
       </div>
@@ -231,6 +229,18 @@ const CourseDetail = () => {
                                     <source src={contentObject.fileUrl} type="video/mp4" />
                                     Your browser does not support the video tag.
                                   </video>
+                                </div>
+                              ) : contentObject.type === 'youtube' ? (
+                                <div className="youtube-preview">
+                                  <iframe
+                                    width="100%"
+                                    height="315"
+                                    src={contentObject.fileUrl.replace('youtu.be/', 'youtube.com/embed/').replace('?si=', '?')}
+                                    title={contentObject.title}
+                                    frameBorder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen>
+                                  </iframe>
                                 </div>
                               ) : contentObject.type === 'image' || contentObject.mediaType === 'image' ? (
                                 <div className="image-preview">
@@ -371,19 +381,19 @@ const CourseDetail = () => {
               className={`tab-button ${activeTab === 'information' ? 'active' : ''}`}
               onClick={() => setActiveTab('information')}
             >
-              Information
+              <FaBook className="tab-icon" /> Information
             </button>
-            {/* <button
-              className={`tab-button ${activeTab === 'content' ? 'active' : ''}`}
-              onClick={() => setActiveTab('content')}
-            >
-              Content ({course.modules?.length || 0})
-            </button> */}
             <button
               className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
-              Reviews ({course.enrolledUsers?.length || 0})
+              <FaComment className="tab-icon" /> Reviews
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'enrolled' ? 'active' : ''}`}
+              onClick={() => setActiveTab('enrolled')}
+            >
+              <FaUser className="tab-icon" /> Enrolled Users ({course.enrolledUsers?.length || 0})
             </button>
           </div>
 
@@ -392,7 +402,7 @@ const CourseDetail = () => {
             {activeTab === 'information' && (
               <div className="information-tab">
                 <div className="course-description">
-                  <p>{course.description}</p>
+                  <p>Course Description : {course.description}</p>
 
                   {course.learningOutcomes && course.learningOutcomes.length > 0 && (
                     <div className="learning-outcomes">
@@ -417,20 +427,27 @@ const CourseDetail = () => {
                   )}
 
                   <div className="course-details">
-                    <p><strong>Level:</strong> {course.level}</p>
                     <p><strong>Duration:</strong> {course.duration}</p>
-                    <p><strong>Target Audience:</strong> {course.targetAudience}</p>
+                    <p><strong>Level:</strong> {course.level}</p>
+                    <p><strong>Language:</strong> {course.language}</p>
+                    <p><strong>Status:</strong> {course.isDraft ? 'Draft' : 'Published'}</p>
                   </div>
+
                 </div>
 
                 {course.creator && (
                   <div className="instructor-info">
                     <div className="instructor-profile">
                       <div className="instructor-image">
-                        <img src="https://i.pravatar.cc/150?img=32" alt={course.creator.name} />
+                        <img
+                          src={course.creator?.profile && course.creator?.profile?.avatar
+                            ? `${VITE_IMAGE_URL}${course.creator?.profile?.avatar}`
+                            : 'https://via.placeholder.com/150?text=Instructor'}
+                          alt={course.creator?.name}
+                        />
                       </div>
                       <div className="instructor-details">
-                        <h4>{course.creator.name}</h4>
+                        <h4>{course.creator?.name}</h4>
                         <p>Course Creator</p>
                       </div>
                     </div>
@@ -464,61 +481,54 @@ const CourseDetail = () => {
               </div>
             )}
 
-            {activeTab === 'content' && (
-              <div className="content-tab">
-                <div className="content-list">
-                  {course.modules && course.modules.length > 0 ? (
-                    course.modules.map((module, index) => (
-                      <div key={module._id} className="content-item">
-                        <div className="content-info">
-                          <h3>{index + 1}. {module.title}</h3>
-                          <p>{module.description}</p>
-                          <span className="content-duration">
-                            <FaClock className="icon" /> {module.duration || "Not specified"}
-                          </span>
-                          {module.content && module.content.length > 0 && (
-                            <div className="content-has-items">
-                              <span>{module.content.length} content item(s)</span>
-                            </div>
-                          )}
-                          {module.quiz && (
-                            <div className="content-has-quiz">
-                              <span>Includes quiz</span>
-                            </div>
-                          )}
-                        </div>
-                        {module.isLocked ? (
-                          <div className="content-locked">
-                            <span className="lock-icon">🔒</span>
-                          </div>
-                        ) : (
-                          <button
-                            className="preview-button"
-                            onClick={() => handlePreviewClick(module)}
-                          >
-                            Preview
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="no-content-message">
-                      <p>No modules available for this course yet.</p>
-                    </div>
-                  )}
-                </div>
+            {activeTab === 'reviews' && (
+              <div className="reviews-tab">
+                <CourseComments courseId={id} />
               </div>
             )}
 
-            {activeTab === 'reviews' && (
-              <div className="reviews-tab">
-                <div className="comments-section">
-                  <h3>Comments</h3>
-                  <div className="comment-input">
-                    <textarea placeholder="Write comment here..."></textarea>
-                    <button className="post-comment-button">Post Comments</button>
+            {activeTab === 'enrolled' && (
+              <div className="enrolled-users-tab">
+                <h3>Enrolled Users</h3>
+                {course.enrolledUsers && course.enrolledUsers.length > 0 ? (
+                  <div className="enrolled-users-list">
+                    {course.enrolledUsers.map((enrollment, index) => (
+                      <div key={index} className="enrolled-user-card">
+                        <div className="user-card-header">
+                          <div className="user-avatar">
+                            <FaUser className="user-icon" />
+                          </div>
+                          <div className="user-details">
+                            <h4>User ID: {enrollment.user}</h4>
+                            <span className={`status-badge status-${enrollment.status}`}>
+                              {enrollment.status.replace('_', ' ')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="user-progress">
+                          <div className="progress-label">
+                            <span>Progress</span>
+                            <span>{enrollment.progress}%</span>
+                          </div>
+                          <div className="progress-bar">
+                            <div
+                              className="progress-fill"
+                              style={{ width: `${enrollment.progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className="enrollment-dates">
+                          <p>Enrolled: {new Date(enrollment.enrolledAt).toLocaleDateString()}</p>
+                          <p>Last Active: {new Date(enrollment.lastAccessedAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="no-enrolled-users">
+                    <p>No users have enrolled in this course yet.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -534,10 +544,6 @@ const CourseDetail = () => {
                   src={course.thumbnail ? `${VITE_IMAGE_URL}${course.thumbnail.replace(/\\/g, '/')}` : 'https://via.placeholder.com/300x200?text=No+Image'}
                   alt={course.title}
                 />
-                {/* <button className="play-button">
-                  <FaPlay />
-                </button>
-                <div className="video-duration">{course.duration}</div> */}
               </div>
             </div>
             <div className="course-price-section">
@@ -546,8 +552,12 @@ const CourseDetail = () => {
                 onClick={handleEnrollNow}
                 disabled={enrolling}
               >
-                {enrolling ? 'Enrolling...' : 'Enroll Now'}
+                {enrolling ? 'Processing...' : isUserEnrolled ? 'Continue Learning' : 'Enroll Now'}
               </button>
+              {/* Debug info - can be removed after fixing */}
+              <div style={{ fontSize: '10px', color: '#666', marginTop: '5px', display: 'none' }}>
+                Enrolled: {isUserEnrolled ? 'Yes' : 'No'}
+              </div>
             </div>
             <div className="course-stats">
               <div className="stat-item">

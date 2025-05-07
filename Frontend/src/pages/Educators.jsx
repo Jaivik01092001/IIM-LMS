@@ -98,7 +98,7 @@ const Educators = () => {
           school: schoolName,
           category: educator.profile?.category || universityCategory,
           avatar: educator.profile?.avatar
-            ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${
+            ? `${import.meta.env.VITE_IMAGE_URL}${
                 educator.profile.avatar
               }`
             : null,
