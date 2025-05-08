@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaPencilAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher } from 'react-icons/fa';
+import { FaPencilAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher, FaClock } from 'react-icons/fa';
 import { IoBookOutline } from 'react-icons/io5';
 import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
+import { getMyCoursesThunk } from '../../redux/educator/educatorSlice';
 import { getCoursesThunk, updateCourseThunk, deleteCourseThunk, getUsersThunk } from '../../redux/admin/adminSlice';
 import DataTableComponent from '../../components/DataTable';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -18,23 +19,26 @@ const SchoolDashboard = () => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [educatorSearchTerm, setEducatorSearchTerm] = useState("");
+  const [ongoingCoursesSearchTerm, setOngoingCoursesSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
   const { educators, loading: educatorsLoading } = useSelector((state) => state.university);
   const { courses, loading: coursesLoading } = useSelector((state) => state.admin);
+  const { myCourses, loading: myCoursesLoading } = useSelector((state) => state.educator);
   const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading states change
   useEffect(() => {
-    setIsLoading(educatorsLoading || coursesLoading);
-  }, [educatorsLoading, coursesLoading]);
+    setIsLoading(educatorsLoading || coursesLoading || myCoursesLoading);
+  }, [educatorsLoading, coursesLoading, myCoursesLoading]);
 
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getEducatorsThunk());
     dispatch(getCoursesThunk());
+    dispatch(getMyCoursesThunk());
     // Only fetch users data if the user has permission to view users
     if (user?.permissions?.view_users) {
       dispatch(getUsersThunk());
@@ -51,6 +55,7 @@ const SchoolDashboard = () => {
   // Transform courses data for the table
   const [courseTableData, setCourseTableData] = useState([]);
   const [educatorTableData, setEducatorTableData] = useState([]);
+  const [ongoingCourses, setOngoingCourses] = useState([]);
 
   // Extract unique categories from courses
   const [categories, setCategories] = useState([]);
@@ -128,6 +133,57 @@ const SchoolDashboard = () => {
       setEducatorTableData(formattedEducators);
     }
   }, [educators, user]);
+
+  // Process myCourses data for ongoing courses
+  useEffect(() => {
+    if (myCourses && myCourses.length > 0) {
+      // Format the ongoing courses data
+      const formattedOngoingCourses = myCourses
+        .filter(course => {
+          // Check if the course has enrolled users with in_progress status
+          return course.enrolledUsers && course.enrolledUsers.some(
+            enrollment => enrollment.status === "in_progress"
+          );
+        })
+        .map(course => {
+          // Get only the in_progress enrollments
+          const ongoingEnrollments = course.enrolledUsers.filter(
+            enrollment => enrollment.status === "in_progress"
+          );
+
+          return {
+            id: course._id,
+            title: course.title || "Untitled Course",
+            description: course.description || "No description available",
+            thumbnail: course.thumbnail || "",
+            creator: {
+              id: course.creator?._id || "",
+              name: course.creator?.name || "Unknown",
+              avatar: course.creator?.profile?.avatar || ""
+            },
+            enrolledCount: ongoingEnrollments.length,
+            enrolledUsers: ongoingEnrollments.map(enrollment => {
+              const user = typeof enrollment.user === 'object'
+                ? enrollment.user
+                : { _id: enrollment.user, name: "Unknown", email: "" };
+
+              return {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.profile?.avatar || "",
+                progress: enrollment.progress || 0,
+                enrolledAt: enrollment.enrolledAt || new Date()
+              };
+            })
+          };
+        });
+
+      setOngoingCourses(formattedOngoingCourses);
+    } else {
+      setOngoingCourses([]);
+    }
+  }, [myCourses]);
 
   // Course status toggle handler
   const handleCourseStatusToggle = (row) => {
@@ -285,6 +341,66 @@ const SchoolDashboard = () => {
     },
   ];
 
+  // Handle ongoing course view
+  const handleOngoingCourseView = (row) => {
+    navigate(`/dashboard/school/courses/${row.id}`);
+  };
+
+  // Ongoing courses table columns configuration
+  const ongoingCoursesColumns = [
+    {
+      name: "Course",
+      cell: (row) => (
+        <div className="course-info">
+          <img
+            src={VITE_IMAGE_URL + row.thumbnail}
+            alt={row.title}
+            className="course-thumbnail"
+          />
+          <div className="course-details">
+            <span className="course-title">{row.title}</span>
+            <span className="course-description">{row.description?.substring(0, 50)}...</span>
+          </div>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Instructor",
+      cell: (row) => (
+        <div className="professor-info">
+          <img
+            src={row.creator?.avatar ? VITE_IMAGE_URL + row.creator.avatar : `https://i.pravatar.cc/150?img=${row.id + 30}`}
+            alt={row.creator?.name || "Unknown"}
+            className="professor-avatar"
+          />
+          <span>{row.creator?.name || "Unknown"}</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Enrolled Students",
+      selector: (row) => row.enrolledCount || 0,
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <button
+          className="action-btn view"
+          onClick={() => handleOngoingCourseView(row)}
+          title="View Course"
+        >
+          <FaEye />
+        </button>
+      ),
+      width: "100px",
+      center: true,
+    },
+  ];
+
   // Educator table columns configuration
   const educatorColumns = [
     {
@@ -367,6 +483,14 @@ const SchoolDashboard = () => {
           </div>
           <div className="stat-count">{educatorTableData.length || 0}</div>
           <div className="stat-title">Our Educators</div>
+        </div>
+
+        <div className="stat-card ongoing">
+          <div className="stat-icon1">
+            <FaClock size={24} />
+          </div>
+          <div className="stat-count">{ongoingCourses?.length || 0}</div>
+          <div className="stat-title">Ongoing Courses</div>
         </div>
       </div>
 
@@ -488,6 +612,64 @@ const SchoolDashboard = () => {
             showSearch={false}
             pagination={true}
           />
+        </div>
+      </div>
+
+      {/* Ongoing Courses Table Section */}
+      <div className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">Ongoing Courses ({ongoingCourses?.length || 0})</h2>
+          <div className="header-actions">
+            <button
+              className="view-all-btn"
+              onClick={() => navigate("/dashboard/school/courses")}
+            >
+              View All Courses
+            </button>
+          </div>
+        </div>
+
+        <div className="search-filter-container">
+          <input
+            type="text"
+            placeholder="Search ongoing courses..."
+            className="search-input"
+            value={ongoingCoursesSearchTerm}
+            onChange={(e) => setOngoingCoursesSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="table-responsive">
+          {ongoingCourses?.length > 0 ? (
+            <DataTableComponent
+              columns={ongoingCoursesColumns}
+              data={ongoingCourses
+                // Apply search filter
+                .filter(item =>
+                  item.title?.toLowerCase().includes(ongoingCoursesSearchTerm.toLowerCase()) ||
+                  item.description?.toLowerCase().includes(ongoingCoursesSearchTerm.toLowerCase()) ||
+                  item.creator?.name?.toLowerCase().includes(ongoingCoursesSearchTerm.toLowerCase())
+                )
+              }
+              showSearch={false}
+              pagination={true}
+            />
+          ) : (
+            <div className="empty-courses">
+              <div className="empty-message">
+                <FaClock className="empty-icon" />
+                <h3>No ongoing courses</h3>
+                <p>There are no courses currently in progress.</p>
+                <p>Create courses and encourage students to enroll to see ongoing courses here.</p>
+                <button
+                  className="browse-courses-btn"
+                  onClick={() => navigate("/dashboard/school/courses/create")}
+                >
+                  Create a Course
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

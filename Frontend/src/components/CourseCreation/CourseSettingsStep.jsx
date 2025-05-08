@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { FaClock, FaCog, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from "react-icons/fa";
+import { FaClock, FaCog, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPencilAlt } from "react-icons/fa";
 
 const CourseSettingsStep = ({ courseData, updateCourseData }) => {
     // Local state for form fields
     const [localData, setLocalData] = useState({
         duration: courseData.duration || "",
-        status: courseData.status ?? 1 // 1=active, 0=inactive
+        status: courseData.status ?? 1, // 1=active, 0=inactive
+        isDraft: courseData.isDraft ?? true // true=draft, false=published
     });
 
     // Handle simple input changes
@@ -15,11 +16,23 @@ const CourseSettingsStep = ({ courseData, updateCourseData }) => {
         updateCourseData({ [name]: value });
     };
 
-    // Toggle course status (active/inactive)
+    // Toggle course status (active/inactive) and publication status
     const toggleStatus = () => {
         const newStatus = localData.status === 1 ? 0 : 1;
-        setLocalData(prev => ({ ...prev, status: newStatus }));
-        updateCourseData({ status: newStatus });
+        // When toggling to active, also set isDraft to false (published)
+        // When toggling to inactive, set isDraft to true (draft)
+        const newIsDraft = newStatus === 0;
+
+        setLocalData(prev => ({
+            ...prev,
+            status: newStatus,
+            isDraft: newIsDraft
+        }));
+
+        updateCourseData({
+            status: newStatus,
+            isDraft: newIsDraft
+        });
     };
 
     // Duration options
@@ -89,10 +102,10 @@ const CourseSettingsStep = ({ courseData, updateCourseData }) => {
                     <div className="settings-card-icon">
                         <FaCog />
                     </div>
-                    <h3 className="settings-card-title">Course Visibility</h3>
+                    <h3 className="settings-card-title">Course Visibility & Publication</h3>
                 </div>
                 <p className="field-hint">
-                    Control whether your course is visible to students.
+                    Control whether your course is visible to students and its publication status.
                 </p>
                 <div className="toggle-group">
                     <div className="toggle-item">
@@ -101,15 +114,15 @@ const CourseSettingsStep = ({ courseData, updateCourseData }) => {
                                 Course Status
                                 <span className={`status-badge ${localData.status === 1 ? 'active' : 'inactive'}`}>
                                     {localData.status === 1
-                                        ? <><FaCheckCircle /> Active</>
-                                        : <><FaTimesCircle /> Inactive</>
+                                        ? <><FaCheckCircle /> Active & Published</>
+                                        : <><FaPencilAlt /> Inactive & Draft</>
                                     }
                                 </span>
                             </h3>
                             <p>
                                 {localData.status === 1
-                                    ? "Course is active and can be discovered by students."
-                                    : "Course is inactive and hidden from students."}
+                                    ? "Course is active, published, and available to enrolled students."
+                                    : "Course is inactive, in draft mode, and hidden from students."}
                             </p>
                         </div>
                         <div className="toggle-wrapper">
@@ -122,7 +135,7 @@ const CourseSettingsStep = ({ courseData, updateCourseData }) => {
                                 <span className="slider"></span>
                             </label>
                             <div className="toggle-label-text">
-                                {localData.status === 1 ? 'Active' : 'Inactive'}
+                                {localData.status === 1 ? 'Active & Published' : 'Inactive & Draft'}
                             </div>
                         </div>
                     </div>

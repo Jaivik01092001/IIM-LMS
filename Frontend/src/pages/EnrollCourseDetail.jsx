@@ -683,9 +683,9 @@ const EnrollCourseDetail = () => {
     }
   };
 
-  const handleSaveNote = () => {
-    toast.success('Note saved');
-  };
+  // const handleSaveNote = () => {
+  //   toast.success('Note saved');
+  // };
 
   const handleQuizSubmit = async (quizId, answers) => {
     try {
@@ -729,7 +729,7 @@ const EnrollCourseDetail = () => {
           });
 
           // Update backend with the new module progress
-          await dispatch(updateModuleProgressThunk({
+          const response = await dispatch(updateModuleProgressThunk({
             courseId: id,
             progressData: {
               moduleId: moduleWithQuiz._id,
@@ -738,7 +738,24 @@ const EnrollCourseDetail = () => {
             }
           })).unwrap();
 
-          // The useEffect hook will handle updating the UI based on the new quiz attempt
+          // Update the local progress state with the value from the response
+          console.log('Progress response after quiz submission:', response);
+
+          // First try to use userProgress which comes directly from the course enrollment
+          if (typeof response.userProgress === 'number') {
+            console.log('Using userProgress from backend after quiz:', response.userProgress);
+            setUserProgress(response.userProgress);
+          }
+          // Then try overallProgress which is calculated from module content
+          else if (typeof response.overallProgress === 'number') {
+            console.log('Using overallProgress from backend after quiz:', response.overallProgress);
+            setUserProgress(response.overallProgress);
+          }
+
+          // Update the module completion state to reflect the quiz completion
+          const newModuleState = { ...moduleCompleted };
+          newModuleState[moduleWithQuiz._id] = true;
+          setModuleCompleted(newModuleState);
         }
       }
 
@@ -1059,16 +1076,16 @@ const EnrollCourseDetail = () => {
             )}
           </div>
 
-          {selectedContent && selectedContent.fileUrl && (
+          {/* {selectedContent && selectedContent.fileUrl && (
             <div className="download-section">
               <p>Download the file</p>
               <button className="download-button">
                 <FaDownload /> Download
               </button>
             </div>
-          )}
+          )} */}
 
-          <div className="personal-note-section">
+          {/* <div className="personal-note-section">
             <h3>Personal Course Note</h3>
             <p className="note-description">This note will be displayed for you privately</p>
             <textarea
@@ -1086,7 +1103,7 @@ const EnrollCourseDetail = () => {
             <button className="save-note-button" onClick={handleSaveNote}>
               Save Note
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div className="course-sidebar">

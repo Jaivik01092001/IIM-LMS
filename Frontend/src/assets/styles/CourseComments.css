@@ -124,7 +124,10 @@
   margin-bottom: 10px;
   transition: background-color 0.2s ease;
 }
-
+.comment-replies-accordion-header span {
+  display: flex;
+  align-items: center;
+}
 .comment-replies-accordion-header:hover {
   background-color: var(--bg-gray);
 }
@@ -139,7 +142,7 @@
 }
 
 .comment-replies {
-  margin-left: 40px;
+  margin-left: 20px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -246,7 +249,7 @@
 
 .reply-form {
   margin-top: 15px;
-  margin-left: 40px;
+  margin-left: 20px;
 }
 
 .reply-toggle-btn {

@@ -101,7 +101,7 @@
 
 .course-detail-container .course-main-content {
   flex: 1;
-  min-width: 300px;
+  width: 100%;
 }
 
 .course-detail-container .course-sidebar {
@@ -169,6 +169,7 @@
 .course-detail-container .course-description p {
   margin-bottom: 20px;
   line-height: 1.7;
+  text-align: justify;
 }
 
 .course-detail-container .learning-outcomes,
@@ -656,7 +657,26 @@
   text-align: center;
   padding: 0 5px;
 }
-
+.course-detail-container .stat-info {
+  display: grid;
+  gap: 5px;
+  align-items: center;
+  justify-items: center;
+}
+.comment-edit-textarea {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid var(--border-gray);
+  border-radius: var(--border-small-radius);
+  font-family: var(--font-Poppins);
+  font-size: var(--basefont);
+  resize: vertical;
+  min-height: 100px;
+  margin-bottom: 15px;
+  background-color: var(--bg-gray);
+  transition: border-color 0.3s ease;
+  outline: none;
+}
 .course-detail-container .stat-icon {
   font-size: 24px;
   color: var(--primary-color);

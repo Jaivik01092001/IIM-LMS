@@ -8,7 +8,7 @@ import {
   FaCalendarAlt,
   FaEye,
 } from "react-icons/fa";
-import { getCoursesThunk } from "../../redux/admin/adminSlice";
+import { getMyCoursesThunk } from "../../redux/educator/educatorSlice";
 import DataTableComponent from "../../components/DataTable";
 import ProgressBar from "../../components/common/ProgressBar";
 import "../../assets/styles/TutorDashboard.css";
@@ -22,7 +22,8 @@ const TutorDashboard = () => {
   const [ongoingCourses, setOngoingCourses] = useState([]);
 
   // Get courses data from Redux store
-  const { courses, loading } = useSelector((state) => state.admin);
+  const { myCourses, loading } = useSelector((state) => state.educator);
+  const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading state changes
   useEffect(() => {
@@ -31,33 +32,22 @@ const TutorDashboard = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    dispatch(getCoursesThunk());
+    dispatch(getMyCoursesThunk());
   }, [dispatch]);
 
   // Process courses data when it changes
   useEffect(() => {
-    if (courses && courses.length > 0) {
-      // Get current user ID from localStorage
-      let currentUserId = null;
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        try {
-          const userData = JSON.parse(userStr);
-          currentUserId = userData.id;
-          console.log('Current user ID from localStorage:', currentUserId);
-        } catch (e) {
-          console.error('Error parsing user data from localStorage:', e);
-        }
-      }
+    if (myCourses && myCourses.length > 0) {
+      // Get current user ID
+      const currentUserId = user?.id;
 
-      const formattedCourses = courses.map((course) => {
-        // Check if the current user is enrolled in this course
-        let isUserEnrolled = false;
+      const formattedCourses = myCourses.map((course) => {
+        // Find the user's enrollment
         let userProgress = 0;
-        let enrollmentStatus = "not-enrolled";
+        let enrollmentStatus = "in_progress";
         let enrollmentDate = new Date();
 
-        if (currentUserId && course.enrolledUsers && course.enrolledUsers.length > 0) {
+        if (course.enrolledUsers && course.enrolledUsers.length > 0) {
           // Find the user's enrollment
           const userEnrollment = course.enrolledUsers.find(enrollment => {
             // Handle different possible data formats of user id
@@ -69,9 +59,8 @@ const TutorDashboard = () => {
           });
 
           if (userEnrollment) {
-            isUserEnrolled = true;
             userProgress = userEnrollment.progress || 0;
-            enrollmentStatus = userProgress === 100 ? "completed" : "ongoing";
+            enrollmentStatus = userEnrollment.status || "in_progress";
             enrollmentDate = new Date(userEnrollment.enrolledAt || Date.now());
           }
         }
@@ -90,7 +79,7 @@ const TutorDashboard = () => {
             course.thumbnail ||
             "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
           hasModules: course.hasModules || false,
-          isEnrolled: isUserEnrolled,
+          isEnrolled: true, // These are all enrolled courses since we're using getMyCourses
           progress: userProgress,
           enrollmentStatus: enrollmentStatus,
           startDate: enrollmentDate.toLocaleDateString(),
@@ -101,27 +90,27 @@ const TutorDashboard = () => {
 
       // Filter for ongoing courses
       const ongoing = formattedCourses.filter(
-        (course) => course.isEnrolled && course.progress < 100
+        (course) => course.progress < 100
       );
       setOngoingCourses(ongoing);
     }
-  }, [courses]);
+  }, [myCourses, user]);
 
   // Count courses by status
   const getCompletedCourses = () => {
     return coursesData.filter(
-      (course) => course.isEnrolled && course.progress === 100
+      (course) => course.progress === 100
     ).length;
   };
 
   const getOngoingCourses = () => {
     return coursesData.filter(
-      (course) => course.isEnrolled && course.progress < 100
+      (course) => course.progress < 100
     ).length;
   };
 
   const getTotalCourses = () => {
-    return coursesData.filter((course) => course.isEnrolled).length;
+    return coursesData.length;
   };
 
   // View course handler
