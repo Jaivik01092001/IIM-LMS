@@ -87,16 +87,16 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
           // Process content array to ensure it contains full content objects, not just IDs
           content: module.content
             ? module.content.map((contentId) => {
-                if (typeof contentId === "object") {
-                  return contentId;
-                } else {
-                  // Find the content item in the content array
-                  const contentItem = content.find(
-                    (item) => item._id === contentId
-                  );
-                  return contentItem || contentId; // Return the content item if found, otherwise return the ID
-                }
-              })
+              if (typeof contentId === "object") {
+                return contentId;
+              } else {
+                // Find the content item in the content array
+                const contentItem = content.find(
+                  (item) => item._id === contentId
+                );
+                return contentItem || contentId; // Return the content item if found, otherwise return the ID
+              }
+            })
             : [],
         };
 
@@ -118,11 +118,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         content,
         quizzes,
       });
-
-      console.log(
-        "Updated course data with processed modules:",
-        processedModules
-      );
     } else {
       setHasUpdatedCourseData(true);
     }
@@ -194,11 +189,11 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const updatedModules = modules.map((module) =>
       module._id === editingModuleId
         ? {
-            ...module,
-            title: moduleFormData.title,
-            description: moduleFormData.description,
-            isCompulsory: moduleFormData.isCompulsory,
-          }
+          ...module,
+          title: moduleFormData.title,
+          description: moduleFormData.description,
+          isCompulsory: moduleFormData.isCompulsory,
+        }
         : module
     );
 
@@ -292,20 +287,20 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         contentFormData.type === "youtube"
           ? contentFormData.textContent
           : contentFormData.type === "text"
-          ? contentFormData.textContent
-          : "",
+            ? contentFormData.textContent
+            : "",
       fileUrl:
         contentFormData.type === "youtube"
           ? contentFormData.textContent
           : contentFormData.file
-          ? URL.createObjectURL(contentFormData.file)
-          : existingContent?.fileUrl || "",
+            ? URL.createObjectURL(contentFormData.file)
+            : existingContent?.fileUrl || "",
       mimeType:
         contentFormData.type === "youtube"
           ? "video/youtube"
           : contentFormData.file?.type ||
-            existingContent?.mimeType ||
-            "application/octet-stream",
+          existingContent?.mimeType ||
+          "application/octet-stream",
       module: moduleOfEditingContent,
     };
 
@@ -370,9 +365,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         const updatedModules = modules.map((module) =>
           module._id === moduleId
             ? {
-                ...module,
-                content: module.content.filter((id) => id !== contentId),
-              }
+              ...module,
+              content: module.content.filter((id) => id !== contentId),
+            }
             : module
         );
 
@@ -851,7 +846,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                 <h5>Content</h5>
                                 <div className="content-list">
                                   {module.content &&
-                                  module.content.length > 0 ? (
+                                    module.content.length > 0 ? (
                                     // First try to find content in the module's content array
                                     module.content
                                       .map((contentId) => {
@@ -868,9 +863,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                           );
                                           return contentItem
                                             ? renderContentItem(
-                                                contentItem,
-                                                module._id
-                                              )
+                                              contentItem,
+                                              module._id
+                                            )
                                             : null;
                                         }
                                       })
@@ -1022,7 +1017,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                 }
                                                 accept={
                                                   contentFormData.type ===
-                                                  "video"
+                                                    "video"
                                                     ? "video/*"
                                                     : "application/pdf,application/msword"
                                                 }
@@ -1034,7 +1029,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                 <FaFileUpload />
                                                 Upload{" "}
                                                 {contentFormData.type ===
-                                                "video"
+                                                  "video"
                                                   ? "Video"
                                                   : "Document"}
                                               </label>
@@ -1227,11 +1222,11 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                     // Convert correctAnswer to number for comparison if it's a string
                                                     const correctAnswerNum =
                                                       typeof q.correctAnswer ===
-                                                      "string"
+                                                        "string"
                                                         ? parseInt(
-                                                            q.correctAnswer,
-                                                            10
-                                                          )
+                                                          q.correctAnswer,
+                                                          10
+                                                        )
                                                         : q.correctAnswer;
 
                                                     return (
@@ -1239,7 +1234,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                         key={optIndex}
                                                         className={
                                                           optIndex ===
-                                                          correctAnswerNum
+                                                            correctAnswerNum
                                                             ? "correct"
                                                             : ""
                                                         }
@@ -1296,24 +1291,22 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                       e.target.value
                                                     )
                                                   }
-                                                  placeholder={`Option ${
-                                                    index + 1
-                                                  }`}
+                                                  placeholder={`Option ${index + 1
+                                                    }`}
                                                 />
                                                 <button
                                                   type="button"
-                                                  className={`correct-toggle ${
-                                                    index ===
+                                                  className={`correct-toggle ${index ===
                                                     currentQuestion.correctAnswer
-                                                      ? "active"
-                                                      : ""
-                                                  }`}
+                                                    ? "active"
+                                                    : ""
+                                                    }`}
                                                   onClick={() =>
                                                     setCorrectAnswer(index)
                                                   }
                                                 >
                                                   {index ===
-                                                  currentQuestion.correctAnswer
+                                                    currentQuestion.correctAnswer
                                                     ? "Correct"
                                                     : "Mark as Correct"}
                                                 </button>
