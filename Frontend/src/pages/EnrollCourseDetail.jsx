@@ -287,7 +287,7 @@ const EnrollCourseDetail = () => {
 
         // If user enrollment exists, use the progress from the backend
         if (userEnrollment && typeof userEnrollment.progress === 'number') {
-          setUserProgress(userProgress);
+          setUserProgress(userEnrollment.progress);
         } else {
           // Fallback to calculated progress if no enrollment found or progress is not a number
           setUserProgress(calculatedProgress);
@@ -328,7 +328,7 @@ const EnrollCourseDetail = () => {
         }
       }
     }
-  }, [moduleProgress, course, currentUserId]);
+  }, [moduleProgress, currentUserId]);
 
   // Monitor quiz attempts and update module unlock status when a quiz is completed
   useEffect(() => {
