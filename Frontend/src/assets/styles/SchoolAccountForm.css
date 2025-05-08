@@ -371,8 +371,9 @@
   }
 
   .school-form-container .form-actions {
-    flex-direction: column;
+    display: flex;
     gap: 0.75rem;
+    flex-direction: row;
   }
 
   .school-form-container .cancel-btn,
