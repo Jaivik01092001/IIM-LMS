@@ -289,8 +289,7 @@ const EnrollCourseDetail = () => {
 
         // If user enrollment exists, use the progress from the backend
         if (userEnrollment && typeof userEnrollment.progress === 'number') {
-          console.log('Setting progress from enrollment:', userEnrollment.progress);
-          setUserProgress(userEnrollment.progress);
+          setUserProgress(userProgress);
         } else {
           // Fallback to calculated progress if no enrollment found or progress is not a number
           console.log('Setting calculated progress:', calculatedProgress);
@@ -817,7 +816,21 @@ const EnrollCourseDetail = () => {
       progressData: {
         lastAccessedModule: module._id
       }
-    }));
+    })).then(response => {
+      // Handle the response and update progress
+      if (response.payload) {
+        // Check if we have progress data in the response
+        if (response.payload.overallProgress !== undefined) {
+          console.log('Using overallProgress from backend:', response.payload.overallProgress);
+          setUserProgress(response.payload.overallProgress);
+        } else if (response.payload.userProgress !== undefined) {
+          console.log('Using userProgress from backend:', response.payload.userProgress);
+          setUserProgress(response.payload.userProgress);
+        }
+      }
+    }).catch(error => {
+      console.error('Error updating module progress:', error);
+    });
   };
 
   // Toggle quiz expansion in accordion
