@@ -5,7 +5,7 @@ import { FaPencilAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher, FaClock } f
 import { IoBookOutline } from 'react-icons/io5';
 import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
 import { getMyCoursesThunk } from '../../redux/educator/educatorSlice';
-import { getCoursesThunk, updateCourseThunk, deleteCourseThunk, getUsersThunk } from '../../redux/admin/adminSlice';
+import { getCoursesThunk, updateCourseThunk, deleteCourseThunk } from '../../redux/admin/adminSlice';
 import DataTableComponent from '../../components/DataTable';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import StatusToggle from '../../components/common/StatusToggle';
@@ -39,11 +39,7 @@ const SchoolDashboard = () => {
     dispatch(getEducatorsThunk());
     dispatch(getCoursesThunk());
     dispatch(getMyCoursesThunk());
-    // Only fetch users data if the user has permission to view users
-    if (user?.permissions?.view_users) {
-      dispatch(getUsersThunk());
-    }
-  }, [dispatch, user]);
+  }, [dispatch]);
 
   // Redirect if not logged in
   useEffect(() => {

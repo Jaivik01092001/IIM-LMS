@@ -143,12 +143,16 @@ const CourseDetail = () => {
     try {
       setEnrolling(true);
       await enrollCourse(id);
-      toast.success('Successfully enrolled in the course!');
+      toast.success('Successfully enrolled in the course!', {
+        position: "bottom-right"
+      });
       setIsUserEnrolled(true);
       navigate(`/dashboard/enroll-course-detail/${id}`);
     } catch (error) {
       console.error('Error enrolling in course:', error);
-      toast.error(error.response?.data?.message || 'Failed to enroll in the course');
+      toast.error(error.response?.data?.message || 'Failed to enroll in the course', {
+        position: "bottom-right"
+      });
     } finally {
       setEnrolling(false);
     }

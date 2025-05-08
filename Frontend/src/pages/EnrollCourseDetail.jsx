@@ -129,7 +129,9 @@ const EnrollCourseDetail = () => {
             });
         }
       } catch (error) {
-        toast.error('Failed to load course');
+        toast.error('Failed to load course', {
+          position: "bottom-right"
+        });
         console.error('Error loading course:', error);
       }
     };
@@ -480,7 +482,9 @@ const EnrollCourseDetail = () => {
               setActiveTab('certificates');
               // Refresh certificates list
               dispatch(getMyCertificatesThunk());
-              toast.success('Certificate generated successfully!');
+              toast.success('Certificate generated successfully!', {
+                position: "bottom-right"
+              });
             })
             .catch(error => {
               console.error('Certificate generation error:', error);
@@ -488,15 +492,21 @@ const EnrollCourseDetail = () => {
                 // If certificate already exists, just refresh the list
                 dispatch(getMyCertificatesThunk());
                 setActiveTab('certificates');
-                toast.info('Certificate already exists. Refreshing your certificates.');
+                toast.info('Certificate already exists. Refreshing your certificates.', {
+                  position: "bottom-right"
+                });
               } else {
-                toast.error('Failed to generate certificate. Please try again.');
+                toast.error('Failed to generate certificate. Please try again.', {
+                  position: "bottom-right"
+                });
               }
             });
         })
         .catch(error => {
           console.error('Course status update error:', error);
-          toast.error('Failed to update course status. Please try again.');
+          toast.error('Failed to update course status. Please try again.', {
+            position: "bottom-right"
+          });
         });
     }
   }, [userProgress, course, id, dispatch, currentUserId, certificateExists, storeQuizAttempts]);
@@ -676,10 +686,14 @@ const EnrollCourseDetail = () => {
         setUserProgress(calculatedProgress);
       }
 
-      toast.success('Progress updated successfully');
+      toast.success('Progress updated successfully', {
+        position: "bottom-right"
+      });
     } catch (error) {
       console.error('Failed to update progress:', error);
-      toast.error('Failed to update progress. Please try again.');
+      toast.error('Failed to update progress. Please try again.', {
+        position: "bottom-right"
+      });
     }
   };
 
@@ -788,7 +802,9 @@ const EnrollCourseDetail = () => {
   // Handle module click - only allow selection if module is not locked
   const handleModuleClick = (module, moduleIndex) => {
     if (isModuleLocked(moduleIndex)) {
-      toast.warning('Complete previous modules first to unlock this module');
+      toast.warning('Complete previous modules first to unlock this module', {
+        position: "bottom-right"
+      });
       return; // Stop execution here for locked modules
     }
 
@@ -816,7 +832,9 @@ const EnrollCourseDetail = () => {
   const handleContentClick = (content, moduleIndex) => {
     // If module is locked, show warning and don't allow content selection
     if (isModuleLocked(moduleIndex)) {
-      toast.warning('Complete previous modules first to unlock this content');
+      toast.warning('Complete previous modules first to unlock this content', {
+        position: "bottom-right"
+      });
       return;
     }
 
@@ -853,7 +871,9 @@ const EnrollCourseDetail = () => {
   const handleGenerateCertificate = () => {
     // Check if certificate already exists for this user and course
     if (certificateExists) {
-      toast.info('You already have a certificate for this course.');
+      toast.info('You already have a certificate for this course.', {
+        position: "bottom-right"
+      });
       setActiveTab('certificates');
       return;
     }
@@ -865,7 +885,9 @@ const EnrollCourseDetail = () => {
     );
 
     if (!allCompulsoryModulesCompleted) {
-      toast.error('You must complete all compulsory modules before generating a certificate.');
+      toast.error('You must complete all compulsory modules before generating a certificate.', {
+        position: "bottom-right"
+      });
       return;
     }
 
@@ -882,7 +904,9 @@ const EnrollCourseDetail = () => {
 
       // If we're missing any quiz attempts, load them now
       if (missingQuizAttempts.length > 0) {
-        toast.info('Loading quiz data, please wait...');
+        toast.info('Loading quiz data, please wait...', {
+          position: "bottom-right"
+        });
 
         // Create an array of promises for missing quiz attempt fetches
         const fetchPromises = missingQuizAttempts.map(module => {
@@ -903,7 +927,9 @@ const EnrollCourseDetail = () => {
           })
           .catch(error => {
             console.error("Error fetching quiz attempts:", error);
-            toast.error('Failed to load quiz data. Please try again.');
+            toast.error('Failed to load quiz data. Please try again.', {
+              position: "bottom-right"
+            });
           });
 
         return; // Exit early while we load the quiz attempts
@@ -920,7 +946,9 @@ const EnrollCourseDetail = () => {
       if (failedQuizzes.length > 0) {
         // Get the names of the modules with failed quizzes
         const failedModuleNames = failedQuizzes.map(module => module.title).join(', ');
-        toast.error(`You must pass the quizzes for these modules: ${failedModuleNames}`);
+        toast.error(`You must pass the quizzes for these modules: ${failedModuleNames}`, {
+          position: "bottom-right"
+        });
         return;
       }
     }
@@ -937,7 +965,9 @@ const EnrollCourseDetail = () => {
             setActiveTab('certificates');
             // Refresh certificates list
             dispatch(getMyCertificatesThunk());
-            toast.success('Certificate generated successfully!');
+            toast.success('Certificate generated successfully!', {
+              position: "bottom-right"
+            });
           })
           .catch(error => {
             console.error('Certificate generation error:', error);
@@ -945,19 +975,29 @@ const EnrollCourseDetail = () => {
               // If certificate already exists, just refresh the list
               dispatch(getMyCertificatesThunk());
               setActiveTab('certificates');
-              toast.info('Certificate already exists. Refreshing your certificates.');
+              toast.info('Certificate already exists. Refreshing your certificates.', {
+                position: "bottom-right"
+              });
             } else if (error.message === "You must complete all compulsory modules before generating a certificate") {
-              toast.error('You must complete all compulsory modules before generating a certificate.');
+              toast.error('You must complete all compulsory modules before generating a certificate.', {
+                position: "bottom-right"
+              });
             } else if (error.message && error.message.includes("You must pass the quiz for module")) {
-              toast.error(error.message);
+              toast.error(error.message, {
+                position: "bottom-right"
+              });
             } else {
-              toast.error('Failed to generate certificate. Please try again.');
+              toast.error('Failed to generate certificate. Please try again.', {
+                position: "bottom-right"
+              });
             }
           });
       })
       .catch(error => {
         console.error('Course status update error:', error);
-        toast.error('Failed to update course status. Please try again.');
+        toast.error('Failed to update course status. Please try again.', {
+          position: "bottom-right"
+        });
       });
   };
 
