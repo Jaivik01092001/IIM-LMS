@@ -683,9 +683,9 @@ const EnrollCourseDetail = () => {
     }
   };
 
-  const handleSaveNote = () => {
-    toast.success('Note saved');
-  };
+  // const handleSaveNote = () => {
+  //   toast.success('Note saved');
+  // };
 
   const handleQuizSubmit = async (quizId, answers) => {
     try {
@@ -1076,16 +1076,16 @@ const EnrollCourseDetail = () => {
             )}
           </div>
 
-          {selectedContent && selectedContent.fileUrl && (
+          {/* {selectedContent && selectedContent.fileUrl && (
             <div className="download-section">
               <p>Download the file</p>
               <button className="download-button">
                 <FaDownload /> Download
               </button>
             </div>
-          )}
+          )} */}
 
-          <div className="personal-note-section">
+          {/* <div className="personal-note-section">
             <h3>Personal Course Note</h3>
             <p className="note-description">This note will be displayed for you privately</p>
             <textarea
@@ -1103,7 +1103,7 @@ const EnrollCourseDetail = () => {
             <button className="save-note-button" onClick={handleSaveNote}>
               Save Note
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div className="course-sidebar">

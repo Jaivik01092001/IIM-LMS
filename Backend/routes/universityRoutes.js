@@ -14,5 +14,6 @@ router.put('/educator/:id', protect, upload.single('profileImage'), universityCo
 router.delete('/educator/:id', protect, universityController.deleteEducator);
 router.put('/profile', protect, universityController.updateProfile);
 router.put('/password', protect, universityController.updatePassword);
+router.get('/ongoing-courses', protect, universityController.getOngoingCourses);
 
 module.exports = router;

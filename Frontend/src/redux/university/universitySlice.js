@@ -91,11 +91,22 @@ export const updatePasswordThunk = createAsyncThunk('university/updatePassword',
   }
 });
 
+export const getOngoingCoursesThunk = createAsyncThunk('university/getOngoingCourses', async (_, { rejectWithValue }) => {
+  try {
+    const data = await api.getOngoingCourses();
+    return data;
+  } catch (error) {
+    showErrorToast(error.response?.data?.message || 'Failed to fetch ongoing courses');
+    return rejectWithValue(error.response?.data?.message || 'Failed to fetch ongoing courses');
+  }
+});
+
 const universitySlice = createSlice({
   name: 'university',
   initialState: {
     educators: [],
     currentEducator: null,
+    ongoingCourses: [],
     loading: false,
     error: null,
   },
@@ -137,6 +148,9 @@ const universitySlice = createSlice({
         if (state.currentEducator && state.currentEducator._id === action.payload) {
           state.currentEducator = null;
         }
+      })
+      .addCase(getOngoingCoursesThunk.fulfilled, (state, action) => {
+        state.ongoingCourses = action.payload;
       })
       .addMatcher(
         (action) => action.type.endsWith('/pending'),
