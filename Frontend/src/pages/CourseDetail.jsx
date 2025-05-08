@@ -70,7 +70,7 @@ const CourseDetail = () => {
             const enrollmentUserId = typeof enrollment.user === 'object'
               ? enrollment.user._id
               : enrollment.user;
-
+         
             return enrollmentUserId === currentUserId;
           });
 
@@ -520,7 +520,8 @@ const CourseDetail = () => {
                             <FaUser className="user-icon" />
                           </div>
                           <div className="user-details">
-                            <h4>User ID: {enrollment.user}</h4>
+                            
+                            <h4>Name: {enrollment.user.name}</h4>
                             <span className={`status-badge status-${enrollment.status}`}>
                               {enrollment.status.replace('_', ' ')}
                             </span>

@@ -368,6 +368,10 @@ exports.getCourse = async (req, res) => {
       .populate({
         path: "comments.user",
         select: "name profile.avatar", // Include user name and avatar for comments
+      })
+       .populate({
+        path: "enrolledUsers.user",
+        select: "name", // 👈 Enrolled user names and avatars
       });
 
     if (!course) {
