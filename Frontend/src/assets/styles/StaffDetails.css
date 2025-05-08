@@ -113,8 +113,9 @@
 }
 
 .staff-details-page .info-row {
-  display: flex;
+  display: grid;
   gap: 0.5rem;
+  grid-template-columns: 150px 1fr;
 }
 
 .staff-details-page .info-row label {
