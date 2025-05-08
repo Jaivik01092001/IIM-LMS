@@ -90,6 +90,7 @@
 .role-description-input textarea {
   resize: vertical;
   min-height: 80px;
+  outline: none;
 }
 
 .permissions-section {
