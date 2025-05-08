@@ -150,6 +150,7 @@
   background-color: var(--bg-white);
   border-radius: var(--border-medium-radius);
   margin-bottom: 2rem;
+  align-items: center;
 }
 
 .user-profile-container .profile-preview {

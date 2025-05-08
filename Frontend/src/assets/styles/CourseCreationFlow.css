@@ -658,7 +658,7 @@ label {
 
 .checkbox-container {
   display: flex;
-  flex-direction: column;
+
   cursor: pointer;
 }
 
@@ -681,7 +681,6 @@ label {
   font-size: var(--smallfont);
   color: var(--text-gray);
   margin-top: 6px;
-  margin-left: 28px;
 }
 
 .module-editor h4,
@@ -1211,8 +1210,21 @@ label {
 .content-actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
 }
-
+.content-actions .edit-grey-btn,
+.delete-grey-btn {
+  background: none;
+  border: none;
+  color: var(--text-gray);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-small-radius);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .edit-button,
 .delete-button {
   background: none;
