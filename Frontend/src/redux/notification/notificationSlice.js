@@ -104,22 +104,19 @@ const notificationSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Mark notification as read
+      // Mark notification as read and remove it from the list
       .addCase(markNotificationAsReadThunk.fulfilled, (state, action) => {
-        state.notifications = state.notifications.map(notification => 
-          notification._id === action.payload.notificationId
-            ? { ...notification, read: true }
-            : notification
+        // Remove the notification from the list instead of just marking it as read
+        state.notifications = state.notifications.filter(
+          notification => notification._id !== action.payload.notificationId
         );
         state.unreadCount = state.notifications.filter(n => !n.read).length;
       })
 
-      // Mark all notifications as read
+      // Mark all notifications as read and clear the list
       .addCase(markAllNotificationsAsReadThunk.fulfilled, (state) => {
-        state.notifications = state.notifications.map(notification => ({
-          ...notification,
-          read: true
-        }));
+        // Clear all notifications from the list
+        state.notifications = [];
         state.unreadCount = 0;
       })
 

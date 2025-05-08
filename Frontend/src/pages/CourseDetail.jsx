@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaPlay, FaClock, FaBook, FaUserGraduate, FaStar, FaChevronDown, FaFileAlt, FaUser, FaComment } from 'react-icons/fa';
 import './CourseDetail.css';
 import { getCourse } from '../redux/admin/adminApi';
@@ -12,7 +12,14 @@ const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('information');
+  const location = useLocation();
+
+  // Check if there's a tab parameter in the URL query string
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get('tab');
+
+  // Set initial active tab based on URL parameter or default to 'information'
+  const [activeTab, setActiveTab] = useState(tabParam === 'reviews' ? 'reviews' : 'information');
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -23,6 +30,16 @@ const CourseDetail = () => {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizResults, setQuizResults] = useState(null);
   const [isUserEnrolled, setIsUserEnrolled] = useState(false);
+
+  // Update active tab when URL query parameter changes
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const tabParam = queryParams.get('tab');
+
+    if (tabParam === 'reviews') {
+      setActiveTab('reviews');
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
