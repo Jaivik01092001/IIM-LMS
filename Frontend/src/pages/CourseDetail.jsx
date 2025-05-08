@@ -70,7 +70,7 @@ const CourseDetail = () => {
             const enrollmentUserId = typeof enrollment.user === 'object'
               ? enrollment.user._id
               : enrollment.user;
-         
+
             return enrollmentUserId === currentUserId;
           });
 
@@ -451,7 +451,7 @@ const CourseDetail = () => {
                     <p><strong>Duration:</strong> {course.duration}</p>
                     <p><strong>Level:</strong> {course.level}</p>
                     <p><strong>Language:</strong> {course.language}</p>
-                    <p><strong>Status:</strong> {course.isDraft ? 'Draft' : 'Published'}</p>
+                    <p><strong>Status:</strong> {course.isDraft ? 'Published' : 'Draft'}</p>
                   </div>
 
                 </div>
@@ -520,7 +520,7 @@ const CourseDetail = () => {
                             <FaUser className="user-icon" />
                           </div>
                           <div className="user-details">
-                            
+
                             <h4>Name: {enrollment.user.name}</h4>
                             <span className={`status-badge status-${enrollment.status}`}>
                               {enrollment.status.replace('_', ' ')}
