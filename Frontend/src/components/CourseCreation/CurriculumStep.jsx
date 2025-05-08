@@ -121,7 +121,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     } else {
       setHasUpdatedCourseData(true);
     }
-  }, [modules, content, quizzes, hasUpdatedCourseData, updateCourseData]);
+  }, [modules, content, quizzes, hasUpdatedCourseData]);
 
   // Toggle module expanded state
   const toggleModuleExpanded = (moduleId) => {
