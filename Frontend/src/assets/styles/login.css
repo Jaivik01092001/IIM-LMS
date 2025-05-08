@@ -62,11 +62,10 @@
   background-color: white;
   padding: 3rem;
   display: grid;
-  grid-template-rows: 100px 1fr;
+
   align-items: center;
 }
 .login-wrapper .login-right .login-right-mainheading {
-  border-bottom: 1px solid var(--bg-gray);
   width: 100%;
 }
 .login-wrapper .login-right .right-Second_part {

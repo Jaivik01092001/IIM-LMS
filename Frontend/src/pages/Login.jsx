@@ -7,6 +7,7 @@ import { IoPhonePortraitOutline } from "react-icons/io5";
 import { FaInfoCircle } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
+import { CiMail } from "react-icons/ci";
 import {
   requestOTPThunk,
   verifyOTPThunk,
@@ -310,11 +311,11 @@ const Login = () => {
 
         {/* Right side with login form */}
         <div className="login-right">
-          <div className="login-right-mainheading">
-            {/* <div className="mainlogoimg">
+          {/* <div className="login-right-mainheading">
+            <div className="mainlogoimg">
               <img src={bluelogo} alt="" />
-            </div> */}
-          </div>
+            </div>
+          </div> */}
           <div className="right-Second_part">
             {!otpRequested ? (
               /* Login form */
@@ -343,12 +344,17 @@ const Login = () => {
                 {/* Email input */}
                 <div className="form-group">
                   <label>{t("common.email")}</label>
-                  <input
-                    type="email"
-                    placeholder="abc@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                  <div className="phone-input-wrapper">
+                    <span className="phone-prefix">
+                      <CiMail className="phoneIcon" />
+                    </span>
+                    <input
+                      type="email"
+                      placeholder="abc@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
                 </div>
 
                 {/* Login button */}

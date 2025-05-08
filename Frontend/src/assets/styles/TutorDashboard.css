@@ -269,6 +269,10 @@
 .tutor-dashboard .empty-message {
   text-align: center;
   max-width: 400px;
+  align-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .tutor-dashboard .empty-icon {

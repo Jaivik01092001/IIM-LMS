@@ -57,7 +57,10 @@
   flex-direction: row-reverse;
   align-items: center;
 }
-
+.admin-dashboard .stat-card.courses {
+  background-color: #fff4de;
+  cursor: pointer;
+}
 .admin-dashboard .stat-card.schools {
   background-color: #ffecef;
   cursor: pointer;
@@ -68,8 +71,8 @@
   cursor: pointer;
 }
 
-.admin-dashboard .stat-card.courses {
-  background-color: #fff8e8;
+.admin-dashboard .stat-card.ongoing {
+  background-color: #ffefef;
   cursor: pointer;
 }
 
