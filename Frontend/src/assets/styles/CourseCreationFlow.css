@@ -729,6 +729,28 @@ label {
   border-radius: var(--border-small-radius);
 }
 
+.existing-file {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: rgba(var(--primary-color-rgb), 0.05);
+  border-radius: var(--border-small-radius);
+  border: 1px dashed var(--primary-color);
+}
+
+.existing-file .file-name {
+  background-color: transparent;
+  padding: 0;
+  margin-top: 0;
+  font-weight: 500;
+}
+
+.existing-file .file-hint {
+  font-size: var(--extrasmallfont);
+  color: var(--text-gray);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
 .add-question-form {
   margin-top: 24px;
   padding-top: 16px;

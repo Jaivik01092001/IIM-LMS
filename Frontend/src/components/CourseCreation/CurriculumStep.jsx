@@ -267,7 +267,11 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       type: contentItem.type || "document",
       file: null,
       textContent: contentItem.textContent || "",
+      existingFileUrl: contentItem.fileUrl || "", // Store the existing file URL
+      existingFileName: contentItem.fileUrl ? contentItem.fileUrl.split('/').pop() : "", // Extract filename from URL
     });
+
+    console.log("Editing content item:", contentItem);
   };
 
   // Save content
@@ -294,7 +298,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
           ? contentFormData.textContent
           : contentFormData.file
             ? URL.createObjectURL(contentFormData.file)
-            : existingContent?.fileUrl || "",
+            : contentFormData.existingFileUrl || existingContent?.fileUrl || "",
       mimeType:
         contentFormData.type === "youtube"
           ? "video/youtube"
@@ -302,6 +306,9 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
           existingContent?.mimeType ||
           "application/octet-stream",
       module: moduleOfEditingContent,
+      // Preserve existing file information for backend processing
+      existingFileUrl: contentFormData.existingFileUrl || existingContent?.fileUrl || "",
+      existingFileName: contentFormData.existingFileName || "",
     };
 
     console.log("📤 Saving content item to state:", newContentItem);
@@ -1033,11 +1040,20 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                                                   ? "Video"
                                                   : "Document"}
                                               </label>
-                                              {contentFormData.file && (
+                                              {contentFormData.file ? (
                                                 <span className="file-name">
                                                   {contentFormData.file.name}
                                                 </span>
-                                              )}
+                                              ) : contentFormData.existingFileName ? (
+                                                <div className="existing-file">
+                                                  <span className="file-name">
+                                                    Current file: {contentFormData.existingFileName}
+                                                  </span>
+                                                  <p className="file-hint">
+                                                    Upload a new file to replace the current one
+                                                  </p>
+                                                </div>
+                                              ) : null}
                                             </div>
                                           </div>
                                         )}
