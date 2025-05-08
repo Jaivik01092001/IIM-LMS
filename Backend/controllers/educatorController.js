@@ -366,8 +366,6 @@ const getQuizAttempts = async (req, res) => {
     // This allows us to check if a specific user has attempted the quiz
     const userId = req.query.userId || req.user.id;
 
-    console.log(`Fetching quiz attempts for user: ${userId}, quiz: ${quizId}`);
-
     // Find the course
     const course = await Course.findById(courseId);
     if (!course) {

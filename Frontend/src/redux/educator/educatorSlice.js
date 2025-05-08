@@ -16,7 +16,7 @@ export const getCoursesThunk = createAsyncThunk(
       console.error("Error fetching courses:", error);
       showErrorToast(
         error.response?.data?.message ||
-          "Failed to fetch courses. You may not have permission to view courses."
+        "Failed to fetch courses. You may not have permission to view courses."
       );
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch courses"
@@ -162,18 +162,10 @@ export const getQuizAttemptsThunk = createAsyncThunk(
         return rejectWithValue("Missing required parameters for quiz attempts");
       }
 
-      // Log the user ID to ensure we're passing it correctly
-      console.log(
-        `Fetching quiz attempts for user: ${quizData.userId}, quiz: ${quizData.quizId}`
-      );
-
       const data = await api.getQuizAttempts(quizData);
 
       // If no attempts found, return null
       if (!data) {
-        console.log(
-          `No attempts found for user: ${quizData.userId}, quiz: ${quizData.quizId}`
-        );
         return null;
       }
 
@@ -386,7 +378,6 @@ const educatorSlice = createSlice({
         state.loading = false;
       })
       .addCase(getCourseDetailThunk.fulfilled, (state, action) => {
-        console.log("Course detail fulfilled:", action.payload);
         state.courseDetail = action.payload;
         state.loading = false;
       })
@@ -409,10 +400,6 @@ const educatorSlice = createSlice({
           // If payload is null, it means the user hasn't attempted the quiz yet
           // We still want to store this in the state to indicate we've checked
           state.quizAttempts[quizId] = action.payload;
-          console.log(
-            `Stored quiz attempt for quiz ${quizId}:`,
-            action.payload
-          );
         }
 
         state.loading = false;
@@ -567,8 +554,6 @@ const educatorSlice = createSlice({
         state.error = null;
       })
       .addCase(updateModuleProgressThunk.fulfilled, (state, action) => {
-        console.log('Module progress update response:', action.payload);
-
         // Store the full progress object, not just the progress field
         state.moduleProgress = action.payload.progress || action.payload;
         state.loading = false;
@@ -583,8 +568,6 @@ const educatorSlice = createSlice({
           state.courseDetail &&
           state.courseDetail.enrolledUsers &&
           state.courseDetail.enrolledUsers.length > 0) {
-
-          console.log('Updating course progress in Redux state:', progressToUse);
           state.courseDetail.enrolledUsers[0].progress = progressToUse;
 
           // If progress is 100%, also update the status
