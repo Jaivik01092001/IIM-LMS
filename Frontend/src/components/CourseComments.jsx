@@ -95,7 +95,9 @@ const CourseComments = ({ courseId }) => {
     e.preventDefault();
 
     if (!commentText.trim()) {
-      toast.error('Comment cannot be empty');
+      toast.error('Comment cannot be empty', {
+        position: "bottom-right"
+      });
       return;
     }
 
@@ -120,7 +122,9 @@ const CourseComments = ({ courseId }) => {
     e.preventDefault();
 
     if (!editText.trim()) {
-      toast.error('Comment cannot be empty');
+      toast.error('Comment cannot be empty', {
+        position: "bottom-right"
+      });
       return;
     }
 
@@ -171,7 +175,9 @@ const CourseComments = ({ courseId }) => {
     e.preventDefault();
 
     if (!replyText.trim()) {
-      toast.error('Reply cannot be empty');
+      toast.error('Reply cannot be empty', {
+        position: "bottom-right"
+      });
       return;
     }
 
@@ -219,7 +225,9 @@ const CourseComments = ({ courseId }) => {
     e.preventDefault();
 
     if (!editReplyText.trim()) {
-      toast.error('Reply cannot be empty');
+      toast.error('Reply cannot be empty', {
+        position: "bottom-right"
+      });
       return;
     }
 

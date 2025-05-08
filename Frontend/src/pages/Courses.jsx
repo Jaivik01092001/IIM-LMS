@@ -7,8 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getCoursesThunk,
-  updateCourseThunk,
-  getUsersThunk
+  updateCourseThunk
 } from "../redux/admin/adminSlice";
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
@@ -28,45 +27,17 @@ const Courses = ({ userType }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { courses, users, loading } = useSelector((state) => state.admin);
+  const { courses, loading } = useSelector((state) => state.admin);
 
   // Update loading state when Redux loading state changes
   useEffect(() => {
     setIsLoading(loading);
   }, [loading]);
 
-  // Count users by role from users API
-  const getCountByRole = (role) => {
-    if (!users) return 0;
-    return users.filter(user => user.role === role).length;
-  };
-
-  // Get counts for each role
-  const universityCount = getCountByRole('university');
-  const educatorCount = getCountByRole('educator');
-  const adminCount = getCountByRole('admin');
-
-  // Log user counts when users data changes
-  useEffect(() => {
-    if (users) {
-      // Only log in development environment
-      if (import.meta.env.NODE_ENV === 'development') {
-        console.log('University users count:', universityCount);
-        console.log('Educator users count:', educatorCount);
-        console.log('Admin users count:', adminCount);
-      }
-    }
-  }, [users, universityCount, educatorCount, adminCount]);
-
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getCoursesThunk());
-
-    // Only fetch users data for admin and school views, not for tutor view
-    if (userType !== 'tutor') {
-      dispatch(getUsersThunk());
-    }
-  }, [dispatch, userType]);
+  }, [dispatch]);
 
   // Transform courses data for the table
   const [tableData, setTableData] = useState([]);
