@@ -113,8 +113,9 @@
 }
 
 .educator-details-page .info-row {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  /* gap: 0.5rem; */
+  grid-template-columns: 150px 1fr;
 }
 
 .educator-details-page .info-row label {

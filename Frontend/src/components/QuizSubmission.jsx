@@ -69,9 +69,6 @@ const QuizSubmission = ({ quiz, onSubmit, existingAttempt = null }) => {
     setResults(null);
   };
 
-  // Add debug logging
-  console.log("QuizSubmission render - existingAttempt:", existingAttempt);
-  console.log("QuizSubmission render - submitted:", submitted);
 
   return (
     <div className="quiz-submission-container">

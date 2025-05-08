@@ -2,7 +2,7 @@
 .dashboard-container {
   display: grid;
   grid-template-columns: 280px 1fr;
-  min-height: 100vh;
+
   background-color: var(--bg-gray);
   transition: grid-template-columns 0.3s ease;
 }

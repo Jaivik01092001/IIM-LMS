@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaBell, FaCheck, FaTrash } from 'react-icons/fa';
+import { FaBell } from 'react-icons/fa';
 import {
   getUserNotificationsThunk,
   markNotificationAsReadThunk,
-  markAllNotificationsAsReadThunk,
-  deleteNotificationThunk
+  markAllNotificationsAsReadThunk
 } from '../redux/notification/notificationSlice';
 import { useNavigate } from 'react-router-dom';
 import '../assets/styles/NotificationDropdown.css';
@@ -48,8 +47,29 @@ const NotificationDropdown = () => {
     dispatch(markAllNotificationsAsReadThunk());
   };
 
-  const handleDeleteNotification = (notificationId) => {
-    dispatch(deleteNotificationThunk(notificationId));
+  // Get user role from localStorage
+  const getUserRole = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        return userData.role || 'educator'; // Default to educator if role not found
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+    }
+    return 'educator'; // Default fallback
+  };
+
+  // Get dashboard path based on user role
+  const getDashboardPath = (role) => {
+    if (role === 'admin' || role === 'staff') {
+      return 'admin'; // Super Admin or IIM Staff -> admin
+    } else if (role === 'university') {
+      return 'school'; // School Admin -> school
+    } else {
+      return 'tutor'; // Educator -> tutor (default)
+    }
   };
 
   const handleNotificationClick = (notification) => {
@@ -59,7 +79,7 @@ const NotificationDropdown = () => {
     }
 
     // Navigate based on notification type
-    if (notification.type === 'comment_reply' && notification.courseId) {
+    if (notification.courseId) {
       // Handle different courseId formats
       let courseId;
 
@@ -76,7 +96,12 @@ const NotificationDropdown = () => {
         courseId = notification.courseId;
       }
 
-      navigate(`/course/${courseId}`);
+      // Get user role and corresponding dashboard path
+      const userRole = getUserRole();
+      const dashboardPath = getDashboardPath(userRole);
+
+      // Navigate to dynamic course detail URL with reviews tab active
+      navigate(`/dashboard/${dashboardPath}/courses/${courseId}?tab=reviews`);
     }
 
     setIsOpen(false);
@@ -152,30 +177,6 @@ const NotificationDropdown = () => {
                   <div className="notification-content">
                     <p>{notification.content}</p>
                     <span className="notification-time">{formatDate(notification.createdAt)}</span>
-                  </div>
-                  <div className="notification-actions">
-                    {!notification.read && (
-                      <button
-                        className="notification-action-btn read-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMarkAsRead(notification._id);
-                        }}
-                        title="Mark as read"
-                      >
-                        <FaCheck />
-                      </button>
-                    )}
-                    <button
-                      className="notification-action-btn delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteNotification(notification._id);
-                      }}
-                      title="Delete notification"
-                    >
-                      <FaTrash />
-                    </button>
                   </div>
                 </div>
               ))

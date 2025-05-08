@@ -1476,6 +1476,8 @@
 
   .blog-detail-meta-actions {
     gap: 0.5rem;
+    display: flex;
+    flex-direction: row;
   }
 
   .blog-detail-meta-action-btn {

@@ -122,7 +122,7 @@ const EnrollCourseDetail = () => {
           // Wait for all fetches to complete
           Promise.all(fetchPromises)
             .then(() => {
-              console.log('All quiz attempts loaded');
+              // All quiz attempts loaded
             })
             .catch(error => {
               console.error("Error fetching quiz attempts:", error);
@@ -141,8 +141,6 @@ const EnrollCourseDetail = () => {
   // Update local state when module progress is loaded from the backend
   useEffect(() => {
     if (moduleProgress && course) {
-      console.log('Initializing progress from backend data:', moduleProgress);
-
       // Start with all sessions NOT completed
       const newSessionCompleted = {};
       course.modules.forEach(mod => {
@@ -289,16 +287,13 @@ const EnrollCourseDetail = () => {
 
         // If user enrollment exists, use the progress from the backend
         if (userEnrollment && typeof userEnrollment.progress === 'number') {
-          console.log('Setting progress from enrollment:', userEnrollment.progress);
           setUserProgress(userEnrollment.progress);
         } else {
           // Fallback to calculated progress if no enrollment found or progress is not a number
-          console.log('Setting calculated progress:', calculatedProgress);
           setUserProgress(calculatedProgress);
         }
       } else {
         // Fallback to calculated progress if no enrollment data
-        console.log('No enrollment found, setting calculated progress:', calculatedProgress);
         setUserProgress(calculatedProgress);
       }
 
@@ -333,14 +328,13 @@ const EnrollCourseDetail = () => {
         }
       }
     }
-  }, [moduleProgress, course, currentUserId]);
+  }, [moduleProgress, currentUserId]);
 
   // Monitor quiz attempts and update module unlock status when a quiz is completed
   useEffect(() => {
     if (!course || !storeQuizAttempts) return;
 
     // Only run this effect if we have course data and quiz attempts
-    console.log('Quiz attempts changed, recalculating module unlock status');
 
     // Create a new module state object starting with the current state
     const newModuleState = { ...moduleCompleted };
@@ -401,7 +395,6 @@ const EnrollCourseDetail = () => {
     );
 
     if (hasChanges) {
-      console.log('Updating module unlock status after quiz completion');
       setModuleCompleted(newModuleState);
     }
   }, [storeQuizAttempts, course, sessionCompleted, moduleCompleted]);
@@ -430,8 +423,6 @@ const EnrollCourseDetail = () => {
 
         // If we're missing any quiz attempts, load them now and don't proceed with certificate generation
         if (missingQuizAttempts.length > 0) {
-          console.log('Missing quiz attempts, loading them now...');
-
           // Create an array of promises for missing quiz attempt fetches
           const fetchPromises = missingQuizAttempts.map(module => {
             // Ensure quizId is a string
@@ -446,7 +437,7 @@ const EnrollCourseDetail = () => {
           // Wait for all fetches to complete but don't auto-generate certificate
           Promise.all(fetchPromises)
             .then(() => {
-              console.log('All quiz attempts loaded');
+              // All quiz attempts loaded
             })
             .catch(error => {
               console.error("Error fetching quiz attempts:", error);
@@ -465,7 +456,6 @@ const EnrollCourseDetail = () => {
 
         if (failedQuizzes.length > 0) {
           // Don't auto-generate certificate if quizzes aren't passed
-          console.log('Not all quizzes passed, skipping auto certificate generation');
           return;
         }
       }
@@ -640,16 +630,6 @@ const EnrollCourseDetail = () => {
           .map(content => content._id) || [];
       });
 
-      // Log debug information
-      console.log('Updating progress with:', {
-        moduleId,
-        contentId: sessionId,
-        isCompleted: newSessionState[sessionId],
-        completedModules,
-        completedContent,
-        moduleSessionsCompleted
-      });
-
       // Update backend first and capture the response
       const response = await dispatch(updateModuleProgressThunk({
         courseId: id,
@@ -668,21 +648,17 @@ const EnrollCourseDetail = () => {
 
       // Use the progress value returned from the backend instead of the locally calculated one
       // This ensures we're always in sync with the server's calculation
-      console.log('Progress response from backend:', response);
 
       // First try to use userProgress which comes directly from the course enrollment
       if (typeof response.userProgress === 'number') {
-        console.log('Using userProgress from backend:', response.userProgress);
         setUserProgress(response.userProgress);
       }
       // Then try overallProgress which is calculated from module content
       else if (typeof response.overallProgress === 'number') {
-        console.log('Using overallProgress from backend:', response.overallProgress);
         setUserProgress(response.overallProgress);
       }
       // Fallback to calculated progress if backend doesn't return a value
       else {
-        console.log('Using locally calculated progress:', calculatedProgress);
         setUserProgress(calculatedProgress);
       }
 
@@ -714,8 +690,6 @@ const EnrollCourseDetail = () => {
 
       // If the quiz was passed, update module progress to reflect this
       if (result.passed) {
-        console.log('Quiz passed, updating module progress');
-
         // Find which module this quiz belongs to
         const moduleWithQuiz = course.modules.find(module => {
           const moduleQuizId = typeof module.quiz === 'object'
@@ -752,17 +726,12 @@ const EnrollCourseDetail = () => {
             }
           })).unwrap();
 
-          // Update the local progress state with the value from the response
-          console.log('Progress response after quiz submission:', response);
-
           // First try to use userProgress which comes directly from the course enrollment
           if (typeof response.userProgress === 'number') {
-            console.log('Using userProgress from backend after quiz:', response.userProgress);
             setUserProgress(response.userProgress);
           }
           // Then try overallProgress which is calculated from module content
           else if (typeof response.overallProgress === 'number') {
-            console.log('Using overallProgress from backend after quiz:', response.overallProgress);
             setUserProgress(response.overallProgress);
           }
 
@@ -817,7 +786,19 @@ const EnrollCourseDetail = () => {
       progressData: {
         lastAccessedModule: module._id
       }
-    }));
+    })).then(response => {
+      // Handle the response and update progress
+      if (response.payload) {
+        // Check if we have progress data in the response
+        if (response.payload.overallProgress !== undefined) {
+          setUserProgress(response.payload.overallProgress);
+        } else if (response.payload.userProgress !== undefined) {
+          setUserProgress(response.payload.userProgress);
+        }
+      }
+    }).catch(error => {
+      console.error('Error updating module progress:', error);
+    });
   };
 
   // Toggle quiz expansion in accordion
