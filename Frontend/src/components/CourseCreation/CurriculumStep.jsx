@@ -77,6 +77,8 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     if (hasUpdatedCourseData) {
       // Create a deep copy of modules with all nested data properly structured
       const processedModules = modules.map((module) => {
+        console.log("Processing module for parent update:", module);
+
         const moduleData = {
           _id: module._id,
           title: module.title,
@@ -191,6 +193,7 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
   // Edit module
   const startEditModule = (module) => {
+    console.log("Editing module:", module);
     setEditingModuleId(module._id);
     setModuleFormData({
       title: module.title,
@@ -198,10 +201,17 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       isCompulsory:
         module.isCompulsory !== undefined ? module.isCompulsory : true,
     });
+    console.log("Module form data set:", {
+      title: module.title,
+      description: module.description,
+      isCompulsory: module.isCompulsory !== undefined ? module.isCompulsory : true,
+    });
   };
 
   // Save module
   const saveModule = () => {
+    console.log("Saving module with form data:", moduleFormData);
+
     const updatedModules = modules.map((module) =>
       module._id === editingModuleId
         ? {
@@ -212,6 +222,8 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         }
         : module
     );
+
+    console.log("Updated module:", updatedModules.find(m => m._id === editingModuleId));
 
     setModules(updatedModules);
     setEditingModuleId(null);
@@ -519,11 +531,29 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const existingQuiz = quizzes.find((quiz) => quiz._id === editingQuizId);
     const moduleOfEditingQuiz = existingQuiz?.module;
 
+    // Check if there's a valid current question that hasn't been added yet
+    let updatedQuestions = [...quizFormData.questions];
+
+    // Only add the current question if it has content and all options are filled
+    if (
+      currentQuestion.question &&
+      !currentQuestion.options.some(opt => !opt)
+    ) {
+      // Create a copy of the current question with correctAnswer as a string
+      const processedQuestion = {
+        ...currentQuestion,
+        correctAnswer: currentQuestion.correctAnswer.toString(), // Convert to string for backend compatibility
+      };
+
+      // Add the current question to the questions array
+      updatedQuestions.push(processedQuestion);
+    }
+
     const updatedQuiz = {
       ...existingQuiz,
       title: quizFormData.title,
       description: quizFormData.description,
-      questions: quizFormData.questions,
+      questions: updatedQuestions,
       // Preserve the isNew flag if it exists
       isNew: existingQuiz?.isNew || false,
     };
@@ -815,6 +845,15 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
                               className="module-title"
                             >
                               {index + 1}. {module.title}
+                              {module.isCompulsory === false ? (
+                                <span className="module-optional-badge" style={{ marginLeft: '8px', fontSize: '0.7rem', padding: '2px 6px', backgroundColor: '#f0ad4e', color: 'white', borderRadius: '4px' }}>
+                                  Optional
+                                </span>
+                              ) : (
+                                <span className="module-compulsory-badge" style={{ marginLeft: '8px', fontSize: '0.7rem', padding: '2px 6px', backgroundColor: '#5cb85c', color: 'white', borderRadius: '4px' }}>
+                                  Compulsory
+                                </span>
+                              )}
                             </h4>
                             <div className="module-actions">
                               <button

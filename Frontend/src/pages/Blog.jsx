@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  FaPlus,
-  FaUserCircle,
-  FaSearch,
-  FaFilter,
-} from "react-icons/fa";
+import { FaPlus, FaUserCircle, FaSearch, FaFilter } from "react-icons/fa";
 import { FaFilePen } from "react-icons/fa6";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -224,56 +219,77 @@ const Blog = () => {
   // Transform blogs data for display
   const transformedBlogs = Array.isArray(blogs)
     ? blogs.map((blog) => ({
-      id: blog._id,
-      title: blog.title || "Untitled Blog",
-      content: blog.content || "",
-      shortDescription: blog.shortDescription || "",
-      tags: blog.tags || [],
-      coverImage: fixImageUrl(blog.coverImage) || null,
-      status: blog.status || "draft",
-      createdAt: blog.createdAt || new Date().toISOString(),
-      updatedAt: blog.updatedAt || new Date().toISOString(),
-      createdBy: blog.createdBy || null,
-      slug: blog.slug || "",
-      isDeleted: blog.isDeleted || false,
-      activeStatus: blog.activeStatus || 1,
-    }))
+        id: blog._id,
+        title: blog.title || "Untitled Blog",
+        content: blog.content || "",
+        shortDescription: blog.shortDescription || "",
+        tags: blog.tags || [],
+        coverImage: fixImageUrl(blog.coverImage) || null,
+        status: blog.status || "draft",
+        createdAt: blog.createdAt || new Date().toISOString(),
+        updatedAt: blog.updatedAt || new Date().toISOString(),
+        createdBy: blog.createdBy || null,
+        slug: blog.slug || "",
+        isDeleted: blog.isDeleted || false,
+        activeStatus: blog.activeStatus || 1,
+      }))
     : [];
 
   // Extract unique tags for filter dropdown
-  const uniqueTags = [...new Set(transformedBlogs.flatMap(blog => blog.tags || []))].filter(Boolean);
+  const uniqueTags = [
+    ...new Set(transformedBlogs.flatMap((blog) => blog.tags || [])),
+  ].filter(Boolean);
 
   // Get filtered data based on search term, status filter, and tag filter
   const getFilteredData = () => {
-    return transformedBlogs
-      // Apply search filter
-      .filter(blog =>
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (blog.tags && blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-        (blog.createdBy?.name && blog.createdBy.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-      // Apply status filter
-      .filter(blog =>
-        !statusFilter || blog.status === statusFilter
-      )
-      // Apply tag filter
-      .filter(blog =>
-        !tagFilter || (blog.tags && blog.tags.includes(tagFilter))
-      )
-      // Apply sorting
-      .sort((a, b) => {
-        if (!sortBy) return 0;
+    return (
+      transformedBlogs
+        // Apply search filter
+        .filter(
+          (blog) =>
+            blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            blog.shortDescription
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            (blog.tags &&
+              blog.tags.some((tag) =>
+                tag.toLowerCase().includes(searchTerm.toLowerCase())
+              )) ||
+            (blog.createdBy?.name &&
+              blog.createdBy.name
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()))
+        )
+        // Apply status filter
+        .filter((blog) => !statusFilter || blog.status === statusFilter)
+        // Apply tag filter
+        .filter(
+          (blog) => !tagFilter || (blog.tags && blog.tags.includes(tagFilter))
+        )
+        // Apply sorting
+        .sort((a, b) => {
+          if (!sortBy) return 0;
 
-        switch (sortBy) {
-          case "title-asc": return a.title.localeCompare(b.title);
-          case "title-desc": return b.title.localeCompare(a.title);
-          case "date-asc": return new Date(a.createdAt) - new Date(b.createdAt);
-          case "date-desc": return new Date(b.createdAt) - new Date(a.createdAt);
-          case "status": return a.status === b.status ? 0 : a.status === "published" ? -1 : 1;
-          default: return 0;
-        }
-      });
+          switch (sortBy) {
+            case "title-asc":
+              return a.title.localeCompare(b.title);
+            case "title-desc":
+              return b.title.localeCompare(a.title);
+            case "date-asc":
+              return new Date(a.createdAt) - new Date(b.createdAt);
+            case "date-desc":
+              return new Date(b.createdAt) - new Date(a.createdAt);
+            case "status":
+              return a.status === b.status
+                ? 0
+                : a.status === "published"
+                ? -1
+                : 1;
+            default:
+              return 0;
+          }
+        })
+    );
   };
 
   // Render loading state
@@ -291,7 +307,10 @@ const Blog = () => {
           </h1>
           <div className="blog-actions">
             {hasLocalPermission("create_blog") && (
-              <button className="btn btn-primary" onClick={handleCreateBlog}>
+              <button
+                className="btn btn-primary  add-blog-btn"
+                onClick={handleCreateBlog}
+              >
                 <FaPlus /> New Blog
               </button>
             )}

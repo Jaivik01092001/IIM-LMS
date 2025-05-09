@@ -306,6 +306,8 @@ const CourseCreationFlow = () => {
 
             // Handle modules - we need to process quizzes and content references before stringifying
             const modulesForSubmission = courseData.modules.map((module) => {
+                console.log("Processing module for submission:", module);
+
                 // Create a clean copy without file objects
                 const { quiz, content, ...cleanModule } = module;
 
@@ -320,6 +322,9 @@ const CourseCreationFlow = () => {
                         return contentItem;
                     })
                     : [];
+
+                // Ensure isCompulsory flag is included
+                console.log(`Module ${cleanModule.title} isCompulsory:`, cleanModule.isCompulsory);
 
                 // If module has a quiz, add it with proper structure
                 if (quiz) {

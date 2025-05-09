@@ -50,7 +50,9 @@ const EnrollCourseDetail = () => {
   const currentUserId = user?.id;
 
   // Check if certificate exists for this course AND belongs to the current user
-  // This is used to determine whether to show the Generate Certificate button
+  // This is used to:
+  // 1. Determine whether to show the Generate Certificate button
+  // 2. Unlock all modules if a certificate exists (even newly added ones)
   const certificateExists = certificates?.some(cert =>
     (cert.course === id || (cert.course && cert.course._id === id)) &&
     (cert.user === currentUserId || (cert.user && cert.user._id === currentUserId))
@@ -845,6 +847,9 @@ const EnrollCourseDetail = () => {
     // First module is always unlocked
     if (moduleIndex === 0) return false;
 
+    // If user already has a certificate for this course, all modules should be unlocked
+    if (certificateExists) return false;
+
     // Get the current module
     const currentModule = course.modules[moduleIndex];
 
@@ -858,6 +863,7 @@ const EnrollCourseDetail = () => {
 
   // Handle module click - only allow selection if module is not locked
   const handleModuleClick = (module, moduleIndex) => {
+    // Check if module is locked (and not already unlocked due to certificate)
     if (isModuleLocked(moduleIndex)) {
       toast.warning('Complete previous modules first to unlock this module', {
         position: "bottom-right"
@@ -899,7 +905,7 @@ const EnrollCourseDetail = () => {
 
   // Handle content click - only allow selection if module is not locked
   const handleContentClick = (content, moduleIndex) => {
-    // If module is locked, show warning and don't allow content selection
+    // If module is locked (and not already unlocked due to certificate), show warning and don't allow content selection
     if (isModuleLocked(moduleIndex)) {
       toast.warning('Complete previous modules first to unlock this content', {
         position: "bottom-right"
@@ -1275,6 +1281,7 @@ const EnrollCourseDetail = () => {
                           <span className="module-compulsory-badge">Compulsory</span>
                         )}
                       </h3>
+                      <p>{module.description}</p>
                       <p>{module.content?.length || 0} Topic</p>
                     </div>
                     <div className="section-toggle">

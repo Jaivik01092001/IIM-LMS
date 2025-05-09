@@ -682,6 +682,9 @@ exports.updateCourse = async (req, res) => {
     // Initialize contentItems array at the beginning to avoid reference errors
     const contentItems = [];
 
+    // Track which temporary module IDs have already been processed to avoid duplicates
+    const processedTempModuleIds = new Map();
+
     console.log("Update course data:", req.body);
 
     // Debug uploaded files
@@ -924,6 +927,13 @@ exports.updateCourse = async (req, res) => {
                 await existingModule.save();
               }
             } else {
+              // Check if this is a temporary module ID that we've already processed
+              if (moduleData._id && moduleData._id.toString().startsWith('temp_') &&
+                processedTempModuleIds.has(moduleData._id)) {
+                console.log(`Skipping duplicate module creation for temp ID ${moduleData._id} - already processed`);
+                continue;
+              }
+
               // Create new module
               const newModule = new Module({
                 title: moduleData.title || "Untitled Module",
@@ -938,9 +948,15 @@ exports.updateCourse = async (req, res) => {
               });
 
               await newModule.save();
+              console.log(`Created new module with ID ${newModule._id} for module data with ID ${moduleData._id || 'undefined'}`);
 
               // Add to course modules
               course.modules.push(newModule._id);
+
+              // If this is a temporary ID, store it in our tracking map
+              if (moduleData._id && moduleData._id.toString().startsWith('temp_')) {
+                processedTempModuleIds.set(moduleData._id, newModule._id);
+              }
 
               // If module has content, associate it
               if (moduleData.content && moduleData.content.length > 0) {
@@ -1255,37 +1271,49 @@ exports.updateCourse = async (req, res) => {
 
           // Check if this is a temporary module ID and create a new module if needed
           if (moduleId && moduleId.toString().startsWith('temp_')) {
-            console.log(`Detected temporary module ID: ${moduleId}, creating a new module`);
+            console.log(`Detected temporary module ID: ${moduleId}`);
 
-            // Find the module data in parsedModules
-            const tempModuleData = parsedModules.find(m => m._id === moduleId);
+            // Check if we've already processed this temporary module ID
+            if (processedTempModuleIds.has(moduleId)) {
+              // Use the previously created module instead of creating a new one
+              console.log(`Using previously created module ${processedTempModuleIds.get(moduleId)} for temp ID ${moduleId}`);
+              moduleId = processedTempModuleIds.get(moduleId);
+            } else {
+              console.log(`Creating a new module for temp ID ${moduleId}`);
 
-            // Create default module data if we can't find it in parsedModules
-            const moduleDataToUse = tempModuleData || {
-              title: "New Module",
-              description: "",
-              order: course.modules ? course.modules.length : 0,
-              isCompulsory: true
-            };
+              // Find the module data in parsedModules
+              const tempModuleData = parsedModules.find(m => m._id === moduleId);
 
-            // Create a new module with proper MongoDB ID
-            const newModule = new Module({
-              title: moduleDataToUse.title || "New Module",
-              description: moduleDataToUse.description || "",
-              course: course._id,
-              order: moduleDataToUse.order || 0,
-              content: [], // Initialize with empty content array
-              isCompulsory: moduleDataToUse.isCompulsory !== undefined ? moduleDataToUse.isCompulsory : true,
-            });
+              // Create default module data if we can't find it in parsedModules
+              const moduleDataToUse = tempModuleData || {
+                title: "New Module",
+                description: "",
+                order: course.modules ? course.modules.length : 0,
+                isCompulsory: true
+              };
 
-            await newModule.save();
-            console.log(`Created new module with ID ${newModule._id} to replace temp ID ${moduleId}`);
+              // Create a new module with proper MongoDB ID
+              const newModule = new Module({
+                title: moduleDataToUse.title || "New Module",
+                description: moduleDataToUse.description || "",
+                course: course._id,
+                order: moduleDataToUse.order || 0,
+                content: [], // Initialize with empty content array
+                isCompulsory: moduleDataToUse.isCompulsory !== undefined ? moduleDataToUse.isCompulsory : true,
+              });
 
-            // Add to course modules
-            course.modules.push(newModule._id);
+              await newModule.save();
+              console.log(`Created new module with ID ${newModule._id} to replace temp ID ${moduleId}`);
 
-            // Update moduleId to use the new MongoDB ID
-            moduleId = newModule._id;
+              // Add to course modules
+              course.modules.push(newModule._id);
+
+              // Store the mapping from temp ID to real ID
+              processedTempModuleIds.set(moduleId, newModule._id);
+
+              // Update moduleId to use the new MongoDB ID
+              moduleId = newModule._id;
+            }
           }
         }
 
@@ -1432,41 +1460,52 @@ exports.updateCourse = async (req, res) => {
     // Update course content
     if (content) {
       try {
+        // First, process all existing content items to update title and description
+        // This ensures all content types (document, video, image, text, youtube) get updated
+        const existingContentPromises = parsedContent
+          .filter((item) => !item._id.startsWith("temp_")) // Only process existing content
+          .map(async (item) => {
+            try {
+              const existingContent = await Content.findById(item._id);
+              if (existingContent) {
+                console.log(`Updating existing content metadata: ${item._id}, title: ${item.title}`);
+
+                // Always update title and description
+                existingContent.title = item.title;
+                existingContent.description = item.description;
+
+                // For text and YouTube content, also update textContent
+                if ((item.type === "text" || item.type === "youtube") && item.textContent) {
+                  existingContent.textContent = item.textContent;
+
+                  // For YouTube content, also update fileUrl for backward compatibility
+                  if (item.type === "youtube") {
+                    existingContent.fileUrl = item.textContent;
+                    existingContent.type = "youtube";
+                    existingContent.mediaType = "video";
+                    existingContent.mimeType = "video/youtube";
+                  }
+                }
+
+                await existingContent.save();
+                console.log(`Successfully updated content metadata: ${item._id}`);
+              }
+            } catch (err) {
+              console.error(`Error updating existing content ${item._id}:`, err);
+            }
+            return null;
+          });
+
+        // Wait for all content updates to complete
+        await Promise.all(existingContentPromises);
+
         // Process text and YouTube content items separately - these don't need file uploads
+        // This is for creating new text/YouTube content items
         const textContentPromises = parsedContent
-          .filter((item) => item.type === "text" || item.type === "youtube")
+          .filter((item) => (item.type === "text" || item.type === "youtube") && item._id.startsWith("temp_"))
           .map(async (item) => {
             // If it's not a temp item (already exists in DB), skip creation
             if (!item._id.startsWith("temp_")) {
-              // Update existing text or YouTube content if it's been edited
-              if (item.textContent) {
-                try {
-                  const existingContent = await Content.findById(item._id);
-                  if (existingContent) {
-                    existingContent.title = item.title;
-                    existingContent.description = item.description;
-                    existingContent.textContent = item.textContent;
-
-                    // For YouTube content, also update fileUrl for backward compatibility
-                    if (item.type === "youtube") {
-                      existingContent.fileUrl = item.textContent;
-                      existingContent.type = "youtube";
-                      existingContent.mediaType = "video";
-                      existingContent.mimeType = "video/youtube";
-                    }
-
-                    await existingContent.save();
-                    console.log(
-                      `Updated existing ${item.type} content: ${item._id}`
-                    );
-                  }
-                } catch (err) {
-                  console.error(
-                    `Error updating existing ${item.type} content: ${item._id}`,
-                    err
-                  );
-                }
-              }
               return null;
             }
 
@@ -1482,37 +1521,49 @@ exports.updateCourse = async (req, res) => {
 
               // Check if this is a temporary module ID and create a new module if needed
               if (moduleId && moduleId.toString().startsWith('temp_')) {
-                console.log(`Detected temporary module ID: ${moduleId}, creating a new module for text/youtube content`);
+                console.log(`Detected temporary module ID: ${moduleId} for text/youtube content`);
 
-                // Find the module data in parsedModules
-                const tempModuleData = parsedModules.find(m => m._id === moduleId);
+                // Check if we've already processed this temporary module ID
+                if (processedTempModuleIds.has(moduleId)) {
+                  // Use the previously created module instead of creating a new one
+                  console.log(`Using previously created module ${processedTempModuleIds.get(moduleId)} for temp ID ${moduleId}`);
+                  moduleId = processedTempModuleIds.get(moduleId);
+                } else {
+                  console.log(`Creating a new module for temp ID ${moduleId} for text/youtube content`);
 
-                // Create default module data if we can't find it in parsedModules
-                const moduleDataToUse = tempModuleData || {
-                  title: "New Module",
-                  description: "",
-                  order: course.modules ? course.modules.length : 0,
-                  isCompulsory: true
-                };
+                  // Find the module data in parsedModules
+                  const tempModuleData = parsedModules.find(m => m._id === moduleId);
 
-                // Create a new module with proper MongoDB ID
-                const newModule = new Module({
-                  title: moduleDataToUse.title || "New Module",
-                  description: moduleDataToUse.description || "",
-                  course: course._id,
-                  order: moduleDataToUse.order || 0,
-                  content: [], // Initialize with empty content array
-                  isCompulsory: moduleDataToUse.isCompulsory !== undefined ? moduleDataToUse.isCompulsory : true,
-                });
+                  // Create default module data if we can't find it in parsedModules
+                  const moduleDataToUse = tempModuleData || {
+                    title: "New Module",
+                    description: "",
+                    order: course.modules ? course.modules.length : 0,
+                    isCompulsory: true
+                  };
 
-                await newModule.save();
-                console.log(`Created new module with ID ${newModule._id} to replace temp ID ${moduleId} for text/youtube content`);
+                  // Create a new module with proper MongoDB ID
+                  const newModule = new Module({
+                    title: moduleDataToUse.title || "New Module",
+                    description: moduleDataToUse.description || "",
+                    course: course._id,
+                    order: moduleDataToUse.order || 0,
+                    content: [], // Initialize with empty content array
+                    isCompulsory: moduleDataToUse.isCompulsory !== undefined ? moduleDataToUse.isCompulsory : true,
+                  });
 
-                // Add to course modules
-                course.modules.push(newModule._id);
+                  await newModule.save();
+                  console.log(`Created new module with ID ${newModule._id} to replace temp ID ${moduleId} for text/youtube content`);
 
-                // Update moduleId to use the new MongoDB ID
-                moduleId = newModule._id;
+                  // Add to course modules
+                  course.modules.push(newModule._id);
+
+                  // Store the mapping from temp ID to real ID
+                  processedTempModuleIds.set(moduleId, newModule._id);
+
+                  // Update moduleId to use the new MongoDB ID
+                  moduleId = newModule._id;
+                }
               }
             }
 
