@@ -121,7 +121,7 @@ const Login = () => {
         const userData = JSON.parse(user);
         if (userData && userData.role) {
           // Redirect user based on role
-          if (userData.role === "admin") {
+          if (userData.role === "admin" || userData.role === "staff") {
             navigate("/dashboard/admin");
           } else if (userData.role === "university") {
             navigate("/dashboard/school");
@@ -179,7 +179,7 @@ const Login = () => {
       const user = JSON.parse(localStorage.getItem("user"));
 
       // Navigate based on user role
-      if (user.role === "admin") {
+      if (user.role === "admin" || user.role === "staff") {
         navigate("/dashboard/admin");
       } else if (user.role === "university") {
         navigate("/dashboard/school");

@@ -1,7 +1,7 @@
 const Notification = require("../models/Notification");
 const User = require("../models/User");
 
-// Get all notifications for the current user
+// Get all unread notifications for the current user
 exports.getUserNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -9,6 +9,7 @@ exports.getUserNotifications = async (req, res) => {
     const notifications = await Notification.find({
       recipient: userId,
       status: 1,
+      read: false, // Only return unread notifications
     })
       .sort({ createdAt: -1 })
       .populate({

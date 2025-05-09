@@ -96,7 +96,7 @@ const notificationSlice = createSlice({
       })
       .addCase(getUserNotificationsThunk.fulfilled, (state, action) => {
         state.notifications = action.payload;
-        state.unreadCount = action.payload.filter(n => !n.read).length;
+        state.unreadCount = action.payload.length; // All notifications are unread now
         state.loading = false;
       })
       .addCase(getUserNotificationsThunk.rejected, (state, action) => {
@@ -106,11 +106,11 @@ const notificationSlice = createSlice({
 
       // Mark notification as read and remove it from the list
       .addCase(markNotificationAsReadThunk.fulfilled, (state, action) => {
-        // Remove the notification from the list instead of just marking it as read
+        // Remove the notification from the list
         state.notifications = state.notifications.filter(
           notification => notification._id !== action.payload.notificationId
         );
-        state.unreadCount = state.notifications.filter(n => !n.read).length;
+        state.unreadCount = state.notifications.length; // Update unread count
       })
 
       // Mark all notifications as read and clear the list
@@ -122,15 +122,10 @@ const notificationSlice = createSlice({
 
       // Delete notification
       .addCase(deleteNotificationThunk.fulfilled, (state, action) => {
-        const deletedNotification = state.notifications.find(
-          n => n._id === action.payload.notificationId
-        );
         state.notifications = state.notifications.filter(
           notification => notification._id !== action.payload.notificationId
         );
-        if (deletedNotification && !deletedNotification.read) {
-          state.unreadCount -= 1;
-        }
+        state.unreadCount = state.notifications.length; // Update unread count
       });
   },
 });

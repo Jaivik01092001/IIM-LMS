@@ -7,8 +7,9 @@ import {
   FaClock,
   FaCalendarAlt,
   FaEye,
+  FaUserGraduate,
 } from "react-icons/fa";
-import { getMyCoursesThunk } from "../../redux/educator/educatorSlice";
+import { getMyCoursesThunk, getCoursesThunk } from "../../redux/educator/educatorSlice";
 import DataTableComponent from "../../components/DataTable";
 import ProgressBar from "../../components/common/ProgressBar";
 import "../../assets/styles/TutorDashboard.css";
@@ -20,9 +21,10 @@ const TutorDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [coursesData, setCoursesData] = useState([]);
   const [ongoingCourses, setOngoingCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
 
   // Get courses data from Redux store
-  const { myCourses, loading } = useSelector((state) => state.educator);
+  const { myCourses, courses, loading } = useSelector((state) => state.educator);
   const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading state changes
@@ -33,9 +35,17 @@ const TutorDashboard = () => {
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getMyCoursesThunk());
+    dispatch(getCoursesThunk());
   }, [dispatch]);
 
-  // Process courses data when it changes
+  // Process all courses data when it changes
+  useEffect(() => {
+    if (courses && courses.length > 0) {
+      setAllCourses(courses);
+    }
+  }, [courses]);
+
+  // Process enrolled courses data when it changes
   useEffect(() => {
     if (myCourses && myCourses.length > 0) {
       // Get current user ID
@@ -88,9 +98,9 @@ const TutorDashboard = () => {
 
       setCoursesData(formattedCourses);
 
-      // Filter for ongoing courses
+      // Filter for ongoing courses (status is "in_progress")
       const ongoing = formattedCourses.filter(
-        (course) => course.progress < 100
+        (course) => course.enrollmentStatus === "in_progress"
       );
       setOngoingCourses(ongoing);
     }
@@ -98,19 +108,35 @@ const TutorDashboard = () => {
 
   // Count courses by status
   const getCompletedCourses = () => {
+    // Only count enrolled courses with "completed" status
     return coursesData.filter(
-      (course) => course.progress === 100
+      (course) => course.enrollmentStatus === "completed"
     ).length;
   };
 
   const getOngoingCourses = () => {
+    // Only count enrolled courses with "in_progress" status
     return coursesData.filter(
-      (course) => course.progress < 100
+      (course) => course.enrollmentStatus === "in_progress"
     ).length;
   };
 
   const getTotalCourses = () => {
-    return coursesData.length;
+    // Return the total number of all courses in the system
+    return allCourses.length;
+  };
+
+  // Handle card clicks
+  const handleTotalCoursesClick = () => {
+    navigate("/dashboard/tutor/courses");
+  };
+
+  const handleOngoingCoursesClick = () => {
+    navigate("/dashboard/tutor/courses");
+  };
+
+  const handleCompletedCoursesClick = () => {
+    navigate("/dashboard/tutor/courses");
   };
 
   // View course handler
@@ -185,7 +211,18 @@ const TutorDashboard = () => {
         <>
           {/* Stats Cards */}
           <div className="dashboard-stats">
-            <div className="stat-card ongoing">
+            <div className="stat-card total" onClick={handleTotalCoursesClick}>
+              <div className="stat-icon3">
+                <FaBook size={24} />
+                <FaBook className="icondesign3" />
+              </div>
+              <div>
+                <div className="stat-count">{getTotalCourses()}</div>
+                <div className="stat-title">Total Courses</div>
+              </div>
+            </div>
+
+            <div className="stat-card ongoing" onClick={handleOngoingCoursesClick}>
               <div className="stat-icon1">
                 <FaClock size={24} />
                 <FaClock className="icondesign1" />
@@ -196,7 +233,7 @@ const TutorDashboard = () => {
               </div>
             </div>
 
-            <div className="stat-card completed">
+            <div className="stat-card completed" onClick={handleCompletedCoursesClick}>
               <div className="stat-icon2">
                 <FaGraduationCap size={24} />
                 <FaGraduationCap className="icondesign2" />
@@ -204,17 +241,6 @@ const TutorDashboard = () => {
               <div>
                 <div className="stat-count">{getCompletedCourses()}</div>
                 <div className="stat-title">Completed Courses</div>
-              </div>
-            </div>
-
-            <div className="stat-card total">
-              <div className="stat-icon3">
-                <FaBook size={24} />
-                <FaBook className="icondesign3" />
-              </div>
-              <div>
-                <div className="stat-count">{getTotalCourses()}</div>
-                <div className="stat-title">Total Courses</div>
               </div>
             </div>
           </div>

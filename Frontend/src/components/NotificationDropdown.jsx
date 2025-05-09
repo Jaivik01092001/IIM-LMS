@@ -73,10 +73,8 @@ const NotificationDropdown = () => {
   };
 
   const handleNotificationClick = (notification) => {
-    // Mark as read
-    if (!notification.read) {
-      dispatch(markNotificationAsReadThunk(notification._id));
-    }
+    // Mark as read (all notifications are unread now)
+    dispatch(markNotificationAsReadThunk(notification._id));
 
     // Navigate based on notification type
     if (notification.courseId) {
@@ -163,7 +161,7 @@ const NotificationDropdown = () => {
               notifications.map(notification => (
                 <div
                   key={notification._id}
-                  className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                  className="notification-item unread"
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="notification-avatar">
