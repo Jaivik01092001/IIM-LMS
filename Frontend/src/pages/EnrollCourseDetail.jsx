@@ -665,6 +665,43 @@ const EnrollCourseDetail = () => {
       toast.success('Progress updated successfully', {
         position: "bottom-right"
       });
+
+      // Check if all content in this module is completed and if the module has a quiz
+      const currentModule = course.modules[moduleIndex];
+      const allContentCompleted = currentModule.content?.every(content => newSessionState[content._id]) || false;
+
+      // If all content is completed and this module has a quiz, automatically redirect to the quiz tab
+      if (allContentCompleted && currentModule.quiz && currentModule.isCompulsory !== false) {
+        // Check if the quiz has already been passed
+        const quizId = typeof currentModule.quiz === 'object'
+          ? currentModule.quiz._id
+          : currentModule.quiz.toString();
+
+        const quizAttempt = storeQuizAttempts[quizId];
+
+        // Only redirect if the quiz hasn't been passed yet
+        if (!quizAttempt || !quizAttempt.passed) {
+          // Fetch quiz attempts for this quiz
+          dispatch(getQuizAttemptsThunk({
+            courseId: id,
+            quizId: quizId,
+            userId: currentUserId
+          }));
+
+          // Switch to quizzes tab
+          setActiveTab('quizzes');
+
+          // Expand this quiz in the quizzes tab
+          setExpandedQuizzes(prev => ({
+            ...prev,
+            [quizId]: true
+          }));
+
+          toast.info('All content completed! Please complete the quiz to proceed.', {
+            position: "bottom-right"
+          });
+        }
+      }
     } catch (error) {
       console.error('Failed to update progress:', error);
       toast.error('Failed to update progress. Please try again.', {
@@ -739,6 +776,36 @@ const EnrollCourseDetail = () => {
           const newModuleState = { ...moduleCompleted };
           newModuleState[moduleWithQuiz._id] = true;
           setModuleCompleted(newModuleState);
+
+          // Find the index of the module with the quiz
+          const currentModuleIndex = course.modules.findIndex(module => module._id === moduleWithQuiz._id);
+
+          // Check if there are any pending compulsory modules after this one
+          if (currentModuleIndex !== -1 && currentModuleIndex < course.modules.length - 1) {
+            // Get the next module
+            const nextModule = course.modules[currentModuleIndex + 1];
+
+            // Check if the next module is compulsory and should be unlocked
+            if (nextModule.isCompulsory !== false && newModuleState[nextModule._id]) {
+              // Switch back to content tab to show the next module
+              setActiveTab('content');
+
+              // Expand the next module
+              setExpandedSections(prev => ({
+                ...prev,
+                [nextModule._id]: true
+              }));
+
+              // If the next module has content, select the first content item
+              if (nextModule.content?.length > 0) {
+                setSelectedContent(nextModule.content[0]);
+              }
+
+              toast.info(`Quiz passed! You can now proceed to the next module: ${nextModule.title}`, {
+                position: "bottom-right"
+              });
+            }
+          }
         }
       }
 

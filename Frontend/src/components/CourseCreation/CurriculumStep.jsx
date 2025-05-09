@@ -271,7 +271,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       existingFileName: contentItem.fileUrl ? contentItem.fileUrl.split('/').pop() : "", // Extract filename from URL
     });
 
-    console.log("Editing content item:", contentItem);
   };
 
   // Save content
@@ -310,8 +309,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       existingFileUrl: contentFormData.existingFileUrl || existingContent?.fileUrl || "",
       existingFileName: contentFormData.existingFileName || "",
     };
-
-    console.log("📤 Saving content item to state:", newContentItem);
 
     // Update content in the content array
     const updatedContent = content.map((item) =>
@@ -355,10 +352,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       file: null,
       textContent: "",
     });
-
-    console.log(
-      "✅ Content state updated in both content array and module reference."
-    );
   };
 
   // Delete content
@@ -426,11 +419,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       correctAnswer: currentQuestion.correctAnswer.toString(), // Convert to string for backend compatibility
     };
 
-    console.log(
-      "Processed question with string correctAnswer:",
-      processedQuestion
-    );
-
     let updatedQuestions;
 
     if (editingQuestionIndex !== null) {
@@ -465,11 +453,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       ...questionToEdit,
       correctAnswer: parseInt(questionToEdit.correctAnswer, 10) || 0, // Convert string to number for UI
     };
-
-    console.log(
-      "Loading question for editing with numeric correctAnswer:",
-      processedQuestionForEdit
-    );
 
     setCurrentQuestion(processedQuestionForEdit);
     setEditingQuestionIndex(index);
@@ -525,8 +508,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       questions: quizFormData.questions,
     };
 
-    console.log("Saving quiz with questions:", quizFormData.questions);
-
     // Update quiz in the quizzes array
     const updatedQuizzes = quizzes.map((quiz) =>
       quiz._id === editingQuizId ? updatedQuiz : quiz
@@ -563,11 +544,6 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       options: ["", "", "", ""],
       correctAnswer: 0,
     });
-
-    console.log(
-      "✅ Quiz state updated in both quizzes array and module reference."
-    );
-    console.log("Updated quizzes array:", updatedQuizzes);
   };
 
   // Delete quiz
