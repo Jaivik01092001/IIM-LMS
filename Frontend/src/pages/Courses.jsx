@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaClock,
-  FaCalendarAlt,
-} from "react-icons/fa";
+import { FaClock, FaCalendarAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getCoursesThunk,
-  updateCourseThunk
-} from "../redux/admin/adminSlice";
+import { getCoursesThunk, updateCourseThunk } from "../redux/admin/adminSlice";
 // No longer needed: import { getEducatorsThunk } from "../redux/university/universitySlice";
 import DataTableComponent from "../components/DataTable";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -50,26 +44,31 @@ const Courses = ({ userType }) => {
     if (courses && courses.length > 0) {
       // Get current user ID from localStorage
       let currentUserId = null;
-      const userStr = localStorage.getItem('user');
+      const userStr = localStorage.getItem("user");
       if (userStr) {
         try {
           const userData = JSON.parse(userStr);
           currentUserId = userData.id;
-          console.log('Current user ID from localStorage:', currentUserId);
+          console.log("Current user ID from localStorage:", currentUserId);
         } catch (e) {
-          console.error('Error parsing user data from localStorage:', e);
+          console.error("Error parsing user data from localStorage:", e);
         }
       }
-      const formattedCourses = courses.map(course => {
+      const formattedCourses = courses.map((course) => {
         // Check if the current user is enrolled in this course
         let isUserEnrolled = false;
 
-        if (currentUserId && course.enrolledUsers && course.enrolledUsers.length > 0) {
-          isUserEnrolled = course.enrolledUsers.some(enrollment => {
+        if (
+          currentUserId &&
+          course.enrolledUsers &&
+          course.enrolledUsers.length > 0
+        ) {
+          isUserEnrolled = course.enrolledUsers.some((enrollment) => {
             // Handle different possible data formats of user id
-            const enrollmentUserId = typeof enrollment.user === 'object'
-              ? enrollment.user._id
-              : enrollment.user;
+            const enrollmentUserId =
+              typeof enrollment.user === "object"
+                ? enrollment.user._id
+                : enrollment.user;
 
             return enrollmentUserId === currentUserId;
           });
@@ -77,41 +76,49 @@ const Courses = ({ userType }) => {
 
         return {
           id: course._id,
-          title: course.title || 'Untitled Course',
-          category: course.category || 'Uncategorized',
-          professor: course.creator?.name || 'Unknown',
-          duration: course.duration || 'N/A',
-          description: course.description || 'No description available',
-          tags: course.tags?.join(', ') || 'No tags',
-          language: course.language || 'English',
+          title: course.title || "Untitled Course",
+          category: course.category || "Uncategorized",
+          professor: course.creator?.name || "Unknown",
+          duration: course.duration || "N/A",
+          description: course.description || "No description available",
+          tags: course.tags?.join(", ") || "No tags",
+          language: course.language || "English",
           status: course.status === 1,
-          thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+          thumbnail:
+            course.thumbnail ||
+            "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
           hasModules: course.hasModules || false,
           // Use the actual enrollment status based on enrolledUsers array
-          isEnrolled: isUserEnrolled || Boolean(course.progress || course.enrolled || course.isEnrolled)
+          isEnrolled:
+            isUserEnrolled ||
+            Boolean(course.progress || course.enrolled || course.isEnrolled),
         };
       });
 
       setTableData(formattedCourses);
 
       // Extract unique categories
-      const uniqueCategories = [...new Set(formattedCourses.map(course => course.category))];
+      const uniqueCategories = [
+        ...new Set(formattedCourses.map((course) => course.category)),
+      ];
       setCategories(uniqueCategories);
     }
   }, [courses, userType]);
 
   // Status toggle handler
   const handleStatusToggle = (row) => {
-    dispatch(updateCourseThunk({
-      id: row.id,
-      formData: { status: row.status ? 0 : 1 },
-    }))
+    dispatch(
+      updateCourseThunk({
+        id: row.id,
+        formData: { status: row.status ? 0 : 1 },
+      })
+    )
       .unwrap()
       .then(() => {
         // Refresh courses data
         dispatch(getCoursesThunk());
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(`Error updating course status:`, error);
       });
   };
@@ -132,7 +139,11 @@ const Courses = ({ userType }) => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img
+            src={VITE_IMAGE_URL + row.thumbnail}
+            alt={row.title}
+            className="course-thumbnail"
+          />
           <span>{row.title}</span>
         </div>
       ),
@@ -184,21 +195,27 @@ const Courses = ({ userType }) => {
   // Filter the data based on search filter
   const filteredData = tableData
     // Apply search filter
-    .filter(item =>
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.tags &&
+          item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     // Apply sorting
     .sort((a, b) => {
       if (!sortBy) return 0;
 
       switch (sortBy) {
-        case "title-asc": return a.title.localeCompare(b.title);
-        case "title-desc": return b.title.localeCompare(a.title);
-        case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
-        default: return 0;
+        case "title-asc":
+          return a.title.localeCompare(b.title);
+        case "title-desc":
+          return b.title.localeCompare(a.title);
+        case "status":
+          return a.status === b.status ? 0 : a.status ? -1 : 1;
+        default:
+          return 0;
       }
     });
 
@@ -210,10 +227,12 @@ const Courses = ({ userType }) => {
           {filteredData.map((course) => (
             <div key={course.id} className="course-card">
               <div className="course-card-thumbnail">
-                <img src={`${VITE_IMAGE_URL}${course.thumbnail}`} alt={course.title} />
+                <img
+                  src={`${VITE_IMAGE_URL}${course.thumbnail}`}
+                  alt={course.title}
+                />
               </div>
               <div className="course-card-content">
-                <div className="course-card-category">Category: {course.category}</div>
                 <h3 className="course-card-title">{course.title}</h3>
                 <p className="course-card-description">
                   {course.description && course.description.length > 100
@@ -230,7 +249,6 @@ const Courses = ({ userType }) => {
                     <FaClock className="meta-icon" />
                     <span>{course.duration}</span>
                   </div>
-
                 </div>
                 <div className="course-card-actions">
                   {course.isEnrolled ? (
@@ -259,19 +277,25 @@ const Courses = ({ userType }) => {
 
   return (
     <div className="courses-container admin-dashboard">
-      {isLoading && <LoadingSpinner overlay={true} message="Loading courses data..." />}
+      {isLoading && (
+        <LoadingSpinner overlay={true} message="Loading courses data..." />
+      )}
 
       {/* Courses Section */}
       <div className="dashboard-section">
         <div className="section-header">
           <h2 className="section-title">
-            {userType === 'tutor' ? 'My Courses' : `All Courses (${tableData.length})`}
+            {userType === "tutor"
+              ? "My Courses"
+              : `All Courses (${tableData.length})`}
           </h2>
           <div className="header-actions">
             {hasLocalPermission("create_course") && (
               <button
                 className="add-course-btn"
-                onClick={() => navigate(`/dashboard/${userType}/courses/create`)}
+                onClick={() =>
+                  navigate(`/dashboard/${userType}/courses/create`)
+                }
               >
                 Add Course
               </button>
@@ -306,7 +330,7 @@ const Courses = ({ userType }) => {
           </select>
         </div>
 
-        {userType === 'tutor' ? (
+        {userType === "tutor" ? (
           renderCourseCards()
         ) : (
           <div className="table-responsive">

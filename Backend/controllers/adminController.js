@@ -255,8 +255,8 @@ exports.createContent = async (req, res) => {
         (mediaType === "video"
           ? "video"
           : mediaType === "image"
-          ? "image"
-          : "document"),
+            ? "image"
+            : "document"),
       mediaType,
       mimeType,
       size: req.file.size,
@@ -369,7 +369,7 @@ exports.getCourse = async (req, res) => {
         path: "comments.user",
         select: "name profile.avatar", // Include user name and avatar for comments
       })
-       .populate({
+      .populate({
         path: "enrolledUsers.user",
         select: "name", // 👈 Enrolled user names and avatars
       });
@@ -383,8 +383,7 @@ exports.getCourse = async (req, res) => {
       console.log("Course modules:");
       course.modules.forEach((module, index) => {
         console.log(
-          `Module ${index + 1}: ID=${module._id}, Title=${
-            module.title
+          `Module ${index + 1}: ID=${module._id}, Title=${module.title
           }, isCompulsory=${module.isCompulsory}`
         );
       });
@@ -854,18 +853,18 @@ exports.updateCourse = async (req, res) => {
                     // Process questions to ensure correctAnswer is a string
                     const processedQuestions = quizData.questions
                       ? quizData.questions.map((question) => {
-                          // Ensure correctAnswer is a string
-                          if (
-                            question.correctAnswer !== undefined &&
-                            typeof question.correctAnswer !== "string"
-                          ) {
-                            return {
-                              ...question,
-                              correctAnswer: question.correctAnswer.toString(),
-                            };
-                          }
-                          return question;
-                        })
+                        // Ensure correctAnswer is a string
+                        if (
+                          question.correctAnswer !== undefined &&
+                          typeof question.correctAnswer !== "string"
+                        ) {
+                          return {
+                            ...question,
+                            correctAnswer: question.correctAnswer.toString(),
+                          };
+                        }
+                        return question;
+                      })
                       : [];
 
                     const quiz = new Quiz({
@@ -973,18 +972,18 @@ exports.updateCourse = async (req, res) => {
                 // Process questions to ensure correctAnswer is a string
                 const processedQuestions = quizData.questions
                   ? quizData.questions.map((question) => {
-                      // Ensure correctAnswer is a string
-                      if (
-                        question.correctAnswer !== undefined &&
-                        typeof question.correctAnswer !== "string"
-                      ) {
-                        return {
-                          ...question,
-                          correctAnswer: question.correctAnswer.toString(),
-                        };
-                      }
-                      return question;
-                    })
+                    // Ensure correctAnswer is a string
+                    if (
+                      question.correctAnswer !== undefined &&
+                      typeof question.correctAnswer !== "string"
+                    ) {
+                      return {
+                        ...question,
+                        correctAnswer: question.correctAnswer.toString(),
+                      };
+                    }
+                    return question;
+                  })
                   : [];
 
                 // Create a new quiz
@@ -1143,13 +1142,62 @@ exports.updateCourse = async (req, res) => {
         // Get module ID from either content item or contentModules mapping
         let moduleId = contentItem.module || null;
 
-        // If this is a temp ID, check if we have a module mapping for it
-        if (contentId.startsWith("temp_") && contentModules[contentId]) {
+        // If we have a module mapping for this content, use it
+        if (contentModules[contentId]) {
           moduleId = contentModules[contentId];
           console.log(`Using module mapping for ${contentId}: ${moduleId}`);
         }
 
-        // Create a new content item
+        // Check if this is an existing content item being updated
+        if (!contentId.startsWith("temp_")) {
+          try {
+            // This is an existing content - update it instead of creating a new one
+            const existingContent = await Content.findById(contentId);
+
+            if (existingContent) {
+              console.log(`Updating existing content: ${contentId}`);
+
+              // Update the content properties
+              existingContent.title = contentItem.title;
+              existingContent.description = contentItem.description;
+              existingContent.fileUrl = file.path;
+              existingContent.type = contentItem.type ||
+                (mediaType === "video" ? "video" :
+                  mediaType === "image" ? "image" : "document");
+              existingContent.mediaType = mediaType;
+              existingContent.mimeType = mimeType;
+              existingContent.size = file.size;
+
+              // Update module if needed
+              if (moduleId && (!existingContent.module || existingContent.module.toString() !== moduleId.toString())) {
+                existingContent.module = moduleId;
+
+                // Add to the new module if not already there
+                try {
+                  const module = await Module.findById(moduleId);
+                  if (module && !module.content.includes(existingContent._id)) {
+                    module.content.push(existingContent._id);
+                    await module.save();
+                    console.log(`Added existing content ${existingContent._id} to module ${moduleId}`);
+                  }
+                } catch (err) {
+                  console.error(`Error adding content to module ${moduleId}:`, err);
+                }
+              }
+
+              await existingContent.save();
+              console.log(`Successfully updated content: ${existingContent._id}`);
+
+              // No need to add to contentItems as we're not creating a new item
+              continue;
+            }
+          } catch (err) {
+            console.error(`Error updating existing content ${contentId}:`, err);
+            // If there's an error updating, fall back to creating a new content
+          }
+        }
+
+        // Create a new content item (for new content or if update failed)
         const newContent = new Content({
           title: contentItem.title,
           description: contentItem.description,
@@ -1161,8 +1209,8 @@ exports.updateCourse = async (req, res) => {
             (mediaType === "video"
               ? "video"
               : mediaType === "image"
-              ? "image"
-              : "document"),
+                ? "image"
+                : "document"),
           mediaType,
           mimeType,
           size: file.size,

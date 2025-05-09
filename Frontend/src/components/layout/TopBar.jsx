@@ -228,9 +228,9 @@ const TopBar = ({ toggleSidebar }) => {
       {/* Right side actions */}
       <div className="topbar-actions">
         {/* Search box */}
-        <div className="search-box">
+        {/* <div className="search-box">
           <input type="text" placeholder={t("common.search") + "..."} />
-        </div>
+        </div> */}
 
         {/* Language Selector */}
         {/* <LanguageSelector /> */}

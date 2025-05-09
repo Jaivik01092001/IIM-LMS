@@ -54,6 +54,13 @@
   justify-content: space-between;
   flex-direction: row-reverse;
   align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tutor-dashboard .stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 .tutor-dashboard .stat-card.ongoing {
@@ -269,6 +276,10 @@
 .tutor-dashboard .empty-message {
   text-align: center;
   max-width: 400px;
+  align-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .tutor-dashboard .empty-icon {

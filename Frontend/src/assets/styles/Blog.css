@@ -870,7 +870,7 @@
   }
 
   .blog-form-sticky-actions {
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
     padding: 10px;
     margin: 15px -15px -15px -15px;
@@ -1008,7 +1008,7 @@
 }
 
 .blog-detail-title {
-  font-size: var(--heading2);
+  font-size: var(--heading3);
   color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 1rem;

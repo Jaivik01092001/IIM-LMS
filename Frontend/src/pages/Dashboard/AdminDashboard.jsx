@@ -373,16 +373,19 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card roles" onClick={() => navigate("/dashboard/admin/role-permission")}>
-          <div className="stat-icon7">
-            <FaUserTag size={24} />
-            <FaUserTag className="icondesign7" />
+        {/* Only show roles stats card to admin users, not staff */}
+        {user?.role === 'admin' && (
+          <div className="stat-card roles" onClick={() => navigate("/dashboard/admin/role-permission")}>
+            <div className="stat-icon7">
+              <FaUserTag size={24} />
+              <FaUserTag className="icondesign7" />
+            </div>
+            <div>
+              <div className="stat-count">{roles?.length || 0}</div>
+              <div className="stat-title">Roles</div>
+            </div>
           </div>
-          <div>
-            <div className="stat-count">{roles?.length || 0}</div>
-            <div className="stat-title">Roles</div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Courses Table Section */}

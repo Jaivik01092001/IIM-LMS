@@ -815,10 +815,12 @@
 
 .enroll-course-detail .quiz-result-badge.passed {
   background-color: #4caf50;
+  color: white;
 }
 
 .enroll-course-detail .quiz-result-badge.failed {
   background-color: #f44336;
+  color: white;
 }
 
 .enroll-course-detail .toggle-icon {

@@ -360,12 +360,17 @@ const CourseCreationFlow = () => {
                     formData.append(`contentFileIds[${index}]`, item._id);
 
                     // For new content items added during edit, also send the module ID
-                    if (item._id.startsWith('temp_') && item.module) {
+                    if (item.module) {
                         const moduleId = typeof item.module === 'object' ? item.module._id : item.module;
                         formData.append(`contentModules[${index}]`, moduleId);
                     }
 
-                    console.log(`Adding content file for ID: ${item._id}, module: ${item.module}`);
+                    // If this is an existing content item being updated, send the existing file info
+                    if (!item._id.startsWith('temp_') && item.existingFileUrl) {
+                        formData.append(`contentExistingFileUrls[${index}]`, item.existingFileUrl);
+                    }
+
+                    console.log(`Adding content file for ID: ${item._id}, module: ${item.module}, isExisting: ${!item._id.startsWith('temp_')}`);
                 }
             });
 

@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { FaPencilAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher, FaClock } from 'react-icons/fa';
+import { FaFilePen } from 'react-icons/fa6';
 import { IoBookOutline } from 'react-icons/io5';
 import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
 import { getMyCoursesThunk } from '../../redux/educator/educatorSlice';
 import { getCoursesThunk, updateCourseThunk, deleteCourseThunk } from '../../redux/admin/adminSlice';
+import { getBlogsThunk } from '../../redux/blog/blogSlice';
 import DataTableComponent from '../../components/DataTable';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import StatusToggle from '../../components/common/StatusToggle';
 import ActionButtons from '../../components/common/ActionButtons';
+import { hasLocalPermission } from '../../utils/localPermissions';
 import '../../assets/styles/Courses.css';
 import '../../assets/styles/SchoolDashboard.css';
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
@@ -27,18 +30,20 @@ const SchoolDashboard = () => {
   const { educators, loading: educatorsLoading } = useSelector((state) => state.university);
   const { courses, loading: coursesLoading } = useSelector((state) => state.admin);
   const { myCourses, loading: myCoursesLoading } = useSelector((state) => state.educator);
+  const { blogs, loading: blogsLoading } = useSelector((state) => state.blog);
   const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading states change
   useEffect(() => {
-    setIsLoading(educatorsLoading || coursesLoading || myCoursesLoading);
-  }, [educatorsLoading, coursesLoading, myCoursesLoading]);
+    setIsLoading(educatorsLoading || coursesLoading || myCoursesLoading || blogsLoading);
+  }, [educatorsLoading, coursesLoading, myCoursesLoading, blogsLoading]);
 
   // Fetch data on component mount
   useEffect(() => {
     dispatch(getEducatorsThunk());
     dispatch(getCoursesThunk());
     dispatch(getMyCoursesThunk());
+    dispatch(getBlogsThunk());
   }, [dispatch]);
 
   // Redirect if not logged in
@@ -52,6 +57,7 @@ const SchoolDashboard = () => {
   const [courseTableData, setCourseTableData] = useState([]);
   const [educatorTableData, setEducatorTableData] = useState([]);
   const [ongoingCourses, setOngoingCourses] = useState([]);
+  const [schoolBlogs, setSchoolBlogs] = useState([]);
 
   // Extract unique categories from courses
   const [categories, setCategories] = useState([]);
@@ -180,6 +186,22 @@ const SchoolDashboard = () => {
       setOngoingCourses([]);
     }
   }, [myCourses]);
+
+  // Filter blogs for the current school
+  useEffect(() => {
+    if (blogs && blogs.length > 0 && user) {
+      // Filter blogs to only show those created by the current university or its educators
+      const universityBlogs = blogs.filter(blog => {
+        // Check if the blog creator is the current user or an educator from this university
+        return blog.createdBy?._id === user.id ||
+          (blog.createdBy?.university && blog.createdBy.university === user.id);
+      });
+
+      setSchoolBlogs(universityBlogs);
+    } else {
+      setSchoolBlogs([]);
+    }
+  }, [blogs, user]);
 
   // Course status toggle handler
   const handleCourseStatusToggle = (row) => {
@@ -465,7 +487,7 @@ const SchoolDashboard = () => {
 
       {/* Stats Cards */}
       <div className="dashboard-stats">
-        <div className="stat-card courses">
+        <div className="stat-card courses" style={{ cursor: 'default' }}>
           <div className="stat-icon3">
             <FaBook size={24} />
           </div>
@@ -473,7 +495,7 @@ const SchoolDashboard = () => {
           <div className="stat-title">Our Courses</div>
         </div>
 
-        <div className="stat-card educators">
+        <div className="stat-card educators" onClick={() => navigate("/dashboard/admin/educators")}>
           <div className="stat-icon2">
             <FaChalkboardTeacher size={24} />
           </div>
@@ -481,12 +503,20 @@ const SchoolDashboard = () => {
           <div className="stat-title">Our Educators</div>
         </div>
 
-        <div className="stat-card ongoing">
+        <div className="stat-card ongoing" style={{ cursor: 'default' }}>
           <div className="stat-icon1">
             <FaClock size={24} />
           </div>
           <div className="stat-count">{ongoingCourses?.length || 0}</div>
           <div className="stat-title">Ongoing Courses</div>
+        </div>
+
+        <div className="stat-card blogs" onClick={() => navigate("/dashboard/school/blogs")}>
+          <div className="stat-icon4">
+            <FaFilePen size={24} />
+          </div>
+          <div className="stat-count">{schoolBlogs?.length || 0}</div>
+          <div className="stat-title">Blogs</div>
         </div>
       </div>
 
@@ -495,12 +525,14 @@ const SchoolDashboard = () => {
         <div className="section-header">
           <h2 className="section-title">Our Courses ({courseTableData.length || 0})</h2>
           <div className="header-actions">
-            <button
-              className="add-course-btn"
-              onClick={() => navigate("/dashboard/school/courses/create")}
-            >
-              Add Course
-            </button>
+            {hasLocalPermission("create_course") && (
+              <button
+                className="add-course-btn"
+                onClick={() => navigate("/dashboard/school/courses/create")}
+              >
+                Add Course
+              </button>
+            )}
             <button
               className="view-all-btn"
               onClick={() => navigate("/dashboard/school/courses")}
@@ -657,12 +689,14 @@ const SchoolDashboard = () => {
                 <h3>No ongoing courses</h3>
                 <p>There are no courses currently in progress.</p>
                 <p>Create courses and encourage students to enroll to see ongoing courses here.</p>
-                <button
-                  className="browse-courses-btn"
-                  onClick={() => navigate("/dashboard/school/courses/create")}
-                >
-                  Create a Course
-                </button>
+                {hasLocalPermission("create_course") && (
+                  <button
+                    className="browse-courses-btn"
+                    onClick={() => navigate("/dashboard/school/courses/create")}
+                  >
+                    Create a Course
+                  </button>
+                )}
               </div>
             </div>
           )}
