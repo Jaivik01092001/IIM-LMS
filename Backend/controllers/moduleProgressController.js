@@ -172,10 +172,10 @@ exports.updateModuleProgress = async (req, res) => {
             const allContentCompleted =
               module.content && module.content.length > 0
                 ? module.content.every((content) =>
-                    mp.completedContent.some(
-                      (id) => id.toString() === content._id.toString()
-                    )
+                  mp.completedContent.some(
+                    (id) => id.toString() === content._id.toString()
                   )
+                )
                 : true;
 
             // If all content is completed and the module is in the completedModules list,
@@ -210,8 +210,7 @@ exports.updateModuleProgress = async (req, res) => {
       "modules"
     );
 
-    // Calculate total content items across all compulsory modules
-    let totalContentItems = 0;
+    // Get compulsory modules
     let compulsoryModuleIds = [];
 
     if (courseWithModules && courseWithModules.modules) {
@@ -229,43 +228,96 @@ exports.updateModuleProgress = async (req, res) => {
       compulsoryModuleIds = compulsoryModules.map((module) =>
         module._id.toString()
       );
-
-      // Count all content items in compulsory modules
-      totalContentItems = compulsoryModules.reduce((total, module) => {
-        // Count content items
-        const contentCount = module.content ? module.content.length : 0;
-        // Add 1 for quiz if it exists
-        const quizCount = module.quiz ? 1 : 0;
-        return total + contentCount + quizCount;
-      }, 0);
     }
 
-    // Count completed content items from compulsory modules in the progress record
-    const completedContentItems = progress.moduleProgress.reduce(
-      (total, mp) => {
-        // Only count if this is a compulsory module
-        if (compulsoryModuleIds.includes(mp.module.toString())) {
-          // Count completed content
-          const contentCount = mp.completedContent
-            ? mp.completedContent.length
-            : 0;
+    // First check if all compulsory modules have been completed
+    // This is a stricter check to ensure all modules are fully completed
+    const allCompulsoryModulesCompleted = compulsoryModuleIds.every(moduleId => {
+      // Find this module in the progress
+      const moduleProgress = progress.moduleProgress.find(
+        mp => mp.module.toString() === moduleId
+      );
 
-          // Add 1 for completed quiz if the module is marked as completed
-          // A module is only marked as completed if its quiz is also completed
-          const quizCount = mp.isCompleted ? 1 : 0;
+      if (!moduleProgress) return false;
 
-          return total + contentCount + quizCount;
+      // Get the actual module to check its content
+      const module = courseWithModules.modules.find(m => m._id.toString() === moduleId);
+      if (!module) return false;
+
+      // Check if all content in this module is completed
+      const allContentCompleted = module.content && module.content.length > 0
+        ? module.content.every(content =>
+          moduleProgress.completedContent.some(
+            id => id.toString() === content._id.toString()
+          )
+        )
+        : true;
+
+      return allContentCompleted;
+    });
+
+    // Create a detailed map of each module's content and completion status
+    const moduleContentMap = [];
+
+    // First, build a map of all content items in each compulsory module
+    if (courseWithModules && courseWithModules.modules) {
+      for (const moduleId of compulsoryModuleIds) {
+        const module = courseWithModules.modules.find(m => m._id.toString() === moduleId);
+        if (!module) continue;
+
+        // Find this module's progress
+        const moduleProgress = progress.moduleProgress.find(
+          mp => mp.module.toString() === moduleId
+        );
+
+        if (!moduleProgress) continue;
+
+        // Add each content item with its completion status
+        if (module.content && module.content.length > 0) {
+          module.content.forEach(content => {
+            const contentId = content._id.toString();
+            const isCompleted = moduleProgress.completedContent.some(
+              id => id.toString() === contentId
+            );
+
+            moduleContentMap.push({
+              moduleId,
+              contentId,
+              isCompleted
+            });
+          });
         }
-        return total;
-      },
-      0
-    );
+
+        // Add quiz if it exists
+        if (module.quiz) {
+          moduleContentMap.push({
+            moduleId,
+            contentId: 'quiz-' + module.quiz.toString(),
+            isCompleted: moduleProgress.isCompleted
+          });
+        }
+      }
+    }
+
+    // Count total and completed content items
+    const totalContentItems = moduleContentMap.length;
+    const completedContentItems = moduleContentMap.filter(item => item.isCompleted).length;
 
     let overallProgress = 0;
     if (totalContentItems > 0) {
-      overallProgress = Math.round(
-        (completedContentItems / totalContentItems) * 100
+      // Calculate raw progress based on content completion
+      // First ensure we don't exceed 100% by capping completedContentItems
+      const cappedCompletedItems = Math.min(completedContentItems, totalContentItems);
+      const rawProgress = Math.round(
+        (cappedCompletedItems / totalContentItems) * 100
       );
+
+      // Only allow 100% progress if all compulsory modules are fully completed
+      if (rawProgress >= 100) {
+        overallProgress = allCompulsoryModulesCompleted ? 100 : 99;
+      } else {
+        overallProgress = rawProgress;
+      }
     }
 
     // Update the course's overall progress for this user
@@ -307,22 +359,46 @@ exports.updateModuleProgress = async (req, res) => {
     }
 
     // Log the progress values for debugging
-    console.log(`Progress calculation:
-      - Total content items: ${totalContentItems}
-      - Completed content items: ${completedContentItems}
-      - Calculated progress: ${overallProgress}%
-      - Stored user progress: ${userProgress}%
-      - Compulsory module IDs: ${JSON.stringify(compulsoryModuleIds)}
-      - Module progress: ${JSON.stringify(
-        progress.moduleProgress.map((mp) => ({
-          moduleId: mp.module.toString(),
-          isCompleted: mp.isCompleted,
-          completedContentCount: mp.completedContent
-            ? mp.completedContent.length
-            : 0,
-        }))
-      )}
-    `);
+    const cappedCompletedItems = Math.min(completedContentItems, totalContentItems);
+    const rawProgressUncapped = totalContentItems > 0 ? Math.round((completedContentItems / totalContentItems) * 100) : 0;
+    const rawProgressCapped = totalContentItems > 0 ? Math.round((cappedCompletedItems / totalContentItems) * 100) : 0;
+
+    // Group content items by module for clearer logging
+    const moduleContentSummary = {};
+    compulsoryModuleIds.forEach(moduleId => {
+      const moduleItems = moduleContentMap.filter(item => item.moduleId === moduleId);
+      const completedItems = moduleItems.filter(item => item.isCompleted);
+
+      moduleContentSummary[moduleId] = {
+        totalItems: moduleItems.length,
+        completedItems: completedItems.length,
+        percentComplete: moduleItems.length > 0
+          ? Math.round((completedItems.length / moduleItems.length) * 100)
+          : 0,
+        items: moduleItems
+      };
+    });
+
+    // console.log(`Progress calculation:
+    //   - Total content items: ${totalContentItems}
+    //   - Completed content items: ${completedContentItems} (capped at ${cappedCompletedItems})
+    //   - Raw progress (uncapped): ${rawProgressUncapped}%
+    //   - Raw progress (capped): ${rawProgressCapped}%
+    //   - Final adjusted progress: ${overallProgress}%
+    //   - Stored user progress: ${userProgress}%
+    //   - All compulsory modules completed: ${allCompulsoryModulesCompleted}
+    //   - Compulsory module IDs: ${JSON.stringify(compulsoryModuleIds)}
+    //   - Module content summary: ${JSON.stringify(moduleContentSummary, null, 2)}
+    //   - Module progress: ${JSON.stringify(
+    //   progress.moduleProgress.map((mp) => ({
+    //     moduleId: mp.module.toString(),
+    //     isCompleted: mp.isCompleted,
+    //     completedContentCount: mp.completedContent
+    //       ? mp.completedContent.length
+    //       : 0,
+    //   }))
+    // )}
+    // `);
 
     res.json({
       message: "Module progress updated successfully",
