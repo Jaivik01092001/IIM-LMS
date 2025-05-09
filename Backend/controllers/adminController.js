@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Module = require("../models/Module");
 const Quiz = require("../models/Quiz");
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 
 exports.getUniversities = async (req, res) => {
@@ -720,10 +721,12 @@ exports.updateCourse = async (req, res) => {
     // Always use modules
     course.hasModules = true;
 
+    // Parse modules if provided - define at a higher scope so it's available throughout the function
+    let parsedModules = [];
+
     if (modules) {
       try {
-        const parsedModules =
-          typeof modules === "string" ? JSON.parse(modules) : modules;
+        parsedModules = typeof modules === "string" ? JSON.parse(modules) : modules;
         console.log("Parsed modules in update:", parsedModules);
 
         // Handle module updates
@@ -953,6 +956,48 @@ exports.updateCourse = async (req, res) => {
                   if (newContentItem) {
                     // Use the database ID for newly created content
                     updatedContent.push(newContentItem.dbId);
+                  } else if (contentId.startsWith("temp_")) {
+                    // This is a temporary content ID that hasn't been processed yet
+                    // We'll need to create a placeholder for it and update it later
+                    console.log(`Found temporary content ID in new module: ${contentId}`);
+
+                    // Find the content details in parsedContent
+                    const tempContentData = parsedContent.find(item => item._id === contentId);
+
+                    if (tempContentData) {
+                      console.log(`Creating placeholder content for temp ID: ${contentId}`);
+
+                      // Create a new content item with the data from parsedContent
+                      const newContent = new Content({
+                        title: tempContentData.title || "New Content",
+                        description: tempContentData.description || "",
+                        textContent: tempContentData.textContent || "",
+                        fileUrl: tempContentData.fileUrl || "",
+                        creator: req.user.id,
+                        status: "approved",
+                        type: tempContentData.type || "document",
+                        mediaType: tempContentData.type === "text" ? "text" :
+                          tempContentData.type === "youtube" ? "video" : "document",
+                        mimeType: tempContentData.type === "text" ? "text/html" :
+                          tempContentData.type === "youtube" ? "video/youtube" :
+                            tempContentData.mimeType || "application/octet-stream",
+                        module: null, // Will be updated after module is created
+                      });
+
+                      await newContent.save();
+                      console.log(`Created placeholder content with ID: ${newContent._id}`);
+
+                      // Add to contentItems for tracking
+                      contentItems.push({
+                        id: contentId,
+                        dbId: newContent._id,
+                      });
+
+                      // Add to updatedContent
+                      updatedContent.push(newContent._id);
+                    } else {
+                      console.warn(`Could not find content data for temp ID: ${contentId}`);
+                    }
                   } else if (!contentId.startsWith("temp_")) {
                     // Only include non-temporary IDs that are valid ObjectIds
                     try {
@@ -1010,45 +1055,65 @@ exports.updateCourse = async (req, res) => {
                 console.log("Processing quiz for new module:", newModule.title);
                 console.log("Quiz data:", quizData);
 
-                // Process questions to ensure correctAnswer is a string
-                const processedQuestions = quizData.questions
-                  ? quizData.questions.map((question) => {
-                    // Ensure correctAnswer is a string
-                    if (
-                      question.correctAnswer !== undefined &&
-                      typeof question.correctAnswer !== "string"
-                    ) {
-                      return {
-                        ...question,
-                        correctAnswer: question.correctAnswer.toString(),
-                      };
-                    }
-                    return question;
-                  })
-                  : [];
+                // Check if this is a temporary quiz ID that might have been processed already
+                let quizId = null;
 
-                // Create a new quiz
-                const quiz = new Quiz({
-                  title: quizData.title || `${newModule.title} Quiz`,
-                  description:
-                    quizData.description || `Quiz for ${newModule.title}`,
-                  course: course._id,
-                  questions: processedQuestions,
-                  timeLimit: quizData.timeLimit || 30,
-                  passingScore: quizData.passingScore || 60,
-                });
+                if (quizData._id && quizData._id.toString().startsWith('temp_')) {
+                  // Check if we've already created a quiz for this temp ID
+                  const existingQuiz = await Quiz.findOne({
+                    course: course._id,
+                    title: quizData.title || `${newModule.title} Quiz`
+                  });
 
-                await quiz.save();
-                console.log("New quiz created for new module with ID:", quiz._id);
+                  if (existingQuiz) {
+                    console.log(`Found existing quiz with title "${existingQuiz.title}" for module ${newModule.title}`);
+                    quizId = existingQuiz._id;
+                  }
+                }
+
+                if (!quizId) {
+                  // Process questions to ensure correctAnswer is a string
+                  const processedQuestions = quizData.questions
+                    ? quizData.questions.map((question) => {
+                      // Ensure correctAnswer is a string
+                      if (
+                        question.correctAnswer !== undefined &&
+                        typeof question.correctAnswer !== "string"
+                      ) {
+                        return {
+                          ...question,
+                          correctAnswer: question.correctAnswer.toString(),
+                        };
+                      }
+                      return question;
+                    })
+                    : [];
+
+                  // Create a new quiz
+                  const quiz = new Quiz({
+                    title: quizData.title || `${newModule.title} Quiz`,
+                    description:
+                      quizData.description || `Quiz for ${newModule.title}`,
+                    course: course._id,
+                    questions: processedQuestions,
+                    timeLimit: quizData.timeLimit || 30,
+                    passingScore: quizData.passingScore || 60,
+                  });
+
+                  await quiz.save();
+                  console.log("New quiz created for new module with ID:", quiz._id);
+                  quizId = quiz._id;
+
+                  // Add quiz to course's quizzes array
+                  if (!course.quizzes.includes(quizId)) {
+                    course.quizzes.push(quizId);
+                  }
+                }
 
                 // Associate quiz with module
-                newModule.quiz = quiz._id;
+                newModule.quiz = quizId;
                 await newModule.save();
-
-                // Add quiz to course's quizzes array
-                if (!course.quizzes.includes(quiz._id)) {
-                  course.quizzes.push(quiz._id);
-                }
+                console.log(`Associated quiz ${quizId} with module ${newModule._id}`);
               }
             }
           }
@@ -1187,6 +1252,41 @@ exports.updateCourse = async (req, res) => {
         if (contentModules[contentId]) {
           moduleId = contentModules[contentId];
           console.log(`Using module mapping for ${contentId}: ${moduleId}`);
+
+          // Check if this is a temporary module ID and create a new module if needed
+          if (moduleId && moduleId.toString().startsWith('temp_')) {
+            console.log(`Detected temporary module ID: ${moduleId}, creating a new module`);
+
+            // Find the module data in parsedModules
+            const tempModuleData = parsedModules.find(m => m._id === moduleId);
+
+            // Create default module data if we can't find it in parsedModules
+            const moduleDataToUse = tempModuleData || {
+              title: "New Module",
+              description: "",
+              order: course.modules ? course.modules.length : 0,
+              isCompulsory: true
+            };
+
+            // Create a new module with proper MongoDB ID
+            const newModule = new Module({
+              title: moduleDataToUse.title || "New Module",
+              description: moduleDataToUse.description || "",
+              course: course._id,
+              order: moduleDataToUse.order || 0,
+              content: [], // Initialize with empty content array
+              isCompulsory: moduleDataToUse.isCompulsory !== undefined ? moduleDataToUse.isCompulsory : true,
+            });
+
+            await newModule.save();
+            console.log(`Created new module with ID ${newModule._id} to replace temp ID ${moduleId}`);
+
+            // Add to course modules
+            course.modules.push(newModule._id);
+
+            // Update moduleId to use the new MongoDB ID
+            moduleId = newModule._id;
+          }
         }
 
         // Check if this is an existing content item being updated
@@ -1239,44 +1339,91 @@ exports.updateCourse = async (req, res) => {
         }
 
         // Create a new content item (for new content or if update failed)
-        const newContent = new Content({
-          title: contentItem.title,
-          description: contentItem.description,
-          fileUrl: file.path,
-          creator: req.user.id,
-          status: "approved",
-          type:
-            contentItem.type ||
-            (mediaType === "video"
-              ? "video"
-              : mediaType === "image"
-                ? "image"
-                : "document"),
-          mediaType,
-          mimeType,
-          size: file.size,
-          module: moduleId,
-        });
+        // Validate moduleId is a valid ObjectId before using it
+        const validModuleId = moduleId && mongoose.Types.ObjectId.isValid(moduleId) ? moduleId : null;
+        if (moduleId && !validModuleId) {
+          console.warn(`Invalid module ID ${moduleId} for content ${contentId}, setting to null`);
+        }
 
-        await newContent.save();
-        contentItems.push({
-          id: contentId,
-          dbId: newContent._id,
-        });
+        // Check if we already created a placeholder for this content
+        const existingPlaceholder = contentItems.find(item => item.id === contentId);
+        let newContent;
 
-        // If we have a module ID, add this content to the module
-        if (moduleId) {
+        if (existingPlaceholder) {
+          // Update the existing placeholder with the file information
+          console.log(`Found existing placeholder for content ID ${contentId}, updating it`);
+          newContent = await Content.findById(existingPlaceholder.dbId);
+
+          if (newContent) {
+            newContent.title = contentItem.title;
+            newContent.description = contentItem.description;
+            newContent.fileUrl = file.path;
+            newContent.type = contentItem.type ||
+              (mediaType === "video"
+                ? "video"
+                : mediaType === "image"
+                  ? "image"
+                  : "document");
+            newContent.mediaType = mediaType;
+            newContent.mimeType = mimeType;
+            newContent.size = file.size;
+            newContent.module = validModuleId;
+
+            await newContent.save();
+            console.log(`Updated existing placeholder content: ${newContent._id}`);
+
+            // No need to add to contentItems as it's already there
+            // But we need to continue with the rest of the processing
+          } else {
+            console.warn(`Could not find placeholder content with ID ${existingPlaceholder.dbId}`);
+            // Fall back to creating a new content item
+            newContent = null;
+          }
+        }
+
+        // If we didn't find or couldn't update a placeholder, create a new content item
+        if (!existingPlaceholder || !newContent) {
+          newContent = new Content({
+            title: contentItem.title,
+            description: contentItem.description,
+            fileUrl: file.path,
+            creator: req.user.id,
+            status: "approved",
+            type:
+              contentItem.type ||
+              (mediaType === "video"
+                ? "video"
+                : mediaType === "image"
+                  ? "image"
+                  : "document"),
+            mediaType,
+            mimeType,
+            size: file.size,
+            module: validModuleId,
+          });
+
+          await newContent.save();
+
+          // Add to contentItems for tracking
+          contentItems.push({
+            id: contentId,
+            dbId: newContent._id,
+          });
+        }
+
+        // If we have a valid module ID, add this content to the module
+        if (validModuleId) {
           try {
-            const module = await Module.findById(moduleId);
+            const module = await Module.findById(validModuleId);
             if (module) {
               module.content.push(newContent._id);
               await module.save();
               console.log(
-                `Added content ${newContent._id} to module ${moduleId}`
+                `Added content ${newContent._id} to module ${validModuleId}`
               );
             }
           } catch (err) {
-            console.error(`Error adding content to module ${moduleId}:`, err);
+            console.error(`Error adding content to module ${validModuleId}:`, err);
           }
         }
       }
@@ -1332,11 +1479,52 @@ exports.updateCourse = async (req, res) => {
               console.log(
                 `Using module mapping for text/youtube ${item._id}: ${moduleId}`
               );
+
+              // Check if this is a temporary module ID and create a new module if needed
+              if (moduleId && moduleId.toString().startsWith('temp_')) {
+                console.log(`Detected temporary module ID: ${moduleId}, creating a new module for text/youtube content`);
+
+                // Find the module data in parsedModules
+                const tempModuleData = parsedModules.find(m => m._id === moduleId);
+
+                // Create default module data if we can't find it in parsedModules
+                const moduleDataToUse = tempModuleData || {
+                  title: "New Module",
+                  description: "",
+                  order: course.modules ? course.modules.length : 0,
+                  isCompulsory: true
+                };
+
+                // Create a new module with proper MongoDB ID
+                const newModule = new Module({
+                  title: moduleDataToUse.title || "New Module",
+                  description: moduleDataToUse.description || "",
+                  course: course._id,
+                  order: moduleDataToUse.order || 0,
+                  content: [], // Initialize with empty content array
+                  isCompulsory: moduleDataToUse.isCompulsory !== undefined ? moduleDataToUse.isCompulsory : true,
+                });
+
+                await newModule.save();
+                console.log(`Created new module with ID ${newModule._id} to replace temp ID ${moduleId} for text/youtube content`);
+
+                // Add to course modules
+                course.modules.push(newModule._id);
+
+                // Update moduleId to use the new MongoDB ID
+                moduleId = newModule._id;
+              }
             }
 
             // Handle new YouTube content
             if (item.type === "youtube") {
               console.log(`Creating new YouTube content item: ${item.title}`);
+              // Validate moduleId is a valid ObjectId before using it
+              const validModuleId = moduleId && mongoose.Types.ObjectId.isValid(moduleId) ? moduleId : null;
+              if (moduleId && !validModuleId) {
+                console.warn(`Invalid module ID ${moduleId} for YouTube content ${item._id}, setting to null`);
+              }
+
               const newYoutubeContent = new Content({
                 title: item.title,
                 description: item.description,
@@ -1347,7 +1535,7 @@ exports.updateCourse = async (req, res) => {
                 type: "youtube",
                 mediaType: "video",
                 mimeType: "video/youtube",
-                module: moduleId,
+                module: validModuleId,
               });
 
               await newYoutubeContent.save();
@@ -1355,20 +1543,20 @@ exports.updateCourse = async (req, res) => {
                 `Created YouTube content with ID: ${newYoutubeContent._id}`
               );
 
-              // If we have a module ID, add this content to the module
-              if (moduleId) {
+              // If we have a valid module ID, add this content to the module
+              if (validModuleId) {
                 try {
-                  const module = await Module.findById(moduleId);
+                  const module = await Module.findById(validModuleId);
                   if (module) {
                     module.content.push(newYoutubeContent._id);
                     await module.save();
                     console.log(
-                      `Added YouTube content ${newYoutubeContent._id} to module ${moduleId}`
+                      `Added YouTube content ${newYoutubeContent._id} to module ${validModuleId}`
                     );
                   }
                 } catch (err) {
                   console.error(
-                    `Error adding YouTube content to module ${moduleId}:`,
+                    `Error adding YouTube content to module ${validModuleId}:`,
                     err
                   );
                 }
@@ -1382,6 +1570,12 @@ exports.updateCourse = async (req, res) => {
 
             // Create new text content
             console.log(`Creating new text content item: ${item.title}`);
+            // Validate moduleId is a valid ObjectId before using it
+            const validModuleId = moduleId && mongoose.Types.ObjectId.isValid(moduleId) ? moduleId : null;
+            if (moduleId && !validModuleId) {
+              console.warn(`Invalid module ID ${moduleId} for text content ${item._id}, setting to null`);
+            }
+
             const newTextContent = new Content({
               title: item.title,
               description: item.description,
@@ -1391,26 +1585,26 @@ exports.updateCourse = async (req, res) => {
               type: "text",
               mediaType: "text",
               mimeType: "text/html",
-              module: moduleId,
+              module: validModuleId,
             });
 
             await newTextContent.save();
             console.log(`Created text content with ID: ${newTextContent._id}`);
 
-            // If we have a module ID, add this content to the module
-            if (moduleId) {
+            // If we have a valid module ID, add this content to the module
+            if (validModuleId) {
               try {
-                const module = await Module.findById(moduleId);
+                const module = await Module.findById(validModuleId);
                 if (module) {
                   module.content.push(newTextContent._id);
                   await module.save();
                   console.log(
-                    `Added text content ${newTextContent._id} to module ${moduleId}`
+                    `Added text content ${newTextContent._id} to module ${validModuleId}`
                   );
                 }
               } catch (err) {
                 console.error(
-                  `Error adding text content to module ${moduleId}:`,
+                  `Error adding text content to module ${validModuleId}:`,
                   err
                 );
               }
