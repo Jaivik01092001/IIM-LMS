@@ -464,7 +464,7 @@
   }
 
   .admin-dashboard .header-actions {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .admin-dashboard .search-filter-container {

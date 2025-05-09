@@ -13,6 +13,7 @@ import StatusToggle from "../components/common/StatusToggle";
 import { hasLocalPermission } from "../utils/localPermissions";
 import { FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Schools.css";
+import "../assets/styles/CommonHeader.css";
 
 const Schools = () => {
   const navigate = useNavigate();
@@ -49,9 +50,7 @@ const Schools = () => {
         // If avatar starts with http, use it directly, otherwise prepend the base URL
         avatarUrl = profile.avatar.startsWith("http")
           ? profile.avatar
-          : `${import.meta.env.VITE_IMAGE_URL}${
-              profile.avatar
-            }`;
+          : `${import.meta.env.VITE_IMAGE_URL}${profile.avatar}`;
       }
 
       return {
@@ -245,8 +244,17 @@ const Schools = () => {
 
   return (
     <div className="schools-container">
-      <div className="schools-header">
-        <div className="search-filter-container">
+      <div className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">Schools & Universities</h1>
+          {hasLocalPermission("create_school") && (
+            <button className="create-button" onClick={handleCreateAccount}>
+              Create School
+            </button>
+          )}
+        </div>
+
+        <div className="filters-row">
           <input
             type="text"
             placeholder="Search Schools"
@@ -285,15 +293,6 @@ const Schools = () => {
             <option value="Name (Z-A)">Name (Z-A)</option>
             <option value="Status">Status</option>
           </select>
-
-          {hasLocalPermission("create_school") && (
-            <button
-              className="create-account-btn"
-              onClick={handleCreateAccount}
-            >
-              Create Account
-            </button>
-          )}
         </div>
       </div>
 

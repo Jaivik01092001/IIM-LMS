@@ -17,6 +17,7 @@ import StatusToggle from "../components/common/StatusToggle";
 import { hasLocalPermission } from "../utils/localPermissions";
 import { FaPencilAlt, FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Educators.css";
+import "../assets/styles/CommonHeader.css";
 
 const Educators = () => {
   const navigate = useNavigate();
@@ -98,9 +99,7 @@ const Educators = () => {
           school: schoolName,
           category: educator.profile?.category || universityCategory,
           avatar: educator.profile?.avatar
-            ? `${import.meta.env.VITE_IMAGE_URL}${
-                educator.profile.avatar
-              }`
+            ? `${import.meta.env.VITE_IMAGE_URL}${educator.profile.avatar}`
             : null,
           mobile: educator.phoneNumber || "N/A",
           status: educator.status === 1,
@@ -267,8 +266,20 @@ const Educators = () => {
 
   return (
     <div className="educators-container">
-      <div className="educators-header">
-        <div className="search-filter-container">
+      <div className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">Educators</h1>
+          {hasLocalPermission("create_educator") && (
+            <button
+              className="create-button"
+              onClick={() => navigate("/dashboard/admin/educator-account-form")}
+            >
+              Create Educator
+            </button>
+          )}
+        </div>
+
+        <div className="filters-row">
           <input
             type="text"
             placeholder="Search Educators"
@@ -289,6 +300,7 @@ const Educators = () => {
               </option>
             ))}
           </select>
+
           <select
             className="filter-select"
             value={sortBy}
@@ -299,15 +311,6 @@ const Educators = () => {
             <option value="name-desc">Name (Z-A)</option>
             <option value="status">Status</option>
           </select>
-
-          {hasLocalPermission("create_educator") && (
-            <button
-              className="create-account-btn"
-              onClick={() => navigate("/dashboard/admin/educator-account-form")}
-            >
-              Create Account
-            </button>
-          )}
         </div>
       </div>
 
