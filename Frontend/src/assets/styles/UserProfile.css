@@ -246,6 +246,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .user-profile-container .submit-btn:hover {
