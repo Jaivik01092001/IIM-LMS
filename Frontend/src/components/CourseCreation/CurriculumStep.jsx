@@ -519,11 +519,29 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
     const existingQuiz = quizzes.find((quiz) => quiz._id === editingQuizId);
     const moduleOfEditingQuiz = existingQuiz?.module;
 
+    // Check if there's a valid current question that hasn't been added yet
+    let updatedQuestions = [...quizFormData.questions];
+
+    // Only add the current question if it has content and all options are filled
+    if (
+      currentQuestion.question &&
+      !currentQuestion.options.some(opt => !opt)
+    ) {
+      // Create a copy of the current question with correctAnswer as a string
+      const processedQuestion = {
+        ...currentQuestion,
+        correctAnswer: currentQuestion.correctAnswer.toString(), // Convert to string for backend compatibility
+      };
+
+      // Add the current question to the questions array
+      updatedQuestions.push(processedQuestion);
+    }
+
     const updatedQuiz = {
       ...existingQuiz,
       title: quizFormData.title,
       description: quizFormData.description,
-      questions: quizFormData.questions,
+      questions: updatedQuestions,
       // Preserve the isNew flag if it exists
       isNew: existingQuiz?.isNew || false,
     };
