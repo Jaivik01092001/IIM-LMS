@@ -9,7 +9,10 @@ import {
   FaEye,
   FaUserGraduate,
 } from "react-icons/fa";
-import { getMyCoursesThunk, getCoursesThunk } from "../../redux/educator/educatorSlice";
+import {
+  getMyCoursesThunk,
+  getCoursesThunk,
+} from "../../redux/educator/educatorSlice";
 import DataTableComponent from "../../components/DataTable";
 import ProgressBar from "../../components/common/ProgressBar";
 import "../../assets/styles/TutorDashboard.css";
@@ -24,7 +27,9 @@ const TutorDashboard = () => {
   const [allCourses, setAllCourses] = useState([]);
 
   // Get courses data from Redux store
-  const { myCourses, courses, loading } = useSelector((state) => state.educator);
+  const { myCourses, courses, loading } = useSelector(
+    (state) => state.educator
+  );
   const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading state changes
@@ -59,11 +64,12 @@ const TutorDashboard = () => {
 
         if (course.enrolledUsers && course.enrolledUsers.length > 0) {
           // Find the user's enrollment
-          const userEnrollment = course.enrolledUsers.find(enrollment => {
+          const userEnrollment = course.enrolledUsers.find((enrollment) => {
             // Handle different possible data formats of user id
-            const enrollmentUserId = typeof enrollment.user === 'object'
-              ? enrollment.user._id
-              : enrollment.user;
+            const enrollmentUserId =
+              typeof enrollment.user === "object"
+                ? enrollment.user._id
+                : enrollment.user;
 
             return enrollmentUserId === currentUserId;
           });
@@ -222,9 +228,13 @@ const TutorDashboard = () => {
               </div>
             </div>
 
-            <div className="stat-card ongoing" onClick={handleOngoingCoursesClick}>
+            <div
+              className="stat-card ongoing"
+              onClick={handleOngoingCoursesClick}
+            >
               <div className="stat-icon1">
                 <FaClock size={24} />
+
                 <FaClock className="icondesign1" />
               </div>
               <div>
@@ -233,7 +243,10 @@ const TutorDashboard = () => {
               </div>
             </div>
 
-            <div className="stat-card completed" onClick={handleCompletedCoursesClick}>
+            <div
+              className="stat-card completed"
+              onClick={handleCompletedCoursesClick}
+            >
               <div className="stat-icon2">
                 <FaGraduationCap size={24} />
                 <FaGraduationCap className="icondesign2" />

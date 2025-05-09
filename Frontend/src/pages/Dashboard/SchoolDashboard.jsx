@@ -1,20 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { FaPencilAlt, FaEye, FaUserTie, FaBook, FaChalkboardTeacher, FaClock } from 'react-icons/fa';
-import { FaFilePen } from 'react-icons/fa6';
-import { IoBookOutline } from 'react-icons/io5';
-import { getEducatorsThunk, updateEducatorThunk, deleteEducatorThunk } from '../../redux/university/universitySlice';
-import { getMyCoursesThunk } from '../../redux/educator/educatorSlice';
-import { getCoursesThunk, updateCourseThunk, deleteCourseThunk } from '../../redux/admin/adminSlice';
-import { getBlogsThunk } from '../../redux/blog/blogSlice';
-import DataTableComponent from '../../components/DataTable';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import StatusToggle from '../../components/common/StatusToggle';
-import ActionButtons from '../../components/common/ActionButtons';
-import { hasLocalPermission } from '../../utils/localPermissions';
-import '../../assets/styles/Courses.css';
-import '../../assets/styles/SchoolDashboard.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  FaPencilAlt,
+  FaEye,
+  FaUserTie,
+  FaBook,
+  FaChalkboardTeacher,
+  FaClock,
+} from "react-icons/fa";
+import { FaFilePen } from "react-icons/fa6";
+import { IoBookOutline } from "react-icons/io5";
+import {
+  getEducatorsThunk,
+  updateEducatorThunk,
+  deleteEducatorThunk,
+} from "../../redux/university/universitySlice";
+import { getMyCoursesThunk } from "../../redux/educator/educatorSlice";
+import {
+  getCoursesThunk,
+  updateCourseThunk,
+  deleteCourseThunk,
+} from "../../redux/admin/adminSlice";
+import { getBlogsThunk } from "../../redux/blog/blogSlice";
+import DataTableComponent from "../../components/DataTable";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import StatusToggle from "../../components/common/StatusToggle";
+import ActionButtons from "../../components/common/ActionButtons";
+import { hasLocalPermission } from "../../utils/localPermissions";
+import "../../assets/styles/Courses.css";
+import "../../assets/styles/SchoolDashboard.css";
 const VITE_IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
 const SchoolDashboard = () => {
@@ -27,15 +42,23 @@ const SchoolDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { educators, loading: educatorsLoading } = useSelector((state) => state.university);
-  const { courses, loading: coursesLoading } = useSelector((state) => state.admin);
-  const { myCourses, loading: myCoursesLoading } = useSelector((state) => state.educator);
+  const { educators, loading: educatorsLoading } = useSelector(
+    (state) => state.university
+  );
+  const { courses, loading: coursesLoading } = useSelector(
+    (state) => state.admin
+  );
+  const { myCourses, loading: myCoursesLoading } = useSelector(
+    (state) => state.educator
+  );
   const { blogs, loading: blogsLoading } = useSelector((state) => state.blog);
   const { user } = useSelector((state) => state.auth);
 
   // Update loading state when Redux loading states change
   useEffect(() => {
-    setIsLoading(educatorsLoading || coursesLoading || myCoursesLoading || blogsLoading);
+    setIsLoading(
+      educatorsLoading || coursesLoading || myCoursesLoading || blogsLoading
+    );
   }, [educatorsLoading, coursesLoading, myCoursesLoading, blogsLoading]);
 
   // Fetch data on component mount
@@ -49,7 +72,7 @@ const SchoolDashboard = () => {
   // Redirect if not logged in
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [user, navigate]);
 
@@ -66,30 +89,36 @@ const SchoolDashboard = () => {
   useEffect(() => {
     if (courses && courses.length > 0 && user) {
       // Filter courses to only show those created by the current university
-      const schoolCourses = courses.filter(course => {
+      const schoolCourses = courses.filter((course) => {
         // Check if the course creator is the current user or an educator from this university
-        return course.creator?._id === user.id ||
-          (course.creator?.university && course.creator.university === user.id);
+        return (
+          course.creator?._id === user.id ||
+          (course.creator?.university && course.creator.university === user.id)
+        );
       });
 
-      const formattedCourses = schoolCourses.map(course => ({
+      const formattedCourses = schoolCourses.map((course) => ({
         id: course._id,
-        title: course.title || 'Untitled Course',
-        category: course.category || 'Uncategorized',
-        professor: course.creator?.name || 'Unknown',
-        duration: course.duration || 'N/A',
-        level: course.level || 'N/A',
-        description: course.description || 'No description available',
-        tags: course.tags?.join(', ') || 'No tags',
-        language: course.language || 'English',
+        title: course.title || "Untitled Course",
+        category: course.category || "Uncategorized",
+        professor: course.creator?.name || "Unknown",
+        duration: course.duration || "N/A",
+        level: course.level || "N/A",
+        description: course.description || "No description available",
+        tags: course.tags?.join(", ") || "No tags",
+        language: course.language || "English",
         status: course.status === 1,
-        thumbnail: course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-        hasModules: course.hasModules || false
+        thumbnail:
+          course.thumbnail ||
+          "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
+        hasModules: course.hasModules || false,
       }));
       setCourseTableData(formattedCourses);
 
       // Extract unique categories
-      const uniqueCategories = [...new Set(formattedCourses.map(course => course.category))];
+      const uniqueCategories = [
+        ...new Set(formattedCourses.map((course) => course.category)),
+      ];
       setCategories(uniqueCategories);
     }
   }, [courses, user]);
@@ -98,20 +127,20 @@ const SchoolDashboard = () => {
   useEffect(() => {
     if (educators && educators.length > 0 && user) {
       // Filter educators to only show those belonging to the current university
-      const universityEducators = educators.filter(educator => {
+      const universityEducators = educators.filter((educator) => {
         return educator.university === user.id;
       });
 
       // Format educators data for display
       const formattedEducators = universityEducators.map((educator, index) => {
         // Get university name from populated university field or use current user's name
-        let universityName = user?.name || 'N/A';
-        let universityCategory = 'University';
+        let universityName = user?.name || "N/A";
+        let universityCategory = "University";
 
         // First try to get from populated university field
-        if (educator.university && typeof educator.university === 'object') {
-          universityName = educator.university.name || user?.name || 'N/A';
-          universityCategory = educator.university.category || 'University';
+        if (educator.university && typeof educator.university === "object") {
+          universityName = educator.university.name || user?.name || "N/A";
+          universityCategory = educator.university.category || "University";
         }
 
         // Use schoolName from profile if available, otherwise use university name
@@ -119,16 +148,18 @@ const SchoolDashboard = () => {
 
         return {
           id: educator._id,
-          professor: educator.name || 'Unknown',
+          professor: educator.name || "Unknown",
           school: schoolName,
           category: educator.profile?.category || universityCategory,
-          avatar: educator.avatar || `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
-          mobile: educator.phoneNumber || 'N/A',
+          avatar:
+            educator.avatar ||
+            `https://randomuser.me/api/portraits/men/${(index % 30) + 1}.jpg`,
+          mobile: educator.phoneNumber || "N/A",
           status: educator.status === 1,
-          email: educator.email || 'N/A',
-          address: educator.profile?.address || 'N/A',
-          zipcode: educator.profile?.zipcode || 'N/A',
-          state: educator.profile?.state || 'N/A'
+          email: educator.email || "N/A",
+          address: educator.profile?.address || "N/A",
+          zipcode: educator.profile?.zipcode || "N/A",
+          state: educator.profile?.state || "N/A",
         };
       });
 
@@ -141,16 +172,19 @@ const SchoolDashboard = () => {
     if (myCourses && myCourses.length > 0) {
       // Format the ongoing courses data
       const formattedOngoingCourses = myCourses
-        .filter(course => {
+        .filter((course) => {
           // Check if the course has enrolled users with in_progress status
-          return course.enrolledUsers && course.enrolledUsers.some(
-            enrollment => enrollment.status === "in_progress"
+          return (
+            course.enrolledUsers &&
+            course.enrolledUsers.some(
+              (enrollment) => enrollment.status === "in_progress"
+            )
           );
         })
-        .map(course => {
+        .map((course) => {
           // Get only the in_progress enrollments
           const ongoingEnrollments = course.enrolledUsers.filter(
-            enrollment => enrollment.status === "in_progress"
+            (enrollment) => enrollment.status === "in_progress"
           );
 
           return {
@@ -161,13 +195,14 @@ const SchoolDashboard = () => {
             creator: {
               id: course.creator?._id || "",
               name: course.creator?.name || "Unknown",
-              avatar: course.creator?.profile?.avatar || ""
+              avatar: course.creator?.profile?.avatar || "",
             },
             enrolledCount: ongoingEnrollments.length,
-            enrolledUsers: ongoingEnrollments.map(enrollment => {
-              const user = typeof enrollment.user === 'object'
-                ? enrollment.user
-                : { _id: enrollment.user, name: "Unknown", email: "" };
+            enrolledUsers: ongoingEnrollments.map((enrollment) => {
+              const user =
+                typeof enrollment.user === "object"
+                  ? enrollment.user
+                  : { _id: enrollment.user, name: "Unknown", email: "" };
 
               return {
                 id: user._id,
@@ -175,9 +210,9 @@ const SchoolDashboard = () => {
                 email: user.email,
                 avatar: user.profile?.avatar || "",
                 progress: enrollment.progress || 0,
-                enrolledAt: enrollment.enrolledAt || new Date()
+                enrolledAt: enrollment.enrolledAt || new Date(),
               };
-            })
+            }),
           };
         });
 
@@ -191,10 +226,12 @@ const SchoolDashboard = () => {
   useEffect(() => {
     if (blogs && blogs.length > 0 && user) {
       // Filter blogs to only show those created by the current university or its educators
-      const universityBlogs = blogs.filter(blog => {
+      const universityBlogs = blogs.filter((blog) => {
         // Check if the blog creator is the current user or an educator from this university
-        return blog.createdBy?._id === user.id ||
-          (blog.createdBy?.university && blog.createdBy.university === user.id);
+        return (
+          blog.createdBy?._id === user.id ||
+          (blog.createdBy?.university && blog.createdBy.university === user.id)
+        );
       });
 
       setSchoolBlogs(universityBlogs);
@@ -205,32 +242,36 @@ const SchoolDashboard = () => {
 
   // Course status toggle handler
   const handleCourseStatusToggle = (row) => {
-    dispatch(updateCourseThunk({
-      id: row.id,
-      status: row.status ? 0 : 1
-    }))
+    dispatch(
+      updateCourseThunk({
+        id: row.id,
+        status: row.status ? 0 : 1,
+      })
+    )
       .unwrap()
       .then(() => {
         // Refresh courses data
         dispatch(getCoursesThunk());
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(`Error updating course status:`, error);
       });
   };
 
   // Educator status toggle handler
   const handleEducatorStatusToggle = (row) => {
-    dispatch(updateEducatorThunk({
-      id: row.id,
-      status: row.status ? 0 : 1
-    }))
+    dispatch(
+      updateEducatorThunk({
+        id: row.id,
+        status: row.status ? 0 : 1,
+      })
+    )
       .unwrap()
       .then(() => {
         // Refresh educators data
         dispatch(getEducatorsThunk());
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(`Error updating educator status:`, error);
       });
   };
@@ -247,14 +288,18 @@ const SchoolDashboard = () => {
 
   // Course delete handler
   const handleCourseDelete = (row) => {
-    if (window.confirm(`Are you sure you want to delete "${row.title}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${row.title}"? This action cannot be undone.`
+      )
+    ) {
       dispatch(deleteCourseThunk(row.id))
         .unwrap()
         .then(() => {
           // Refresh courses data
           dispatch(getCoursesThunk());
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(`Error deleting course:`, error);
         });
     }
@@ -266,9 +311,9 @@ const SchoolDashboard = () => {
       state: {
         educator: {
           ...row,
-          id: row.id
-        }
-      }
+          id: row.id,
+        },
+      },
     });
   };
 
@@ -281,14 +326,18 @@ const SchoolDashboard = () => {
 
   // Educator delete handler
   const handleEducatorDelete = (row) => {
-    if (window.confirm(`Are you sure you want to delete "${row.professor}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${row.professor}"? This action cannot be undone.`
+      )
+    ) {
       dispatch(deleteEducatorThunk(row.id))
         .unwrap()
         .then(() => {
           // Refresh educators data
           dispatch(getEducatorsThunk());
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(`Error deleting educator:`, error);
         });
     }
@@ -300,7 +349,11 @@ const SchoolDashboard = () => {
       name: "Course Title",
       cell: (row) => (
         <div className="course-info">
-          <img src={VITE_IMAGE_URL + row.thumbnail} alt={row.title} className="course-thumbnail" />
+          <img
+            src={VITE_IMAGE_URL + row.thumbnail}
+            alt={row.title}
+            className="course-thumbnail"
+          />
           <span>{row.title}</span>
         </div>
       ),
@@ -377,7 +430,9 @@ const SchoolDashboard = () => {
           />
           <div className="course-details">
             <span className="course-title">{row.title}</span>
-            <span className="course-description">{row.description?.substring(0, 50)}...</span>
+            <span className="course-description">
+              {row.description?.substring(0, 50)}...
+            </span>
           </div>
         </div>
       ),
@@ -388,7 +443,11 @@ const SchoolDashboard = () => {
       cell: (row) => (
         <div className="professor-info">
           <img
-            src={row.creator?.avatar ? VITE_IMAGE_URL + row.creator.avatar : `https://i.pravatar.cc/150?img=${row.id + 30}`}
+            src={
+              row.creator?.avatar
+                ? VITE_IMAGE_URL + row.creator.avatar
+                : `https://i.pravatar.cc/150?img=${row.id + 30}`
+            }
             alt={row.creator?.name || "Unknown"}
             className="professor-avatar"
           />
@@ -483,47 +542,65 @@ const SchoolDashboard = () => {
 
   return (
     <div className="courses-container admin-dashboard">
-      {isLoading && <LoadingSpinner overlay={true} message="Loading dashboard data..." />}
+      {isLoading && (
+        <LoadingSpinner overlay={true} message="Loading dashboard data..." />
+      )}
 
       {/* Stats Cards */}
       <div className="dashboard-stats">
-        <div className="stat-card courses" style={{ cursor: 'default' }}>
+        <div className="stat-card courses" style={{ cursor: "default" }}>
           <div className="stat-icon3">
             <FaBook size={24} />
           </div>
-          <div className="stat-count">{courseTableData.length || 0}</div>
-          <div className="stat-title">Our Courses</div>
+          <div className="stat-count">
+            {courseTableData.length || 0}
+            <div className="stat-title">Our Courses</div>
+          </div>
         </div>
 
-        <div className="stat-card educators" onClick={() => navigate("/dashboard/admin/educators")}>
+        <div
+          className="stat-card educators"
+          onClick={() => navigate("/dashboard/admin/educators")}
+        >
           <div className="stat-icon2">
             <FaChalkboardTeacher size={24} />
           </div>
-          <div className="stat-count">{educatorTableData.length || 0}</div>
-          <div className="stat-title">Our Educators</div>
+          <div className="stat-count">
+            {educatorTableData.length || 0}
+            <div className="stat-title">Our Educators</div>
+          </div>
         </div>
 
-        <div className="stat-card ongoing" style={{ cursor: 'default' }}>
+        <div className="stat-card ongoing" style={{ cursor: "default" }}>
           <div className="stat-icon1">
             <FaClock size={24} />
           </div>
-          <div className="stat-count">{ongoingCourses?.length || 0}</div>
-          <div className="stat-title">Ongoing Courses</div>
+          <div className="stat-count">
+            {ongoingCourses?.length || 0}
+            <div className="stat-title">Ongoing Courses</div>
+          </div>
         </div>
 
-        <div className="stat-card blogs" onClick={() => navigate("/dashboard/school/blogs")}>
+        <div
+          className="stat-card blogs"
+          onClick={() => navigate("/dashboard/school/blogs")}
+        >
           <div className="stat-icon4">
             <FaFilePen size={24} />
           </div>
-          <div className="stat-count">{schoolBlogs?.length || 0}</div>
-          <div className="stat-title">Blogs</div>
+          <div className="stat-count">
+            {schoolBlogs?.length || 0}
+            <div className="stat-title">Blogs</div>
+          </div>
         </div>
       </div>
 
       {/* Courses Table Section */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">Our Courses ({courseTableData.length || 0})</h2>
+          <h2 className="section-title">
+            Our Courses ({courseTableData.length || 0})
+          </h2>
           <div className="header-actions">
             {hasLocalPermission("create_course") && (
               <button
@@ -570,27 +647,40 @@ const SchoolDashboard = () => {
             columns={courseColumns}
             data={courseTableData
               // Apply search filter
-              .filter(item =>
-                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.professor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.level?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (item.tags && item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+              .filter(
+                (item) =>
+                  item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  item.category
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  item.professor
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  item.level
+                    ?.toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  (item.tags &&
+                    item.tags.toLowerCase().includes(searchTerm.toLowerCase()))
               )
               // Apply sorting
               .sort((a, b) => {
                 if (!sortBy) return 0;
 
                 switch (sortBy) {
-                  case "title-asc": return a.title.localeCompare(b.title);
-                  case "title-desc": return b.title.localeCompare(a.title);
-                  case "level-asc": return a.level.localeCompare(b.level);
-                  case "level-desc": return b.level.localeCompare(a.level);
-                  case "status": return a.status === b.status ? 0 : a.status ? -1 : 1;
-                  default: return 0;
+                  case "title-asc":
+                    return a.title.localeCompare(b.title);
+                  case "title-desc":
+                    return b.title.localeCompare(a.title);
+                  case "level-asc":
+                    return a.level.localeCompare(b.level);
+                  case "level-desc":
+                    return b.level.localeCompare(a.level);
+                  case "status":
+                    return a.status === b.status ? 0 : a.status ? -1 : 1;
+                  default:
+                    return 0;
                 }
-              })
-            }
+              })}
             showSearch={false}
           />
         </div>
@@ -599,11 +689,15 @@ const SchoolDashboard = () => {
       {/* Educators Table Section */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">Our Educators ({educatorTableData.length || 0})</h2>
+          <h2 className="section-title">
+            Our Educators ({educatorTableData.length || 0})
+          </h2>
           <div className="header-actions">
             <button
               className="add-course-btn"
-              onClick={() => navigate("/dashboard/school/educator-account-form")}
+              onClick={() =>
+                navigate("/dashboard/school/educator-account-form")
+              }
             >
               Add Educator
             </button>
@@ -631,12 +725,18 @@ const SchoolDashboard = () => {
             columns={educatorColumns}
             data={educatorTableData
               // Apply search filter
-              .filter(item =>
-                item.professor.toLowerCase().includes(educatorSearchTerm.toLowerCase()) ||
-                item.email?.toLowerCase().includes(educatorSearchTerm.toLowerCase()) ||
-                item.mobile?.toLowerCase().includes(educatorSearchTerm.toLowerCase())
-              )
-            }
+              .filter(
+                (item) =>
+                  item.professor
+                    .toLowerCase()
+                    .includes(educatorSearchTerm.toLowerCase()) ||
+                  item.email
+                    ?.toLowerCase()
+                    .includes(educatorSearchTerm.toLowerCase()) ||
+                  item.mobile
+                    ?.toLowerCase()
+                    .includes(educatorSearchTerm.toLowerCase())
+              )}
             showSearch={false}
             pagination={true}
           />
@@ -646,7 +746,9 @@ const SchoolDashboard = () => {
       {/* Ongoing Courses Table Section */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">Ongoing Courses ({ongoingCourses?.length || 0})</h2>
+          <h2 className="section-title">
+            Ongoing Courses ({ongoingCourses?.length || 0})
+          </h2>
           <div className="header-actions">
             <button
               className="view-all-btn"
@@ -673,12 +775,18 @@ const SchoolDashboard = () => {
               columns={ongoingCoursesColumns}
               data={ongoingCourses
                 // Apply search filter
-                .filter(item =>
-                  item.title?.toLowerCase().includes(ongoingCoursesSearchTerm.toLowerCase()) ||
-                  item.description?.toLowerCase().includes(ongoingCoursesSearchTerm.toLowerCase()) ||
-                  item.creator?.name?.toLowerCase().includes(ongoingCoursesSearchTerm.toLowerCase())
-                )
-              }
+                .filter(
+                  (item) =>
+                    item.title
+                      ?.toLowerCase()
+                      .includes(ongoingCoursesSearchTerm.toLowerCase()) ||
+                    item.description
+                      ?.toLowerCase()
+                      .includes(ongoingCoursesSearchTerm.toLowerCase()) ||
+                    item.creator?.name
+                      ?.toLowerCase()
+                      .includes(ongoingCoursesSearchTerm.toLowerCase())
+                )}
               showSearch={false}
               pagination={true}
             />
@@ -688,7 +796,10 @@ const SchoolDashboard = () => {
                 <FaClock className="empty-icon" />
                 <h3>No ongoing courses</h3>
                 <p>There are no courses currently in progress.</p>
-                <p>Create courses and encourage students to enroll to see ongoing courses here.</p>
+                <p>
+                  Create courses and encourage students to enroll to see ongoing
+                  courses here.
+                </p>
                 {hasLocalPermission("create_course") && (
                   <button
                     className="browse-courses-btn"

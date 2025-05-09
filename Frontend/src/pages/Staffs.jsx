@@ -12,6 +12,7 @@ import StatusToggle from "../components/common/StatusToggle";
 import ActionButtons from "../components/common/ActionButtons";
 import { FaUserCircle } from "react-icons/fa";
 import "../assets/styles/Staffs.css";
+import "../assets/styles/CommonHeader.css";
 
 const Staffs = () => {
   const navigate = useNavigate();
@@ -52,9 +53,7 @@ const Staffs = () => {
         // If avatar starts with http, use it directly, otherwise prepend the base URL
         avatarUrl = profile.avatar.startsWith("http")
           ? profile.avatar
-          : `${import.meta.env.VITE_IMAGE_URL}${
-              profile.avatar
-            }`;
+          : `${import.meta.env.VITE_IMAGE_URL}${profile.avatar}`;
       }
 
       return {
@@ -254,51 +253,58 @@ const Staffs = () => {
         </div>
       )}
 
-      <div className="search-filter-container">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search by name or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="filter-select"
-          value={departmentFilter}
-          onChange={(e) => setDepartmentFilter(e.target.value)}
-        >
-          <option value="">All Departments</option>
-          {departments.map((department, index) => (
-            <option key={index} value={department}>
-              {department}
-            </option>
-          ))}
-        </select>
+      <div className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">Staff Members</h1>
+          <button className="create-button" onClick={handleCreateAccount}>
+            Create Staff
+          </button>
+        </div>
 
-        <select
-          className="filter-select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <div className="filters-row">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-        <select
-          className="filter-select"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="">Sort By</option>
-          <option value="Name (A-Z)">Name (A-Z)</option>
-          <option value="Name (Z-A)">Name (Z-A)</option>
-          <option value="Department">Department</option>
-          <option value="Status">Status</option>
-        </select>
-        <button className="create-account-btn" onClick={handleCreateAccount}>
-          Create Staff
-        </button>
+          <select
+            className="filter-select"
+            value={departmentFilter}
+            onChange={(e) => setDepartmentFilter(e.target.value)}
+          >
+            <option value="">All Departments</option>
+            {departments.map((department, index) => (
+              <option key={index} value={department}>
+                {department}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          <select
+            className="filter-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="">Sort By</option>
+            <option value="Name (A-Z)">Name (A-Z)</option>
+            <option value="Name (Z-A)">Name (Z-A)</option>
+            <option value="Department">Department</option>
+            <option value="Status">Status</option>
+          </select>
+        </div>
       </div>
 
       <DataTableComponent

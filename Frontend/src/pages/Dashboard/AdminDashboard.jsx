@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaBook, FaUsers, FaUserTie, FaNewspaper, FaUserTag } from "react-icons/fa";
+import {
+  FaBook,
+  FaUsers,
+  FaUserTie,
+  FaNewspaper,
+  FaUserTag,
+} from "react-icons/fa";
 import { LuSchool } from "react-icons/lu";
 import { LiaChalkboardTeacherSolid } from "react-icons/lia";
 import { useNavigate } from "react-router-dom";
@@ -30,18 +36,17 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get data from Redux store
-  const { universities, courses, users, loading: adminLoading } = useSelector(
-    (state) => state.admin
-  );
+  const {
+    universities,
+    courses,
+    users,
+    loading: adminLoading,
+  } = useSelector((state) => state.admin);
   const { staffMembers, loading: staffLoading } = useSelector(
     (state) => state.staff
   );
-  const { blogs, loading: blogLoading } = useSelector(
-    (state) => state.blog
-  );
-  const { roles, loading: roleLoading } = useSelector(
-    (state) => state.role
-  );
+  const { blogs, loading: blogLoading } = useSelector((state) => state.blog);
+  const { roles, loading: roleLoading } = useSelector((state) => state.role);
 
   // Update loading state when any Redux loading state changes
   useEffect(() => {
@@ -86,7 +91,7 @@ const AdminDashboard = () => {
     dispatch(getRolesThunk());
 
     // Admin users should have permission to view users, but let's check anyway
-    if (user?.role === 'admin' || user?.permissions?.view_users) {
+    if (user?.role === "admin" || user?.permissions?.view_users) {
       dispatch(getUsersThunk());
     }
   }, [dispatch, user]);
@@ -226,7 +231,8 @@ const AdminDashboard = () => {
       .unwrap()
       .then(() => {
         console.log(
-          `Successfully ${row.status ? "deactivated" : "activated"} ${row.title
+          `Successfully ${row.status ? "deactivated" : "activated"} ${
+            row.title
           }`
         );
         // Refresh courses data
@@ -314,7 +320,10 @@ const AdminDashboard = () => {
       )}
       {/* Dashboard Stats */}
       <div className="dashboard-stats">
-        <div className="stat-card courses" onClick={() => navigate("/dashboard/admin/courses")}>
+        <div
+          className="stat-card courses"
+          onClick={() => navigate("/dashboard/admin/courses")}
+        >
           <div className="stat-icon3">
             <FaBook size={24} />
             <FaBook className="icondesign3" />
@@ -325,9 +334,13 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card schools" onClick={() => navigate("/dashboard/admin/schools")}>
+        <div
+          className="stat-card schools"
+          onClick={() => navigate("/dashboard/admin/schools")}
+        >
           <div className="stat-icon1">
             <LuSchool size={24} />
+
             <LuSchool className="icondesign1" />
           </div>
           <div>
@@ -338,7 +351,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card educators" onClick={() => navigate("/dashboard/admin/educators")}>
+        <div
+          className="stat-card educators"
+          onClick={() => navigate("/dashboard/admin/educators")}
+        >
           <div className="stat-icon2">
             <LiaChalkboardTeacherSolid size={30} />
             <LiaChalkboardTeacherSolid className="icondesign2" />
@@ -351,7 +367,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card staff" onClick={() => navigate("/dashboard/admin/staffs")}>
+        <div
+          className="stat-card staff"
+          onClick={() => navigate("/dashboard/admin/staffs")}
+        >
           <div className="stat-icon5">
             <FaUserTie size={24} />
             <FaUserTie className="icondesign5" />
@@ -362,7 +381,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card blogs" onClick={() => navigate("/dashboard/admin/blogs")}>
+        <div
+          className="stat-card blogs"
+          onClick={() => navigate("/dashboard/admin/blogs")}
+        >
           <div className="stat-icon6">
             <FaNewspaper size={24} />
             <FaNewspaper className="icondesign6" />
@@ -374,8 +396,11 @@ const AdminDashboard = () => {
         </div>
 
         {/* Only show roles stats card to admin users, not staff */}
-        {user?.role === 'admin' && (
-          <div className="stat-card roles" onClick={() => navigate("/dashboard/admin/role-permission")}>
+        {user?.role === "admin" && (
+          <div
+            className="stat-card roles"
+            onClick={() => navigate("/dashboard/admin/role-permission")}
+          >
             <div className="stat-icon7">
               <FaUserTag size={24} />
               <FaUserTag className="icondesign7" />
