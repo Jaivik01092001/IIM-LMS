@@ -678,6 +678,9 @@ exports.updateCourse = async (req, res) => {
       isDraft,
     } = req.body;
 
+    // Initialize contentItems array at the beginning to avoid reference errors
+    const contentItems = [];
+
     console.log("Update course data:", req.body);
 
     // Debug uploaded files
@@ -781,11 +784,22 @@ exports.updateCourse = async (req, res) => {
                     }
                   }
 
-                  // Update module content
-                  existingModule.content = updatedContent;
+                  // Update module content - ensure we only have valid ObjectIds
+                  const validModuleContent = [];
+
+                  for (const contentId of updatedContent) {
+                    // Skip any non-ObjectId values
+                    if (mongoose.Types.ObjectId.isValid(contentId)) {
+                      validModuleContent.push(contentId);
+                    } else {
+                      console.log(`Skipping invalid content ID in module: ${contentId}`);
+                    }
+                  }
+
+                  existingModule.content = validModuleContent;
 
                   // Update content items to reference this module
-                  for (const contentId of updatedContent) {
+                  for (const contentId of validModuleContent) {
                     try {
                       const contentExists = await Content.findById(contentId);
                       if (contentExists) {
@@ -804,10 +818,21 @@ exports.updateCourse = async (req, res) => {
                 // Update quiz if provided
                 if (moduleData.quiz) {
                   const quizData = moduleData.quiz;
+                  console.log("Processing quiz for module:", existingModule.title);
+                  console.log("Quiz data:", quizData);
 
-                  // Check if quiz has an ID (existing quiz)
-                  if (quizData._id) {
+                  // Check if this is a new quiz being added during edit (has isNew flag or temp ID)
+                  const isNewQuiz = quizData.isNew === true ||
+                    (quizData._id && quizData._id.toString().startsWith('temp_'));
+
+                  // Check if quiz has a valid MongoDB ID (existing quiz)
+                  const hasValidId = quizData._id &&
+                    !quizData._id.toString().startsWith('temp_') &&
+                    mongoose.Types.ObjectId.isValid(quizData._id);
+
+                  if (hasValidId && !isNewQuiz) {
                     // Update existing quiz
+                    console.log("Updating existing quiz with ID:", quizData._id);
                     const existingQuiz = await Quiz.findById(quizData._id);
                     if (existingQuiz) {
                       existingQuiz.title = quizData.title || existingQuiz.title;
@@ -849,7 +874,9 @@ exports.updateCourse = async (req, res) => {
                       await existingQuiz.save();
                     }
                   } else {
-                    // Create new quiz
+                    // Create new quiz - either completely new or added during edit
+                    console.log("Creating new quiz for existing module:", existingModule.title);
+
                     // Process questions to ensure correctAnswer is a string
                     const processedQuestions = quizData.questions
                       ? quizData.questions.map((question) => {
@@ -879,6 +906,7 @@ exports.updateCourse = async (req, res) => {
                     });
 
                     await quiz.save();
+                    console.log("New quiz created with ID:", quiz._id);
 
                     // Associate quiz with module
                     existingModule.quiz = quiz._id;
@@ -943,11 +971,22 @@ exports.updateCourse = async (req, res) => {
                   }
                 }
 
-                // Update module content
-                newModule.content = updatedContent;
+                // Update module content - ensure we only have valid ObjectIds
+                const validModuleContent = [];
+
+                for (const contentId of updatedContent) {
+                  // Skip any non-ObjectId values
+                  if (mongoose.Types.ObjectId.isValid(contentId)) {
+                    validModuleContent.push(contentId);
+                  } else {
+                    console.log(`Skipping invalid content ID in new module: ${contentId}`);
+                  }
+                }
+
+                newModule.content = validModuleContent;
 
                 // Update content items to reference this module
-                for (const contentId of updatedContent) {
+                for (const contentId of validModuleContent) {
                   try {
                     const contentExists = await Content.findById(contentId);
                     if (contentExists) {
@@ -968,6 +1007,8 @@ exports.updateCourse = async (req, res) => {
               // If module has a quiz, create it and associate it with the module
               if (moduleData.quiz) {
                 const quizData = moduleData.quiz;
+                console.log("Processing quiz for new module:", newModule.title);
+                console.log("Quiz data:", quizData);
 
                 // Process questions to ensure correctAnswer is a string
                 const processedQuestions = quizData.questions
@@ -998,6 +1039,7 @@ exports.updateCourse = async (req, res) => {
                 });
 
                 await quiz.save();
+                console.log("New quiz created for new module with ID:", quiz._id);
 
                 // Associate quiz with module
                 newModule.quiz = quiz._id;
@@ -1061,8 +1103,7 @@ exports.updateCourse = async (req, res) => {
       parsedContent = [];
     }
 
-    // Create content items for uploaded files
-    const contentItems = [];
+    // We already have contentItems array initialized at the top of the function
 
     // Get content module mappings from request
     const contentModules = {};
@@ -1403,12 +1444,58 @@ exports.updateCourse = async (req, res) => {
           );
 
           // Add the newly created content items
-          course.content = [
-            ...parsedContent,
-            ...contentItems.map((item) => item.dbId),
-          ];
+          // Make sure we're only storing valid ObjectIds in the course.content array
+          const validContentIds = [];
+
+          // Add existing content IDs (filter out any objects or invalid IDs)
+          if (Array.isArray(parsedContent)) {
+            for (const item of parsedContent) {
+              // Skip temporary content items
+              if (item._id && item._id.toString().startsWith('temp_')) {
+                console.log(`Skipping temporary content item: ${item._id}`);
+                continue;
+              }
+
+              // If it's a valid ObjectId, add it
+              if (item._id && mongoose.Types.ObjectId.isValid(item._id)) {
+                validContentIds.push(item._id);
+              }
+            }
+          }
+
+          // Add newly created content IDs
+          if (contentItems && contentItems.length > 0) {
+            for (const item of contentItems) {
+              if (item && item.dbId) {
+                validContentIds.push(item.dbId);
+              }
+            }
+          }
+
+          // Set the course content to the valid IDs
+          course.content = validContentIds;
+          console.log(`Setting course.content to ${validContentIds.length} valid content IDs`);
         } else {
-          course.content = parsedContent;
+          // If no new content items, make sure we're still only storing valid ObjectIds
+          const validContentIds = [];
+
+          if (Array.isArray(parsedContent)) {
+            for (const item of parsedContent) {
+              // Skip temporary content items
+              if (item._id && item._id.toString().startsWith('temp_')) {
+                console.log(`Skipping temporary content item: ${item._id}`);
+                continue;
+              }
+
+              // If it's a valid ObjectId, add it
+              if (item._id && mongoose.Types.ObjectId.isValid(item._id)) {
+                validContentIds.push(item._id);
+              }
+            }
+          }
+
+          course.content = validContentIds;
+          console.log(`Setting course.content to ${validContentIds.length} valid content IDs (no new items)`);
         }
       } catch (err) {
         console.error("Error processing content update:", err);
@@ -1421,58 +1508,144 @@ exports.updateCourse = async (req, res) => {
         const parsedQuizzes =
           typeof quizzes === "string" ? JSON.parse(quizzes) : quizzes;
 
+        console.log("Processing quizzes:", parsedQuizzes);
+
         // Process each quiz to update its questions in the database
         if (Array.isArray(parsedQuizzes)) {
+          // Filter out temporary quiz IDs - these are handled in the module processing section
+          const validQuizzes = [];
+
           for (const quizData of parsedQuizzes) {
-            // Only process quizzes with an ID (existing quizzes)
-            if (quizData._id) {
-              const existingQuiz = await Quiz.findById(quizData._id);
-              if (existingQuiz) {
-                // Update quiz properties
-                existingQuiz.title = quizData.title || existingQuiz.title;
-                existingQuiz.description =
-                  quizData.description || existingQuiz.description;
+            // Skip temporary quizzes - they are handled in the module processing
+            if (quizData._id && quizData._id.toString().startsWith('temp_')) {
+              console.log(`Skipping temporary quiz with ID: ${quizData._id} - it will be handled in module processing`);
 
-                // Always update questions array if it's provided, even if it's empty
-                if (quizData.questions !== undefined) {
-                  console.log(
-                    `Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`
-                  );
+              // Check if this quiz is associated with a module
+              if (quizData.module) {
+                console.log(`Temporary quiz ${quizData._id} is associated with module ${quizData.module}`);
 
-                  // Process questions to ensure correctAnswer is a string
-                  const processedQuestions = quizData.questions.map(
-                    (question) => {
-                      // Ensure correctAnswer is a string
-                      if (
-                        question.correctAnswer !== undefined &&
-                        typeof question.correctAnswer !== "string"
-                      ) {
-                        return {
-                          ...question,
-                          correctAnswer: question.correctAnswer.toString(),
-                        };
+                try {
+                  // Find the module
+                  const module = await Module.findById(quizData.module);
+                  if (module) {
+                    console.log(`Found module ${module._id} for temporary quiz ${quizData._id}`);
+
+                    // If the module doesn't have a quiz yet, create one
+                    if (!module.quiz) {
+                      console.log(`Module ${module._id} doesn't have a quiz yet, creating one`);
+
+                      // Process questions to ensure correctAnswer is a string
+                      const processedQuestions = quizData.questions
+                        ? quizData.questions.map((question) => {
+                          // Ensure correctAnswer is a string
+                          if (
+                            question.correctAnswer !== undefined &&
+                            typeof question.correctAnswer !== "string"
+                          ) {
+                            return {
+                              ...question,
+                              correctAnswer: question.correctAnswer.toString(),
+                            };
+                          }
+                          return question;
+                        })
+                        : [];
+
+                      // Create a new quiz
+                      const quiz = new Quiz({
+                        title: quizData.title || `${module.title} Quiz`,
+                        description:
+                          quizData.description || `Quiz for ${module.title}`,
+                        course: course._id,
+                        questions: processedQuestions,
+                        timeLimit: quizData.timeLimit || 30,
+                        passingScore: quizData.passingScore || 60,
+                      });
+
+                      await quiz.save();
+                      console.log(`Created new quiz ${quiz._id} for module ${module._id}`);
+
+                      // Associate quiz with module
+                      module.quiz = quiz._id;
+                      await module.save();
+
+                      // Add quiz to course's quizzes array
+                      if (!course.quizzes.includes(quiz._id)) {
+                        course.quizzes.push(quiz._id);
                       }
-                      return question;
                     }
-                  );
-
-                  existingQuiz.questions = processedQuestions;
+                  }
+                } catch (err) {
+                  console.error(`Error processing temporary quiz ${quizData._id} for module ${quizData.module}:`, err);
                 }
+              }
 
-                existingQuiz.timeLimit =
-                  quizData.timeLimit || existingQuiz.timeLimit;
-                existingQuiz.passingScore =
-                  quizData.passingScore || existingQuiz.passingScore;
+              continue;
+            }
 
-                // Save the updated quiz
-                await existingQuiz.save();
+            // Only process quizzes with a valid MongoDB ID
+            if (quizData._id && mongoose.Types.ObjectId.isValid(quizData._id)) {
+              try {
+                const existingQuiz = await Quiz.findById(quizData._id);
+                if (existingQuiz) {
+                  // Update quiz properties
+                  existingQuiz.title = quizData.title || existingQuiz.title;
+                  existingQuiz.description =
+                    quizData.description || existingQuiz.description;
+
+                  // Always update questions array if it's provided, even if it's empty
+                  if (quizData.questions !== undefined) {
+                    console.log(
+                      `Updating quiz ${existingQuiz._id} with ${quizData.questions.length} questions from quizzes array`
+                    );
+
+                    // Process questions to ensure correctAnswer is a string
+                    const processedQuestions = quizData.questions.map(
+                      (question) => {
+                        // Ensure correctAnswer is a string
+                        if (
+                          question.correctAnswer !== undefined &&
+                          typeof question.correctAnswer !== "string"
+                        ) {
+                          return {
+                            ...question,
+                            correctAnswer: question.correctAnswer.toString(),
+                          };
+                        }
+                        return question;
+                      }
+                    );
+
+                    existingQuiz.questions = processedQuestions;
+                  }
+
+                  existingQuiz.timeLimit =
+                    quizData.timeLimit || existingQuiz.timeLimit;
+                  existingQuiz.passingScore =
+                    quizData.passingScore || existingQuiz.passingScore;
+
+                  // Save the updated quiz
+                  await existingQuiz.save();
+                  validQuizzes.push(existingQuiz._id);
+                }
+              } catch (err) {
+                console.error(`Error processing quiz ${quizData._id}:`, err);
+              }
+            }
+          }
+
+          // Only update course.quizzes with valid quiz IDs
+          // Don't overwrite the entire array as it may contain quizzes created in the module processing
+          if (validQuizzes.length > 0) {
+            // Merge existing quizzes with valid quizzes from the quizzes array
+            const existingQuizIds = course.quizzes.map(id => id.toString());
+            for (const quizId of validQuizzes) {
+              if (!existingQuizIds.includes(quizId.toString())) {
+                course.quizzes.push(quizId);
               }
             }
           }
         }
-
-        // Update course.quizzes array with quiz IDs
-        course.quizzes = parsedQuizzes.map((quiz) => quiz._id);
       } catch (err) {
         console.error("Error processing quizzes update:", err);
       }

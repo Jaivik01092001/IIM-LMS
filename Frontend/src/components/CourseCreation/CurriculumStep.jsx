@@ -113,10 +113,26 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
         return moduleData;
       });
 
+      // Process quizzes to ensure they have proper structure for backend
+      const processedQuizzes = quizzes.map(quiz => {
+        // Ensure questions have correctAnswer as string for backend compatibility
+        const processedQuestions = quiz.questions.map(q => ({
+          ...q,
+          correctAnswer: q.correctAnswer.toString()
+        }));
+
+        // Make sure isNew flag is preserved for new quizzes
+        return {
+          ...quiz,
+          questions: processedQuestions,
+          isNew: quiz.isNew === true
+        };
+      });
+
       updateCourseData({
         modules: processedModules,
         content,
-        quizzes,
+        quizzes: processedQuizzes,
       });
     } else {
       setHasUpdatedCourseData(true);
@@ -380,21 +396,23 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
 
   // Add quiz to module
   const addQuizToModule = (moduleId) => {
+    const newQuizId = `temp_quiz_${Date.now()}`;
     const newQuiz = {
-      _id: `temp_quiz_${Date.now()}`,
+      _id: newQuizId,
       title: "Module Quiz",
       description: "Test your knowledge of this module",
       questions: [],
       module: moduleId,
+      isNew: true, // Flag to indicate this is a new quiz being added during edit
     };
 
     const updatedModules = modules.map((module) =>
-      module._id === moduleId ? { ...module, quiz: newQuiz._id } : module
+      module._id === moduleId ? { ...module, quiz: newQuizId } : module
     );
 
     setModules(updatedModules);
     setQuizzes([...quizzes, newQuiz]);
-    setEditingQuizId(newQuiz._id);
+    setEditingQuizId(newQuizId);
     setQuizFormData({
       title: newQuiz.title,
       description: newQuiz.description,
@@ -506,6 +524,8 @@ const CurriculumStep = ({ courseData, updateCourseData }) => {
       title: quizFormData.title,
       description: quizFormData.description,
       questions: quizFormData.questions,
+      // Preserve the isNew flag if it exists
+      isNew: existingQuiz?.isNew || false,
     };
 
     // Update quiz in the quizzes array
