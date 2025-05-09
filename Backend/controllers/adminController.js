@@ -1460,41 +1460,52 @@ exports.updateCourse = async (req, res) => {
     // Update course content
     if (content) {
       try {
+        // First, process all existing content items to update title and description
+        // This ensures all content types (document, video, image, text, youtube) get updated
+        const existingContentPromises = parsedContent
+          .filter((item) => !item._id.startsWith("temp_")) // Only process existing content
+          .map(async (item) => {
+            try {
+              const existingContent = await Content.findById(item._id);
+              if (existingContent) {
+                console.log(`Updating existing content metadata: ${item._id}, title: ${item.title}`);
+
+                // Always update title and description
+                existingContent.title = item.title;
+                existingContent.description = item.description;
+
+                // For text and YouTube content, also update textContent
+                if ((item.type === "text" || item.type === "youtube") && item.textContent) {
+                  existingContent.textContent = item.textContent;
+
+                  // For YouTube content, also update fileUrl for backward compatibility
+                  if (item.type === "youtube") {
+                    existingContent.fileUrl = item.textContent;
+                    existingContent.type = "youtube";
+                    existingContent.mediaType = "video";
+                    existingContent.mimeType = "video/youtube";
+                  }
+                }
+
+                await existingContent.save();
+                console.log(`Successfully updated content metadata: ${item._id}`);
+              }
+            } catch (err) {
+              console.error(`Error updating existing content ${item._id}:`, err);
+            }
+            return null;
+          });
+
+        // Wait for all content updates to complete
+        await Promise.all(existingContentPromises);
+
         // Process text and YouTube content items separately - these don't need file uploads
+        // This is for creating new text/YouTube content items
         const textContentPromises = parsedContent
-          .filter((item) => item.type === "text" || item.type === "youtube")
+          .filter((item) => (item.type === "text" || item.type === "youtube") && item._id.startsWith("temp_"))
           .map(async (item) => {
             // If it's not a temp item (already exists in DB), skip creation
             if (!item._id.startsWith("temp_")) {
-              // Update existing text or YouTube content if it's been edited
-              if (item.textContent) {
-                try {
-                  const existingContent = await Content.findById(item._id);
-                  if (existingContent) {
-                    existingContent.title = item.title;
-                    existingContent.description = item.description;
-                    existingContent.textContent = item.textContent;
-
-                    // For YouTube content, also update fileUrl for backward compatibility
-                    if (item.type === "youtube") {
-                      existingContent.fileUrl = item.textContent;
-                      existingContent.type = "youtube";
-                      existingContent.mediaType = "video";
-                      existingContent.mimeType = "video/youtube";
-                    }
-
-                    await existingContent.save();
-                    console.log(
-                      `Updated existing ${item.type} content: ${item._id}`
-                    );
-                  }
-                } catch (err) {
-                  console.error(
-                    `Error updating existing ${item.type} content: ${item._id}`,
-                    err
-                  );
-                }
-              }
               return null;
             }
 

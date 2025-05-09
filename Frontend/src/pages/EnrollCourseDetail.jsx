@@ -1281,6 +1281,7 @@ const EnrollCourseDetail = () => {
                           <span className="module-compulsory-badge">Compulsory</span>
                         )}
                       </h3>
+                      <p>{module.description}</p>
                       <p>{module.content?.length || 0} Topic</p>
                     </div>
                     <div className="section-toggle">
