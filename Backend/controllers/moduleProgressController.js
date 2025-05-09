@@ -210,8 +210,10 @@ exports.updateModuleProgress = async (req, res) => {
       "modules"
     );
 
-    // Get compulsory modules
+    // Get compulsory modules and optional modules
     let compulsoryModuleIds = [];
+    let optionalModuleIds = [];
+    let allModuleIds = [];
 
     if (courseWithModules && courseWithModules.modules) {
       // Populate the modules with their content and get compulsory modules
@@ -228,11 +230,47 @@ exports.updateModuleProgress = async (req, res) => {
       compulsoryModuleIds = compulsoryModules.map((module) =>
         module._id.toString()
       );
+
+      // Filter optional modules and store their IDs
+      const optionalModules = populatedModules.filter(
+        (module) => module.isCompulsory === false
+      );
+      optionalModuleIds = optionalModules.map((module) =>
+        module._id.toString()
+      );
+
+      // Store all module IDs
+      allModuleIds = populatedModules.map((module) => module._id.toString());
     }
 
-    // First check if all compulsory modules have been completed
+    // Check if all compulsory modules have been completed
     // This is a stricter check to ensure all modules are fully completed
     const allCompulsoryModulesCompleted = compulsoryModuleIds.every(moduleId => {
+      // Find this module in the progress
+      const moduleProgress = progress.moduleProgress.find(
+        mp => mp.module.toString() === moduleId
+      );
+
+      if (!moduleProgress) return false;
+
+      // Get the actual module to check its content
+      const module = courseWithModules.modules.find(m => m._id.toString() === moduleId);
+      if (!module) return false;
+
+      // Check if all content in this module is completed
+      const allContentCompleted = module.content && module.content.length > 0
+        ? module.content.every(content =>
+          moduleProgress.completedContent.some(
+            id => id.toString() === content._id.toString()
+          )
+        )
+        : true;
+
+      return allContentCompleted;
+    });
+
+    // Check if all optional modules have been completed (for courses with only optional modules)
+    const allOptionalModulesCompleted = optionalModuleIds.every(moduleId => {
       // Find this module in the progress
       const moduleProgress = progress.moduleProgress.find(
         mp => mp.module.toString() === moduleId
@@ -259,9 +297,15 @@ exports.updateModuleProgress = async (req, res) => {
     // Create a detailed map of each module's content and completion status
     const moduleContentMap = [];
 
-    // First, build a map of all content items in each compulsory module
+    // Determine which modules to use for progress calculation
+    // If there are compulsory modules, use those; otherwise, use optional modules
+    const modulesToUseForProgress = compulsoryModuleIds.length > 0
+      ? compulsoryModuleIds
+      : optionalModuleIds;
+
+    // Build a map of all content items in the modules we're using for progress calculation
     if (courseWithModules && courseWithModules.modules) {
-      for (const moduleId of compulsoryModuleIds) {
+      for (const moduleId of modulesToUseForProgress) {
         const module = courseWithModules.modules.find(m => m._id.toString() === moduleId);
         if (!module) continue;
 
@@ -312,9 +356,15 @@ exports.updateModuleProgress = async (req, res) => {
         (cappedCompletedItems / totalContentItems) * 100
       );
 
-      // Only allow 100% progress if all compulsory modules are fully completed
+      // Determine if we should allow 100% progress
+      // If there are compulsory modules, check if they're all completed
+      // If there are only optional modules, check if they're all completed
+      const shouldAllow100Percent = compulsoryModuleIds.length > 0
+        ? allCompulsoryModulesCompleted
+        : allOptionalModulesCompleted;
+
       if (rawProgress >= 100) {
-        overallProgress = allCompulsoryModulesCompleted ? 100 : 99;
+        overallProgress = shouldAllow100Percent ? 100 : 99;
       } else {
         overallProgress = rawProgress;
       }
@@ -365,7 +415,7 @@ exports.updateModuleProgress = async (req, res) => {
 
     // Group content items by module for clearer logging
     const moduleContentSummary = {};
-    compulsoryModuleIds.forEach(moduleId => {
+    modulesToUseForProgress.forEach(moduleId => {
       const moduleItems = moduleContentMap.filter(item => item.moduleId === moduleId);
       const completedItems = moduleItems.filter(item => item.isCompleted);
 

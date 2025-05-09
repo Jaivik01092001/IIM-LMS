@@ -37,11 +37,19 @@ exports.generateCertificateInternal = async (userId, courseId) => {
       throw new Error("Course not completed");
     }
 
-    // Get all compulsory modules for this course
+    // Get all modules for this course
     const Module = require("../models/Module");
+
+    // Get compulsory modules
     const compulsoryModules = await Module.find({
       course: courseId,
       isCompulsory: true,
+    });
+
+    // Get optional modules
+    const optionalModules = await Module.find({
+      course: courseId,
+      isCompulsory: false,
     });
 
     // Get user's module progress
@@ -51,7 +59,7 @@ exports.generateCertificateInternal = async (userId, courseId) => {
       course: courseId,
     });
 
-    // Check if all compulsory modules are completed
+    // If there are compulsory modules, check if they're all completed
     if (progress && compulsoryModules.length > 0) {
       const completedCompulsoryModules = compulsoryModules.filter((module) => {
         const moduleProgress = progress.moduleProgress.find(
@@ -76,6 +84,56 @@ exports.generateCertificateInternal = async (userId, courseId) => {
       // Check if all quizzes for compulsory modules have been passed
       if (compulsoryModulesWithQuizzes.length > 0) {
         for (const module of compulsoryModulesWithQuizzes) {
+          if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
+
+          // Find the user's attempts for this quiz
+          const quiz = await Quiz.findById(module.quiz);
+          if (!quiz) continue; // Skip if quiz not found
+
+          // Get user's attempts for this quiz
+          const userAttempts = quiz.attempts.filter(
+            attempt => attempt.user.toString() === userId
+          );
+
+          // Check if user has passed the quiz
+          const hasPassed = userAttempts.some(
+            attempt => attempt.score >= quiz.passingScore
+          );
+
+          if (!hasPassed) {
+            throw new Error(
+              `You must pass the quiz for module "${module.title}" before generating a certificate`
+            );
+          }
+        }
+      }
+    }
+    // If there are no compulsory modules but there are optional modules, check if all optional modules are completed
+    else if (progress && compulsoryModules.length === 0 && optionalModules.length > 0) {
+      const completedOptionalModules = optionalModules.filter((module) => {
+        const moduleProgress = progress.moduleProgress.find(
+          (mp) => mp.module.toString() === module._id.toString()
+        );
+        return moduleProgress && moduleProgress.isCompleted;
+      });
+
+      // For courses with only optional modules, we require all optional modules to be completed
+      if (completedOptionalModules.length < optionalModules.length) {
+        throw new Error(
+          "All modules must be completed before generating a certificate"
+        );
+      }
+
+      // Get all optional modules with quizzes
+      const optionalModulesWithQuizzes = await Module.find({
+        course: courseId,
+        isCompulsory: false,
+        quiz: { $exists: true, $ne: null }
+      }).populate('quiz');
+
+      // Check if all quizzes for optional modules have been passed
+      if (optionalModulesWithQuizzes.length > 0) {
+        for (const module of optionalModulesWithQuizzes) {
           if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
 
           // Find the user's attempts for this quiz
@@ -192,11 +250,19 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
     return next(new AppError("You have not completed this course yet", 400));
   }
 
-  // Get all compulsory modules for this course
+  // Get all modules for this course
   const Module = require("../models/Module");
+
+  // Get compulsory modules
   const compulsoryModules = await Module.find({
     course: courseId,
     isCompulsory: true,
+  });
+
+  // Get optional modules
+  const optionalModules = await Module.find({
+    course: courseId,
+    isCompulsory: false,
   });
 
   // Get user's module progress
@@ -206,7 +272,7 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
     course: courseId,
   });
 
-  // Check if all compulsory modules are completed
+  // If there are compulsory modules, check if they're all completed
   if (progress && compulsoryModules.length > 0) {
     const completedCompulsoryModules = compulsoryModules.filter((module) => {
       const moduleProgress = progress.moduleProgress.find(
@@ -234,6 +300,62 @@ exports.generateCertificate = catchAsync(async (req, res, next) => {
     // Check if all quizzes for compulsory modules have been passed
     if (compulsoryModulesWithQuizzes.length > 0) {
       for (const module of compulsoryModulesWithQuizzes) {
+        if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
+
+        // Find the user's attempts for this quiz
+        const quiz = await Quiz.findById(module.quiz);
+        if (!quiz) continue; // Skip if quiz not found
+
+        // Get user's attempts for this quiz
+        const userAttempts = quiz.attempts.filter(
+          attempt => attempt.user.toString() === userId
+        );
+
+        // Check if user has passed the quiz
+        const hasPassed = userAttempts.some(
+          attempt => attempt.score >= quiz.passingScore
+        );
+
+        if (!hasPassed) {
+          return next(
+            new AppError(
+              `You must pass the quiz for module "${module.title}" before generating a certificate`,
+              400
+            )
+          );
+        }
+      }
+    }
+  }
+  // If there are no compulsory modules but there are optional modules, check if all optional modules are completed
+  else if (progress && compulsoryModules.length === 0 && optionalModules.length > 0) {
+    const completedOptionalModules = optionalModules.filter((module) => {
+      const moduleProgress = progress.moduleProgress.find(
+        (mp) => mp.module.toString() === module._id.toString()
+      );
+      return moduleProgress && moduleProgress.isCompleted;
+    });
+
+    // For courses with only optional modules, we require all optional modules to be completed
+    if (completedOptionalModules.length < optionalModules.length) {
+      return next(
+        new AppError(
+          "All modules must be completed before generating a certificate",
+          400
+        )
+      );
+    }
+
+    // Get all optional modules with quizzes
+    const optionalModulesWithQuizzes = await Module.find({
+      course: courseId,
+      isCompulsory: false,
+      quiz: { $exists: true, $ne: null }
+    }).populate('quiz');
+
+    // Check if all quizzes for optional modules have been passed
+    if (optionalModulesWithQuizzes.length > 0) {
+      for (const module of optionalModulesWithQuizzes) {
         if (!module.quiz) continue; // Skip if no quiz (should not happen due to query)
 
         // Find the user's attempts for this quiz

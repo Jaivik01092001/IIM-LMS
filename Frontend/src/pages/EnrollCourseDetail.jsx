@@ -249,13 +249,20 @@ const EnrollCourseDetail = () => {
       // Update session completion state
       setSessionCompleted(newSessionCompleted);
 
-      // Calculate overall progress based on completed content in compulsory modules only
+      // Calculate overall progress based on completed content
       let completedCount = 0;
       let totalSessions = 0;
 
-      // Only count content from compulsory modules
+      // Check if there are any compulsory modules
+      const hasCompulsoryModules = course.modules.some(module => module.isCompulsory !== false);
+
+      // If there are compulsory modules, only count those for progress
+      // If there are only optional modules, count all modules for progress
       course.modules.forEach(module => {
-        if (module.isCompulsory !== false) { // If module is compulsory
+        // Include module in progress calculation if:
+        // 1. It's compulsory (when there are compulsory modules), OR
+        // 2. All modules are optional (no compulsory modules exist)
+        if (!hasCompulsoryModules || module.isCompulsory !== false) {
           module.content?.forEach(content => {
             totalSessions++; // Count this content item
             if (newSessionCompleted[content._id]) {
@@ -409,13 +416,20 @@ const EnrollCourseDetail = () => {
         return;
       }
 
-      // Check if all quizzes for compulsory modules have been passed
-      const compulsoryModules = course.modules.filter(module => module.isCompulsory !== false);
-      const compulsoryModulesWithQuizzes = compulsoryModules.filter(module => module.quiz);
+      // Check if there are any compulsory modules
+      const hasCompulsoryModules = course.modules.some(module => module.isCompulsory !== false);
 
-      if (compulsoryModulesWithQuizzes.length > 0) {
+      // If there are compulsory modules, check those
+      // If there are only optional modules, check all modules
+      const modulesToCheck = hasCompulsoryModules
+        ? course.modules.filter(module => module.isCompulsory !== false) // Only compulsory modules
+        : course.modules; // All modules (when all are optional)
+
+      const modulesWithQuizzes = modulesToCheck.filter(module => module.quiz);
+
+      if (modulesWithQuizzes.length > 0) {
         // First, check if we have loaded all quiz attempts
-        const missingQuizAttempts = compulsoryModulesWithQuizzes.filter(module => {
+        const missingQuizAttempts = modulesWithQuizzes.filter(module => {
           // Ensure quizId is a string
           const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
           return storeQuizAttempts[quizId] === undefined;
@@ -447,7 +461,7 @@ const EnrollCourseDetail = () => {
         }
 
         // Now check if all quizzes have been passed
-        const failedQuizzes = compulsoryModulesWithQuizzes.filter(module => {
+        const failedQuizzes = modulesWithQuizzes.filter(module => {
           // Ensure quizId is a string
           const quizId = typeof module.quiz === 'object' ? module.quiz._id : module.quiz.toString();
           const quizAttempt = storeQuizAttempts[quizId];
@@ -516,13 +530,20 @@ const EnrollCourseDetail = () => {
         [sessionId]: !sessionCompleted[sessionId],
       };
 
-      // Calculate progress for all sessions in compulsory modules only
+      // Calculate progress for all sessions
       let completedCount = 0;
       let totalSessions = 0;
 
-      // Only count content from compulsory modules
+      // Check if there are any compulsory modules
+      const hasCompulsoryModules = course.modules.some(module => module.isCompulsory !== false);
+
+      // If there are compulsory modules, only count those for progress
+      // If there are only optional modules, count all modules for progress
       course.modules.forEach(module => {
-        if (module.isCompulsory !== false) { // If module is compulsory
+        // Include module in progress calculation if:
+        // 1. It's compulsory (when there are compulsory modules), OR
+        // 2. All modules are optional (no compulsory modules exist)
+        if (!hasCompulsoryModules || module.isCompulsory !== false) {
           module.content?.forEach(content => {
             totalSessions++; // Count this content item
             if (newSessionState[content._id]) {
