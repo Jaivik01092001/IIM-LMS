@@ -55,6 +55,13 @@
   padding: 24px;
   overflow: hidden;
   box-shadow: var(--box-shadow-light);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.school-dashboard .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--box-shadow-medium);
 }
 
 .school-dashboard .stat-card.professors {
@@ -63,6 +70,18 @@
 
 .school-dashboard .stat-card.courses {
   background-color: #fff8e8;
+}
+
+.school-dashboard .stat-card.educators {
+  background-color: #e8f4ff;
+}
+
+.school-dashboard .stat-card.ongoing {
+  background-color: #f0e7ff;
+}
+
+.school-dashboard .stat-card.blogs {
+  background-color: #ffe7e7;
 }
 
 .school-dashboard .stat-count {
@@ -79,14 +98,16 @@
 
 .school-dashboard .stat-icon1,
 .school-dashboard .stat-icon2,
-.school-dashboard .stat-icon3 {
+.school-dashboard .stat-icon3,
+.school-dashboard .stat-icon4 {
   position: relative;
   display: inline-block;
 }
 
 .school-dashboard .icondesign1,
 .school-dashboard .icondesign2,
-.school-dashboard .icondesign3 {
+.school-dashboard .icondesign3,
+.school-dashboard .icondesign4 {
   position: absolute;
   top: -8px;
   left: -8px;
