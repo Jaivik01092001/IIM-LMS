@@ -1,5 +1,6 @@
 .schools-container {
   margin: 0 auto;
+  min-height: 100vh;
 }
 
 /* Schools container specific styles */

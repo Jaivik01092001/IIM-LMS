@@ -7,10 +7,9 @@
 }
 
 .page-title {
-  color: var(--primary-color);
-  font-size: var(--heading2);
+  font-size: 20px;
   font-weight: 600;
-  margin: 0;
+  color: #333;
 }
 
 .add-btn {
